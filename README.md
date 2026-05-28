@@ -2,23 +2,49 @@
 
 Team project repository for the "千模百炼 AI 开发者学生竞赛".
 
-## Competition Background
+## Project Overview
 
-This project is prepared for a student AI developer competition centered on exploring practical AI Agent applications. The team will use the competition period to investigate QwenPaw capabilities, define a feasible product direction, and build an interactive AI Agent prototype.
+An AI-powered travel companion for exploring Macau's historic districts. Delivered as a WeChat Mini Program / mobile app, it provides real-time location-based commentary, intelligent route planning, and a gamified experience for tourists.
+
+## Core Features
+
+### 1. Historic District Guide (核心：旧区位置讲解)
+- **Location-aware commentary**: When users enter a district, the app generates contextual descriptions (history, landmarks, culture) based on their current location.
+- **Audio narration**: All content is delivered with voice commentary.
+- **Tour route generation**: Automatically creates optimized walking routes with guided narration.
+
+### 2. Intelligent Route Planning (核心路线规划)
+- **Route optimization**: Combines local attractions and trending spots into curated routes.
+- **Dynamic adjustments**: Fine-tunes routes based on crowd levels, weather, and seasonality.
+- **Map visualization**: Highlights key stops and connections on a map; tapping a stop reveals a timeline with detailed content.
+- **Itinerary view**: A memo-style trip plan for easy reference.
+- **Gamification**: Check-in points to encourage exploration (similar to Duolingo's engagement model).
+
+#### Input Factors
+- Real-time crowd levels (人流)
+- Weather conditions (天气)
+- Optimal local routes (本身地区的最优化路线)
+- User-defined travel type and purpose (用户自定义的旅游类型和目的)
+- Macau festivals and cultural events (澳门节庆和文化活动)
+- Casino shuttle bus routes (发财车路线)
+
+### 3. User Management (基础功能)
+- **Registration & Login**: Collects name, contact (email/phone), origin country, language preference, visit duration, and travel type (solo, family, post-conference leisure).
+- **Preference Checklist**: Understands what the user wants to explore in Macau (entertainment, culture, history, etc.).
+- **Tutorial**: An onboarding video walkthrough of app features.
+- **Personal Center**: Profile and trip management.
+
+### 4. Human-in-the-Loop Curation (人工调度)
+- **Social listening**: Aggregates popularity data from Xiaohongshu, Douyin, and Zhihu.
+- **Crowd intelligence**: Monitors crowd levels at ports and attractions (via CrowdPass or similar data sources).
 
 ## Current Stage
 
-early exploration
+Feature and framework design finalized. Moving into implementation.
 
 ## Project Goal
 
-Build an interactive AI Agent application prototype based on QwenPaw. The prototype should demonstrate a clear user scenario, agent workflow, and practical value through a usable demo.
-
-## Current Uncertainties
-
-- Final competition track
-- QwenPaw deployment approach
-- Product form and demo experience
+Build an interactive AI Agent application prototype based on QwenPaw that delivers a seamless, personalized tour experience for Macau visitors.
 
 ## Team Collaboration
 
