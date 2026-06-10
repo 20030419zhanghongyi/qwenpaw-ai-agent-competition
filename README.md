@@ -35,8 +35,9 @@ An AI-powered travel companion for exploring Macau's historic districts. Deliver
 - **Personal Center**: Profile and trip management.
 
 ### 4. Human-in-the-Loop Curation (人工调度)
-- **Social listening**: Aggregates popularity data from Xiaohongshu, Douyin, and Zhihu.
-- **Crowd intelligence**: Monitors crowd levels at ports and attractions (via CrowdPass or similar data sources).
+- **Offline research data**: Uses the team's existing Xiaohongshu dataset (100 high-engagement notes + 751 comments, 2023–2025) as a static source for POI popularity, pain points, and route priors. No real-time social media monitoring or ongoing crawling in the competition scope.
+- **Crowd intelligence**: Monitors crowd levels at ports and attractions when available (via CrowdPass or similar data sources).
+- **Manual curation & feedback**: Team-reviewed content updates and in-app user feedback replace live social listening for knowledge iteration.
 
 ## Current Stage
 
