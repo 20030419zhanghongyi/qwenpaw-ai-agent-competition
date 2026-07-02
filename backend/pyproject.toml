@@ -1,0 +1,32 @@
+[project]
+name = "macau-storywalk-backend"
+version = "0.1.0"
+description = "澳跡同行 Macau StoryWalk — backend (FastAPI + QwenPaw + RAG)"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "python-multipart>=0.0.9",
+    "httpx>=0.27",
+    "dashscope>=1.20",
+    "PyJWT>=2.8",
+    "SQLAlchemy>=2.0",
+    "psycopg[binary]>=3.1",
+    "pgvector>=0.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.4",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

@@ -1,0 +1,65 @@
+:root {
+  --bg: #faf7f2;
+  --card: #ffffff;
+  --primary: #b6242b;       /* 澳门中式红 */
+  --accent: #f4d35e;        /* 暖黄 */
+  --text: #2b2b2b;
+  --muted: #888;
+  --border: #ece6dc;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+h1 { font-size: 1.4rem; }
+h2 { font-size: 1.1rem; margin-top: 0; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.chip {
+  display: inline-block;
+  background: var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  margin: 2px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  user-select: none;
+}
+.chip.on { background: var(--primary); color: #fff; }
+
+button.primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 1rem;
+  width: 100%;
+  cursor: pointer;
+}
+button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.muted { color: var(--muted); font-size: 0.85rem; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.steps { color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; }
+.node { padding: 10px 0; border-bottom: 1px dashed var(--border); }
+.node:last-child { border-bottom: none; }

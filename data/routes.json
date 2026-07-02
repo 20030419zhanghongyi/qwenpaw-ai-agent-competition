@@ -1,0 +1,104 @@
+{
+  "_comment": "预设路线种子数据 —— Phase 1 最小集。schema 见 backend/app/models/route.py 与 data/README.md。其中 photo_halfday 对应设计书 §5 摄影打卡路线示例。后续团队扩充至 ≥6 条主题路线。",
+  "routes": [
+    {
+      "id": "culture_halfday",
+      "name": "半日文化散步路线",
+      "theme": "文化",
+      "duration_label": "半日",
+      "duration_hours": 3.0,
+      "walk_distance_km": 2.0,
+      "physical_level": "low",
+      "suitable_for": ["history", "architecture", "culture", "solo", "friends", "relax", "less-walk"],
+      "description": "串联议事亭前地、恋爱巷与望德堂区的低强度文化路线，半天即可走完，适合首次到访、想了解旧区故事的游客。",
+      "nodes": [
+        { "poi_id": "poi_senado", "order": 1, "suggested_stay_min": 30, "note": "起点，欣赏波浪地面与葡式建筑", "replaceable_with": [] },
+        { "poi_id": "poi_paixao", "order": 2, "suggested_stay_min": 15, "note": "短巷拍照，巷尾可见大三巴", "replaceable_with": [] },
+        { "poi_id": "poi_fatong", "order": 3, "suggested_stay_min": 35, "note": "葡式碎石路 + 文创园，听旧区故事", "replaceable_with": ["poi_sv_lazaro"] },
+        { "poi_id": "poi_sv_lazaro", "order": 4, "suggested_stay_min": 30, "note": "慢走望德堂区，感受本地生活", "replaceable_with": ["poi_florindo"] }
+      ]
+    },
+    {
+      "id": "photo_halfday",
+      "name": "摄影打卡路线（半日版）",
+      "theme": "摄影",
+      "duration_label": "半日",
+      "duration_hours": 2.0,
+      "walk_distance_km": 1.5,
+      "physical_level": "low",
+      "suitable_for": ["photo", "architecture", "solo", "friends", "less-walk", "no-backtrack"],
+      "description": "对应设计书 §5 示例：在半天、想拍照但不想太累的需求下，串联恋爱巷、议事亭前地与福隆新街，沿途出片且步行强度低。",
+      "nodes": [
+        { "poi_id": "poi_paixao", "order": 1, "suggested_stay_min": 20, "note": "粉墙 + 大三巴一角，出片起点", "replaceable_with": [] },
+        { "poi_id": "poi_senado", "order": 2, "suggested_stay_min": 25, "note": "波浪地面全景，建议上午顺光", "replaceable_with": [] },
+        { "poi_id": "poi_florindo", "order": 3, "suggested_stay_min": 40, "note": "红灯笼骑楼街景，黄昏最佳", "replaceable_with": ["poi_fatong"] }
+      ]
+    },
+    {
+      "id": "food_family_halfday",
+      "name": "亲子美食轻松路线",
+      "theme": "美食",
+      "duration_label": "半日",
+      "duration_hours": 3.5,
+      "walk_distance_km": 2.2,
+      "physical_level": "low",
+      "suitable_for": ["food", "culture", "family", "relax", "less-walk"],
+      "description": "面向亲子家庭的低强度美食路线，从福隆新街一路吃到下环街市，沿途有凉茶、点心与地道小吃，节奏轻松。",
+      "nodes": [
+        { "poi_id": "poi_florindo", "order": 1, "suggested_stay_min": 45, "note": "凉茶、虾酱、粤式点心", "replaceable_with": ["poi_senado"] },
+        { "poi_id": "poi_senado", "order": 2, "suggested_stay_min": 30, "note": "广场休整，周边小吃", "replaceable_with": [] },
+        { "poi_id": "poi_xiahuan", "order": 3, "suggested_stay_min": 50, "note": "下环街市熟食档 + 旧码头海风", "replaceable_with": [] }
+      ]
+    },
+    {
+      "id": "heritage_fullday",
+      "name": "中区世遗经典一日线",
+      "theme": "文化",
+      "duration_label": "一日",
+      "duration_hours": 6.5,
+      "walk_distance_km": 4.8,
+      "physical_level": "medium",
+      "suitable_for": ["history", "architecture", "culture", "photo", "solo", "friends", "family", "no-backtrack"],
+      "description": "参考澳门旅游局当前主推的『中区世遗游』思路，从妈阁与亚婆井片区一路走到议事亭前地和恋爱巷，适合第一次来澳门、想把经典历史城区一次走透的游客。",
+      "nodes": [
+        { "poi_id": "poi_ama", "order": 1, "suggested_stay_min": 45, "note": "从澳门地名记忆与海神信仰出发", "replaceable_with": ["poi_lilau"] },
+        { "poi_id": "poi_lilau", "order": 2, "suggested_stay_min": 35, "note": "感受『亚婆井水』与风顺堂旧社区氛围", "replaceable_with": [] },
+        { "poi_id": "poi_senado", "order": 3, "suggested_stay_min": 35, "note": "进入历史城区核心，适合午间休整", "replaceable_with": [] },
+        { "poi_id": "poi_paixao", "order": 4, "suggested_stay_min": 20, "note": "补一段热门街巷拍照点", "replaceable_with": [] },
+        { "poi_id": "poi_florindo", "order": 5, "suggested_stay_min": 45, "note": "以老街与美食收尾，体验旧区活化", "replaceable_with": ["poi_xiahuan"] }
+      ]
+    },
+    {
+      "id": "taipa_hotspot_halfday",
+      "name": "氹仔热门打卡半日线",
+      "theme": "摄影",
+      "duration_label": "半日",
+      "duration_hours": 4.0,
+      "walk_distance_km": 2.6,
+      "physical_level": "low",
+      "suitable_for": ["photo", "food", "culture", "architecture", "friends", "family", "relax", "less-walk", "no-backtrack"],
+      "description": "结合旅游局『氹仔葡韵游』与近年游客热度最高的官也街片区，串联嘉模圣母堂、龙环葡韵和官也街，适合想在半天内兼顾拍照、轻松散步和觅食的行程。",
+      "nodes": [
+        { "poi_id": "poi_rua_cunha", "order": 1, "suggested_stay_min": 45, "note": "先逛官也街，避开傍晚排队高峰", "replaceable_with": [] },
+        { "poi_id": "poi_carmo", "order": 2, "suggested_stay_min": 30, "note": "嘉模前地与教堂立面是经典构图", "replaceable_with": [] },
+        { "poi_id": "poi_taipa_houses", "order": 3, "suggested_stay_min": 45, "note": "绿色葡式建筑群与海边步道适合慢拍", "replaceable_with": [] }
+      ]
+    },
+    {
+      "id": "coloane_leisure_halfday",
+      "name": "路环渔村悠闲半日线",
+      "theme": "文化",
+      "duration_label": "半日",
+      "duration_hours": 3.5,
+      "walk_distance_km": 1.8,
+      "physical_level": "low",
+      "suitable_for": ["culture", "photo", "history", "food", "solo", "friends", "family", "relax", "less-walk"],
+      "description": "对应旅游局『路环悠闲游』的慢节奏路线，从圣方济各圣堂到花园仔与旧码头，适合想离开核心游客区、体验澳门海边渔村氛围的人。",
+      "nodes": [
+        { "poi_id": "poi_coloane_chapel", "order": 1, "suggested_stay_min": 30, "note": "从淡黄色小教堂开始，先看路环代表画面", "replaceable_with": ["poi_eanes_square"] },
+        { "poi_id": "poi_eanes_square", "order": 2, "suggested_stay_min": 40, "note": "广场休息、吃小点，观察路环旧街节奏", "replaceable_with": [] },
+        { "poi_id": "poi_coloane_pier", "order": 3, "suggested_stay_min": 35, "note": "到码头吹海风收尾，适合傍晚到访", "replaceable_with": [] }
+      ]
+    }
+  ]
+}
