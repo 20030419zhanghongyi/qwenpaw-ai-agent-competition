@@ -3,6 +3,7 @@
 运行：  pytest -q
 """
 
+from app.db.data import load_weights
 from app.features.routes.candidate_selector import build_candidate_pool, select_candidates_for_node
 from app.features.routes.route_constructor import construct_route
 from app.features.routes.repository import get_template
@@ -101,6 +102,34 @@ def test_candidate_pool_prefers_same_or_adjacent_districts():
     candidates = select_candidates_for_node(target_node, route, limit=5)
     assert len(candidates) >= 1
     assert all(candidate["district_relation"] in {"same", "adjacent"} for candidate in candidates)
+
+
+def test_weights_file_contains_expected_sections():
+    weights = load_weights()
+    assert "poi_heat" in weights
+    assert "crowd_risk" in weights
+    assert "alt_poi_candidates" in weights
+    assert "theme_bias" in weights
+
+
+def test_curated_alt_candidate_is_marked_in_candidate_signals():
+    route = get_template("culture_halfday")
+    assert route is not None
+    target_node = route["nodes"][0]  # poi_senado
+    candidates = select_candidates_for_node(target_node, route, limit=5)
+    assert any(
+        candidate["weight_signals"]["alt_candidate"]
+        and "离线调研替代候选" in candidate["reasons"]
+        for candidate in candidates
+    )
+
+
+def test_theme_bias_is_applied_for_matching_route_theme():
+    route = get_template("photo_halfday")
+    assert route is not None
+    target_node = route["nodes"][0]  # poi_paixao
+    candidates = select_candidates_for_node(target_node, route, limit=5)
+    assert any(candidate["weight_signals"]["theme_bias"] > 0 for candidate in candidates)
 
 
 def test_full_day_history_route_respects_duration_budget():
