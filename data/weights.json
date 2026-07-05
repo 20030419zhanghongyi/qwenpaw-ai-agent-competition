@@ -1,0 +1,83 @@
+{
+  "_comment": "Phase 1 离线调研预计算权重表。当前为基于现有路线与 POI 的人工初始化版本，后续由 scripts/clean_xhs.py 从团队离线数据集自动产出。",
+  "poi_heat": {
+    "poi_senado": 2,
+    "poi_paixao": 3,
+    "poi_fatong": 1,
+    "poi_sv_lazaro": 1,
+    "poi_florindo": 2,
+    "poi_xiahuan": 1,
+    "poi_ama": 2,
+    "poi_lilau": 1,
+    "poi_rua_cunha": 3,
+    "poi_carmo": 1,
+    "poi_taipa_houses": 2,
+    "poi_coloane_chapel": 1,
+    "poi_coloane_pier": 1,
+    "poi_eanes_square": 1
+  },
+  "crowd_risk": {
+    "poi_senado": 2,
+    "poi_paixao": 2,
+    "poi_fatong": 0,
+    "poi_sv_lazaro": 0,
+    "poi_florindo": 1,
+    "poi_xiahuan": 0,
+    "poi_ama": 2,
+    "poi_lilau": 0,
+    "poi_rua_cunha": 3,
+    "poi_carmo": 1,
+    "poi_taipa_houses": 1,
+    "poi_coloane_chapel": 0,
+    "poi_coloane_pier": 0,
+    "poi_eanes_square": 0
+  },
+  "pain_point_tags": {
+    "poi_senado": ["人多"],
+    "poi_paixao": ["排队", "人多"],
+    "poi_florindo": ["热门时段拥挤"],
+    "poi_ama": ["台阶多", "热门时段拥挤"],
+    "poi_rua_cunha": ["排队", "人多"],
+    "poi_taipa_houses": ["热门时段拥挤"]
+  },
+  "alt_poi_candidates": {
+    "poi_senado": ["poi_sv_lazaro", "poi_florindo"],
+    "poi_paixao": ["poi_fatong", "poi_carmo"],
+    "poi_fatong": ["poi_sv_lazaro", "poi_lilau"],
+    "poi_sv_lazaro": ["poi_fatong", "poi_lilau"],
+    "poi_florindo": ["poi_xiahuan", "poi_rua_cunha"],
+    "poi_xiahuan": ["poi_florindo", "poi_eanes_square"],
+    "poi_ama": ["poi_lilau", "poi_coloane_chapel"],
+    "poi_lilau": ["poi_ama", "poi_sv_lazaro"],
+    "poi_rua_cunha": ["poi_carmo", "poi_taipa_houses"],
+    "poi_carmo": ["poi_taipa_houses", "poi_rua_cunha"],
+    "poi_taipa_houses": ["poi_carmo", "poi_rua_cunha"],
+    "poi_coloane_chapel": ["poi_eanes_square", "poi_coloane_pier"],
+    "poi_coloane_pier": ["poi_eanes_square", "poi_coloane_chapel"],
+    "poi_eanes_square": ["poi_coloane_chapel", "poi_coloane_pier"]
+  },
+  "theme_bias": {
+    "文化": {
+      "poi_sv_lazaro": 2,
+      "poi_ama": 2,
+      "poi_lilau": 2,
+      "poi_fatong": 1,
+      "poi_coloane_chapel": 1,
+      "poi_eanes_square": 1
+    },
+    "摄影": {
+      "poi_paixao": 2,
+      "poi_fatong": 1,
+      "poi_carmo": 1,
+      "poi_taipa_houses": 2,
+      "poi_coloane_chapel": 1,
+      "poi_coloane_pier": 1
+    },
+    "美食": {
+      "poi_florindo": 2,
+      "poi_xiahuan": 2,
+      "poi_rua_cunha": 2,
+      "poi_eanes_square": 1
+    }
+  }
+}

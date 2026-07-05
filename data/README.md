@@ -11,6 +11,26 @@ Phase 1 最小数据集。团队按 `plan/开发计划与清单.md` Phase 1 扩�
 | `routes.json` | 预设路线库 | `backend/app/models/route.py` → `Route` |
 | `weights.json` | （Phase 1 末生成）离线调研权重表 | `scripts/clean_xhs.py` 产出 |
 
+## weights schema
+
+```json
+{
+  "poi_heat": { "<poi_id>": 0 },
+  "crowd_risk": { "<poi_id>": 0 },
+  "pain_point_tags": { "<poi_id>": ["排队", "人多"] },
+  "alt_poi_candidates": { "<poi_id>": ["<poi_id>", "<poi_id>"] },
+  "theme_bias": {
+    "文化|摄影|美食": { "<poi_id>": 0 }
+  }
+}
+```
+
+- `poi_heat`：离线提及热度，用于模板打分和候选点加权。
+- `crowd_risk`：热门时段拥挤风险，适合在轻松 / 亲子 / 少走路路线里做降权。
+- `pain_point_tags`：游客抱怨标签，如 `排队`、`人多`、`台阶多`。
+- `alt_poi_candidates`：人工或离线调研整理的可替换候选点。
+- `theme_bias`：按路线主题给候选点加额外偏好，避免“同主题但不够代表”的点排太前。
+
 ## POI schema
 
 ```
