@@ -1,11 +1,14 @@
 """无 API key 的候选 POI 召回。
 
-当前阶段只依赖本地种子数据与可选的 weights.json：
+当前阶段依赖本地种子数据与离线权重表 `weights.json`：
 - theme
 - suitable_for
 - district
 - replaceable_with
-- poi_heat（若存在）
+- poi_heat
+- crowd_risk / pain_point_tags
+- alt_poi_candidates
+- theme_bias
 
 目标不是求“语义最相似”，而是给路线微调与解释层提供
 更贴近真实路线规划的可替换 / 可补充候选点池：
@@ -13,6 +16,7 @@
 - 优先和整条路线主题一致
 - 优先同区或相邻区，减少跨区乱跳
 - 显式 replaceable_with 始终有最高优先级
+- 用离线调研信号避免把高风险热门点一股脑塞进轻松路线
 """
 
 from __future__ import annotations
@@ -30,6 +34,10 @@ ADJACENT_DISTRICTS: dict[str, set[str]] = {
     "氹仔": {"氹仔旧城区"},
     "路环市区": {"路环市区"},
 }
+
+LOW_BURDEN_TAGS = {"relax", "family", "less-walk"}
+CROWD_PAIN_POINTS = {"排队", "人多", "热门时段拥挤"}
+BURDEN_PAIN_POINTS = {"暴走", "上坡", "台阶多"}
 
 
 def select_candidates_for_node(
@@ -51,7 +59,12 @@ def select_candidates_for_node(
 
     weights = load_weights()
     heat = weights.get("poi_heat", {})
+    crowd_risk = weights.get("crowd_risk", {})
+    pain_point_tags = weights.get("pain_point_tags", {})
+    alt_poi_candidates = weights.get("alt_poi_candidates", {})
+    theme_bias = weights.get("theme_bias", {})
     explicit_replaceable = set(node.get("replaceable_with", []))
+    curated_alternatives = set(alt_poi_candidates.get(poi["id"], []))
     all_pois = load_pois()
     candidates: list[tuple[int, dict]] = []
     route_theme = route.get("theme")
@@ -74,6 +87,9 @@ def select_candidates_for_node(
         if other_id in explicit_replaceable:
             score += 8
             reasons.append("模板内可替换点")
+        elif other_id in curated_alternatives:
+            score += 3
+            reasons.append("离线调研替代候选")
 
         theme_overlap = source_theme & other_theme
         if theme_overlap:
@@ -94,6 +110,11 @@ def select_candidates_for_node(
             score += 2
             reasons.append("符合路线主主题")
 
+        theme_boost = int(theme_bias.get(route_theme, {}).get(other_id, 0)) if route_theme else 0
+        if theme_boost:
+            score += theme_boost
+            reasons.append(f"{route_theme}主题离线偏好更高")
+
         if district_relation == "same":
             score += 4
             reasons.append("同区替换")
@@ -109,6 +130,13 @@ def select_candidates_for_node(
             score += heat_score
             reasons.append("离线热度较高")
 
+        risk_score = int(crowd_risk.get(other_id, 0))
+        pain_points = pain_point_tags.get(other_id, [])
+        penalty = _experience_penalty(route_suitable, risk_score, pain_points)
+        if penalty:
+            score -= penalty
+            reasons.append("人流或体感风险偏高，已降权")
+
         # 如果只有“路线大标签”命中，但和源节点本身不相似，适当降权。
         if route_theme and route_theme in other_theme and not theme_overlap and not source_suitable_overlap:
             score -= 1
@@ -122,9 +150,16 @@ def select_candidates_for_node(
                 {
                     "poi_id": other_id,
                     "score": score,
-                    "reasons": reasons,
+                    "reasons": _dedupe(reasons),
                     "district_relation": district_relation,
                     "explicit_replaceable": other_id in explicit_replaceable,
+                    "weight_signals": {
+                        "poi_heat": heat_score,
+                        "crowd_risk": risk_score,
+                        "pain_points": pain_points,
+                        "theme_bias": theme_boost,
+                        "alt_candidate": other_id in curated_alternatives,
+                    },
                 },
             )
         )
@@ -166,3 +201,21 @@ def _prefer_nearby_candidates(candidates: list[dict]) -> list[dict]:
         if candidate["district_relation"] == "far" and not candidate.get("explicit_replaceable")
     ]
     return nearby + far
+
+
+def _experience_penalty(route_suitable: set[str], risk_score: int, pain_points: list[str]) -> int:
+    penalty = 0
+    pain_point_set = set(pain_points)
+
+    if route_suitable & LOW_BURDEN_TAGS:
+        penalty += risk_score
+        if pain_point_set & CROWD_PAIN_POINTS:
+            penalty += 1
+        if pain_point_set & BURDEN_PAIN_POINTS:
+            penalty += 1
+
+    return penalty
+
+
+def _dedupe(items: list[str]) -> list[str]:
+    return list(dict.fromkeys(items))

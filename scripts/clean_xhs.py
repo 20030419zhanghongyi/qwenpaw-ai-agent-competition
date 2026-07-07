@@ -8,8 +8,12 @@
 weight 表结构（建议）：
 {
   "poi_heat":   { "<poi_id>": float },   # 提及热度
-  "pain_points":{ "<poi_id|district>": ["排队","累",...] },
-  "niche_candidates": ["<poi_id>", ...]  # 小众推荐候选
+  "crowd_risk": { "<poi_id>": int },     # 热门时段拥挤风险
+  "pain_point_tags": { "<poi_id>": ["排队","人多", ...] },
+  "alt_poi_candidates": { "<poi_id>": ["<poi_id>", ...] },
+  "theme_bias": {
+    "文化|摄影|美食": { "<poi_id>": int }
+  }
 }
 
 运行：python scripts/clean_xhs.py
@@ -46,7 +50,8 @@ def main() -> int:
     #   1) pandas 读 notes / comments sheet
     #   2) 关键词命中统计：「攻略/路线/排队/人多/累/暴走/回头路/历史/文化/介绍/为什么」
     #   3) POI 提及抽取（与 data/pois.json 的 name_zh 对齐 → poi_id）
-    #   4) 生成 poi_heat / pain_points / niche_candidates 写入 data/weights.json
+    #   4) 生成 poi_heat / crowd_risk / pain_point_tags / alt_poi_candidates / theme_bias
+    #      并写入 data/weights.json
     print(f"✓ 找到数据源 {xlsx.name}，等待实现清洗逻辑后产出 {OUT.relative_to(REPO_ROOT)}")
     return 0
 
