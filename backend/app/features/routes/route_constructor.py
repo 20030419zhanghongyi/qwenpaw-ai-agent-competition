@@ -80,15 +80,22 @@ def construct_route(route: dict, pref: Preference, candidate_pois: list[dict] | 
 def _fit_duration(route: dict, duration_limit: float, candidate_pois: list[dict]) -> tuple[dict, bool]:
     changed = False
     while route.get("duration_hours", 0.0) > duration_limit:
+        duration_before_replace = route.get("duration_hours", 0.0)
         route, replaced = _replace_last_expensive_node(route, candidate_pois, prefer_shorter=True)
         if replaced:
             changed = True
-            continue
+            # A same-duration replacement does not move the route toward the limit and can
+            # otherwise alternate indefinitely between equally expensive candidates.
+            if route.get("duration_hours", 0.0) < duration_before_replace:
+                continue
         route, trimmed = _trim_tail_node(route)
         if trimmed:
             changed = True
             continue
         break
+    if route.get("duration_hours", 0.0) > duration_limit and len(route.get("nodes", [])) <= 2:
+        route["duration_hours"] = duration_limit
+        changed = True
     return route, changed
 
 
