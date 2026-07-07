@@ -5,7 +5,9 @@
 
 from app.features.routes.candidate_selector import build_candidate_pool, select_candidates_for_node
 from app.features.routes.route_constructor import construct_route
-from app.features.routes.repository import get_template
+from app.features.routes.explain import build_explanation
+from app.features.routes.repository import get_template, list_templates
+from app.db.data import get_poi
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -256,3 +258,124 @@ def test_route_constructor_prefers_replacement_before_trim_for_walk_limit():
     route, constraints = construct_route(template, Pref(), candidate_pois=pool)
     assert route["walk_distance_km"] <= 2.8
     assert any("按少走路约束调整" in item for item in constraints)
+
+
+# ---------------------------------------------------------------------------
+# 以下为「无 API key 阶段」补强用例：覆盖此前未测的空白场景，全部纯规则、不依赖外部 API。
+# ---------------------------------------------------------------------------
+
+
+def test_evening_duration_respects_shorter_budget():
+    """evening 档（DURATION_LIMITS=2.5h）下，推荐路线应落在晚间预算内。
+
+    设计契约是「尽力裁剪」而非「每条模板都能压进预算」，因此只断言 top match。
+    """
+    payload = {
+        "duration": "evening",
+        "interests": ["culture"],
+        "travel_type": ["solo"],
+        "physical": [],
+        "language": "zh-CN",
+    }
+    r = client.post("/api/v1/routes/match", json=payload)
+    assert r.status_code == 200
+    top = r.json()["matches"][0]
+    assert top["route"]["duration_hours"] <= 2.5
+
+
+def test_route_adjust_supports_food_point_suggestion():
+    """adjust 的美食路径：想吃点东西 → 注入 food 兴趣并实际插入一个美食候选点。"""
+    payload = {
+        "route_id": "culture_halfday",
+        "instruction": "想吃点东西",
+        "preference": {
+            "duration": "half-day",
+            "interests": ["culture"],
+            "travel_type": ["solo"],
+            "physical": [],
+            "language": "zh-CN",
+        },
+    }
+    r = client.post("/api/v1/routes/adjust", json=payload)
+    assert r.status_code == 200
+    data = r.json()
+    assert "food" in data["preference_after"]["interests"]
+    assert len(data["added_nodes"]) >= 1
+
+    route_ids = {item["poi_id"] for item in data["route"]["nodes"]}
+    added_ids = {item["poi_id"] for item in data["added_nodes"]}
+    inserted = added_ids & route_ids
+    assert inserted  # 建议的候选点确实落进了最终路线
+    # 且至少有一个新增节点是真正的美食 POI
+    assert any("food" in (get_poi(pid) or {}).get("suitable_for", []) for pid in inserted)
+
+
+def test_construct_route_no_backtrack_actually_reorders_nodes():
+    """no-backtrack 约束应真正按街区连续性重排节点顺序，而不只是附加一条说明文字。"""
+    template = get_template("heritage_fullday")
+    assert template is not None
+    pool = build_candidate_pool(template)
+
+    class Pref:
+        duration = "full-day"
+        physical = ["no-backtrack"]
+        interests = ["history"]
+
+    original_order = [node["poi_id"] for node in sorted(template["nodes"], key=lambda i: i["order"])]
+    route, constraints = construct_route(template, Pref(), candidate_pois=pool)
+    new_order = [node["poi_id"] for node in sorted(route["nodes"], key=lambda i: i["order"])]
+    assert new_order != original_order
+    assert any("已按街区连续性重排节点" in item for item in constraints)
+
+
+def test_match_is_robust_to_unknown_duration_and_empty_preferences():
+    """未知 duration + 空 interests/travel_type/physical 不应报错，仍返回有效路线。"""
+    payload = {
+        "duration": "weekend",
+        "interests": [],
+        "travel_type": [],
+        "physical": [],
+        "language": "zh-CN",
+    }
+    r = client.post("/api/v1/routes/match", json=payload)
+    assert r.status_code == 200
+    matches = r.json()["matches"]
+    assert isinstance(matches, list) and len(matches) >= 1
+    assert len(matches[0]["route"]["nodes"]) >= 1
+
+
+def test_repository_list_and_get_templates():
+    """repository 包装层：list_templates 返回全部模板，get_template 命中与未命中。"""
+    templates = list_templates()
+    assert len(templates) >= 6
+    assert all(t.get("id") and t.get("nodes") for t in templates)
+    assert get_template("culture_halfday") is not None
+    assert get_template("definitely_missing") is None
+
+
+def test_explain_builds_frontend_friendly_block():
+    """explain 层输出结构稳定，且 candidate_overview 每个源节点最多展示 2 个候选、每个候选最多 2 条理由。"""
+    candidate_pois = [
+        {
+            "source_poi_id": "poi_senado",
+            "candidates": [
+                {"poi_id": f"poi_c{i}", "reasons": ["r1", "r2", "r3"]}
+                for i in range(4)
+            ],
+        }
+    ]
+    block = build_explanation(
+        template_id="culture_halfday",
+        reasons=["时长契合「半日游」", "时长契合「半日游」"],
+        applied_constraints=["按时长约束调整至 4.5 小时内"],
+        candidate_pois=candidate_pois,
+    )
+    assert block["selected_template"] == "culture_halfday"
+    assert block["summary"] == ["时长契合「半日游」"]  # 去重
+    assert block["constraints"] == ["按时长约束调整至 4.5 小时内"]
+    overview = block["candidate_overview"]
+    assert len(overview) == 1
+    assert overview[0]["source_poi_id"] == "poi_senado"
+    assert len(overview[0]["top_candidates"]) == 2  # 每个源节点封顶 2 个候选
+    for candidate in overview[0]["top_candidates"]:
+        assert len(candidate["reasons"]) <= 2
