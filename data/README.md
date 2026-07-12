@@ -46,7 +46,34 @@ story           文化故事
 observation_tips 建议观察角度
 suitable_for[]  匹配标签：history/architecture/photo/food/culture/solo/friends/family/relax
 source_type     来源分级：official/academic/folklore/ai   ← 落实伦理透明度
+verify_status   核验状态：待核验 / AI生成·待核验 / 已核验
 ```
+
+## POI 文化内容的来源（official vs ai）
+
+`pois.json` 共 339 条 POI，文化内容分两类来源，靠 `source_type` 区分（伦理透明度）：
+
+| 来源 | 条数 | source_type | verify_status | 说明 |
+|------|------|-------------|---------------|------|
+| 人工富化（官方/学术史料） | 14 | `official` | `待核验` | 精选核心节点，手工核对写入 |
+| AI 生成（讲解 agent 补全） | 325 | `ai` | `AI生成·待核验` | 由 QwenPaw 讲解能力批量补全，**人工核验前不作权威史料** |
+
+### AI 富化怎么来的
+
+`scripts/generate_guide_content.py` 调本地 QwenPaw（`default` agent；待 `guide` agent 建好后用
+`--agent guide`），对 5 个文化字段为空的「瘦 POI」逐条补全 `intro`/`history`/`architecture`/
+`story`/`observation_tips`，并发跑（`--workers 8`）、幂等可续跑（intro 非空即跳过）、每条原子写回。
+
+纪律（对齐 `skills/macau-guide/SKILL.md`）：
+- **不编史料**：资料不足的字段写概括描述或留空（故 `story` 仅 ~140/325 非空，属正常）；
+- **易变信息低置信**：开放时间/票价/活动不给具体时间表，写「以现场为准」；
+- **冷门点位如实说明**：公开资料匮乏者，`confidence ≤ 0.4` 且正文写「公开资料有限」
+  （全集中 13 条 <0.4，均为此类）。
+
+每条生成的审计记录（id / confidence / token / 延迟 / 状态）落盘于
+`data/legacy/guide_enrichment_log.jsonl`，可复核、可重算。geo 数据（coordinates / amap）
+不受富化影响，325 条全保留。
+
 
 ## Route schema
 

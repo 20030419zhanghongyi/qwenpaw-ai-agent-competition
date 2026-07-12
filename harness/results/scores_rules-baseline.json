@@ -1,0 +1,209 @@
+{
+  "run_id": "rules-baseline",
+  "ts": "2026-07-10T14:15:04",
+  "guide_agent": "default",
+  "overall": 0.796,
+  "by_category": {
+    "route": 0.796,
+    "guide": null
+  },
+  "n": 9,
+  "cases": [
+    {
+      "checks": [
+        {
+          "name": "physical",
+          "passed": false
+        },
+        {
+          "name": "removed_tail",
+          "passed": false
+        },
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 0.333,
+      "passed": 1,
+      "total": 3,
+      "detail": {
+        "source": "rules"
+      },
+      "id": "r01",
+      "category": "route"
+    },
+    {
+      "checks": [
+        {
+          "name": "interests",
+          "passed": true
+        },
+        {
+          "name": "added_tag:photo",
+          "passed": true
+        },
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "source": "rules"
+      },
+      "id": "r02",
+      "category": "route"
+    },
+    {
+      "checks": [
+        {
+          "name": "physical",
+          "passed": true
+        },
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 2,
+      "total": 2,
+      "detail": {
+        "source": "rules"
+      },
+      "id": "r03",
+      "category": "route"
+    },
+    {
+      "checks": [
+        {
+          "name": "interests",
+          "passed": true
+        },
+        {
+          "name": "added_tag:food",
+          "passed": false
+        },
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 0.667,
+      "passed": 2,
+      "total": 3,
+      "detail": {
+        "source": "rules"
+      },
+      "id": "r04",
+      "category": "route"
+    },
+    {
+      "checks": [
+        {
+          "name": "physical",
+          "passed": true
+        },
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 2,
+      "total": 2,
+      "detail": {
+        "source": "rules"
+      },
+      "id": "r05",
+      "category": "route"
+    },
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 1,
+      "total": 1,
+      "detail": {
+        "source": "rules"
+      },
+      "id": "r06",
+      "category": "route"
+    },
+    {
+      "checks": [
+        {
+          "name": "duration",
+          "passed": false
+        },
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 0.5,
+      "passed": 1,
+      "total": 2,
+      "detail": {
+        "source": "rules"
+      },
+      "id": "r07",
+      "category": "route"
+    },
+    {
+      "checks": [
+        {
+          "name": "physical",
+          "passed": true
+        },
+        {
+          "name": "interests",
+          "passed": true
+        },
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "source": "rules"
+      },
+      "id": "r08",
+      "category": "route"
+    },
+    {
+      "checks": [
+        {
+          "name": "physical",
+          "passed": true
+        },
+        {
+          "name": "interests",
+          "passed": false
+        },
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 0.667,
+      "passed": 2,
+      "total": 3,
+      "detail": {
+        "source": "rules"
+      },
+      "id": "r09",
+      "category": "route"
+    }
+  ]
+}

@@ -25,14 +25,24 @@ class RouteAdjustRequest(BaseModel):
     preference: Preference
 
 
-def adjust_route(request: RouteAdjustRequest) -> dict:
-    """根据简单自然语言指令做规则版路线微调。"""
+def adjust_route(request: RouteAdjustRequest, preference_override: Preference | None = None) -> dict:
+    """根据自然语言指令做路线微调。
+
+    ``preference_override`` 由 P1 路线 agent 路径传入：agent 把自然语言翻成结构化意图后，
+    叠加到 ``Preference`` 直接喂给现成排线引擎（跳过下面的规则版关键词解析）。
+    排线算法（construct_route / _apply_route_mutations）一行不改。
+    """
     template = get_template(request.route_id)
     if template is None:
         raise ValueError(f"Route template not found: {request.route_id}")
 
     original_pref = request.preference
-    adjusted_pref = _apply_instruction_to_preference(original_pref, request.instruction)
+    if preference_override is not None:
+        # agent 路径：偏好已由 route_agent 叠加好，直接用
+        adjusted_pref = preference_override
+    else:
+        # 规则路径：关键词解析
+        adjusted_pref = _apply_instruction_to_preference(original_pref, request.instruction)
     original_node_ids = [node["poi_id"] for node in template.get("nodes", [])]
 
     candidate_pois = build_candidate_pool(template)

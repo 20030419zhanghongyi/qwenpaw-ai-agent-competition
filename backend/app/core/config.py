@@ -33,6 +33,20 @@ class Settings(BaseSettings):
     qwenpaw_app_id: str = ""
     qwenpaw_api_key: str = ""
     qwen_text_model: str = "qwen-plus"
+
+    # QwenPaw 外层 harness 连接（P0 连接基座）
+    # 实例已在 http://127.0.0.1:8088 跑；本机 GET 无需鉴权，POST 可能需 web token。
+    qwenpaw_base_url: str = "http://127.0.0.1:8088"
+    qwenpaw_timeout: float = 60.0
+    qwenpaw_default_agent_id: str = "default"
+    # 发消息端点：已确认 POST /api/console/chat（SSE，agent 由 X-Agent-Id 头指定）
+    qwenpaw_send_path_template: str = "/api/console/chat"
+    # 可选鉴权：POST 若 401，从 Console devtools 抓 Cookie / Authorization 填这里
+    qwenpaw_auth_cookie: str = ""
+    qwenpaw_auth_header: str = ""
+    # P1 路线 agent 开关：默认 False（规则版 fallback，零意外 LLM 调用）；
+    # 在 QwenPaw 建好 route agent 后置 true。
+    route_agent_enabled: bool = False
     qwen_vision_model: str = "qwen-vl-max"
     qwen_embedding_model: str = "text-embedding-v3"
     qwen_tts_model: str = "cosyvoice-v1"
