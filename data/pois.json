@@ -111,9 +111,9 @@
     },
     {
       "id": "poi_sv_lazaro",
-      "name_zh": "望德堂区",
-      "name_en": "São Lázaro District",
-      "name_pt": "Freguesia de São Lázaro",
+      "name_zh": "望德圣母堂",
+      "name_en": "St. Lazarus Church",
+      "name_pt": "Igreja de São Lázaro",
       "district": "望德堂区",
       "theme": [
         "历史",
@@ -180,7 +180,7 @@
     {
       "id": "poi_xiahuan",
       "name_zh": "下环街市",
-      "name_en": "Mercado de S. Lourenço",
+      "name_en": "S. Lourenço Market",
       "name_pt": "Mercado de S. Lourenço",
       "district": "风顺堂区",
       "theme": [
