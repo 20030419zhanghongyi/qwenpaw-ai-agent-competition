@@ -86,13 +86,16 @@
 **目标**:第二个 agent + 用数据证明「调优过」,产出最强截图。对齐 M3。
 
 任务:
-- [ ] 建讲解 agent(`agents create --name "文化讲解" --agent-id guide`)+ `macau-guide` skill —— 手动待做
+- [ ] **★下一个立即项:route agent before/after(P1 已通,只差跑一次)** —— `ROUTE_AGENT_ENABLED=true python -m app.eval.runner --only route --run-id route-agent`(在 `backend/` 下,QwenPaw 要在跑)→ `python -m app.eval.compare --runs rules-baseline route-agent` → 截图⑥。规则 baseline 0.796 已存 `scores_rules-baseline.json`
+- [ ] 调优循环:看哪条 case 分低 → 改 `skills/route-adjust/SKILL.md` / 补 `cases.json` → 换 `--run-id` 重跑 → `compare` 看涨分(分数曲线)
+- [ ] ⚠️ 规则分只看结构化信号,agent 语义优势(如 r06 小众)可能不体现 → 必要时上 `rubrics/llm_judge_prompt.md` LLM-judge
+- [ ] 建讲解 agent(Console 建 `文化讲解` agent-id `guide`)+ `macau-guide` skill(reconcile 法注册,见 `skills/README.md`)—— 手动待做
 - [ ] `ethics/qwenpaw-skills/source-attribution/prompt.md` → SKILL.md,挂进讲解 agent
-- [ ] POI 知识(`data/`)丢进 agent `file_store/`
+- [ ] POI 知识(`data/`)丢进 agent `file_store/`(截图⑤)
+- [ ] 跑 guide 类 g01–g08(`python -m app.eval.runner --only guide --guide-agent guide`)
 - [x] 建 `harness/datasets/`:`cases.json` 17 条(9 路线 + 8 讲解),从小红书真实评论/笔记取材
 - [x] 建 `harness/rubrics/`:`rule_checks.md`(规则项)+ `llm_judge_prompt.md`(LLM-judge)
 - [x] 写 `backend/app/eval/`:`runner.py` + `scoring.py`(跑批 + 规则打分 + 落 results);route 规则 baseline 已跑 overall **0.796**
-- [ ] 调优循环:看哪类分低 → 改 SKILL.md/补知识 → 重跑 → 对比(工具就绪,待 agent run 产出真实 before/after)
 - [x] 出图:`compare.py` 渲染自包含 HTML(SVG 柱状图 / before-after);baseline + projected 已出
 
 交付物:讲解 agent、测试集、rubric、跑批脚本、`results/` 分数图、调优记录。
@@ -125,16 +128,16 @@
 
 ## 4. 截图采集清单(贯穿全程,对应「开发过程证明」)
 
-| # | 关键节点 | 截什么 |
-|---|---|---|
-| ① | 基础部署 | Console 首页 + `qwenpaw --version` + `qwenpaw app` 进程 |
-| ② | 模型接入 | Console → Settings → Models,provider 已启用(key 打码) |
-| ③ | 创建 agent | Create New Agent 页 + `qwenpaw agents list` |
-| ④ | 写技能(核心开发证据) | Console Skills 页(custom enabled)+ SKILL.md 源码 + `skills list` source=custom |
-| ⑤ | 灌知识(RAG) | agent `file_store/` POI 数据 + Console 对话引用具体景点 |
-| ⑥ | 调优迭代 | 分数曲线 + before/after + SKILL.md git diff |
-| ⑦ | 后端连接 | FastAPI 日志 `POST /chats` + curl 返回 + 前端拿真实结果 |
-| ⑧ | 多 agent 协作 | `agents chat --from … --to …` 过程 |
+| # | 关键节点 | 截什么 | 状态 |
+|---|---|---|---|
+| ① | 基础部署 | Console 首页 + `qwenpaw --version` + `qwenpaw app` 进程 | ⬜ 待采 |
+| ② | 模型接入 | Console → Settings → Models,provider 已启用(key 打码) | ⬜ 待采 |
+| ③ | 创建 agent | Edit Agent 页(id/name/model/挂技能)+ `qwenpaw agents list` | ✅ 已采(2026-07-12) |
+| ④ | 写技能(核心开发证据) | Console Skills 页(custom enabled)+ SKILL.md 源码 + `skills list` source=custom | ✅ 已采(route-adjust/macau-guide source=Custom) |
+| ⑤ | 灌知识(RAG) | agent `file_store/` POI 数据 + Console 对话引用具体景点 | ⬜ 待采(P2) |
+| ⑥ | 调优迭代 | 分数曲线 + before/after + SKILL.md git diff | ⬜ 待采(P2,下一个立即项) |
+| ⑦ | 后端连接 | FastAPI 日志 `POST /api/console/chat` + curl 返回 `source=agent` | ✅ 已采(2026-07-12) |
+| ⑧ | 多 agent 协作 | `agents chat --from … --to …` 过程 | ⬜ 待采(P3) |
 
 > 再录 1–2 分钟屏幕视频:Console 建 agent → 装技能 → 对话 → 前端调用,覆盖大半节点。截图存 `harness/results/screenshots/`,命名带节点编号。
 
