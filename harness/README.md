@@ -111,14 +111,38 @@ backend/app/
 - ✅ ethics 4 技能已有 prompt.md 草稿(`ethics/qwenpaw-skills/`)
 - ✅ **harness 骨架就位**:`harness/{datasets,rubrics,results,reports}` + `backend/app/{orchestrator,eval,guardrails,observability}` + `skills/` 全部建好
 - ✅ **P0 连接基座完成 + 端到端验证**:`qwenpaw_client.py`(契约 `POST /api/console/chat` SSE + `X-Agent-Id`) + `/agents/ping` + `trace.py`;`ask()` 已真实跑通(default agent,干净答复 + token/延迟落 trace)
-- ✅ **P1 路线 agent 完成 + 端到端验证(2026-07-12)**:QwenPaw 建 `route` agent + 挂 `route-adjust` 技能(reconcile 法见 `skills/README.md`)+ `.env` `ROUTE_AGENT_ENABLED=true`;thin prompt(无 schema)返回干净结构化 JSON;`POST /api/v1/routes/adjust` 实测 **`source=agent`**(agent 把「少走点路」→ `physical:less-walk` + `remove_tail`,引擎裁末端、压到 2.4km)。**待**:截图③④⑦采集
+- ✅ **P1 路线 agent 完成 + 端到端验证(2026-07-12)**:QwenPaw 建 `route` agent + 挂 `route-adjust` 技能(reconcile 法见 `skills/README.md`)+ `.env` `ROUTE_AGENT_ENABLED=true`;thin prompt(无 schema)返回干净结构化 JSON;`POST /api/v1/routes/adjust` 实测 **`source=agent`**(agent 把「少走点路」→ `physical:less-walk` + `remove_tail`,引擎裁末端、压到 2.4km)。截图 ③④⑦ 已采集
 - 🟢 **P2 评测/调优 harness 骨架完成**:`datasets/cases.json`(17 条真实取材)+ `rubrics/`(规则+LLM-judge)+ `eval/{runner,scoring,compare}.py`;route 规则 baseline 已跑(overall **0.796**),出图工具已验证;**待**:把烟测改打 `route` agent 重跑 → 真实 before/after(截图⑥)+ 建讲解 guide agent
 - ⬜ 护栏 hook(P3)、可观测落库(P4)—— 待建
 
 ---
 
-## 8. 下一步
+## 8. 下一步 —— 回家继续的起点
 
-**立即**:采集 P1 截图③(建 agent)④(技能 source=custom)⑦(后端 `source=agent` 真实调整);然后把 `scripts/test_route_agent_smoke.py` 从 `default`+自带 schema 改成直打 `route` agent(thin prompt),重跑 9 条拿真实 before/after 分数(对规则 baseline 0.796,截图⑥)。
+**进度**:P0✅ P1✅(route agent 端到端打通,截图③④⑦ 已采集)。剩余**唯一硬目标 = P2 评测调优**(产出 before/after,截图⑥,整份材料最强证据)。
 
-**之后**:进 **[`plan.md`](./plan.md) P2(评测/调优 harness,核心)** —— 文化讲解 agent + 测试集 + rubric + 跑批,产出分数曲线 / before-after(整份材料最强证据)。
+### 立即做:route agent vs 规则 before/after(截图⑥核心)
+
+> 评测用 `TestClient`(进程内),**不需要单独起 uvicorn 后端**;只要 QwenPaw 在跑 + flag 开。
+
+前置(每次开机):
+1. QwenPaw 在跑:`~/Desktop/启动QwenPaw.sh`,确认 `http://127.0.0.1:8088`(`curl http://127.0.0.1:8088/api/version`)
+2. `route` agent 存在(存在 `~/.qwenpaw`,换机器才需重建,见 `skills/README.md`)
+3. flag 开:`.env` 里 `ROUTE_AGENT_ENABLED=true`(`.env` 被 gitignore,换机器要从 `.env.example` 重建)
+
+跑 agent 版评测(真实调 9 次 QwenPaw route agent,几分钟 + 一些 token):
+```bash
+cd backend
+ROUTE_AGENT_ENABLED=true python -m app.eval.runner --only route --run-id route-agent
+```
+渲染 before/after(对规则 baseline 0.796):
+```bash
+python -m app.eval.compare --runs rules-baseline route-agent
+# → harness/results/compare_rules-baseline_vs_route-agent.html,浏览器打开截图⑥
+```
+
+### 然后:调优循环 + guide agent(见 [`plan.md`](./plan.md) P2)
+- **调优本体**:看哪条 case 分掉 → 改 `skills/route-adjust/SKILL.md` / 补 `harness/datasets/cases.json` → 换 `--run-id` 重跑 → `compare` 两两对比看涨分(分数曲线)
+- ⚠️ 诚实预期:规则打分只看结构化信号(physical/interests/keywords),agent 的语义优势(如 r06「小众别挤大三巴」规则版无信号)不一定在规则分上体现 → 必要时上 `rubrics/llm_judge_prompt.md` 的 LLM-judge
+- **第二能力线**:建 `guide` agent(`macau-guide` 技能已写好,同 route 流程:refresh + 挂技能)→ 跑 g01–g08
+- 之后再 P3(编排+ethics 护栏,截图⑧)、P4(可观测+提交三件套)
