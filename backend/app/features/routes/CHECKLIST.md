@@ -26,7 +26,7 @@
 - [x] 候选 POI 召回已接入更丰富的权重信号，不再只依赖 `poi_heat`
 - [x] 约束式排线已从“尾部裁剪”升级到“可替换节点 + 可插入节点”
 - [x] `POST /api/v1/routes/adjust` 已支持基础节点增删改排
-- [ ] 规则版 adjust 升级为 QwenPaw Agent 版 adjust
+- [x] 规则版 adjust 升级为 QwenPaw Agent 版 adjust —— `/routes/adjust` 先 agent 后规则 fallback + `agents/route_agent.py` + `skills/route-adjust/SKILL.md`；已端到端验证（2026-07-12）：`route` agent + 技能就位、`ROUTE_AGENT_ENABLED=true`，实测 `source=agent`，agent 把「少走点路」→ `physical:less-walk`+`remove_tail`，排线引擎裁末端、压到 2.4km
 - [ ] explanation block 继续细化成更适合前端直接渲染的展示结构
 - [ ] 路线数据规模仍偏小，当前工作区仅有 6 条模板路线与约 14 个 POI，后续需继续扩充候选池
 

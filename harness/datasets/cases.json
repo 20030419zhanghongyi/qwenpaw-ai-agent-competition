@@ -1,0 +1,141 @@
+{
+  "_schema": "评测用例集。每条 case 由 backend/app/eval/runner.py 读取。\n  category: route | guide\n  route 类 context: {route_id, preference} → 调 /routes/adjust（agent 或规则版）\n  guide 类 context: {poi_id} → 调讲解 agent\n  expect 为可规则核对的期望信号（见 harness/rubrics/rule_checks.md）：\n    route → physical/interests 应被加入 preference_after；added_tag 期望节点被插入；\n           removed_tail 期望末端被裁；keywords_any 期望出现在解释里\n    guide  → keywords_any 期望出现在讲解里；max_len/min_len 长度约束\n  source: 灵感出处（小红书真实评论/笔记，仅离线数据集，见 scripts/clean_xhs.py）",
+  "cases": [
+    {
+      "id": "r01",
+      "category": "route",
+      "input": "这趟有点累，少走点路，能坐车就坐车",
+      "context": { "route_id": "heritage_fullday", "preference": { "duration": "full-day", "party_size": 2, "travel_type": ["friends"], "interests": ["history"], "physical": [], "language": "zh-CN" } },
+      "expect": { "physical": ["less-walk"], "removed_tail": true, "keywords_any": ["少走", "步行", "末端", "负担"] },
+      "source": "xhs 评论：「我看全是步行，感觉自己没法暴走这么多路…景点直接都有公交吗？」"
+    },
+    {
+      "id": "r02",
+      "category": "route",
+      "input": "加个拍照出片的地方，最好颜色好看的",
+      "context": { "route_id": "culture_halfday", "preference": { "duration": "half-day", "party_size": 1, "travel_type": ["solo"], "interests": ["history"], "physical": [], "language": "zh-CN" } },
+      "expect": { "interests": ["photo"], "added_tag": "photo", "keywords_any": ["拍照", "出片", "候选"] },
+      "source": "xhs 笔记：「来澳门不要错过这个隐藏机位！！（含攻略）」「为了这18张图我去了一趟澳门」"
+    },
+    {
+      "id": "r03",
+      "category": "route",
+      "input": "别绕来绕去，顺路一点，不要走回头路",
+      "context": { "route_id": "taipa_hotspot_halfday", "preference": { "duration": "half-day", "party_size": 3, "travel_type": ["family"], "interests": ["food", "photo"], "physical": [], "language": "zh-CN" } },
+      "expect": { "physical": ["no-backtrack"], "keywords_any": ["回头", "顺路", "街区", "连续"] },
+      "source": "xhs 评论：「请问如果第一晚住氹仔…玩完从半岛回氹仔取行李」（往返折返痛点）"
+    },
+    {
+      "id": "r04",
+      "category": "route",
+      "input": "想吃点本地小吃，加个美食点",
+      "context": { "route_id": "coloane_leisure_halfday", "preference": { "duration": "half-day", "party_size": 2, "travel_type": ["friends"], "interests": ["culture"], "physical": [], "language": "zh-CN" } },
+      "expect": { "interests": ["food"], "added_tag": "food", "keywords_any": ["美食", "小吃", "候选"] },
+      "source": "xhs 笔记：「澳门半岛一日游吃逛攻略｜附路线」"
+    },
+    {
+      "id": "r05",
+      "category": "route",
+      "input": "带小朋友去，轻松一点，别太累也别排太满",
+      "context": { "route_id": "food_family_halfday", "preference": { "duration": "half-day", "party_size": 4, "travel_type": ["family"], "interests": ["food"], "physical": [], "language": "zh-CN" } },
+      "expect": { "physical": ["less-walk"], "keywords_any": ["轻松", "少走", "亲子", "家庭"] },
+      "source": "xhs 评论：「小朋友7岁，15岁可以去吗」（亲子出行顾虑）"
+    },
+    {
+      "id": "r06",
+      "category": "route",
+      "input": "想要小众一点的，别都挤在大三巴",
+      "context": { "route_id": "culture_halfday", "preference": { "duration": "half-day", "party_size": 2, "travel_type": ["friends"], "interests": ["history", "architecture"], "physical": [], "language": "zh-CN" } },
+      "expect": { "keywords_any": ["小众", "本地", "街巷", "避开"] },
+      "source": "xhs 笔记：「别只挤大三巴了，这三条街才是本地人的」「澳门路环小众路线」"
+    },
+    {
+      "id": "r07",
+      "category": "route",
+      "input": "时间不够了，只逛半天就行",
+      "context": { "route_id": "heritage_fullday", "preference": { "duration": "full-day", "party_size": 1, "travel_type": ["solo"], "interests": ["history"], "physical": [], "language": "zh-CN" } },
+      "expect": { "duration": "half-day", "keywords_any": ["半天", "时长", "缩短"] },
+      "source": "xhs 笔记：「第一次来澳门这样逛真的很省力！！！」「特种兵详细攻略」"
+    },
+    {
+      "id": "r08",
+      "category": "route",
+      "input": "腿脚不太好，尽量少走路，拍照为主",
+      "context": { "route_id": "photo_halfday", "preference": { "duration": "half-day", "party_size": 2, "travel_type": ["friends"], "interests": ["photo"], "physical": [], "language": "zh-CN" } },
+      "expect": { "physical": ["less-walk"], "interests": ["photo"], "keywords_any": ["少走", "拍照"] },
+      "source": "xhs 评论（综合）：步行强度大 + 隐藏机位出片"
+    },
+    {
+      "id": "r09",
+      "category": "route",
+      "input": "顺路一点顺便吃个饭，别绕路也别太累",
+      "context": { "route_id": "taipa_hotspot_halfday", "preference": { "duration": "half-day", "party_size": 2, "travel_type": ["friends"], "interests": ["photo"], "physical": [], "language": "zh-CN" } },
+      "expect": { "physical": ["no-backtrack", "less-walk"], "interests": ["food"], "keywords_any": ["顺路", "美食", "少走"] },
+      "source": "xhs 评论（综合）：折返 + 步行 + 找吃的"
+    },
+    {
+      "id": "g01",
+      "category": "guide",
+      "input": "妈阁庙有什么历史？为什么澳门的名字跟这座庙有关？",
+      "context": { "poi_id": "poi_ama" },
+      "expect": { "keywords_any": ["妈祖", "澳门", "渔民", "葡萄牙", "Macau", "妈阁"], "min_len": 40, "max_len": 400 },
+      "source": "xhs 笔记/评论：澳门地名由来是常见好奇点"
+    },
+    {
+      "id": "g02",
+      "category": "guide",
+      "input": "议事亭前地这片广场有什么故事？地上的碎石花纹是什么？",
+      "context": { "poi_id": "poi_senado" },
+      "expect": { "keywords_any": ["议事亭", "葡式", "碎石", "波浪", "市政厅", "前地"], "min_len": 40, "max_len": 400 },
+      "source": "xhs 笔记：葡式碎石路（葡国石灰岩）是地标特色"
+    },
+    {
+      "id": "g03",
+      "category": "guide",
+      "input": "龙环葡韵这几幢绿色别墅是做什么用的？现在展示什么？",
+      "context": { "poi_id": "poi_taipa_houses" },
+      "expect": { "keywords_any": ["别墅", "土生葡人", "博物馆", "住宅", "绿色", "氹仔"], "min_len": 40, "max_len": 400 },
+      "source": "xhs 笔记：龙环葡韵是氹仔代表景点"
+    },
+    {
+      "id": "g04",
+      "category": "guide",
+      "input": "路环这个小教堂有什么来历？路环跟澳门半岛、氹仔有什么不同？",
+      "context": { "poi_id": "poi_coloane_chapel" },
+      "expect": { "keywords_any": ["圣方济各", "路环", "渔村", "教堂", "氹仔"], "min_len": 40, "max_len": 400 },
+      "source": "xhs 笔记：「澳门路环小众路线」"
+    },
+    {
+      "id": "g05",
+      "category": "guide",
+      "input": "福隆新街以前是做什么的？为什么叫『新街』？",
+      "context": { "poi_id": "poi_florindo" },
+      "expect": { "keywords_any": ["福隆", "青楼", "烟花", "商业", "街道", "清代", "复原"], "min_len": 40, "max_len": 400 },
+      "source": "xhs 笔记：福隆新街历史街区改造是热点"
+    },
+    {
+      "id": "g06",
+      "category": "guide",
+      "input": "恋爱巷为什么叫这个名字？适合拍照吗，什么时段人少？",
+      "context": { "poi_id": "poi_paixao" },
+      "expect": { "keywords_any": ["恋爱", "粉色", "拍照", "小巷", "大三巴", "附近"], "min_len": 30, "max_len": 400 },
+      "source": "xhs 笔记：「隐藏机位」「为了这18张图」（恋爱巷是经典出片点）"
+    },
+    {
+      "id": "g07",
+      "category": "guide",
+      "input": "疯堂斜巷这片区域有什么特别？为什么这么有欧洲 feel？",
+      "context": { "poi_id": "poi_fatong" },
+      "expect": { "keywords_any": ["疯堂", "葡式", "欧洲", "斜巷", "望德", "教堂", "艺术"], "min_len": 30, "max_len": 400 },
+      "source": "xhs 评论：「街巷里更能体现澳门的特色」"
+    },
+    {
+      "id": "g08",
+      "category": "guide",
+      "input": "春节/假期期间澳门这些景点会有什么活动吗？开放时间会变吗？",
+      "context": { "poi_id": "poi_ama" },
+      "expect": { "keywords_any": ["活动", "开放时间", "以现场", "建议", "确认", "假期"], "min_len": 20, "max_len": 400 },
+      "source": "xhs 评论：「春节期间有演出吗」（易变信息 → 应触发低置信/以现场为准）"
+    }
+  ]
+}

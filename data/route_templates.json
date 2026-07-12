@@ -1,0 +1,369 @@
+{
+  "_comment": "由 scripts/build_route_db.py 从 xlsx 生成；未匹配节点已剔除",
+  "routes": [
+    {
+      "id": "tpl001",
+      "name": "澳门特别行政区1日游·低强度舒适型",
+      "route_type_raw": "低强度舒适型",
+      "physical_level": "low",
+      "route_area": "澳门半岛 + 路氹",
+      "description": "适合不想太累、希望节奏舒适、有休息和室内节点的一日路线。",
+      "nodes": [
+        {
+          "poi_id": "poi_0001",
+          "order": 1,
+          "suggested_stay_min": 20,
+          "note": "起点",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0004",
+          "order": 3,
+          "suggested_stay_min": 15,
+          "note": "街巷",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0005",
+          "order": 4,
+          "suggested_stay_min": 25,
+          "note": "文化",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0020",
+          "order": 7,
+          "suggested_stay_min": 25,
+          "note": "购物 / 娱乐",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0027",
+          "order": 8,
+          "suggested_stay_min": 25,
+          "note": "收束点",
+          "replaceable_with": []
+        }
+      ],
+      "_unmatched_nodes": 3
+    },
+    {
+      "id": "tpl002",
+      "name": "澳门特别行政区1日游·避晒舒适型",
+      "route_type_raw": "避晒舒适型",
+      "physical_level": "low",
+      "route_area": "澳门半岛 + 路氹",
+      "description": "适合夏天、怕晒怕热、希望多走室内和有空调空间的一日路线。",
+      "nodes": [
+        {
+          "poi_id": "poi_0044",
+          "order": 6,
+          "suggested_stay_min": 25,
+          "note": "文化",
+          "replaceable_with": []
+        }
+      ],
+      "_unmatched_nodes": 11
+    },
+    {
+      "id": "tpl003",
+      "name": "澳门特别行政区1日游·无脑托管路线",
+      "route_type_raw": "无脑托管型",
+      "physical_level": "medium",
+      "route_area": "澳门半岛 + 路氹",
+      "description": "适合不想做攻略、希望系统自动安排经典景点、休息、餐饮和娱乐的一日路线。",
+      "nodes": [
+        {
+          "poi_id": "poi_0011",
+          "order": 1,
+          "suggested_stay_min": 20,
+          "note": "起点",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0004",
+          "order": 2,
+          "suggested_stay_min": 15,
+          "note": "街巷",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0001",
+          "order": 3,
+          "suggested_stay_min": 30,
+          "note": "景点",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0002",
+          "order": 4,
+          "suggested_stay_min": 30,
+          "note": "景点",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0022",
+          "order": 7,
+          "suggested_stay_min": 30,
+          "note": "景点",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0012",
+          "order": 8,
+          "suggested_stay_min": 25,
+          "note": "文化",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0008",
+          "order": 9,
+          "suggested_stay_min": 15,
+          "note": "街巷",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0020",
+          "order": 10,
+          "suggested_stay_min": 25,
+          "note": "购物 / 娱乐",
+          "replaceable_with": []
+        }
+      ],
+      "_unmatched_nodes": 3
+    },
+    {
+      "id": "tpl004",
+      "name": "澳门特别行政区1日游·历史认知篇",
+      "route_type_raw": "历史认知型",
+      "physical_level": "medium",
+      "route_area": "澳门半岛",
+      "description": "适合想了解澳门历史、宗教建筑、中西文化交融和旧城脉络的游客。",
+      "nodes": [
+        {
+          "poi_id": "poi_0011",
+          "order": 1,
+          "suggested_stay_min": 20,
+          "note": "起点",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0004",
+          "order": 5,
+          "suggested_stay_min": 15,
+          "note": "街巷",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0005",
+          "order": 6,
+          "suggested_stay_min": 25,
+          "note": "文化",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0001",
+          "order": 7,
+          "suggested_stay_min": 30,
+          "note": "景点",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0018",
+          "order": 10,
+          "suggested_stay_min": 15,
+          "note": "街巷",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0007",
+          "order": 11,
+          "suggested_stay_min": 25,
+          "note": "收束点",
+          "replaceable_with": []
+        }
+      ],
+      "_unmatched_nodes": 5
+    },
+    {
+      "id": "tpl005",
+      "name": "半岛旧区吃喝漫步",
+      "route_type_raw": "本地消费型",
+      "physical_level": "medium",
+      "route_area": "澳门半岛",
+      "description": "适合从半岛旧区进入本地小店、老字号、茶餐厅和甜品店的吃喝漫步路线。",
+      "nodes": [
+        {
+          "poi_id": "poi_0017",
+          "order": 1,
+          "suggested_stay_min": 20,
+          "note": "起点",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0046",
+          "order": 2,
+          "suggested_stay_min": 25,
+          "note": "餐饮",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0016",
+          "order": 3,
+          "suggested_stay_min": 15,
+          "note": "街巷",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0047",
+          "order": 4,
+          "suggested_stay_min": 25,
+          "note": "餐饮",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0029",
+          "order": 5,
+          "suggested_stay_min": 15,
+          "note": "街巷",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0030",
+          "order": 6,
+          "suggested_stay_min": 15,
+          "note": "街巷",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0048",
+          "order": 7,
+          "suggested_stay_min": 25,
+          "note": "收束点",
+          "replaceable_with": []
+        }
+      ],
+      "_unmatched_nodes": 0
+    },
+    {
+      "id": "tpl006",
+      "name": "澳门一日Citywalk·视觉表达型",
+      "route_type_raw": "视觉表达型",
+      "physical_level": "medium",
+      "route_area": "澳门半岛",
+      "description": "适合拍照、拍视频、小红书打卡，强调街巷、坡道、光影和澳门城市视觉层次。",
+      "nodes": [
+        {
+          "poi_id": "poi_0001",
+          "order": 1,
+          "suggested_stay_min": 20,
+          "note": "起点",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0002",
+          "order": 2,
+          "suggested_stay_min": 30,
+          "note": "景点",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0018",
+          "order": 4,
+          "suggested_stay_min": 15,
+          "note": "街巷",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0034",
+          "order": 5,
+          "suggested_stay_min": 15,
+          "note": "街巷",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0017",
+          "order": 7,
+          "suggested_stay_min": 15,
+          "note": "街巷",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0032",
+          "order": 8,
+          "suggested_stay_min": 15,
+          "note": "街巷",
+          "replaceable_with": []
+        }
+      ],
+      "_unmatched_nodes": 3
+    },
+    {
+      "id": "tpl007",
+      "name": "澳门避世Citywalk·避峰逃离型",
+      "route_type_raw": "避峰逃离型",
+      "physical_level": "medium",
+      "route_area": "澳门半岛",
+      "description": "适合从热门景区边缘出发，逐步切入安静街巷、坡道和低人流区域的避峰路线。",
+      "nodes": [
+        {
+          "poi_id": "poi_0001",
+          "order": 1,
+          "suggested_stay_min": 20,
+          "note": "起点",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0029",
+          "order": 2,
+          "suggested_stay_min": 15,
+          "note": "街巷",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0002",
+          "order": 3,
+          "suggested_stay_min": 30,
+          "note": "景点",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0018",
+          "order": 4,
+          "suggested_stay_min": 15,
+          "note": "街巷",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0031",
+          "order": 5,
+          "suggested_stay_min": 15,
+          "note": "街巷",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0017",
+          "order": 6,
+          "suggested_stay_min": 15,
+          "note": "街巷",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0032",
+          "order": 8,
+          "suggested_stay_min": 15,
+          "note": "街巷",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0033",
+          "order": 9,
+          "suggested_stay_min": 25,
+          "note": "收束点",
+          "replaceable_with": []
+        }
+      ],
+      "_unmatched_nodes": 1
+    }
+  ]
+}
