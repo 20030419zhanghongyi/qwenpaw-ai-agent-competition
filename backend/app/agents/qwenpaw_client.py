@@ -81,6 +81,12 @@ class QwenPawClient:
 
     def _raise_for_status(self, resp: httpx.Response, path: str) -> None:
         if resp.status_code >= 400:
+            # send() 走 httpx.stream，流式响应访问 body 前必须先 read()，
+            # 否则 httpx.ResponseNotRead 会把 QwenPaw 的真实错误信息吞掉
+            try:
+                resp.read()
+            except httpx.HTTPError:
+                pass
             body = resp.text[:300]
             raise QwenPawError(f"{path} 返回 {resp.status_code}：{body}")
 

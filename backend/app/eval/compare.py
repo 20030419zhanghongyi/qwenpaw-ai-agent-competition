@@ -56,11 +56,14 @@ def render_single(run: dict) -> str:
     rows.append(f'<text x="{left}" y="30" font-size="16" font-weight="600" fill="#1a1f2e">'
                 f'评测 run：{html.escape(run["run_id"])} — overall {run["overall"]:.2f}</text>')
     rows.append(f'<text x="{left}" y="50" font-size="12" fill="#6b7280">'
-                f'route {run["by_category"].get("route")} · guide {run["by_category"].get("guide")} · n={run["n"]}</text>')
+                f'route {run["by_category"].get("route")} · guide {run["by_category"].get("guide")} · '
+                f'intent {run["by_category"].get("intent")} · review {run["by_category"].get("review")} · '
+                f'n={run["n"]}</text>')
     for i, c in enumerate(cases):
         y = top + i * (row_h + gap)
         score = c["score"]
-        col = "#3aa6" if c["category"] == "route" else "#f59e0b"
+        col = {"route": "#3aa6b2", "guide": "#f59e0b", "intent": "#8b5cf6",
+               "review": "#ef4444"}.get(c["category"], "#6b7280")
         rows.append(f'<text x="0" y="{y + row_h - 8:.1f}" font-size="12" fill="#334">'
                     f'{html.escape(c["id"] + " " + c["category"])}</text>')
         rows.append(_bar(left, y, max_w * score, row_h, col,

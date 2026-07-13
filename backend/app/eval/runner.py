@@ -61,12 +61,24 @@ def run_guide_case(case: dict, qp: QwenPawClient, guide_agent: str) -> str:
         return ""
 
 
+def run_intent_case(case: dict, client: TestClient) -> dict:
+    """调真实 /intent/parse 端点（INTENT_AGENT_ENABLED 决定 agent/规则）。"""
+    resp = client.post("/api/v1/intent/parse", json={"text": case["input"]})
+    return resp.json()
+
+
+def run_review_case(case: dict, client: TestClient) -> dict:
+    """调真实 /review/content 端点（REVIEWER_AGENT_ENABLED 决定 agent/规则）。"""
+    resp = client.post("/api/v1/review/content", json={"text": case["input"]})
+    return resp.json()
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="harness 评测跑批")
     ap.add_argument("--cases", default=str(CASES_PATH))
     ap.add_argument("--run-id", default=None, help="本次 run 名（默认 run-<ts>）")
     ap.add_argument("--guide-agent", default="default", help="讲解类调用的 agent id")
-    ap.add_argument("--only", choices=["route", "guide"], default=None)
+    ap.add_argument("--only", choices=["route", "guide", "intent", "review"], default=None)
     ap.add_argument("--skip-guide", action="store_true", help="跳过 guide 类（省 LLM token）")
     ap.add_argument("--limit", type=int, default=None)
     args = ap.parse_args()
@@ -92,6 +104,12 @@ def main() -> None:
         if c["category"] == "route":
             resp = run_route_case(c, tc)
             scored = scoring.score_route_case(c, resp)
+        elif c["category"] == "intent":
+            resp = run_intent_case(c, tc)
+            scored = scoring.score_intent_case(c, resp)
+        elif c["category"] == "review":
+            resp = run_review_case(c, tc)
+            scored = scoring.score_review_case(c, resp)
         else:
             answer = run_guide_case(c, qp, args.guide_agent)
             scored = scoring.score_guide_case(c, answer)
@@ -117,8 +135,9 @@ def main() -> None:
     path = RESULTS_DIR / f"scores_{run_id}.json"
     path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    print(f"\noverall: {agg['overall']:.3f} | route: {agg['by_category']['route']} | "
-          f"guide: {agg['by_category']['guide']} | n={agg['n']}")
+    print(f"\noverall: {agg['overall']:.3f} | route: {agg['by_category'].get('route')} | "
+          f"guide: {agg['by_category'].get('guide')} | intent: {agg['by_category'].get('intent')} | "
+          f"review: {agg['by_category'].get('review')} | n={agg['n']}")
     print(f"→ {path}")
     record_trace(kind="eval.run", status="ok", extra={"run_id": run_id, "overall": agg["overall"], "n": agg["n"]})
 

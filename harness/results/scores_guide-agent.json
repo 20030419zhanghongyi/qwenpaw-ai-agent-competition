@@ -1,0 +1,215 @@
+{
+  "run_id": "guide-agent",
+  "ts": "2026-07-13T16:10:06",
+  "guide_agent": "guide",
+  "overall": 1.0,
+  "by_category": {
+    "route": null,
+    "guide": 1.0,
+    "intent": null,
+    "review": null
+  },
+  "n": 8,
+  "cases": [
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        },
+        {
+          "name": "min_len",
+          "passed": true
+        },
+        {
+          "name": "max_len",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "length": 361,
+        "answer_head": "根据技能要求，基于妈阁庙的公开文化资料：\n\n{\"text\":\"妈阁庙是澳门最古老的庙宇之一，始建于明朝（一说1488年，以现场碑刻为准），供奉海神妈祖。1550年代葡萄牙人抵达澳门时，询问此地名称，当地人以闽语回答『妈阁』，被音译为『Mac"
+      },
+      "id": "g01",
+      "category": "guide"
+    },
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        },
+        {
+          "name": "min_len",
+          "passed": true
+        },
+        {
+          "name": "max_len",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "length": 238,
+        "answer_head": "```json\n{\n  \"text\": \"议事亭前地是澳门历史城区的核心广场，名字源自昔日设于此的澳葡议事机构。地面铺设葡式碎石，黑白两色拼成波浪纹，是葡萄牙常见的城市铺装工艺，象征海洋与航海传统。四周环绕粉黄、粉绿色的葡式新古典建筑，是世"
+      },
+      "id": "g02",
+      "category": "guide"
+    },
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        },
+        {
+          "name": "min_len",
+          "passed": true
+        },
+        {
+          "name": "max_len",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "length": 199,
+        "answer_head": "{\"text\":\"龙环葡韵由五幢薄荷绿色葡式别墅组成，原为1920年代澳葡官员及土生葡人的住宅，现已活化成为『住宅式博物馆』，展示土生葡人的生活文化与历史。建筑群临海而立，环境清幽，是澳门八景之一。具体展览内容与开放时间以现场为准。\",\"s"
+      },
+      "id": "g03",
+      "category": "guide"
+    },
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        },
+        {
+          "name": "min_len",
+          "passed": true
+        },
+        {
+          "name": "max_len",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "length": 396,
+        "answer_head": "抱歉，当前工作空间中未找到「路环圣方济各圣堂」的结构化文化资料（POI 数据），无法提供有据可查的讲解。\n\n根据技能要求，我必须**只以给定 POI 资料为事实依据**，不能编造史料。\n\n---\n\n如果您有该景点的资料文件，请放入 `ski"
+      },
+      "id": "g04",
+      "category": "guide"
+    },
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        },
+        {
+          "name": "min_len",
+          "passed": true
+        },
+        {
+          "name": "max_len",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "length": 377,
+        "answer_head": "根据 macau-guide 技能要求，我为您讲解福隆新街：\n\n```json\n{\"text\":\"福隆新街是澳门保存完整的清代街道，红窗门、青砖墙是标志性建筑风貌。清朝时这里曾是澳门著名的『烟花之地』，即青楼聚集区，后经活化改造，成为今日的"
+      },
+      "id": "g05",
+      "category": "guide"
+    },
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        },
+        {
+          "name": "min_len",
+          "passed": true
+        },
+        {
+          "name": "max_len",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "length": 199,
+        "answer_head": "{\"text\":\"恋爱巷葡语名 Travessa da Paixão，\"Paixão\"意为\"激情\"或\"爱情\"，因此得名。巷内粉红与明黄色建筑交错，色彩浪漫，非常适合拍照。人流时段因节假日而异，建议清晨或傍晚前往人较少（以现场为准）。\",\"s"
+      },
+      "id": "g06",
+      "category": "guide"
+    },
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        },
+        {
+          "name": "min_len",
+          "passed": true
+        },
+        {
+          "name": "max_len",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "length": 345,
+        "answer_head": "根据 macau-guide 技能的要求，我需要提供符合格式的讲解。由于工作目录中没有疯堂斜巷的结构化 POI 数据，我将基于一般常识提供讲解，并明确标注来源与置信度：\n\n```json\n{\"text\":\"疯堂斜巷位于澳门望德堂区，这条蜿蜒"
+      },
+      "id": "g07",
+      "category": "guide"
+    },
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        },
+        {
+          "name": "min_len",
+          "passed": true
+        },
+        {
+          "name": "max_len",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "length": 205,
+        "answer_head": "```json\n{\"text\":\"妈阁庙是澳门最古老的庙宇之一，供奉海神妈祖，「Macau」地名便源于此。春节等重大节日常有信众前来祈福，庙宇周边氛围热闹。但具体活动安排及开放时间每年可能调整，**以现场为准或出行前查阅官方公告**。\",\""
+      },
+      "id": "g08",
+      "category": "guide"
+    }
+  ]
+}

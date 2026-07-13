@@ -85,6 +85,43 @@ def score_guide_case(case: dict[str, Any], answer: str) -> dict[str, Any]:
     return _finalize(checks, {"length": length, "answer_head": answer[:120]})
 
 
+def score_intent_case(case: dict[str, Any], resp: dict[str, Any]) -> dict[str, Any]:
+    """对 /intent/parse 响应打分。expect 键：duration（等值）/ interests / physical /
+    travel_type（均为子集匹配：期望标签都进入 preference 对应字段即通过，多余标签不扣分）。"""
+    exp = case.get("expect", {})
+    pref = resp.get("preference", {}) or {}
+    checks: list[tuple[str, bool]] = []
+
+    if "duration" in exp:
+        checks.append(("duration", pref.get("duration") == exp["duration"]))
+    for field in ("interests", "physical", "travel_type"):
+        if field in exp:
+            have = set(pref.get(field, []))
+            checks.append((field, all(t in have for t in exp[field])))
+
+    return _finalize(checks, {"source": resp.get("source"), "preference": pref})
+
+
+def score_review_case(case: dict[str, Any], resp: dict[str, Any]) -> dict[str, Any]:
+    """对 /review/content 响应打分。expect 键：decision（等值 pass/revise/block）。
+
+    review 是分类任务（待审核文本 → 裁定），主信号就是 decision 是否等于期望；
+    每个 case 单一 check，case 分即 0/1（命中/未命中），run 分 = 分类准确率。
+    """
+    exp = case.get("expect", {})
+    checks: list[tuple[str, bool]] = []
+    if "decision" in exp:
+        checks.append(("decision", resp.get("decision") == exp["decision"]))
+
+    issues = resp.get("issues", []) or []
+    return _finalize(checks, {
+        "source": resp.get("source"),
+        "decision": resp.get("decision"),
+        "n_issues": len(issues),
+        "reviewer_notes_head": (resp.get("reviewer_notes") or "")[:120],
+    })
+
+
 def _finalize(checks: list[tuple[str, bool]], detail: dict[str, Any]) -> dict[str, Any]:
     passed = sum(1 for _, ok in checks if ok)
     score = passed / len(checks) if checks else 1.0
@@ -101,7 +138,7 @@ def aggregate(results: list[dict[str, Any]]) -> dict[str, Any]:
     """汇总 case 结果 → overall + by_category。"""
     overall = sum(r["score"] for r in results) / len(results) if results else 0.0
     by_cat: dict[str, float | None] = {}
-    for cat in ("route", "guide"):
+    for cat in ("route", "guide", "intent", "review"):
         rs = [r for r in results if r.get("category") == cat]
         by_cat[cat] = round(sum(r["score"] for r in rs) / len(rs), 3) if rs else None
     return {"overall": round(overall, 3), "by_category": by_cat, "n": len(results)}

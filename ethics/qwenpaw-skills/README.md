@@ -13,20 +13,42 @@
 
 ```
 <skill>/
-├── prompt.md       # 该 Agent 的 system prompt（贴进 QwenPaw）
-├── config.yaml     # QwenPaw 配置占位（模型/温度/工具/输入输出 schema）
-└── examples/       # few-shot 样例（输入 → 期望输出）
+├── SKILL.md        # QwenPaw 可加载的技能（frontmatter + 内联伦理基线 + 职责/规则/样例）
+├── prompt.md       # 原始 system prompt 规格（SKILL.md 来源，保留供审阅/版本管理）
+└── config.yaml     # QwenPaw 配置占位（模型/温度/工具/输入输出 schema，可选）
 ```
 
-> 所有 prompt 都以 [`../prompts/_ethics_base.md`](../prompts/_ethics_base.md) 为共享前缀。
+> `SKILL.md` 已把 [`../prompts/_ethics_base.md`](../prompts/_ethics_base.md) 共享前缀**内联**进每个技能，
+> 故技能自包含；`prompt.md` 的「System prompt = base 前缀 + 本文件」约定由 `SKILL.md` 落实。
 
-## 如何在 QwenPaw 平台配置（步骤，团队按平台实际 UI 微调）
+## 已接入 QwenPaw（2026-07-13）✅
 
-1. 在 QwenPaw/百炼控制台新建 Agent。
-2. System prompt = `_ethics_base.md` 全文 + 本技能 `prompt.md` 职责段。
-3. 按技能需要挂载工具（RAG 检索 / 地图 / 天气 / 视觉）。
-4. 用 `examples/` 里的样例做 few-shot 与回归测试。
-5. 记录该技能的 `model_version`、`prompt_version`，供审计日志（见 `实施清单.md` §3）。
+4 个 ethics 技能都已生成 `SKILL.md` 并注册进 QwenPaw skill pool（`source=customized`，共 25 个技能）：
+
+```bash
+cp -R ethics/qwenpaw-skills/{source-attribution,anti-sycophancy,content-safety-review,fairness-gate} ~/.qwenpaw/skill_pool/
+curl -X POST http://127.0.0.1:8088/api/skills/pool/refresh   # 不自动发现，必须 reconcile
+```
+
+> 与 route-adjust / requirement-understand 同一套注册流程（见 `skills/README.md`，**不自动发现**坑）。
+
+### 挂到哪个 agent（Console → 给 agent 勾选启用技能）
+
+| 技能 | 挂载目标 | 作用 |
+|------|----------|------|
+| `source-attribution` | guide（讲解）、photo（拍照识别讲解） | 输出标 source_type/confidence，低置信回退 |
+| `anti-sycophancy` | guide（讲解） | 纠正用户错误假设，不逢迎不编史料 |
+| `fairness-gate` | intent（需求理解，作后置复核） | 结构化偏好不得含禁止特征 |
+| `content-safety-review` | 独立审核 agent / 外层 guardrail hook（P3） | 高风险内容上线前 pass/revise/block |
+
+> 上述「外层 guardrail hook」（前置注入 base、后置跑审核）由 `backend/app/guardrails/`（P3）落地，目前是占位。
+> Console 内挂技能 =「内层 agent 自带伦理」，guardrail hook =「外层强制」，两处都要留证据（plan §P3）。
+
+### 配置要点（团队按平台实际 UI 微调）
+
+1. 在 QwenPaw Console 给目标 agent 勾选启用对应 ethics 技能（技能正文已是完整 system prompt）。
+2. 按技能需要挂载工具（RAG 检索 / 地图 / 天气 / 视觉）。
+3. 记录该技能的 `model_version`、`prompt_version`，供审计日志（见 `实施清单.md` §3）。
 
 ## 与后端代码的关系
 
