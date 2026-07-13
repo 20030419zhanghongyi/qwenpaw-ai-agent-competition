@@ -17,7 +17,16 @@ from app.core.config import Settings, settings
 from app.db import models  # noqa: F401 - registers ORM tables
 from app.db.base import Base
 from app.db.health import ping_database
-from app.db.models import Checkin, Favorite, Trip, TripFeedback, TripStop, User
+from app.db.models import (
+    Checkin,
+    Favorite,
+    RouteTemplate,
+    RouteTemplateStop,
+    Trip,
+    TripFeedback,
+    TripStop,
+    User,
+)
 from app.db.session import SessionLocal, build_engine, engine
 from app.main import app
 
@@ -30,6 +39,9 @@ EXPECTED_TABLES = {
     "checkins",
     "favorites",
     "trip_feedback",
+    "pois",
+    "route_templates",
+    "route_template_stops",
 }
 client = TestClient(app)
 
@@ -97,7 +109,7 @@ def test_engine_and_session_factory_are_synchronous():
     assert SessionLocal.kw["autoflush"] is False
 
 
-def test_metadata_contains_six_core_tables():
+def test_metadata_contains_core_tables():
     assert set(Base.metadata.tables) == EXPECTED_TABLES
 
 
@@ -142,6 +154,19 @@ def test_trip_feedback_rating_check_constraint():
         if isinstance(constraint, CheckConstraint)
     }
     assert "ck_trip_feedback_rating_range" in names
+
+
+def test_route_template_stop_constraints_and_foreign_keys():
+    assert "uq_route_template_stops_template_order" in _unique_constraint_names(
+        RouteTemplateStop.__table__
+    )
+    foreign_keys = {
+        foreign_key.target_fullname
+        for column in RouteTemplateStop.__table__.columns
+        for foreign_key in column.foreign_keys
+    }
+    assert foreign_keys == {"route_templates.id", "pois.poi_id"}
+    assert RouteTemplate.__table__.c.id.primary_key is True
 
 
 def test_database_select_one():

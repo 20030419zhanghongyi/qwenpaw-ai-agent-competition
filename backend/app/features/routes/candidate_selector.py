@@ -21,7 +21,10 @@
 
 from __future__ import annotations
 
-from app.db.data import get_poi, load_pois, load_weights
+from app.db.data import load_weights
+from app.features.pois.repository import canonical_poi_id
+
+from .poi_metadata import get_poi_metadata, list_poi_metadata
 
 ADJACENT_DISTRICTS: dict[str, set[str]] = {
     # 澳门官方 8 堂区（freguesia）。半岛堂区北→南、西→东；离岛堂区经路氹相连。
@@ -54,19 +57,25 @@ def select_candidates_for_node(
       ...
     ]
     """
-    poi = get_poi(node["poi_id"])
+    poi = get_poi_metadata(node["poi_id"])
     if not poi:
         return []
 
     weights = load_weights()
-    heat = weights.get("poi_heat", {})
-    crowd_risk = weights.get("crowd_risk", {})
-    pain_point_tags = weights.get("pain_point_tags", {})
-    alt_poi_candidates = weights.get("alt_poi_candidates", {})
-    theme_bias = weights.get("theme_bias", {})
+    heat = _canonical_map(weights.get("poi_heat", {}))
+    crowd_risk = _canonical_map(weights.get("crowd_risk", {}))
+    pain_point_tags = _canonical_map(weights.get("pain_point_tags", {}))
+    alt_poi_candidates = {
+        canonical_poi_id(source): [canonical_poi_id(item) for item in alternatives]
+        for source, alternatives in weights.get("alt_poi_candidates", {}).items()
+    }
+    theme_bias = {
+        theme: _canonical_map(values)
+        for theme, values in weights.get("theme_bias", {}).items()
+    }
     explicit_replaceable = set(node.get("replaceable_with", []))
     curated_alternatives = set(alt_poi_candidates.get(poi["id"], []))
-    all_pois = load_pois()
+    all_pois = list_poi_metadata()
     candidates: list[tuple[int, dict]] = []
     route_theme = route.get("theme")
     route_suitable = set(route.get("suitable_for", []))
@@ -165,7 +174,14 @@ def select_candidates_for_node(
             )
         )
 
-    ranked = [candidate for _, candidate in sorted(candidates, key=lambda item: item[0], reverse=True)]
+    ranked = [
+        candidate
+        for _, candidate in sorted(
+            candidates,
+            key=lambda item: (item[1]["explicit_replaceable"], item[0]),
+            reverse=True,
+        )
+    ]
     ranked = _prefer_nearby_candidates(ranked)
     return ranked[:limit]
 
@@ -177,7 +193,9 @@ def build_candidate_pool(route: dict, limit_per_node: int = 3) -> list[dict]:
         pool.append(
             {
                 "source_poi_id": node["poi_id"],
-                "source_district": (get_poi(node["poi_id"]) or {}).get("district"),
+                "source_district": (get_poi_metadata(node["poi_id"]) or {}).get(
+                    "district"
+                ),
                 "candidates": select_candidates_for_node(node, route, limit=limit_per_node),
             }
         )
@@ -220,3 +238,7 @@ def _experience_penalty(route_suitable: set[str], risk_score: int, pain_points: 
 
 def _dedupe(items: list[str]) -> list[str]:
     return list(dict.fromkeys(items))
+
+
+def _canonical_map(values: dict) -> dict:
+    return {canonical_poi_id(poi_id): value for poi_id, value in values.items()}

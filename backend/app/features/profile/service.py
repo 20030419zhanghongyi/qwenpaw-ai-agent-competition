@@ -3,10 +3,13 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from app.db.data import get_poi
+from app.db.session import SessionLocal
+from app.features.pois.models import PoiResponse
+from app.features.pois.repository import PoiRepository
 from app.features.trips.models import TripStatus
+from app.features.trips.repository import SqlAlchemyTripRepository
 from app.features.trips.service import TripService
-from app.features.trips.store import InMemoryTripStore, trip_store
+from app.features.trips.store import trip_store
 
 from .models import (
     FavoritePoi,
@@ -15,7 +18,7 @@ from .models import (
     TripFeedback,
     TripFeedbackRequest,
 )
-from .store import InMemoryProfileStore, profile_store
+from .repository import SqlAlchemyProfileRepository, profile_repository
 
 
 class PoiNotFoundError(LookupError):
@@ -41,10 +44,10 @@ class TripNotCompletedError(RuntimeError):
 class ProfileService:
     def __init__(
         self,
-        store: InMemoryProfileStore,
-        trips: InMemoryTripStore,
+        repository: SqlAlchemyProfileRepository,
+        trips: SqlAlchemyTripRepository,
     ) -> None:
-        self._store = store
+        self._repository = repository
         self._trips = trips
 
     def list_trip_history(
@@ -76,22 +79,22 @@ class ProfileService:
         return history
 
     @staticmethod
-    def _favorite_response(favorite: FavoritePoi, poi: dict) -> FavoritePoiResponse:
-        coordinates = poi["coordinates"]
+    def _favorite_response(favorite: FavoritePoi, poi: PoiResponse) -> FavoritePoiResponse:
         return FavoritePoiResponse(
             user_id=favorite.user_id,
             poi_id=favorite.poi_id,
-            poi_name=poi["name_zh"],
-            longitude=coordinates["lng"],
-            latitude=coordinates["lat"],
+            poi_name=poi.poi_name,
+            longitude=poi.longitude,
+            latitude=poi.latitude,
             created_at=favorite.created_at,
         )
 
     def add_favorite(self, user_id: str, poi_id: str) -> tuple[FavoritePoiResponse, bool]:
-        poi = get_poi(poi_id)
+        with SessionLocal() as session:
+            poi = PoiRepository(session).get_by_id(poi_id)
         if poi is None:
             raise PoiNotFoundError(f"POI not found: {poi_id}")
-        favorite, created = self._store.add_favorite(
+        favorite, created = self._repository.add_favorite(
             FavoritePoi(
                 user_id=user_id,
                 poi_id=poi_id,
@@ -101,15 +104,19 @@ class ProfileService:
         return self._favorite_response(favorite, poi), created
 
     def remove_favorite(self, user_id: str, poi_id: str) -> None:
-        self._store.remove_favorite(user_id, poi_id)
+        self._repository.remove_favorite(user_id, poi_id)
 
     def list_favorites(self, user_id: str) -> list[FavoritePoiResponse]:
-        responses: list[FavoritePoiResponse] = []
-        for favorite in self._store.list_favorites(user_id):
-            poi = get_poi(favorite.poi_id)
-            if poi is not None:
-                responses.append(self._favorite_response(favorite, poi))
-        return responses
+        favorites = self._repository.list_favorites(user_id)
+        with SessionLocal() as session:
+            pois = PoiRepository(session).get_by_ids(
+                [favorite.poi_id for favorite in favorites]
+            )
+        return [
+            self._favorite_response(favorite, pois[favorite.poi_id])
+            for favorite in favorites
+            if favorite.poi_id in pois
+        ]
 
     def upsert_feedback(
         self,
@@ -136,15 +143,15 @@ class ProfileService:
             created_at=now,
             updated_at=now,
         )
-        return self._store.upsert_feedback(feedback)
+        return self._repository.upsert_feedback(feedback)
 
     def get_feedback(self, trip_id: str) -> TripFeedback:
         if self._trips.get(trip_id) is None:
             raise TripNotFoundError(f"Trip not found: {trip_id}")
-        feedback = self._store.get_feedback(trip_id)
+        feedback = self._repository.get_feedback(trip_id)
         if feedback is None:
             raise FeedbackNotFoundError(f"Feedback not found for trip: {trip_id}")
         return feedback
 
 
-profile_service = ProfileService(profile_store, trip_store)
+profile_service = ProfileService(profile_repository, trip_store)

@@ -8,7 +8,7 @@ from app.features.routes.candidate_selector import build_candidate_pool, select_
 from app.features.routes.route_constructor import construct_route
 from app.features.routes.explain import build_explanation
 from app.features.routes.repository import get_template, list_templates
-from app.db.data import get_poi
+from app.features.routes.poi_metadata import get_poi_metadata
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -94,7 +94,7 @@ def test_explicit_replaceable_candidate_is_ranked_first():
     target_node = route["nodes"][-1]
     candidates = select_candidates_for_node(target_node, route, limit=3)
     assert len(candidates) >= 1
-    assert candidates[0]["poi_id"] == "poi_fatong"
+    assert candidates[0]["poi_id"] == "poi_0018"
 
 
 def test_candidate_pool_prefers_same_or_adjacent_districts():
@@ -336,7 +336,10 @@ def test_route_adjust_supports_food_point_suggestion():
     inserted = added_ids & route_ids
     assert inserted  # 建议的候选点确实落进了最终路线
     # 且至少有一个新增节点是真正的美食 POI
-    assert any("food" in (get_poi(pid) or {}).get("suitable_for", []) for pid in inserted)
+    assert any(
+        "food" in (get_poi_metadata(pid) or {}).get("suitable_for", [])
+        for pid in inserted
+    )
 
 
 def test_construct_route_no_backtrack_actually_reorders_nodes():

@@ -3,26 +3,38 @@ import logging
 from fastapi import APIRouter, HTTPException
 
 from app.agents import route_agent
+from app.api.contracts import NOT_FOUND_RESPONSE, UNPROCESSABLE_RESPONSE
 from app.core.config import settings
 from app.models.user import Preference
 from app.observability.trace import record_trace
 
 from .adjuster import RouteAdjustRequest, adjust_route
-from .matcher import match_routes
-from .repository import get_template, list_templates
+from .models import RouteAdjustResponse, RouteMatchResponse, RouteTemplateResponse
+from .service import route_service
 
 logger = logging.getLogger("macau_storywalk.routes")
 
 router = APIRouter(prefix="/api/v1/routes", tags=["routes"])
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=list[RouteTemplateResponse],
+    summary="List route templates",
+    description="Return database-backed route templates in their configured order.",
+)
 def list_routes() -> list[dict]:
     """全部预设路线模板。"""
-    return list_templates()
+    return route_service.list_templates()
 
 
-@router.post("/match")
+@router.post(
+    "/match",
+    response_model=RouteMatchResponse,
+    summary="Match route templates",
+    description="Rank persisted route templates for the supplied travel preferences.",
+    responses=UNPROCESSABLE_RESPONSE,
+)
 def match(pref: Preference) -> dict:
     """根据偏好返回最匹配的路线结果（无 API key 第一阶段）。
 
@@ -33,11 +45,17 @@ def match(pref: Preference) -> dict:
 
     未来 Phase 3 再接 /routes/adjust 做 Agent 微调。
     """
-    matches = match_routes(pref)
+    matches = route_service.match(pref)
     return {"preference": pref.model_dump(), "matches": matches}
 
 
-@router.post("/adjust")
+@router.post(
+    "/adjust",
+    response_model=RouteAdjustResponse,
+    summary="Adjust a route",
+    description="Apply the existing route-adjustment behavior to a persisted template.",
+    responses={**NOT_FOUND_RESPONSE, **UNPROCESSABLE_RESPONSE},
+)
 def adjust(request: RouteAdjustRequest) -> dict:
     """路线微调接口（P1：QwenPaw 路线 agent 驱动，规则版作 fallback）。
 
@@ -74,9 +92,14 @@ def adjust(request: RouteAdjustRequest) -> dict:
     return result
 
 
-@router.get("/{route_id}")
+@router.get(
+    "/{route_id}",
+    response_model=RouteTemplateResponse,
+    summary="Get a route template",
+    responses=NOT_FOUND_RESPONSE,
+)
 def get_route_detail(route_id: str) -> dict:
-    route = get_template(route_id)
+    route = route_service.get_template(route_id)
     if not route:
         raise HTTPException(status_code=404, detail=f"Route not found: {route_id}")
     return route

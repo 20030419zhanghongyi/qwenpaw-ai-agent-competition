@@ -1,90 +1,342 @@
-# Backend — Macau StoryWalk API
+# QwenPaw 澳门 AI 旅游助手后端
 
-FastAPI 后端，负责 API 编排、路线匹配、QwenPaw Agent 封装与数据访问。
+## 1. 项目简介
 
-## 技术栈
+本后端为 QwenPaw 澳门 AI 旅游助手提供稳定的数据和 REST API 服务，面向项目队友、指导老师、比赛评委，以及后续接入 Qwen Agent 和微信小程序的开发者。
 
-- **FastAPI** + **Pydantic v2** + **Pydantic Settings**
-- 数据访问：Phase 1 直接读 `data/*.json`；Phase 3 接 pgvector / Postgres
-- Agent：Phase 3 接入 QwenPaw / DashScope
+后端主要负责：
 
-## 环境准备
+- 澳门地点（POI）数据管理与空间查询
+- 路线模板及路线节点管理
+- 用户旅行状态、行程与打卡管理
+- 收藏、行程反馈和历史行程管理
+- 为 Agent 和小程序提供稳定、可验证的 REST API
 
-```bash
-# 1) 在仓库根目录复制环境变量模板并填入 key
-cd ..                 # 回到仓库根
-cp .env.example .env
-#   编辑 .env，至少填 DASHSCOPE_API_KEY（Phase 3 起）。Phase 1/2 不填也能跑。
+本目录聚焦后端基础设施与数据接口，不包含 Qwen Agent、Prompt、AI 推理逻辑或前端小程序实现。
 
-# 2) 安装依赖（推荐用 uv，也可用 pip）
-cd backend
-pip install -e ".[dev]"          # 或：uv pip install -e ".[dev]"
+### 总体架构
+
+```text
+小程序 / Qwen Agent
+        ↓ HTTP / JSON
+     FastAPI API
+        ↓
+    Service 业务层
+        ↓
+  Repository 数据层
+        ↓
+SQLAlchemy + PostgreSQL/PostGIS
 ```
 
-## 启动
+## 2. 技术栈
 
-```bash
-uvicorn app.main:app --reload --port 8000
-# 接口文档：http://localhost:8000/docs
-# 健康检查：http://localhost:8000/api/v1/health
+- Python 3.11+
+- FastAPI
+- PostgreSQL 16
+- PostGIS 3.4
+- SQLAlchemy 2
+- Alembic
+- Docker Compose
+- Pytest
+
+## 3. 已完成模块
+
+### 数据库基础设施
+
+已完成：
+
+- 使用 Docker Compose 提供 PostgreSQL/PostGIS 本地开发环境
+- 使用 SQLAlchemy ORM 定义业务数据模型
+- 使用 Alembic 管理数据库版本和迁移
+- 支持数据库 upgrade、downgrade 和重复 upgrade 验证
+- 提供数据库健康检查；数据库不可用时 API 仍返回 HTTP 200，并通过 `database_status=unavailable` 标识状态
+
+当前 Alembic head 为 `20260713_03`。
+
+### POI 地点数据库
+
+澳门地点数据已由只读 Excel 数据源导入 PostgreSQL：
+
+- 共导入 341 条 POI
+- 使用唯一 `poi_id` 作为 canonical ID
+- 使用 PostGIS `geometry(Point, 4326)` 保存空间坐标
+- 在位置字段上创建 GiST 空间索引
+- 支持 POI 列表、单地点详情和附近地点查询
+- 导入脚本支持幂等执行，不修改原始 Excel，也不会产生重复数据
+
+验证结果：
+
+- `SELECT COUNT(*) FROM pois` 返回 `341`
+- 单地点 `poi_id` 查询成功
+- nearby 空间查询成功，并按照距离排序
+
+### Route Template 数据库
+
+路线模板已从静态数据迁移到：
+
+- `route_templates`
+- `route_template_stops`
+
+验证结果：
+
+- 6 条路线模板
+- 38 个有序路线节点
+- 路线节点使用 canonical `poi_id` 外键关联 `pois`
+- 导入脚本支持幂等执行，不修改原始路线 JSON
+
+### Trip 行程持久化
+
+已完成以下能力的 PostgreSQL 持久化：
+
+- Trip 创建
+- Trip 详情查询
+- 用户当前 Trip 查询
+- Checkin 创建
+- Trip Progress 计算
+
+数据访问遵循分层结构：
+
+```text
+API → Service → Repository → PostgreSQL
 ```
 
-## 测试
+API 层不直接访问数据库，业务逻辑与数据访问职责相互隔离。
 
-```bash
-pytest -q
+### 用户相关数据
+
+已完成：
+
+- POI 收藏与取消收藏
+- 收藏列表查询
+- Trip Feedback 创建、查询和更新
+- 用户历史行程查询
+
+Favorite 和 Feedback 均通过 Repository 持久化至 PostgreSQL，并保持原有 API 请求、响应和错误码兼容。
+
+### API 稳定化
+
+已完成：
+
+- 为非 204 API 配置 `response_model`
+- 完善 Swagger UI、ReDoc 和 OpenAPI Schema
+- 统一核心接口的摘要与说明
+- 明确 `404 Not Found`、`409 Conflict` 和 `422 Unprocessable Entity` 错误契约
+- 增加覆盖 POI、Route、Trip、Checkin、Favorite 和 Feedback 的 API contract 测试
+
+## 4. 验证实验与测试结果
+
+以下结果在本地 PostGIS 容器和项目虚拟环境中完成验证。
+
+### 数据库验证
+
+已通过：
+
+- PostgreSQL/PostGIS 容器启动及 healthy 状态检查
+- PostGIS 扩展版本验证：`3.4.3`
+- Alembic `upgrade head`
+- Alembic `downgrade base`
+- Alembic 再次 `upgrade head`
+- `alembic current` 与 `alembic heads` 均为 `20260713_03 (head)`
+- `alembic check` 返回无待生成迁移
+
+### POI 数据验证
+
+验证结果：
+
+- 成功导入 341 条 POI
+- 重复运行导入不会产生重复数据
+- 使用 canonical `poi_id` 查询地点成功
+- nearby 空间查询成功
+- 数据库存储的经纬度与导入数据一致
+
+### 空间查询验证
+
+使用大三巴牌坊坐标进行 PostGIS 空间查询：
+
+```text
+longitude: 113.545883
+latitude:  22.194627
 ```
 
-## Local PostgreSQL + PostGIS
+返回结果：
 
-The repository root `compose.yml` provides a local Demo database using
-`postgis/postgis:16-3.4`. Its credentials are development-only defaults.
+```text
+大三巴牌坊  distance=0.000m
+旧城墙遗址  distance=24.305m
+恋爱·电影馆 distance=33.612m
+大三巴斜巷  distance=43.480m
+恋爱巷      distance=49.455m
+```
+
+大三巴牌坊距离为 0，其他附近地点按照距离从近到远排列。
+
+### Route Template 数据验证
+
+- `route_templates`：6 条记录
+- `route_template_stops`：38 条记录
+- 节点顺序约束验证通过
+- 所有节点均通过外键引用 `pois.poi_id`
+- Route Match API 保持原有响应结构兼容
+
+### 自动化测试
+
+最终全量测试结果：
+
+```text
+97 passed
+```
+
+测试覆盖：
+
+- Health API
+- POI API 与 PostGIS nearby 查询
+- Route API 与路线模板 Repository
+- Trip API、Checkin 和 Progress
+- Profile、Favorite 和 Feedback API
+- Database integration
+- Repository 数据持久化
+- API contract、response model 和错误码
+
+## 5. 环境准备
+
+以下命令均在仓库根目录执行，并只使用项目虚拟环境：
 
 ```powershell
-# From the repository root
+Set-Location C:\Users\AW\Desktop\qwenpaw-ai-agent-competition
+
+# 首次创建虚拟环境
+py -m venv .venv
+
+# 安装项目声明的运行与测试依赖
+.\.venv\Scripts\python.exe -m pip install -e ".\backend[dev]"
+```
+
+默认开发数据库连接已与仓库根目录的 `compose.yml` 对齐。需要覆盖配置时，可参考 `backend/.env.example` 设置进程环境变量或创建被 Git 忽略的本地 `.env`。不要提交真实密钥或 `.env`。
+
+## 6. 启动数据库与执行迁移
+
+### 启动 Docker 数据库
+
+```powershell
 docker compose up -d db
 docker compose ps
+```
 
-# Apply and inspect schema migrations
-Push-Location backend
-..\.venv\Scripts\python.exe -m alembic upgrade head
-..\.venv\Scripts\python.exe -m alembic current
-Pop-Location
+预期 `qwenpaw-postgis` 状态为 `healthy`。
 
-# Stop the container while retaining the named data volume
+停止服务但保留数据：
+
+```powershell
 docker compose stop db
 ```
 
-The application reads `DATABASE_URL` and optional `DB_ECHO` from the normal
-Pydantic settings sources. Copy `backend/.env.example` to an ignored local
-environment file only when overrides are needed; never commit real secrets.
+`docker compose down -v` 会删除本地数据库 volume，不应作为日常停止命令。
 
-> **Danger — deletes all local QwenPaw database data:**
-> `docker compose down -v`. Normal `docker compose down` retains the named volume.
+### 执行数据库迁移
 
-## 已实现接口（Phase 1/2）
+```powershell
+Push-Location backend
+..\.venv\Scripts\python.exe -m alembic upgrade head
+..\.venv\Scripts\python.exe -m alembic current
+..\.venv\Scripts\python.exe -m alembic heads
+..\.venv\Scripts\python.exe -m alembic check
+Pop-Location
+```
+
+### 导入 POI 和路线模板
+
+必须先导入 POI，再导入路线模板，因为 `route_template_stops.poi_id` 外键引用 `pois.poi_id`。两个脚本都支持重复执行，且不会修改只读 Excel/JSON 数据源。
+
+```powershell
+Push-Location backend
+
+# 将路径替换为本机只读 POI Excel 的实际位置
+..\.venv\Scripts\python.exe scripts\import_pois.py `
+  "C:\path\to\Macau_Route_Database_simple.xlsx"
+
+..\.venv\Scripts\python.exe scripts\import_routes.py ..\data\routes.json
+
+Pop-Location
+```
+
+## 7. 启动 API 与接口文档
+
+```powershell
+Push-Location backend
+..\.venv\Scripts\python.exe -m uvicorn app.main:app `
+  --host 127.0.0.1 --port 8000 --reload
+Pop-Location
+```
+
+- Swagger UI：<http://127.0.0.1:8000/docs>
+- ReDoc：<http://127.0.0.1:8000/redoc>
+- OpenAPI JSON：<http://127.0.0.1:8000/openapi.json>
+- 健康检查：<http://127.0.0.1:8000/api/v1/health>
+
+## 8. 核心 API 列表
 
 | 方法 | 路径 | 说明 |
-|------|------|------|
-| GET  | `/api/v1/health` | 健康检查 + 配置状态 |
-| POST | `/api/v1/users` | 创建用户（占位，内存） |
-| PUT  | `/api/v1/users/{id}/preferences` | 更新偏好 |
-| GET  | `/api/v1/pois` · `/{id}` | POI 列表 / 详情 |
-| GET  | `/api/v1/routes` · `/{id}` | 预设路线列表 / 详情 |
-| POST | `/api/v1/routes/match` | 按偏好规则匹配路线（Phase 2） |
+|---|---|---|
+| GET | `/api/v1/health` | API 与数据库健康状态 |
+| GET | `/api/v1/pois` | POI 列表和分类过滤 |
+| GET | `/api/v1/pois/nearby` | PostGIS 附近 POI 查询 |
+| GET | `/api/v1/pois/{poi_id}` | POI 详情 |
+| GET | `/api/v1/routes` | 路线模板列表 |
+| GET | `/api/v1/routes/{route_id}` | 路线模板详情 |
+| POST | `/api/v1/routes/match` | 按用户偏好匹配路线 |
+| POST | `/api/v1/routes/adjust` | 按现有规则调整路线 |
+| POST | `/api/v1/trips` | 创建 Trip |
+| GET | `/api/v1/trips/{trip_id}` | Trip 详情 |
+| GET | `/api/v1/users/{user_id}/current-trip` | 用户当前 Trip |
+| POST | `/api/v1/trips/{trip_id}/checkins` | 创建 Checkin |
+| GET | `/api/v1/trips/{trip_id}/progress` | 查询 Trip 进度 |
+| GET | `/api/v1/users/{user_id}/trips` | 用户历史行程 |
+| POST | `/api/v1/users/{user_id}/favorites/pois/{poi_id}` | 收藏 POI |
+| DELETE | `/api/v1/users/{user_id}/favorites/pois/{poi_id}` | 取消收藏 POI |
+| GET | `/api/v1/users/{user_id}/favorites/pois` | 收藏列表 |
+| POST | `/api/v1/trips/{trip_id}/feedback` | 创建或更新反馈 |
+| GET | `/api/v1/trips/{trip_id}/feedback` | 查询反馈 |
 
-## 目录
+## 9. 错误响应规范
 
+业务错误统一使用 FastAPI JSON 响应：
+
+```json
+{
+  "detail": "error description"
+}
 ```
-backend/app/
-├── main.py            # FastAPI 入口
-├── core/config.py     # 从 .env 读配置
-├── models/            # POI / Route / User Pydantic 模型
-├── db/data.py         # 加载 data/*.json
-├── services/          # route_matcher 等业务逻辑
-├── agents/            # Phase 3: QwenPaw 6 Agent
-└── api/               # 路由层（/api/v1）
+
+- `404 Not Found`：POI、路线模板、Trip 或其他目标资源不存在
+- `409 Conflict`：资源当前状态不允许操作，例如未完成 Trip 提交反馈
+- `422 Unprocessable Entity`：请求字段校验失败，或 POI 不属于 Trip 等业务校验失败
+
+字段级 422 错误的 `detail` 使用 FastAPI 标准错误数组。最终接口契约以 `/openapi.json` 为准。
+
+## 10. 运行测试
+
+测试前请确保本地 PostGIS 容器已启动，并已完成数据库迁移和基础数据导入：
+
+```powershell
+$env:PYTHONDONTWRITEBYTECODE = "1"
+
+Push-Location backend
+..\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider
+Pop-Location
+
+Remove-Item Env:PYTHONDONTWRITEBYTECODE -ErrorAction SilentlyContinue
 ```
 
-> 路线规则匹配在 Phase 2 用作初筛 + 兜底；Phase 3 引入 QwenPaw 路线微调 Agent 后，
-> Agent 在 `routes/match` 返回结果上做自然语言微调（换节点 / 加休息 / 调顺序）。
+测试完成后不要提交测试生成的 `harness/results/traces/traces.jsonl`、pytest cache 或虚拟环境文件。
+
+## 11. 交付检查
+
+联调或交付前请确认：
+
+1. `docker compose ps` 显示数据库为 `healthy`。
+2. `alembic current` 与 `alembic heads` 均为 `20260713_03 (head)`。
+3. POI 和路线模板导入脚本已成功执行。
+4. `/api/v1/health` 返回 `database_status=ok`。
+5. Swagger UI 和 OpenAPI JSON 可正常访问。
+6. 全量 Pytest 测试通过。
+7. 工作区不包含 `.env`、`.venv`、trace 或 pytest cache 改动。
