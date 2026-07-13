@@ -2,7 +2,11 @@
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
+from app.db.models import Favorite as FavoriteRecord
+from app.db.models import TripFeedback as FeedbackRecord
+from app.db.session import SessionLocal
 from app.features.profile.store import profile_store
 from app.features.trips.store import trip_store
 from app.main import app
@@ -117,6 +121,19 @@ def test_add_valid_favorite():
     assert response.json()["poi_id"] == POI_ID
 
 
+def test_favorite_is_persisted_in_database():
+    response = client.post(f"/api/v1/users/{USER_ID}/favorites/pois/{POI_ID}")
+    assert response.status_code == 201
+    with SessionLocal() as session:
+        record = session.scalar(
+            select(FavoriteRecord).where(
+                FavoriteRecord.user_id == USER_ID,
+                FavoriteRecord.poi_id == POI_ID,
+            )
+        )
+        assert record is not None
+
+
 def test_add_unknown_favorite_returns_404():
     response = client.post(f"/api/v1/users/{USER_ID}/favorites/pois/missing-poi")
     assert response.status_code == 404
@@ -153,6 +170,20 @@ def test_remove_favorite():
     assert client.get(f"/api/v1/users/{USER_ID}/favorites/pois").json() == []
 
 
+def test_remove_favorite_deletes_database_record():
+    client.post(f"/api/v1/users/{USER_ID}/favorites/pois/{POI_ID}")
+    response = client.delete(f"/api/v1/users/{USER_ID}/favorites/pois/{POI_ID}")
+    assert response.status_code == 204
+    with SessionLocal() as session:
+        record = session.scalar(
+            select(FavoriteRecord).where(
+                FavoriteRecord.user_id == USER_ID,
+                FavoriteRecord.poi_id == POI_ID,
+            )
+        )
+        assert record is None
+
+
 def test_remove_favorite_is_idempotent():
     first = client.delete(f"/api/v1/users/{USER_ID}/favorites/pois/{POI_ID}")
     second = client.delete(f"/api/v1/users/{USER_ID}/favorites/pois/{POI_ID}")
@@ -176,6 +207,21 @@ def test_submit_feedback_for_completed_trip():
     )
     assert response.status_code == 201
     assert response.json()["comment"] == "Route was comfortable."
+
+
+def test_feedback_is_persisted_in_database():
+    trip_id = complete_trip()["trip"]["trip_id"]
+    response = client.post(
+        f"/api/v1/trips/{trip_id}/feedback",
+        json=feedback_payload(),
+    )
+    assert response.status_code == 201
+    with SessionLocal() as session:
+        record = session.scalar(
+            select(FeedbackRecord).where(FeedbackRecord.trip_id == trip_id)
+        )
+        assert record is not None
+        assert record.rating == 5
 
 
 def test_active_trip_rejects_feedback():
@@ -246,6 +292,28 @@ def test_repeated_feedback_updates_original():
     assert second.json()["feedback_id"] == first.json()["feedback_id"]
     assert second.json()["rating"] == 4
     assert second.json()["comment"] == "Updated"
+
+
+def test_feedback_update_changes_database_record():
+    trip_id = complete_trip()["trip"]["trip_id"]
+    first = client.post(
+        f"/api/v1/trips/{trip_id}/feedback",
+        json=feedback_payload(),
+    ).json()
+    second = client.post(
+        f"/api/v1/trips/{trip_id}/feedback",
+        json=feedback_payload(rating=4, comment="Updated in database"),
+    ).json()
+    with SessionLocal() as session:
+        record = session.scalar(
+            select(FeedbackRecord).where(FeedbackRecord.trip_id == trip_id)
+        )
+        assert record is not None
+        assert record.id == first["feedback_id"] == second["feedback_id"]
+        assert record.rating == 4
+        assert record.comment == "Updated in database"
+        assert record.created_at.isoformat().replace("+00:00", "Z") == first["created_at"]
+        assert record.updated_at.isoformat().replace("+00:00", "Z") == second["updated_at"]
 
 
 def test_feedback_update_preserves_created_at_and_changes_updated_at():
