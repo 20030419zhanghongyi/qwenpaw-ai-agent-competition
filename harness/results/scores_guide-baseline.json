@@ -1,0 +1,215 @@
+{
+  "run_id": "guide-baseline",
+  "ts": "2026-07-13T16:00:30",
+  "guide_agent": "default",
+  "overall": 1.0,
+  "by_category": {
+    "route": null,
+    "guide": 1.0,
+    "intent": null,
+    "review": null
+  },
+  "n": 8,
+  "cases": [
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        },
+        {
+          "name": "min_len",
+          "passed": true
+        },
+        {
+          "name": "max_len",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "length": 160,
+        "answer_head": "**妈阁庙**是澳门最古老的庙宇，始建于**明朝成化年间（约1488年）**，距今已有500多年历史，供奉海上保护神妈祖。\n\n关于澳门名字的由来：葡萄牙人16世纪抵达时，向当地人询问地名，因庙前港湾渔民常答\"妈阁\"（闽南语对妈祖的尊称），葡"
+      },
+      "id": "g01",
+      "category": "guide"
+    },
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        },
+        {
+          "name": "min_len",
+          "passed": true
+        },
+        {
+          "name": "max_len",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "length": 194,
+        "answer_head": "**议事亭前地**\n\n这片广场是澳门历史城区的心脏地带，「议事亭」之名源于昔日葡萄牙人的市政议事机构。广场地面铺设的黑白碎石波浪花纹，是葡式「葡石路」的典型样式，以海洋波涛为意象，象征澳门作为海港城市的身份。\n\n广场周边环绕着民政总署大楼（"
+      },
+      "id": "g02",
+      "category": "guide"
+    },
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        },
+        {
+          "name": "min_len",
+          "passed": true
+        },
+        {
+          "name": "max_len",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "length": 363,
+        "answer_head": "# 龙环葡韵讲解\n\n**龙环葡韵**是澳门保存最完整的葡式住宅区，这五栋翠绿别墅建于**1921年**，原为澳门高级官员的官邸。\n\n如今，这五栋别墅已活化成为**住宅式博物馆**：\n- **一号馆**：葡韵生活馆 — 展示土生葡人家庭的生活"
+      },
+      "id": "g03",
+      "category": "guide"
+    },
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        },
+        {
+          "name": "min_len",
+          "passed": true
+        },
+        {
+          "name": "max_len",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "length": 129,
+        "answer_head": "路环圣方济各圣堂建于1928年，是路环岛上最古老的天主教堂，以黄色外墙和巴洛克风格著称，内藏圣方济各圣物。\n\n路环与澳门半岛、氹仔不同：它是澳门三岛中面积最小、最宁静的，保留着渔村风貌，没有赌场和繁华商业，以慢节奏生活和自然风光见长。教堂开"
+      },
+      "id": "g04",
+      "category": "guide"
+    },
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        },
+        {
+          "name": "min_len",
+          "passed": true
+        },
+        {
+          "name": "max_len",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "length": 172,
+        "answer_head": "福隆新街是澳门著名的历史街区，曾是**清朝时期的烟花之地**，也是澳门最繁华的**青楼街**。街名中的「新街」是相对于更早建成的「福隆旧街」而言——当时澳门城市发展向南扩展，这条新开辟的街道便被称为「新街」。\n\n如今这里已转型为**文创旅游"
+      },
+      "id": "g05",
+      "category": "guide"
+    },
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        },
+        {
+          "name": "min_len",
+          "passed": true
+        },
+        {
+          "name": "max_len",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "length": 125,
+        "answer_head": "恋爱巷因毗邻大三巴牌坊，曾是情侣约会胜地，浪漫氛围渐成美名，「恋爱」二字由此而来。这里彩色葡式建筑、碎石路面与大三巴背景相映成趣，非常适合拍照。建议清晨（约 8–10 点）或工作日下午前往，人流较少；节假日及黄昏时段游客较多。具体开放时间以"
+      },
+      "id": "g06",
+      "category": "guide"
+    },
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        },
+        {
+          "name": "min_len",
+          "passed": true
+        },
+        {
+          "name": "max_len",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "length": 244,
+        "answer_head": "**疯堂斜巷**是澳门保存最完整的葡式街区之一，名字源自 16 世纪为麻风病人设立的「望德堂」（疯堂庙），「斜巷」则因街道依山而建、略有坡度。\n\n这里曾是葡萄牙人聚居地，至今保留着大量 **19 世纪末至 20 世纪初的葡式建筑**：红瓦屋"
+      },
+      "id": "g07",
+      "category": "guide"
+    },
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        },
+        {
+          "name": "min_len",
+          "passed": true
+        },
+        {
+          "name": "max_len",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "length": 204,
+        "answer_head": "**妈祖阁（妈阁庙）春节活动与开放时间**\n\n春节期间，妈阁庙香火最盛，祈福人潮络绎不绝。庙方通常会延长开放时间，除夕至年初一可能通宵开放，供善信上头炷香（具体以现场为准）。\n\n周边会举办传统舞狮、民俗表演，议事亭前地更有农历新年花车巡游（"
+      },
+      "id": "g08",
+      "category": "guide"
+    }
+  ]
+}

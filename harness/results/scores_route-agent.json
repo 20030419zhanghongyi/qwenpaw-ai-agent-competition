@@ -1,0 +1,209 @@
+{
+  "run_id": "route-agent",
+  "ts": "2026-07-13T08:39:42",
+  "guide_agent": "default",
+  "overall": 0.963,
+  "by_category": {
+    "route": 0.963,
+    "guide": null
+  },
+  "n": 9,
+  "cases": [
+    {
+      "checks": [
+        {
+          "name": "physical",
+          "passed": true
+        },
+        {
+          "name": "removed_tail",
+          "passed": true
+        },
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "source": "agent"
+      },
+      "id": "r01",
+      "category": "route"
+    },
+    {
+      "checks": [
+        {
+          "name": "interests",
+          "passed": true
+        },
+        {
+          "name": "added_tag:photo",
+          "passed": true
+        },
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "source": "agent"
+      },
+      "id": "r02",
+      "category": "route"
+    },
+    {
+      "checks": [
+        {
+          "name": "physical",
+          "passed": true
+        },
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 2,
+      "total": 2,
+      "detail": {
+        "source": "agent"
+      },
+      "id": "r03",
+      "category": "route"
+    },
+    {
+      "checks": [
+        {
+          "name": "interests",
+          "passed": true
+        },
+        {
+          "name": "added_tag:food",
+          "passed": false
+        },
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 0.667,
+      "passed": 2,
+      "total": 3,
+      "detail": {
+        "source": "agent"
+      },
+      "id": "r04",
+      "category": "route"
+    },
+    {
+      "checks": [
+        {
+          "name": "physical",
+          "passed": true
+        },
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 2,
+      "total": 2,
+      "detail": {
+        "source": "agent"
+      },
+      "id": "r05",
+      "category": "route"
+    },
+    {
+      "checks": [
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 1,
+      "total": 1,
+      "detail": {
+        "source": "agent"
+      },
+      "id": "r06",
+      "category": "route"
+    },
+    {
+      "checks": [
+        {
+          "name": "duration",
+          "passed": true
+        },
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 2,
+      "total": 2,
+      "detail": {
+        "source": "agent"
+      },
+      "id": "r07",
+      "category": "route"
+    },
+    {
+      "checks": [
+        {
+          "name": "physical",
+          "passed": true
+        },
+        {
+          "name": "interests",
+          "passed": true
+        },
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "source": "agent"
+      },
+      "id": "r08",
+      "category": "route"
+    },
+    {
+      "checks": [
+        {
+          "name": "physical",
+          "passed": true
+        },
+        {
+          "name": "interests",
+          "passed": true
+        },
+        {
+          "name": "keywords_any",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 3,
+      "total": 3,
+      "detail": {
+        "source": "agent"
+      },
+      "id": "r09",
+      "category": "route"
+    }
+  ]
+}

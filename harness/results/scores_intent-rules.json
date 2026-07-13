@@ -1,0 +1,272 @@
+{
+  "run_id": "intent-rules",
+  "ts": "2026-07-13T12:59:01",
+  "guide_agent": "default",
+  "overall": 0.812,
+  "by_category": {
+    "route": null,
+    "guide": null,
+    "intent": 0.812
+  },
+  "n": 8,
+  "cases": [
+    {
+      "checks": [
+        {
+          "name": "duration",
+          "passed": true
+        },
+        {
+          "name": "interests",
+          "passed": true
+        },
+        {
+          "name": "physical",
+          "passed": true
+        },
+        {
+          "name": "travel_type",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "rules",
+        "preference": {
+          "duration": "half-day",
+          "party_size": 1,
+          "travel_type": [
+            "family"
+          ],
+          "interests": [
+            "architecture"
+          ],
+          "physical": [
+            "less-walk"
+          ],
+          "language": "zh-CN"
+        }
+      },
+      "id": "i01",
+      "category": "intent"
+    },
+    {
+      "checks": [
+        {
+          "name": "duration",
+          "passed": false
+        },
+        {
+          "name": "physical",
+          "passed": false
+        }
+      ],
+      "score": 0.0,
+      "passed": 0,
+      "total": 2,
+      "detail": {
+        "source": "rules",
+        "preference": {
+          "duration": "half-day",
+          "party_size": 1,
+          "travel_type": [],
+          "interests": [],
+          "physical": [],
+          "language": "zh-CN"
+        }
+      },
+      "id": "i02",
+      "category": "intent"
+    },
+    {
+      "checks": [
+        {
+          "name": "duration",
+          "passed": true
+        },
+        {
+          "name": "interests",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 2,
+      "total": 2,
+      "detail": {
+        "source": "rules",
+        "preference": {
+          "duration": "evening",
+          "party_size": 1,
+          "travel_type": [],
+          "interests": [
+            "photo"
+          ],
+          "physical": [],
+          "language": "zh-CN"
+        }
+      },
+      "id": "i03",
+      "category": "intent"
+    },
+    {
+      "checks": [
+        {
+          "name": "interests",
+          "passed": true
+        },
+        {
+          "name": "travel_type",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 2,
+      "total": 2,
+      "detail": {
+        "source": "rules",
+        "preference": {
+          "duration": "half-day",
+          "party_size": 1,
+          "travel_type": [
+            "friends"
+          ],
+          "interests": [
+            "food"
+          ],
+          "physical": [],
+          "language": "zh-CN"
+        }
+      },
+      "id": "i04",
+      "category": "intent"
+    },
+    {
+      "checks": [
+        {
+          "name": "interests",
+          "passed": true
+        },
+        {
+          "name": "travel_type",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 2,
+      "total": 2,
+      "detail": {
+        "source": "rules",
+        "preference": {
+          "duration": "half-day",
+          "party_size": 1,
+          "travel_type": [
+            "family"
+          ],
+          "interests": [
+            "history"
+          ],
+          "physical": [],
+          "language": "zh-CN"
+        }
+      },
+      "id": "i05",
+      "category": "intent"
+    },
+    {
+      "checks": [
+        {
+          "name": "physical",
+          "passed": true
+        },
+        {
+          "name": "travel_type",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 2,
+      "total": 2,
+      "detail": {
+        "source": "rules",
+        "preference": {
+          "duration": "half-day",
+          "party_size": 1,
+          "travel_type": [
+            "relax"
+          ],
+          "interests": [],
+          "physical": [
+            "less-walk"
+          ],
+          "language": "zh-CN"
+        }
+      },
+      "id": "i06",
+      "category": "intent"
+    },
+    {
+      "checks": [
+        {
+          "name": "duration",
+          "passed": true
+        },
+        {
+          "name": "interests",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 2,
+      "total": 2,
+      "detail": {
+        "source": "rules",
+        "preference": {
+          "duration": "full-day",
+          "party_size": 1,
+          "travel_type": [],
+          "interests": [
+            "photo",
+            "history",
+            "architecture"
+          ],
+          "physical": [],
+          "language": "zh-CN"
+        }
+      },
+      "id": "i07",
+      "category": "intent"
+    },
+    {
+      "checks": [
+        {
+          "name": "physical",
+          "passed": false
+        },
+        {
+          "name": "travel_type",
+          "passed": true
+        }
+      ],
+      "score": 0.5,
+      "passed": 1,
+      "total": 2,
+      "detail": {
+        "source": "rules",
+        "preference": {
+          "duration": "half-day",
+          "party_size": 1,
+          "travel_type": [
+            "solo"
+          ],
+          "interests": [],
+          "physical": [],
+          "language": "zh-CN"
+        }
+      },
+      "id": "i08",
+      "category": "intent"
+    }
+  ]
+}

@@ -13,6 +13,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # backend/app/core/config.py -> 向上 3 层到仓库根
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
+# 让 backend 能 import 仓库根下的 rag/（RAG 模块在仓库根、不在 backend/app 内）。
+# config 被几乎所有模块早 import，放在这里保证 rag 可用。
+import sys as _sys
+if str(REPO_ROOT) not in _sys.path:
+    _sys.path.insert(0, str(REPO_ROOT))
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -30,6 +36,9 @@ class Settings(BaseSettings):
 
     # QwenPaw / 百炼 / DashScope
     dashscope_api_key: str = ""
+    # RAG 向量检索专用 key（text-embedding-v3 走百炼/DashScope）；
+    # 独立填写便于单独控量/换号；留空时代码回落到 dashscope_api_key。
+    qwen_embedding_api_key: str = ""
     qwenpaw_app_id: str = ""
     qwenpaw_api_key: str = ""
     qwen_text_model: str = "qwen-plus"
@@ -47,6 +56,18 @@ class Settings(BaseSettings):
     # P1 路线 agent 开关：默认 False（规则版 fallback，零意外 LLM 调用）；
     # 在 QwenPaw 建好 route agent 后置 true。
     route_agent_enabled: bool = False
+    # 需求理解 agent 开关：默认 False（规则版 fallback，零意外 LLM 调用）；
+    # 在 QwenPaw 建好 intent agent 后置 true。
+    intent_agent_enabled: bool = False
+    # Phase 4 拍照识别开关：默认 False（零意外 agent 调用）。
+    # 需在 QwenPaw 建 photo agent（多模态模型 + view_image 工具 + photo-recognize 技能）后置 true。
+    photo_agent_enabled: bool = False
+    # 文化讲解 agent 开关：默认 False（讲解字段 explanation 留空）。
+    # 需在 QwenPaw 建 guide agent（挂 macau-guide 技能）+ RAG 已 ingest 后置 true。
+    guide_agent_enabled: bool = False
+    # 独立审核 agent 开关：默认 False（规则版 fallback，零意外 LLM 调用）；
+    # 在 QwenPaw 建好 reviewer agent（挂 content-safety-review 技能）后置 true。
+    reviewer_agent_enabled: bool = False
     qwen_vision_model: str = "qwen-vl-max"
     qwen_embedding_model: str = "text-embedding-v3"
     qwen_tts_model: str = "cosyvoice-v1"
