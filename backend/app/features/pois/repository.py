@@ -21,6 +21,7 @@ LEGACY_POI_IDS = {
     "poi_fatong": "poi_0018",
     "poi_florindo": "poi_0016",
     "poi_holy_house_mercy": "poi_0055",
+    "poi_ho_tung_library": "poi_0129",
     "poi_leal_senado": "poi_0056",
     "poi_lilau": "poi_0017",
     "poi_lou_kau": "poi_0057",
@@ -41,6 +42,10 @@ LEGACY_POI_IDS = {
     "poi_taipa_houses": "poi_0012",
     "poi_xiahuan": "poi_0168",
 }
+
+
+def canonical_poi_id(poi_id: str) -> str:
+    return LEGACY_POI_IDS.get(poi_id, poi_id)
 
 
 class PoiRepository:
@@ -76,7 +81,7 @@ class PoiRepository:
 
     @staticmethod
     def _database_id(poi_id: str) -> str:
-        return LEGACY_POI_IDS.get(poi_id, poi_id)
+        return canonical_poi_id(poi_id)
 
     def get_by_id(self, poi_id: str) -> PoiResponse | None:
         record = self._session.get(Poi, self._database_id(poi_id))

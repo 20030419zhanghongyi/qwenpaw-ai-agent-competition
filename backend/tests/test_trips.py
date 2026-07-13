@@ -37,11 +37,11 @@ def test_create_valid_trip():
     assert data["trip"]["route_id"] == ROUTE_ID
     assert data["trip"]["status"] == "active"
     assert data["trip"]["stop_poi_ids"] == [
-        "poi_paixao",
-        "poi_ruins_st_paul",
-        "poi_mount_fortress",
-        "poi_fatong",
-        "poi_sv_lazaro",
+        "poi_0002",
+        "poi_0001",
+        "poi_0003",
+        "poi_0018",
+        "poi_0030",
     ]
     assert data["trip"]["checked_in_poi_ids"] == []
 

@@ -8,8 +8,7 @@ from app.models.user import Preference
 from app.observability.trace import record_trace
 
 from .adjuster import RouteAdjustRequest, adjust_route
-from .matcher import match_routes
-from .repository import get_template, list_templates
+from .service import route_service
 
 logger = logging.getLogger("macau_storywalk.routes")
 
@@ -19,7 +18,7 @@ router = APIRouter(prefix="/api/v1/routes", tags=["routes"])
 @router.get("")
 def list_routes() -> list[dict]:
     """全部预设路线模板。"""
-    return list_templates()
+    return route_service.list_templates()
 
 
 @router.post("/match")
@@ -33,7 +32,7 @@ def match(pref: Preference) -> dict:
 
     未来 Phase 3 再接 /routes/adjust 做 Agent 微调。
     """
-    matches = match_routes(pref)
+    matches = route_service.match(pref)
     return {"preference": pref.model_dump(), "matches": matches}
 
 
@@ -76,7 +75,7 @@ def adjust(request: RouteAdjustRequest) -> dict:
 
 @router.get("/{route_id}")
 def get_route_detail(route_id: str) -> dict:
-    route = get_template(route_id)
+    route = route_service.get_template(route_id)
     if not route:
         raise HTTPException(status_code=404, detail=f"Route not found: {route_id}")
     return route

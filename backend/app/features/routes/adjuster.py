@@ -10,11 +10,11 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from app.db.data import get_poi
 from app.models.user import Preference
 
 from .candidate_selector import build_candidate_pool
 from .explain import build_explanation
+from .poi_metadata import get_poi_metadata, list_poi_metadata
 from .repository import get_template
 from .route_constructor import construct_route
 
@@ -148,7 +148,7 @@ def _suggest_added_nodes(instruction: str, candidate_pois: list[dict], route: di
         for candidate in entry.get("candidates", []):
             if candidate["poi_id"] in current_ids:
                 continue
-            poi = get_poi(candidate["poi_id"])
+            poi = get_poi_metadata(candidate["poi_id"])
             if not poi:
                 continue
             if "photo" not in poi.get("suitable_for", []) and "摄影" not in poi.get("theme", []):
@@ -206,7 +206,7 @@ def _suggest_food_nodes(candidate_pois: list[dict], route: dict) -> list[dict]:
         for candidate in entry.get("candidates", []):
             if candidate["poi_id"] in current_ids:
                 continue
-            poi = get_poi(candidate["poi_id"])
+            poi = get_poi_metadata(candidate["poi_id"])
             if not poi or "food" not in poi.get("suitable_for", []):
                 continue
             suggestions.append(
@@ -218,6 +218,19 @@ def _suggest_food_nodes(candidate_pois: list[dict], route: dict) -> list[dict]:
             )
             break
         if suggestions:
+            break
+    if not suggestions and route.get("nodes"):
+        based_on = min(route["nodes"], key=lambda node: node["order"])["poi_id"]
+        for poi in list_poi_metadata():
+            if poi["id"] in current_ids or "food" not in poi.get("suitable_for", []):
+                continue
+            suggestions.append(
+                {
+                    "poi_id": poi["id"],
+                    "based_on": based_on,
+                    "reasons": ["符合美食偏好"],
+                }
+            )
             break
     return suggestions
 
@@ -249,7 +262,7 @@ def _reorder_by_district(route: dict) -> tuple[dict, list[dict]]:
 
 
 def _district_rank(poi_id: str) -> tuple[str, str]:
-    poi = get_poi(poi_id) or {}
+    poi = get_poi_metadata(poi_id) or {}
     return poi.get("district", ""), poi_id
 
 

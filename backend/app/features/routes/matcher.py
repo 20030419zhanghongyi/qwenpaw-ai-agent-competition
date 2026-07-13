@@ -9,6 +9,7 @@
 """
 
 from app.models.user import Preference
+from app.features.pois.repository import canonical_poi_id
 
 from .candidate_selector import build_candidate_pool
 from .explain import build_explanation
@@ -26,6 +27,10 @@ def match_routes(pref: Preference, top_k: int = 3) -> list[dict]:
     3. 约束式排线
     """
     weights = load_weights()
+    poi_heat = {
+        canonical_poi_id(poi_id): value
+        for poi_id, value in weights.get("poi_heat", {}).items()
+    }
     results: list[tuple[int, list[str], dict]] = []
 
     for template in list_templates():
@@ -61,7 +66,7 @@ def match_routes(pref: Preference, top_k: int = 3) -> list[dict]:
             reasons.append(f"适合：{'、'.join(hit_travel)}")
 
         # 离线调研热度加成（若有权重表）
-        hot = sum(weights.get("poi_heat", {}).get(n["poi_id"], 0) for n in template["nodes"])
+        hot = sum(poi_heat.get(node["poi_id"], 0) for node in template["nodes"])
         score += int(hot)
         if hot:
             reasons.append("叠加离线热度权重")
