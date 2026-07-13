@@ -1,0 +1,10 @@
+﻿case_id,category,instruction,route_id,rules_score,rules_passed,rules_total,agent_score,agent_passed,agent_total,delta,change
+r01,route,这趟有点累，少走点路，能坐车就坐车,heritage_fullday,0.33,1,3,1.00,3,3,+0.67,↑涨
+r02,route,加个拍照出片的地方，最好颜色好看的,culture_halfday,1.00,3,3,1.00,3,3,+0.00,=平
+r03,route,别绕来绕去，顺路一点，不要走回头路,taipa_hotspot_halfday,1.00,2,2,1.00,2,2,+0.00,=平
+r04,route,想吃点本地小吃，加个美食点,coloane_leisure_halfday,0.67,2,3,0.67,2,3,+0.00,=平
+r05,route,带小朋友去，轻松一点，别太累也别排太满,food_family_halfday,1.00,2,2,1.00,2,2,+0.00,=平
+r06,route,想要小众一点的，别都挤在大三巴,culture_halfday,1.00,1,1,1.00,1,1,+0.00,=平
+r07,route,时间不够了，只逛半天就行,heritage_fullday,0.50,1,2,1.00,2,2,+0.50,↑涨
+r08,route,腿脚不太好，尽量少走路，拍照为主,photo_halfday,1.00,3,3,1.00,3,3,+0.00,=平
+r09,route,顺路一点顺便吃个饭，别绕路也别太累,taipa_hotspot_halfday,0.67,2,3,1.00,3,3,+0.33,↑涨
