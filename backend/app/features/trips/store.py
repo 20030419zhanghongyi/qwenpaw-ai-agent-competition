@@ -36,6 +36,14 @@ class InMemoryTripStore:
             latest = max(active, key=lambda trip: trip.created_at)
             return latest.model_copy(deep=True)
 
+    def list_by_user(self, user_id: str) -> list[Trip]:
+        with self._lock:
+            return [
+                trip.model_copy(deep=True)
+                for trip in self._trips.values()
+                if trip.user_id == user_id
+            ]
+
     def update(self, trip: Trip) -> Trip:
         with self._lock:
             if trip.trip_id not in self._trips:
