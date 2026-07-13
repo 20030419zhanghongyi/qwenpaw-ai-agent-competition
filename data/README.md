@@ -92,6 +92,42 @@ description     路线说明
 > `suitable_for` 标签词表务必跨 POI / Route / 用户偏好保持一致，
 > 否则 `route_matcher.py` 的匹配打分会失真。
 
+## 数据层架构（讲解 RAG：PG + pgvector + 千问 embedding）
+
+> 名词澄清：队友说的「PG + pgvector + 千问 embedding」是**讲解 agent（guide）知识检索**的技术栈，
+> 与路线 agent 是两条线（路线用结构化数据 + route agent 语义匹配，**不上向量**）。三个词含义如下。
+
+**三个词是什么**
+
+| 词 | 是什么 | 在本项目里的角色 |
+|---|---|---|
+| **PG = PostgreSQL** | 关系型数据库（和 MySQL 同类），数据存成表、用 SQL 查 | 存 POI / 小红书笔记的结构化字段（名字、堂区、标签、坐标…） |
+| **pgvector** | PG 的一个**向量插件**：给表加一列「向量」+ 相似度检索能力 | 「按语义找相似」一条 SQL 搞定，**不用另装向量库**（Milvus / Pinecone / Qdrant 等） |
+| **千问 embedding** | 阿里的「文字→向量」模型（走 DashScope），把文字变成一串捕捉语义的浮点数 | 把 POI 资料 / 笔记 / 用户问题都变成向量，供 pgvector 检索 |
+
+关键点：pgvector =「**结构化 DB + 外挂向量层**」——文本存 PG 表、向量存同行的 pgvector 列，一个库同时干「结构化查询」和「语义检索」两件事。
+（即 `harness/plan.md §1` 说的「队友方案 = 我们 `config.py` 现状，无分歧，只是叫法不同」。）
+
+**三者怎么配合（RAG 检索流程）**
+
+```
+① 离线灌库：POI 资料 / 小红书笔记 ──千问embedding──→ 向量
+            └→ 文本进 PG 表，向量进同行的 pgvector 列
+② 在线问答：用户「妈阁庙有什么故事？」──千问embedding──→ 查询向量
+            ──pgvector 找最近几行──→ 命中的 POI 资料
+            ──塞进 LLM 当上下文──→ 有据讲解（不瞎编史料）
+```
+
+**与路线的区别（plan §1 数据层决策）**
+
+| 子系统 | 方案 | 用向量？ |
+|---|---|---|
+| 路线 | 结构化 JSON + route agent 语义匹配（过滤 / 排序 / 约束求解） | ❌ 不上 |
+| 讲解 RAG | **PG + pgvector + 千问 embedding** | ✅ 上 |
+
+**当前阶段**：初赛阶段路线与讲解都仍用本目录的 JSON（`config.py` 已留换库口子，初赛不引入 Postgres）；
+PG + pgvector 是讲解 RAG 的**目标架构**，待建 guide agent（P2 后段）真正接入 —— 对应 harness 五模块里的⑤知识管理。
+
 ## 数据来源与伦理
 
 - 文化资料以**官方史料**优先，区分 `source_type`；AI 生成或情景演绎须标 `ai`，不作真实史料使用。
