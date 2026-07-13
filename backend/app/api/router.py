@@ -1,9 +1,10 @@
 from fastapi import APIRouter
 
 from app.agents import api as agents_api
-from app.api import health, pois, users
+from app.api import health, users
 from app.features.guide import api as guide_api
 from app.features.intent import api as intent_api
+from app.features.pois import api as pois_api
 from app.features.profile import api as profile_api
 from app.features.review import api as review_api
 from app.features.routes import api as routes_api
@@ -20,5 +21,5 @@ api_router.include_router(profile_api.trip_router)
 api_router.include_router(intent_api.router)
 api_router.include_router(review_api.router)
 api_router.include_router(guide_api.router)
-api_router.include_router(pois.router)
+api_router.include_router(pois_api.router)
 api_router.include_router(agents_api.router)

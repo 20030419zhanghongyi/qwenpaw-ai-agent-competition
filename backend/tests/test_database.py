@@ -30,6 +30,7 @@ EXPECTED_TABLES = {
     "checkins",
     "favorites",
     "trip_feedback",
+    "pois",
 }
 client = TestClient(app)
 
@@ -97,7 +98,7 @@ def test_engine_and_session_factory_are_synchronous():
     assert SessionLocal.kw["autoflush"] is False
 
 
-def test_metadata_contains_six_core_tables():
+def test_metadata_contains_core_tables():
     assert set(Base.metadata.tables) == EXPECTED_TABLES
 
 
