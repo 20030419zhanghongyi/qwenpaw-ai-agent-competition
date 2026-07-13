@@ -35,6 +35,33 @@ uvicorn app.main:app --reload --port 8000
 pytest -q
 ```
 
+## Local PostgreSQL + PostGIS
+
+The repository root `compose.yml` provides a local Demo database using
+`postgis/postgis:16-3.4`. Its credentials are development-only defaults.
+
+```powershell
+# From the repository root
+docker compose up -d db
+docker compose ps
+
+# Apply and inspect schema migrations
+Push-Location backend
+..\.venv\Scripts\python.exe -m alembic upgrade head
+..\.venv\Scripts\python.exe -m alembic current
+Pop-Location
+
+# Stop the container while retaining the named data volume
+docker compose stop db
+```
+
+The application reads `DATABASE_URL` and optional `DB_ECHO` from the normal
+Pydantic settings sources. Copy `backend/.env.example` to an ignored local
+environment file only when overrides are needed; never commit real secrets.
+
+> **Danger — deletes all local QwenPaw database data:**
+> `docker compose down -v`. Normal `docker compose down` retains the named volume.
+
 ## 已实现接口（Phase 1/2）
 
 | 方法 | 路径 | 说明 |

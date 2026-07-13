@@ -57,7 +57,10 @@ class Settings(BaseSettings):
     amap_security_code: str = ""
 
     # 数据库 / 向量库
-    database_url: str = "postgresql+psycopg://macau:macau@localhost:5432/macau"
+    database_url: str = (
+        "postgresql+psycopg://qwenpaw:qwenpaw_dev_password@127.0.0.1:5432/qwenpaw"
+    )
+    db_echo: bool = False
     pgvector_enabled: bool = Field(default=False)
 
     # 认证
