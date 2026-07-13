@@ -34,13 +34,42 @@
 > + ethics `source-attribution`（见 `llm_judge_prompt.md`）。易变信息（开放时间/活动）
 > 类用例，期望 agent 触发「以现场为准」措辞（g08）。
 
+## intent 类（对 `/intent/parse` 响应打分）
+
+响应里可用的核对源：`preference`（NL → 结构化偏好的解析结果）。
+
+| expect 键 | 检查逻辑 | 通过条件 |
+|---|---|---|
+| `duration: "full-day"` | `preference.duration == 值` | 命中 = 1 |
+| `interests: [tag,...]` | 每个 tag 是否进入 `preference.interests`（子集匹配，多余标签不扣分） | 全部命中 = 1 |
+| `physical: [tag,...]` | 每个 tag 是否进入 `preference.physical`（子集匹配） | 全部命中 = 1 |
+| `travel_type: [tag,...]` | 每个 tag 是否进入 `preference.travel_type`（子集匹配） | 全部命中 = 1 |
+
+> intent 类天然适合规则打分（输出是结构化 Preference，非自由文本）。agent 版的价值在
+> **语义覆盖**：规则版只认字面关键词，agent 能理解「一日游→full-day」「腿脚不太好→less-walk」
+> 「重复的路→no-backtrack」等同义表达 —— 这些 case（i02/i08）构成 agent vs 规则的 before/after 差。
+
+## review 类（对 `/review/content` 响应打分）
+
+响应里可用的核对源：`decision`（pass / revise / block）、`issues`、`reviewer_notes`。
+
+| expect 键 | 检查逻辑 | 通过条件 |
+|---|---|---|
+| `decision: "pass"\|"revise"\|"block"` | `resp.decision == 值` | 命中 = 1 |
+
+> review 是**分类任务**（待审核文本 → 裁定），主信号即 decision 是否等于期望，故每 case 单一
+> check、case 分 0/1，run 分 = 分类准确率。agent 版的价值在**语义判断**：规则版只做关键词红线
+> 扫描，(a) 漏判语义性风险 —— 价值/效力断言（v04）、诱导脱离平台交易（v05）、医疗越界（v08）
+> 均无关键词命中会误 pass；(b) 过判可更正的事实错误 —— 「拨打120」（澳门应为 999，v06）规则
+> 版会误 block，agent 正确判 revise。这些 case 构成 agent vs 规则的 before/after 差。
+
 ## 记分产出（落 `harness/results/scores_<run>.json`）
 
 ```
 {
   "run_id": "...", "agent_map": {"route":"route","guide":"guide"}, "ts": "...",
   "overall": 0.0,                       # 0–1
-  "by_category": {"route": 0.0, "guide": 0.0},
+  "by_category": {"route": 0.0, "guide": 0.0, "intent": 0.0, "review": 0.0},
   "cases": [ {"id","category","checks":[{"name","passed"}],"score":0.0,"detail":...}, ... ]
 }
 ```

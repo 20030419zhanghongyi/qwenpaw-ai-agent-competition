@@ -4,8 +4,10 @@
 
 ```
 skills/
-├── route-adjust/SKILL.md   # P1：路线微调 agent 的技能（NL 偏好 → 结构化意图 JSON）
-└── macau-guide/SKILL.md    # P2：文化讲解 agent 的技能（POI 资料 → 有据讲解 + 来源/置信）
+├── route-adjust/SKILL.md        # P1：路线微调 agent（NL 偏好 → 结构化意图 JSON）
+├── requirement-understand/SKILL.md  # 需求理解 agent（NL → Preference JSON）
+├── macau-guide/SKILL.md         # P2：文化讲解 agent（POI 资料 → 有据讲解 + 来源/置信）
+└── photo-recognize/SKILL.md     # P4：拍照识别 agent（图 → {描述,候选POI,置信} JSON）
 ```
 
 ## 部署到 QwenPaw（开发期）
@@ -19,7 +21,7 @@ skills/
 
 ```bash
 # 1. 复制技能源到 QwenPaw 技能池
-cp -R skills/route-adjust skills/macau-guide ~/.qwenpaw/skill_pool/
+cp -R skills/route-adjust skills/requirement-understand skills/macau-guide skills/photo-recognize ~/.qwenpaw/skill_pool/
 
 # 2. 校验 SKILL.md 格式通过（safe=True 才会被登记）
 qwenpaw skills test ~/.qwenpaw/skill_pool/route-adjust
@@ -52,6 +54,51 @@ CLI 默认不在 PATH 时，用 **Console** 建：
 >   `completion_tokens:0`、返回空串且秒退（~1.5s）。换到可用 provider（如 default 用的那个）即通。
 >   症状：空返回 + 秒退 + `qwenpaw.log` 里 `openai.AuthenticationError 401`。
 
+## 在 QwenPaw 里建需求理解 agent（手动步骤）—— ✅ 已完成 + 端到端验证（2026-07-13）
+
+需求理解 agent（`intent`）的技能源已就位（`skills/requirement-understand/SKILL.md`），与 route/guide 平行：
+
+1. Console → Create New Agent：name `需求理解`，agent-id `intent`，挑已配的 text 模型
+2. `cp -R skills/requirement-understand ~/.qwenpaw/skill_pool/` → `qwenpaw skills test ~/.qwenpaw/skill_pool/requirement-understand` → `curl -X POST http://127.0.0.1:8088/api/skills/pool/refresh`（同 route/guide，**不自动发现**）
+3. 给该 agent 启用 `requirement-understand` 技能
+4. 仓库 `.env` 设 `INTENT_AGENT_ENABLED=true` → `POST /api/v1/intent/parse` 走 agent 驱动（失败降级规则版）
+
+> **验证状态**：已完成。thin prompt（不带 schema、靠技能 system prompt）返回干净 Preference JSON；
+> `POST /api/v1/intent/parse` 实测 `source=agent`，agent 把「下午带老人少走路，看建筑」翻成
+> `{travel_type:["family"], physical:["less-walk"], interests:["architecture"], duration:"half-day"}`，
+> 「晚上一个人去拍拍照，别绕路」翻成 `{duration:"evening", travel_type:["solo"], interests:["photo"], physical:["no-backtrack"]}`。
+>
+> **两个坑（route agent 已踩过，同样适用）**：技能不自动发现（见上节，必须 `pool/refresh`）；
+> 模型 provider 401（建 agent 时分到失效 key 会秒退空返回，换可用 provider）。
+
+> `requirement-understand` 输出严格 Preference JSON
+> （`duration/party_size/travel_type/interests/physical/language`），字段对齐
+> `backend/app/models/user.py`——与 route-adjust 同一套「结构化输出 + 失败降级」纪律。
+
+## 在 QwenPaw 里建独立审核 agent（手动步骤）—— ✅ 已完成 + 端到端验证（2026-07-13）
+
+独立审核 agent（`reviewer`）的技能 `content-safety-review` **已在 pool 里**（2026-07-13 已随 ethics 4 技能一起 reconcile），
+故只需建 agent + 挂技能，无需再 cp/refresh：
+
+1. Console → Create New Agent：name `独立审核`，agent-id `reviewer`，挑已配的 text 模型
+2. 给该 agent 启用 `content-safety-review` 技能（技能已在 pool，Console 刷新即可看到）
+3. 仓库 `.env` 设 `REVIEWER_AGENT_ENABLED=true` → `POST /api/v1/review/content` 走 agent 驱动（失败降级规则版）
+
+> **验证状态**：已完成。`POST /api/v1/review/content` 三 case 实测 `source=agent`：干净内容 `pass`；
+> 「制于1908…肯定最豪华」（绝对化无来源）`revise`（命中「不编造 + 附置信度」红线）；「拨打120…
+> 出示身份证银行卡号」`block`——agent 甚至**比规则版更深**：抓到澳门急救应拨 999 而非 120（大陆号码，
+> 地理错可延误救援），并把紧急场景索要银行卡号定性为「诈骗诱导」，需记审计日志并通知内容责任人。
+>
+> **为什么必须独立 agent**：content-safety-review 硬规则「审核者只审核、不改写正文，改写交回
+> 原生成 agent」—— 挂在 guide/photo 上会让生成者与审核者同体，违背设计。故 reviewer 独立存在，
+> 生成方（guide/photo）的输出 pipe 到 `/review/content` 做上线前 pass/revise/block 把关。
+>
+> **验证目标**：`POST /api/v1/review/content` 实测 `source=agent`，agent 对含编造史料 / 安全隐患 /
+> 越界（紧急救援 / 索要个人信息）的内容判 `block`，对过度自信无来源的断言判 `revise`，干净内容 `pass`。
+>
+> **坑**（route/intent 已踩过，同样适用）：技能不自动发现（content-safety-review 已 reconcile 过）；
+> 模型 provider 401（建 agent 分到失效 key 会秒退空返回，换可用 provider）。
+
 ## 在 QwenPaw 里建讲解 agent（P2 手动步骤）
 
 讲解 agent（`guide`）的技能源已就位（`skills/macau-guide/SKILL.md`），与路线 agent 平行：
@@ -65,3 +112,35 @@ CLI 默认不在 PATH 时，用 **Console** 建：
 > `macau-guide` 输出严格 JSON `{text, source_type, confidence, ai_generated, language}`：
 > 易变信息（开放时间/活动）置信度 ≤0.5 且正文「以现场为准」，不编史料——
 > 与路线技能同一套「结构化输出 + 失败降级」纪律。
+
+## 在 QwenPaw 里建拍照识别 agent（P4 手动步骤）
+
+拍照识别 agent（`photo`）的技能源已就位（`skills/photo-recognize/SKILL.md`），与 route/intent 平行。
+**关键差异：本 agent 必须挂多模态模型 + 启用 `view_image` 工具。**
+
+> **机制（2026-07-13 实测确认）**：QwenPaw agent **不**通过内联 image content block 看图，而是用
+> 自带的 `view_image` 工具读取「**本地文件路径**」。后端 `features/guide/api.py` 把脱敏图写成临时
+> 文件、把绝对路径发给 `photo` agent，agent 自行 `view_image` 后输出 JSON。
+> 实测：`{type:"image",image:<data-uri>}` 格式 console-chat 虽接受但模型收不到图、只提示「用
+> view_image / 给文件路径或 URL」；`{type:"image_url",...}` 格式直接空回。故「临时文件路径 +
+> view_image」是唯一通路。
+
+1. Console → Create New Agent：name `拍照识别`，agent-id `photo`
+2. **模型选「支持视觉/多模态」的那个**。当前 `default`/`route` 用的 **glm-5 是纯文本**，会明确回
+   「我当前使用的模型不支持多模态输入」。若模型实际支持视觉却被报非多模态，在提供者设置里把
+   `supports_multimodal` 设为 `true`。
+3. **确认该 agent 启用了 `view_image` 工具**（agent 工具集里勾上——这是它看图的唯一途径）。
+4. `cp -R skills/photo-recognize ~/.qwenpaw/skill_pool/` →
+   `qwenpaw skills test ~/.qwenpaw/skill_pool/photo-recognize` →
+   `curl -X POST http://127.0.0.1:8088/api/skills/pool/refresh`（同 route/intent，**技能不自动发现**）
+5. 给该 agent 启用 `photo-recognize` 技能
+6. 仓库 `.env` 设 `PHOTO_AGENT_ENABLED=true` → `POST /api/v1/guide/photo` 走 photo agent
+   （失败降级：返回 `confidence:0` + `error`，不 500）
+
+> **验证目标**：`curl -F file=@澳门建筑.jpg http://127.0.0.1:8000/api/v1/guide/photo` →
+> `source:"agent"`、`description` 非空、`candidate_poi`/`confidence` 合理。讲解字段 `explanation`
+> 本竖切**恒为 `null`**——讲解（RAG + guide agent）依赖同事的 guide agent，已在接口里留好
+> `_explain()` seam（见 `features/guide/api.py`），待 guide agent 就位后接入。
+>
+> **坑**（route agent 已踩过，同样适用）：技能不自动发现（必须 `pool/refresh`）；模型 provider 401
+> （建 agent 时分到失效 key 会秒退空返回，换可用 provider）。

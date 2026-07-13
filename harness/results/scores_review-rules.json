@@ -1,0 +1,167 @@
+{
+  "run_id": "review-rules",
+  "ts": "2026-07-13T13:52:56",
+  "guide_agent": "default",
+  "overall": 0.5,
+  "by_category": {
+    "route": null,
+    "guide": null,
+    "intent": null,
+    "review": 0.5
+  },
+  "n": 8,
+  "cases": [
+    {
+      "checks": [
+        {
+          "name": "decision",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 1,
+      "total": 1,
+      "detail": {
+        "source": "rules",
+        "decision": "pass",
+        "n_issues": 0,
+        "reviewer_notes_head": "规则版关键词红线扫描（agent 不可用时的 baseline）"
+      },
+      "id": "v01",
+      "category": "review"
+    },
+    {
+      "checks": [
+        {
+          "name": "decision",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 1,
+      "total": 1,
+      "detail": {
+        "source": "rules",
+        "decision": "pass",
+        "n_issues": 0,
+        "reviewer_notes_head": "规则版关键词红线扫描（agent 不可用时的 baseline）"
+      },
+      "id": "v02",
+      "category": "review"
+    },
+    {
+      "checks": [
+        {
+          "name": "decision",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 1,
+      "total": 1,
+      "detail": {
+        "source": "rules",
+        "decision": "revise",
+        "n_issues": 1,
+        "reviewer_notes_head": "规则版关键词红线扫描（agent 不可用时的 baseline）"
+      },
+      "id": "v03",
+      "category": "review"
+    },
+    {
+      "checks": [
+        {
+          "name": "decision",
+          "passed": false
+        }
+      ],
+      "score": 0.0,
+      "passed": 0,
+      "total": 1,
+      "detail": {
+        "source": "rules",
+        "decision": "pass",
+        "n_issues": 0,
+        "reviewer_notes_head": "规则版关键词红线扫描（agent 不可用时的 baseline）"
+      },
+      "id": "v04",
+      "category": "review"
+    },
+    {
+      "checks": [
+        {
+          "name": "decision",
+          "passed": false
+        }
+      ],
+      "score": 0.0,
+      "passed": 0,
+      "total": 1,
+      "detail": {
+        "source": "rules",
+        "decision": "pass",
+        "n_issues": 0,
+        "reviewer_notes_head": "规则版关键词红线扫描（agent 不可用时的 baseline）"
+      },
+      "id": "v05",
+      "category": "review"
+    },
+    {
+      "checks": [
+        {
+          "name": "decision",
+          "passed": false
+        }
+      ],
+      "score": 0.0,
+      "passed": 0,
+      "total": 1,
+      "detail": {
+        "source": "rules",
+        "decision": "block",
+        "n_issues": 1,
+        "reviewer_notes_head": "规则版关键词红线扫描（agent 不可用时的 baseline）"
+      },
+      "id": "v06",
+      "category": "review"
+    },
+    {
+      "checks": [
+        {
+          "name": "decision",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 1,
+      "total": 1,
+      "detail": {
+        "source": "rules",
+        "decision": "block",
+        "n_issues": 1,
+        "reviewer_notes_head": "规则版关键词红线扫描（agent 不可用时的 baseline）"
+      },
+      "id": "v07",
+      "category": "review"
+    },
+    {
+      "checks": [
+        {
+          "name": "decision",
+          "passed": false
+        }
+      ],
+      "score": 0.0,
+      "passed": 0,
+      "total": 1,
+      "detail": {
+        "source": "rules",
+        "decision": "pass",
+        "n_issues": 0,
+        "reviewer_notes_head": "规则版关键词红线扫描（agent 不可用时的 baseline）"
+      },
+      "id": "v08",
+      "category": "review"
+    }
+  ]
+}

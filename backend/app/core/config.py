@@ -30,6 +30,9 @@ class Settings(BaseSettings):
 
     # QwenPaw / 百炼 / DashScope
     dashscope_api_key: str = ""
+    # RAG 向量检索专用 key（text-embedding-v3 走百炼/DashScope）；
+    # 独立填写便于单独控量/换号；留空时代码回落到 dashscope_api_key。
+    qwen_embedding_api_key: str = ""
     qwenpaw_app_id: str = ""
     qwenpaw_api_key: str = ""
     qwen_text_model: str = "qwen-plus"
@@ -47,6 +50,15 @@ class Settings(BaseSettings):
     # P1 路线 agent 开关：默认 False（规则版 fallback，零意外 LLM 调用）；
     # 在 QwenPaw 建好 route agent 后置 true。
     route_agent_enabled: bool = False
+    # 需求理解 agent 开关：默认 False（规则版 fallback，零意外 LLM 调用）；
+    # 在 QwenPaw 建好 intent agent 后置 true。
+    intent_agent_enabled: bool = False
+    # Phase 4 拍照识别开关：默认 False（零意外 agent 调用）。
+    # 需在 QwenPaw 建 photo agent（多模态模型 + view_image 工具 + photo-recognize 技能）后置 true。
+    photo_agent_enabled: bool = False
+    # 独立审核 agent 开关：默认 False（规则版 fallback，零意外 LLM 调用）；
+    # 在 QwenPaw 建好 reviewer agent（挂 content-safety-review 技能）后置 true。
+    reviewer_agent_enabled: bool = False
     qwen_vision_model: str = "qwen-vl-max"
     qwen_embedding_model: str = "text-embedding-v3"
     qwen_tts_model: str = "cosyvoice-v1"
