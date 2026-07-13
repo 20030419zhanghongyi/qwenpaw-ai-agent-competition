@@ -137,6 +137,14 @@ def test_favorite_is_persisted_in_database():
 def test_add_unknown_favorite_returns_404():
     response = client.post(f"/api/v1/users/{USER_ID}/favorites/pois/missing-poi")
     assert response.status_code == 404
+    with SessionLocal() as session:
+        favorite = session.scalar(
+            select(FavoriteRecord).where(
+                FavoriteRecord.user_id == USER_ID,
+                FavoriteRecord.poi_id == "missing-poi",
+            )
+        )
+        assert favorite is None
 
 
 def test_add_favorite_is_idempotent():

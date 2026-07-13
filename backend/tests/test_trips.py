@@ -64,6 +64,22 @@ def test_create_trip_with_unknown_route_returns_404():
     assert "Route not found" in response.json()["detail"]
 
 
+def test_create_trip_rejects_route_with_unknown_poi(monkeypatch):
+    monkeypatch.setattr(
+        "app.features.trips.service.get_template",
+        lambda route_id: {
+            "template_id": route_id,
+            "nodes": [{"poi_id": "missing-poi", "order": 1}],
+        },
+    )
+    response = client.post(
+        "/api/v1/trips",
+        json={"user_id": USER_ID, "route_id": "invalid-poi-route"},
+    )
+    assert response.status_code == 422
+    assert "Route references unknown POIs: missing-poi" in response.json()["detail"]
+
+
 def test_get_trip():
     created = create_trip()
     response = client.get(f"/api/v1/trips/{created['trip']['trip_id']}")

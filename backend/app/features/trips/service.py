@@ -3,6 +3,8 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
+from app.db.session import SessionLocal
+from app.features.pois.repository import PoiRepository
 from app.features.routes.repository import get_template
 
 from .models import (
@@ -79,6 +81,13 @@ class TripService:
         stop_poi_ids = self._extract_stop_poi_ids(route)
         if not stop_poi_ids:
             raise InvalidRouteError(f"Route has no valid POI stops: {route_id}")
+        with SessionLocal() as session:
+            pois = PoiRepository(session).get_by_ids(stop_poi_ids)
+        missing_poi_ids = [poi_id for poi_id in stop_poi_ids if poi_id not in pois]
+        if missing_poi_ids:
+            raise InvalidRouteError(
+                f"Route references unknown POIs: {', '.join(missing_poi_ids)}"
+            )
 
         now = datetime.now(timezone.utc)
         trip = Trip(

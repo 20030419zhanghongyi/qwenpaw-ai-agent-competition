@@ -24,7 +24,7 @@ class PoiService:
         return self._repository.list_pois(category=category, offset=offset, limit=limit)
 
     def get_poi(self, poi_id: str) -> PoiResponse:
-        poi = self._repository.get_poi(poi_id)
+        poi = self._repository.get_by_id(poi_id)
         if poi is None:
             raise PoiNotFoundError(f"POI not found: {poi_id}")
         return poi

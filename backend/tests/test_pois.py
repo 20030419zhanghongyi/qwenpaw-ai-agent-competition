@@ -7,6 +7,7 @@ from sqlalchemy import delete, func, select
 
 from app.db.models import Poi
 from app.db.session import SessionLocal
+from app.features.pois.repository import PoiRepository
 from app.main import app
 from scripts.import_pois import PoiImportRow, upsert_pois
 
@@ -82,6 +83,21 @@ def test_poi_list_reads_database_rows():
     response = client.get("/api/v1/pois?category=test")
     assert response.status_code == 200
     assert {item["poi_id"] for item in response.json()} == TEST_IDS
+
+
+def test_repository_get_by_id_get_by_ids_and_exists():
+    upsert_pois(_rows())
+    with SessionLocal() as session:
+        repository = PoiRepository(session)
+        poi = repository.get_by_id("test_poi_near_a")
+        pois = repository.get_by_ids(
+            ["test_poi_near_a", "test_poi_near_b", "missing-poi"]
+        )
+        assert poi is not None
+        assert poi.poi_name == "Test Senado"
+        assert set(pois) == TEST_IDS
+        assert repository.exists("test_poi_near_a") is True
+        assert repository.exists("missing-poi") is False
 
 
 def test_nearby_pois_uses_postgis_distance():
