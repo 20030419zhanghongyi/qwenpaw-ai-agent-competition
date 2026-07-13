@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.api.contracts import NOT_FOUND_RESPONSE, UNPROCESSABLE_RESPONSE
 from app.db.session import get_db
 
 from .models import NearbyPoiResponse, PoiResponse
@@ -13,7 +14,13 @@ from .service import PoiNotFoundError, PoiService
 router = APIRouter(prefix="/api/v1/pois", tags=["pois"])
 
 
-@router.get("", response_model=list[PoiResponse])
+@router.get(
+    "",
+    response_model=list[PoiResponse],
+    summary="List POIs",
+    description="List canonical POIs stored in PostgreSQL, optionally filtered by category.",
+    responses=UNPROCESSABLE_RESPONSE,
+)
 def list_pois(
     database: Annotated[Session, Depends(get_db)],
     category: str | None = None,
@@ -23,7 +30,13 @@ def list_pois(
     return PoiService(database).list_pois(category=category, offset=offset, limit=limit)
 
 
-@router.get("/nearby", response_model=list[NearbyPoiResponse])
+@router.get(
+    "/nearby",
+    response_model=list[NearbyPoiResponse],
+    summary="Find nearby POIs",
+    description="Use PostGIS geography distance to find canonical POIs within a radius.",
+    responses=UNPROCESSABLE_RESPONSE,
+)
 def nearby_pois(
     database: Annotated[Session, Depends(get_db)],
     longitude: float = Query(ge=-180, le=180),
@@ -39,7 +52,12 @@ def nearby_pois(
     )
 
 
-@router.get("/{poi_id}", response_model=PoiResponse)
+@router.get(
+    "/{poi_id}",
+    response_model=PoiResponse,
+    summary="Get a POI",
+    responses=NOT_FOUND_RESPONSE,
+)
 def get_poi_detail(
     poi_id: str,
     database: Annotated[Session, Depends(get_db)],
