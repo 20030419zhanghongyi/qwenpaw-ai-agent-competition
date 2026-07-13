@@ -56,4 +56,8 @@ class InMemoryTripStore:
             self._trips.clear()
 
 
-trip_store = InMemoryTripStore()
+# Preserve the existing import path for profile code and test cleanup while the
+# active application store moves to PostgreSQL.
+from .repository import trip_repository  # noqa: E402
+
+trip_store = trip_repository

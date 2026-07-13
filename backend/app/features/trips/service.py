@@ -13,7 +13,7 @@ from .models import (
     TripStatus,
     TripWithProgressResponse,
 )
-from .store import InMemoryTripStore, trip_store
+from .repository import SqlAlchemyTripRepository, trip_repository
 
 
 class TripNotFoundError(LookupError):
@@ -33,8 +33,8 @@ class PoiNotInTripError(ValueError):
 
 
 class TripService:
-    def __init__(self, store: InMemoryTripStore) -> None:
-        self._store = store
+    def __init__(self, repository: SqlAlchemyTripRepository) -> None:
+        self._repository = repository
 
     @staticmethod
     def _extract_stop_poi_ids(route: dict) -> list[str]:
@@ -91,40 +91,38 @@ class TripService:
             created_at=now,
             updated_at=now,
         )
-        return self._with_progress(self._store.create(trip))
+        return self._with_progress(self._repository.create_trip(trip))
 
     def get_trip(self, trip_id: str) -> TripWithProgressResponse:
-        trip = self._store.get(trip_id)
+        trip = self._repository.get_trip(trip_id)
         if trip is None:
             raise TripNotFoundError(f"Trip not found: {trip_id}")
         return self._with_progress(trip)
 
     def get_current_trip(self, user_id: str) -> TripWithProgressResponse:
-        trip = self._store.get_active_by_user(user_id)
+        trip = self._repository.get_user_current_trip(user_id)
         if trip is None:
             raise TripNotFoundError(f"Active trip not found for user: {user_id}")
         return self._with_progress(trip)
 
     def check_in(self, trip_id: str, poi_id: str) -> TripWithProgressResponse:
-        trip = self._store.get(trip_id)
+        trip = self._repository.get_trip(trip_id)
         if trip is None:
             raise TripNotFoundError(f"Trip not found: {trip_id}")
         if poi_id not in trip.stop_poi_ids:
             raise PoiNotInTripError(f"POI is not part of trip {trip_id}: {poi_id}")
 
         if poi_id not in trip.checked_in_poi_ids:
-            trip.checked_in_poi_ids.append(poi_id)
-            trip.updated_at = datetime.now(timezone.utc)
-            if len(trip.checked_in_poi_ids) == len(trip.stop_poi_ids):
-                trip.status = TripStatus.COMPLETED
-            trip = self._store.update(trip)
+            trip = self._repository.add_checkin(trip_id, poi_id)
+            if trip is None:
+                raise TripNotFoundError(f"Trip not found: {trip_id}")
         return self._with_progress(trip)
 
     def get_progress(self, trip_id: str) -> TripProgress:
-        trip = self._store.get(trip_id)
-        if trip is None:
+        progress = self._repository.get_progress(trip_id)
+        if progress is None:
             raise TripNotFoundError(f"Trip not found: {trip_id}")
-        return self.calculate_progress(trip)
+        return progress
 
 
-trip_service = TripService(trip_store)
+trip_service = TripService(trip_repository)

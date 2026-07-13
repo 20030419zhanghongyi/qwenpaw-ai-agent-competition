@@ -2,7 +2,11 @@
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
+from app.db.models import Checkin as CheckinRecord
+from app.db.models import Trip as TripRecord
+from app.db.session import SessionLocal
 from app.features.trips.store import trip_store
 from app.main import app
 
@@ -40,6 +44,15 @@ def test_create_valid_trip():
         "poi_sv_lazaro",
     ]
     assert data["trip"]["checked_in_poi_ids"] == []
+
+
+def test_created_trip_is_persisted_in_database():
+    data = create_trip()
+    with SessionLocal() as session:
+        record = session.get(TripRecord, data["trip"]["trip_id"])
+        assert record is not None
+        assert record.user_id == USER_ID
+        assert record.route_id == ROUTE_ID
 
 
 def test_create_trip_with_unknown_route_returns_404():
@@ -82,6 +95,19 @@ def test_first_checkin_succeeds():
     response = client.post(f"/api/v1/trips/{trip_id}/checkins", json={"poi_id": poi_id})
     assert response.status_code == 200
     assert response.json()["trip"]["checked_in_poi_ids"] == [poi_id]
+
+
+def test_checkin_is_persisted_in_database():
+    created = create_trip()
+    trip_id = created["trip"]["trip_id"]
+    poi_id = created["trip"]["stop_poi_ids"][0]
+    response = client.post(f"/api/v1/trips/{trip_id}/checkins", json={"poi_id": poi_id})
+    assert response.status_code == 200
+    with SessionLocal() as session:
+        records = session.scalars(
+            select(CheckinRecord).where(CheckinRecord.trip_id == trip_id)
+        ).all()
+        assert [record.poi_id for record in records] == [poi_id]
 
 
 def test_duplicate_checkin_is_idempotent():
