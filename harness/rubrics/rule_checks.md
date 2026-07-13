@@ -33,6 +33,14 @@
 > 关键词命中只验证「讲到了相关事实」，**不验证事实正确性** —— 后者交给 LLM-judge
 > + ethics `source-attribution`（见 `llm_judge_prompt.md`）。易变信息（开放时间/活动）
 > 类用例，期望 agent 触发「以现场为准」措辞（g08）。
+>
+> **2026-07-13 实测（rule-check 饱和）**：guide 的 before/after = `default` agent（无技能）
+> vs `guide` agent（macau-guide 技能），8 case 两边**都 1.0**（见 `scores_guide-baseline.json` /
+> `scores_guide-agent.json`）。知名 POI 的基本事实覆盖 + 易变信息 hedging（g08 两边都说「以现场为准」）
+> 任何合格 LLM 都能做到，故 keyword+长度 rubric **在 guide 上饱和、无区分度**。guide agent 的真正
+> 价值——结构化 `{text,source_type,confidence}`、严格不编造、JSON 契约——是 rule-check 抓不到的
+> 质量维度，已由 **guide→reviewer 管道**（`/guide/generate` 产出过 `review_text` 把关）兜住，
+> 更深一层的事实正确性留 LLM-judge。
 
 ## intent 类（对 `/intent/parse` 响应打分）
 

@@ -75,26 +75,37 @@ def parse_review_rules(text: str, source_type: str | None = None) -> dict:
     }
 
 
-@router.post("/content")
-def review(request: ReviewRequest) -> dict:
-    """待上线内容 → 审核裁定（agent 先行，失败降级规则版）。"""
+def review_text(text: str, source_type: str | None = None) -> dict:
+    """核心审核逻辑（agent 先行，失败降级规则版）——端点与 guide→reviewer 管道共用。
+
+    返回带 ``source``（"agent"|"rules"）的裁定 dict：
+    ``{decision, issues, reviewer_notes, source}``。reviewer agent 不可用 / 解析失败
+    时自动回落规则版（``source="rules"``），永不抛穿。
+    """
     source = "rules"
-    verdict = parse_review_rules(request.text, request.source_type)
+    verdict = parse_review_rules(text, source_type)
 
     if settings.reviewer_agent_enabled:
-        agent_verdict = reviewer_agent.parse_review(request.text, source_type=request.source_type)
+        agent_verdict = reviewer_agent.parse_review(text, source_type=source_type)
         if agent_verdict is not None:
             verdict = agent_verdict.model_dump()
             source = "agent"
         else:
             logger.info("reviewer agent 不可用或解析失败，降级规则版")
 
+    verdict["source"] = source
+    return verdict
+
+
+@router.post("/content")
+def review(request: ReviewRequest) -> dict:
+    """待上线内容 → 审核裁定（agent 先行，失败降级规则版）。"""
+    verdict = review_text(request.text, request.source_type)
     record_trace(
         kind="review.content",
-        status=source,
-        agent_id="reviewer" if source == "agent" else None,
+        status=verdict["source"],
+        agent_id="reviewer" if verdict["source"] == "agent" else None,
         input_summary=request.text[:200],
         extra={"decision": verdict.get("decision"), "source_type": request.source_type},
     )
-    verdict["source"] = source
     return verdict

@@ -99,21 +99,48 @@ CLI 默认不在 PATH 时，用 **Console** 建：
 > **坑**（route/intent 已踩过，同样适用）：技能不自动发现（content-safety-review 已 reconcile 过）；
 > 模型 provider 401（建 agent 分到失效 key 会秒退空返回，换可用 provider）。
 
-## 在 QwenPaw 里建讲解 agent（P2 手动步骤）
+## 在 QwenPaw 里建讲解 agent（P2 手动步骤）—— 代码 + RAG 已就绪，待 Console 建档
 
-讲解 agent（`guide`）的技能源已就位（`skills/macau-guide/SKILL.md`），与路线 agent 平行：
+讲解 agent（`guide`）的**后端已全部落地**（2026-07-13，Grace 主导）：
+- `backend/app/agents/guide_agent.py`（调 QwenPaw `guide` agent，输出 `{text, source_type, confidence, ai_generated, language}`）
+- `backend/app/features/guide/api.py`：`/guide/photo` 的 `_explain()` seam 已接通 RAG + guide agent；
+  新增 `POST /api/v1/guide/generate`（POI 名/id + 偏好 → 讲解）
+- RAG 已是 **Phase 3 pgvector 语义检索**（不再是 Phase 1 关键词）：339 个 POI 经 DashScope
+  `text-embedding-v3` 向量化入库（`rag/ingest.py`），`rag/retrieve.py` 走余弦 top-k（库空/报错回落关键词）
+- 讲解素材：candidate_poi 已点名 → `get_poi_material` 精确取整 POI；否则 `retrieve()` 向量兜底
 
+**端到端已验证**（2026-07-13）：临时挂 `default` agent + 内联 schema 探针，「议事亭前地」取料 →
+生成 198 字讲解、`source_type=official`、`confidence=0.95`，`guide_agent._extract_json/_coerce` 正确解析。
+即取料→prompt→LLM→JSON→GuideExplanation 全通，**正式版只需建 guide agent**。
+
+待你做（Console，~2 分钟）：
 1. Console → Create New Agent：name `文化讲解`，agent-id `guide`，挑已配的 text 模型
-2. `cp -R skills/macau-guide ~/.qwenpaw/skill_pool/` → `qwenpaw skills test` → `curl -X POST http://127.0.0.1:8088/api/skills/pool/refresh`（同上，**不自动发现**）
+2. `cp -R skills/macau-guide ~/.qwenpaw/skill_pool/` →
+   `qwenpaw skills test ~/.qwenpaw/skill_pool/macau-guide` →
+   `curl -X POST http://127.0.0.1:8088/api/skills/pool/refresh`（同 route/intent，**技能不自动发现**）
 3. 给该 agent 启用 `macau-guide` 技能（讲解类，对齐 `ethics/qwenpaw-skills/source-attribution`）
-4. 待 `POST /api/v1/guide/generate`（POI + 偏好 → 讲解）接口落地后即可端到端联调；
-   在此之前，讲解用例 g01–g08 的评测 `by_category.guide` 仍为 null（见 `harness/results/`）
+4. `.env` 设 `GUIDE_AGENT_ENABLED=true` →
+   `curl -X POST localhost:8000/api/v1/guide/generate -H 'Content-Type: application/json' -d '{"poi":"议事亭前地","interests":["history","architecture"]}'`
+   → `source:"agent"`、`text` 非空讲解；`/guide/photo` 的 `explanation` 也随之有值
 
 > `macau-guide` 输出严格 JSON `{text, source_type, confidence, ai_generated, language}`：
 > 易变信息（开放时间/活动）置信度 ≤0.5 且正文「以现场为准」，不编史料——
 > 与路线技能同一套「结构化输出 + 失败降级」纪律。
+>
+> **前置：pgvector 要在跑**。讲解取料走 `retrieve()`（向量），需 `macau-pg` 容器在线：
+> `docker start macau-pg`（首次起库 + ingest 见 `rag/README.md`）。库空时 `retrieve` 自动回落关键词，不挂。
 
-## 在 QwenPaw 里建拍照识别 agent（P4 手动步骤）
+## 在 QwenPaw 里建拍照识别 agent（P4）—— ✅ 已建 + 端到端验证（2026-07-13，API 建档）
+
+> **验证状态**：已完成。**全程用 API 建档，未手点 Console**：
+> 1. `cp -R skills/photo-recognize ~/.qwenpaw/skill_pool/` → `curl -X POST http://127.0.0.1:8088/api/skills/pool/refresh`（技能进池，`source=customized`）
+> 2. `POST /api/agents`（body `{id:"photo", name:"拍照识别", active_model:{provider_id:"aliyun-tokenplan-intl", model:"kimi-k2.5"}, skill_names:["photo-recognize"], language:"zh"}`）→ HTTP 201
+> 3. 验证：`active_model=kimi-k2.5`（多模态）、`view_image.enabled=true`（**内置工具不是 skill**，默认开、每个 agent 自动注册，技能网格里找不到是正常的）、`photo-recognize` 技能 `enabled:true/channels:all`（挂载形态同 guide 的 macau-guide）
+> 4. `.env` `PHOTO_AGENT_ENABLED=true` + 重启后端
+>
+> **端到端实测**（合成图：红顶黄墙建筑+太阳）：`POST /api/v1/guide/photo` → `source:"agent"`、`scrubbed:true`、`description` 精准（kimi-k2.5 经 `view_image` 看图，把「黄色小房子/红三角顶/棕门/绿草地/蓝天/黄太阳」一字不差读出）、`candidate_poi:null`+`confidence:0.1`（非澳门 POI 正确低置信）；讲解 seam 触发（向量兜底检 4 POI→guide 列举让用户选）、`review.decision=pass`（guide→reviewer 管道通）。trace `guide.photo` status=ok agent=photo 12.7s；`guide.review` status=agent agent=reviewer。
+>
+> **待补**：用真实澳门建筑/街景照验识别命中率（KPI ≥75%）——合成图只验管线、验不了 POI 命中。低置信（如 0.1）时 explanation 仍会经向量兜底触发，是计划里 deferred 的「置信度不足兜底」增量，非 bug。
 
 拍照识别 agent（`photo`）的技能源已就位（`skills/photo-recognize/SKILL.md`），与 route/intent 平行。
 **关键差异：本 agent 必须挂多模态模型 + 启用 `view_image` 工具。**
@@ -137,10 +164,9 @@ CLI 默认不在 PATH 时，用 **Console** 建：
 6. 仓库 `.env` 设 `PHOTO_AGENT_ENABLED=true` → `POST /api/v1/guide/photo` 走 photo agent
    （失败降级：返回 `confidence:0` + `error`，不 500）
 
-> **验证目标**：`curl -F file=@澳门建筑.jpg http://127.0.0.1:8000/api/v1/guide/photo` →
+> **验证目标**（已达成，见上方状态块）：`curl -F file=@澳门建筑.jpg http://127.0.0.1:8000/api/v1/guide/photo` →
 > `source:"agent"`、`description` 非空、`candidate_poi`/`confidence` 合理。讲解字段 `explanation`
-> 本竖切**恒为 `null`**——讲解（RAG + guide agent）依赖同事的 guide agent，已在接口里留好
-> `_explain()` seam（见 `features/guide/api.py`），待 guide agent 就位后接入。
+> 在 guide agent 就位后**已有值**（candidate_poi 命中→精确取料讲解；未命中→向量兜底检索相关 POI），并过 reviewer。
 >
 > **坑**（route agent 已踩过，同样适用）：技能不自动发现（必须 `pool/refresh`）；模型 provider 401
 > （建 agent 时分到失效 key 会秒退空返回，换可用 provider）。
