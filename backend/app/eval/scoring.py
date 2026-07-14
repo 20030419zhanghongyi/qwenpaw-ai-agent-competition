@@ -122,6 +122,46 @@ def score_review_case(case: dict[str, Any], resp: dict[str, Any]) -> dict[str, A
     })
 
 
+def _normalize_candidate(value: Any) -> str:
+    """POI 名称比较用归一化：忽略大小写、空白与标点，保留中英文数字。"""
+    return "".join(ch for ch in str(value or "").casefold() if ch.isalnum())
+
+
+def score_photo_case(case: dict[str, Any], resp: dict[str, Any]) -> dict[str, Any]:
+    """对 photo agent 的结构化识别结果打分。"""
+    exp = case.get("expect", {})
+    description = str(resp.get("description") or "")
+    candidate = resp.get("candidate_poi")
+    try:
+        confidence = float(resp.get("confidence", 0.0))
+    except (TypeError, ValueError):
+        confidence = 0.0
+
+    checks: list[tuple[str, bool]] = []
+    if "candidate_any" in exp:
+        actual = _normalize_candidate(candidate)
+        expected = [_normalize_candidate(v) for v in exp["candidate_any"]]
+        matched = bool(actual) and any(v and (v in actual or actual in v) for v in expected)
+        checks.append(("candidate_match", matched))
+    if exp.get("candidate_null"):
+        checks.append(("candidate_null", candidate is None))
+    if "description_keywords_any" in exp:
+        checks.append(("description_keywords_any", _has_keyword(description, exp["description_keywords_any"])))
+    if "description_min_len" in exp:
+        checks.append(("description_min_len", len(description) >= int(exp["description_min_len"])))
+    if "confidence_min" in exp:
+        checks.append(("confidence_min", confidence >= float(exp["confidence_min"])))
+    if "confidence_max" in exp:
+        checks.append(("confidence_max", confidence <= float(exp["confidence_max"])))
+
+    return _finalize(checks, {
+        "source": resp.get("source"),
+        "candidate_poi": candidate,
+        "confidence": confidence,
+        "description_head": description[:160],
+    })
+
+
 def _finalize(checks: list[tuple[str, bool]], detail: dict[str, Any]) -> dict[str, Any]:
     passed = sum(1 for _, ok in checks if ok)
     score = passed / len(checks) if checks else 1.0
@@ -138,7 +178,7 @@ def aggregate(results: list[dict[str, Any]]) -> dict[str, Any]:
     """汇总 case 结果 → overall + by_category。"""
     overall = sum(r["score"] for r in results) / len(results) if results else 0.0
     by_cat: dict[str, float | None] = {}
-    for cat in ("route", "guide", "intent", "review"):
+    for cat in ("route", "guide", "intent", "review", "photo"):
         rs = [r for r in results if r.get("category") == cat]
         by_cat[cat] = round(sum(r["score"] for r in rs) / len(rs), 3) if rs else None
     return {"overall": round(overall, 3), "by_category": by_cat, "n": len(results)}
