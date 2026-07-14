@@ -1,0 +1,7 @@
+# 统一数据库镜像：pgvector(向量) + PostGIS(地理) 双扩展，backend 表与 RAG 的 poi_chunks 共用同一个 qwenpaw 库。
+# 基础 pgvector/pgvector:pg16 自带 vector 扩展；PostGIS 走 apt 装（pgdg 源已在基础镜像里）。
+FROM pgvector/pgvector:pg16
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-16-postgis-3 \
+    && rm -rf /var/lib/apt/lists/*

@@ -1,0 +1,25 @@
+# 构建上下文瘦身 + 防泄密：.env 永不进镜像。
+.git
+.github
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+.venv/
+backend/.venv/
+**/*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 密钥（绝不打进镜像）
+.env
+.env.*
+!.env.example
+
+# 大/无关产物
+node_modules/
+harness/results/
+harness/traces/
+**/.DS_Store
+dist/
+build/
