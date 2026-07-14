@@ -1,8 +1,12 @@
-# Local Demo database only. Do not reuse these credentials in production.
+# Macau StoryWalk 后端一键编排：统一数据库(PostGIS+pgvector) + 后端 + 自动建表导数据。
+# 队友流程：cp .env.example .env(填 key) → 本机起 QwenPaw(:8088) → docker compose up -d --build
+# RAG(文化讲解)可选：docker compose run --rm rag-seed + .env 开 PGVECTOR_ENABLED/GUIDE_AGENT_ENABLED。
 services:
   db:
-    image: postgis/postgis:16-3.4
-    container_name: qwenpaw-postgis
+    build:
+      context: .
+      dockerfile: Dockerfile.db
+    container_name: qwenpaw-db
     restart: unless-stopped
     environment:
       POSTGRES_DB: qwenpaw
@@ -11,7 +15,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - qwenpaw_postgres_data:/var/lib/postgresql/data
+      - qwenpaw_pg_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U qwenpaw -d qwenpaw"]
       interval: 5s
@@ -19,5 +24,68 @@ services:
       retries: 12
       start_period: 10s
 
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: qwenpaw-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # 指向 compose 网络里的 db 服务（覆盖 .env/默认值的 127.0.0.1）
+      DATABASE_URL: postgresql+psycopg://qwenpaw:qwenpaw_dev_password@db:5432/qwenpaw
+      # QwenPaw 在队友宿主机 :8088；容器经 host.docker.internal 连过去（Mac/Win 原生，Linux 走 host-gateway）
+      QWENPAW_BASE_URL: http://host.docker.internal:8088
+    ports:
+      - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: qwenpaw-seed
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+psycopg://qwenpaw:qwenpaw_dev_password@db:5432/qwenpaw
+    working_dir: /app/backend
+    command: ["sh", "scripts/seed.sh"]
+    restart: "no"
+
+  # 可选：向量化灌 RAG embedding（DashScope text-embedding-v3，需 API key + ~1min + 小额费用）。
+  # 默认不在 up 范围；用文化讲解时手动跑一次：docker compose run --rm rag-seed
+  rag-seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles: ["rag"]
+    depends_on:
+      db:
+        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+psycopg://qwenpaw:qwenpaw_dev_password@db:5432/qwenpaw
+      PGVECTOR_ENABLED: "true"
+    working_dir: /app
+    command: ["python", "rag/ingest.py"]
+    restart: "no"
+
 volumes:
-  qwenpaw_postgres_data:
+  qwenpaw_pg_data:
