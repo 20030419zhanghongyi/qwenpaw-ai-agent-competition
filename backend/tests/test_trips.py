@@ -2,7 +2,11 @@
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
+from app.db.models import Checkin as CheckinRecord
+from app.db.models import Trip as TripRecord
+from app.db.session import SessionLocal
 from app.features.trips.store import trip_store
 from app.main import app
 
@@ -33,13 +37,22 @@ def test_create_valid_trip():
     assert data["trip"]["route_id"] == ROUTE_ID
     assert data["trip"]["status"] == "active"
     assert data["trip"]["stop_poi_ids"] == [
-        "poi_paixao",
-        "poi_ruins_st_paul",
-        "poi_mount_fortress",
-        "poi_fatong",
-        "poi_sv_lazaro",
+        "poi_0002",
+        "poi_0001",
+        "poi_0003",
+        "poi_0018",
+        "poi_0030",
     ]
     assert data["trip"]["checked_in_poi_ids"] == []
+
+
+def test_created_trip_is_persisted_in_database():
+    data = create_trip()
+    with SessionLocal() as session:
+        record = session.get(TripRecord, data["trip"]["trip_id"])
+        assert record is not None
+        assert record.user_id == USER_ID
+        assert record.route_id == ROUTE_ID
 
 
 def test_create_trip_with_unknown_route_returns_404():
@@ -49,6 +62,22 @@ def test_create_trip_with_unknown_route_returns_404():
     )
     assert response.status_code == 404
     assert "Route not found" in response.json()["detail"]
+
+
+def test_create_trip_rejects_route_with_unknown_poi(monkeypatch):
+    monkeypatch.setattr(
+        "app.features.trips.service.get_template",
+        lambda route_id: {
+            "template_id": route_id,
+            "nodes": [{"poi_id": "missing-poi", "order": 1}],
+        },
+    )
+    response = client.post(
+        "/api/v1/trips",
+        json={"user_id": USER_ID, "route_id": "invalid-poi-route"},
+    )
+    assert response.status_code == 422
+    assert "Route references unknown POIs: missing-poi" in response.json()["detail"]
 
 
 def test_get_trip():
@@ -82,6 +111,19 @@ def test_first_checkin_succeeds():
     response = client.post(f"/api/v1/trips/{trip_id}/checkins", json={"poi_id": poi_id})
     assert response.status_code == 200
     assert response.json()["trip"]["checked_in_poi_ids"] == [poi_id]
+
+
+def test_checkin_is_persisted_in_database():
+    created = create_trip()
+    trip_id = created["trip"]["trip_id"]
+    poi_id = created["trip"]["stop_poi_ids"][0]
+    response = client.post(f"/api/v1/trips/{trip_id}/checkins", json={"poi_id": poi_id})
+    assert response.status_code == 200
+    with SessionLocal() as session:
+        records = session.scalars(
+            select(CheckinRecord).where(CheckinRecord.trip_id == trip_id)
+        ).all()
+        assert [record.poi_id for record in records] == [poi_id]
 
 
 def test_duplicate_checkin_is_idempotent():

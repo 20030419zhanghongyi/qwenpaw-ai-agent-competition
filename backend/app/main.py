@@ -1,27 +1,44 @@
-"""FastAPI 应用入口。
-
-启动：  uvicorn app.main:app --reload --port 8000
-文档：  http://localhost:8000/docs
-"""
+"""QwenPaw FastAPI application entry point."""
 
 import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 from app.api.router import api_router
 from app.core.config import settings
 
 logging.basicConfig(level=settings.log_level.upper())
-logger = logging.getLogger("macau_storywalk")
+
+
+class RootResponse(BaseModel):
+    name: str
+    docs: str
+    health: str
+
+
+OPENAPI_TAGS = [
+    {"name": "health", "description": "API and PostgreSQL availability."},
+    {"name": "pois", "description": "Canonical POI and PostGIS nearby queries."},
+    {"name": "routes", "description": "Persisted route templates and matching."},
+    {"name": "trips", "description": "Trip lifecycle, check-ins, and progress."},
+    {"name": "profile", "description": "Trip history, favorites, and feedback."},
+    {"name": "users", "description": "Demo user preference endpoints."},
+]
 
 app = FastAPI(
-    title="Macau StoryWalk API",
-    description="澳跡同行 —— 基于 QwenPaw 的任务式智慧文旅导览系统",
-    version="0.1.0",
+    title="QwenPaw Macau AI Travel Assistant API",
+    description=(
+        "Stable backend data API for the QwenPaw Agent and mini-program teams. "
+        "Core POI, route, trip, check-in, favorite, and feedback data is persisted "
+        "in PostgreSQL/PostGIS."
+    ),
+    version="1.0.0",
+    openapi_tags=OPENAPI_TAGS,
+    contact={"name": "QwenPaw backend team"},
 )
 
-# Phase 2 本地开发：允许 Vite 前端跨域。上线后收紧为真实域名。
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -36,6 +53,10 @@ app.add_middleware(
 app.include_router(api_router)
 
 
-@app.get("/")
-def root() -> dict:
-    return {"name": "Macau StoryWalk API", "docs": "/docs", "health": "/api/v1/health"}
+@app.get("/", response_model=RootResponse, summary="API entry point")
+def root() -> RootResponse:
+    return RootResponse(
+        name="QwenPaw Macau AI Travel Assistant API",
+        docs="/docs",
+        health="/api/v1/health",
+    )

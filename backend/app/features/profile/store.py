@@ -60,4 +60,8 @@ class InMemoryProfileStore:
             self._feedback_by_trip.clear()
 
 
-profile_store = InMemoryProfileStore()
+# Preserve the existing import path for test cleanup while active profile state
+# moves to PostgreSQL.
+from .repository import profile_repository  # noqa: E402
+
+profile_store = profile_repository

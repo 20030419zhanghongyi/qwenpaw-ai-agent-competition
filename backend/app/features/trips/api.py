@@ -2,6 +2,8 @@
 
 from fastapi import APIRouter, HTTPException, status
 
+from app.api.contracts import NOT_FOUND_RESPONSE, UNPROCESSABLE_RESPONSE
+
 from .models import (
     CheckinRequest,
     TripCreateRequest,
@@ -35,6 +37,9 @@ def _raise_http_error(exc: Exception) -> None:
     "",
     response_model=TripWithProgressResponse,
     status_code=status.HTTP_201_CREATED,
+    summary="Create a trip",
+    description="Create a persisted trip from a database-backed route template.",
+    responses={**NOT_FOUND_RESPONSE, **UNPROCESSABLE_RESPONSE},
 )
 def create_trip(request: TripCreateRequest) -> TripWithProgressResponse:
     try:
@@ -43,7 +48,12 @@ def create_trip(request: TripCreateRequest) -> TripWithProgressResponse:
         _raise_http_error(exc)
 
 
-@router.get("/{trip_id}", response_model=TripWithProgressResponse)
+@router.get(
+    "/{trip_id}",
+    response_model=TripWithProgressResponse,
+    summary="Get a trip",
+    responses=NOT_FOUND_RESPONSE,
+)
 def get_trip(trip_id: str) -> TripWithProgressResponse:
     try:
         return trip_service.get_trip(trip_id)
@@ -51,7 +61,12 @@ def get_trip(trip_id: str) -> TripWithProgressResponse:
         _raise_http_error(exc)
 
 
-@user_router.get("/{user_id}/current-trip", response_model=TripWithProgressResponse)
+@user_router.get(
+    "/{user_id}/current-trip",
+    response_model=TripWithProgressResponse,
+    summary="Get the user's current trip",
+    responses=NOT_FOUND_RESPONSE,
+)
 def get_current_trip(user_id: str) -> TripWithProgressResponse:
     try:
         return trip_service.get_current_trip(user_id)
@@ -59,7 +74,12 @@ def get_current_trip(user_id: str) -> TripWithProgressResponse:
         _raise_http_error(exc)
 
 
-@router.post("/{trip_id}/checkins", response_model=TripWithProgressResponse)
+@router.post(
+    "/{trip_id}/checkins",
+    response_model=TripWithProgressResponse,
+    summary="Check in at a trip stop",
+    responses={**NOT_FOUND_RESPONSE, **UNPROCESSABLE_RESPONSE},
+)
 def check_in(trip_id: str, request: CheckinRequest) -> TripWithProgressResponse:
     try:
         return trip_service.check_in(trip_id, request.poi_id)
@@ -67,7 +87,12 @@ def check_in(trip_id: str, request: CheckinRequest) -> TripWithProgressResponse:
         _raise_http_error(exc)
 
 
-@router.get("/{trip_id}/progress", response_model=TripProgressResponse)
+@router.get(
+    "/{trip_id}/progress",
+    response_model=TripProgressResponse,
+    summary="Get trip progress",
+    responses=NOT_FOUND_RESPONSE,
+)
 def get_progress(trip_id: str) -> TripProgressResponse:
     try:
         progress = trip_service.get_progress(trip_id)

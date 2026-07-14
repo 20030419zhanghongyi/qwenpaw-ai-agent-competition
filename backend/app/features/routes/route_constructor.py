@@ -13,8 +13,9 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from app.db.data import get_poi
 from app.models.user import Preference
+
+from .poi_metadata import get_poi_metadata
 
 
 DURATION_LIMITS = {
@@ -142,7 +143,7 @@ def _insert_candidates_for_interests(
                 if poi_id in current_ids:
                     continue
 
-                poi = get_poi(poi_id)
+                poi = get_poi_metadata(poi_id)
                 if not poi:
                     continue
 
@@ -195,7 +196,7 @@ def _replace_last_expensive_node(
         return route, False
 
     target = nodes[-1]
-    source_poi = get_poi(target["poi_id"]) or {}
+    source_poi = get_poi_metadata(target["poi_id"]) or {}
     target_entry = next((entry for entry in candidate_pois if entry["source_poi_id"] == target["poi_id"]), None)
     if not target_entry:
         return route, False
@@ -205,7 +206,7 @@ def _replace_last_expensive_node(
         poi_id = candidate["poi_id"]
         if poi_id in current_ids:
             continue
-        poi = get_poi(poi_id)
+        poi = get_poi_metadata(poi_id)
         if not poi:
             continue
         if prefer_same_district and poi.get("district") != source_poi.get("district"):
@@ -270,7 +271,7 @@ def _default_stay_min(poi: dict) -> int:
 
 
 def _district_rank(poi_id: str) -> tuple[str, str]:
-    poi = get_poi(poi_id) or {}
+    poi = get_poi_metadata(poi_id) or {}
     return poi.get("district", ""), poi_id
 
 
@@ -284,7 +285,7 @@ def _renumber_nodes(route: dict) -> dict:
 def _renumber_nodes_inplace(nodes: list[dict]) -> None:
     for index, node in enumerate(nodes, start=1):
         node["order"] = index
-        if poi := get_poi(node["poi_id"]):
+        if poi := get_poi_metadata(node["poi_id"]):
             node["district"] = poi.get("district")
 
 

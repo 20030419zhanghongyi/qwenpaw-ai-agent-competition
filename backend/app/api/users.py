@@ -1,31 +1,52 @@
+"""Demo user preference endpoints."""
+
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 from app.models.user import Preference, UserProfile
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
-
-
-# Phase 2 占位：内存返回。Phase 2 末接 Postgres + JWT 后替换。
 _INMEMORY: dict[str, UserProfile] = {}
 
 
-@router.post("")
-def create_user(user: UserProfile) -> dict:
+class UserMutationResponse(BaseModel):
+    status: str
+    user_id: str
+
+
+class UserDetailResponse(BaseModel):
+    user: UserProfile | None
+
+
+class PreferenceUpdateResponse(UserMutationResponse):
+    preference: Preference
+
+
+@router.post("", response_model=UserMutationResponse, summary="Create a demo user")
+def create_user(user: UserProfile) -> UserMutationResponse:
     _INMEMORY[user.user_id] = user
-    return {"status": "ok", "user_id": user.user_id}
+    return UserMutationResponse(status="ok", user_id=user.user_id)
 
 
-@router.get("/{user_id}")
-def get_user(user_id: str) -> dict:
-    user = _INMEMORY.get(user_id)
-    return {"user": user.model_dump() if user else None}
+@router.get(
+    "/{user_id}", response_model=UserDetailResponse, summary="Get a demo user"
+)
+def get_user(user_id: str) -> UserDetailResponse:
+    return UserDetailResponse(user=_INMEMORY.get(user_id))
 
 
-@router.put("/{user_id}/preferences")
-def update_preferences(user_id: str, pref: Preference) -> dict:
-    """更新偏好，后续触发路线配对。"""
+@router.put(
+    "/{user_id}/preferences",
+    response_model=PreferenceUpdateResponse,
+    summary="Update demo user preferences",
+)
+def update_preferences(user_id: str, pref: Preference) -> PreferenceUpdateResponse:
     if user_id in _INMEMORY:
         _INMEMORY[user_id].preference = pref
     else:
-        _INMEMORY[user_id] = UserProfile(user_id=user_id, language=pref.language, preference=pref)
-    return {"status": "ok", "user_id": user_id, "preference": pref.model_dump()}
+        _INMEMORY[user_id] = UserProfile(
+            user_id=user_id,
+            language=pref.language,
+            preference=pref,
+        )
+    return PreferenceUpdateResponse(status="ok", user_id=user_id, preference=pref)

@@ -4,6 +4,7 @@ from typing import NoReturn
 
 from fastapi import APIRouter, HTTPException, Query, Response, status
 
+from app.api.contracts import CONFLICT_RESPONSE, NOT_FOUND_RESPONSE, UNPROCESSABLE_RESPONSE
 from app.features.trips.models import TripStatus
 
 from .models import (
@@ -35,7 +36,12 @@ def _raise_http_error(exc: Exception) -> NoReturn:
     raise exc
 
 
-@user_router.get("/{user_id}/trips", response_model=list[HistoryTripResponse])
+@user_router.get(
+    "/{user_id}/trips",
+    response_model=list[HistoryTripResponse],
+    summary="List trip history",
+    responses=UNPROCESSABLE_RESPONSE,
+)
 def list_trip_history(
     user_id: str,
     status_filter: TripStatus | None = Query(default=None, alias="status"),
@@ -47,6 +53,8 @@ def list_trip_history(
 @user_router.post(
     "/{user_id}/favorites/pois/{poi_id}",
     response_model=FavoritePoiResponse,
+    summary="Add a favorite POI",
+    responses=NOT_FOUND_RESPONSE,
 )
 def add_favorite(user_id: str, poi_id: str, response: Response) -> FavoritePoiResponse:
     try:
@@ -60,6 +68,7 @@ def add_favorite(user_id: str, poi_id: str, response: Response) -> FavoritePoiRe
 @user_router.delete(
     "/{user_id}/favorites/pois/{poi_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    summary="Remove a favorite POI",
 )
 def remove_favorite(user_id: str, poi_id: str) -> Response:
     profile_service.remove_favorite(user_id, poi_id)
@@ -69,12 +78,23 @@ def remove_favorite(user_id: str, poi_id: str) -> Response:
 @user_router.get(
     "/{user_id}/favorites/pois",
     response_model=list[FavoritePoiResponse],
+    summary="List favorite POIs",
 )
 def list_favorites(user_id: str) -> list[FavoritePoiResponse]:
     return profile_service.list_favorites(user_id)
 
 
-@trip_router.post("/{trip_id}/feedback", response_model=TripFeedback)
+@trip_router.post(
+    "/{trip_id}/feedback",
+    response_model=TripFeedback,
+    summary="Create or update trip feedback",
+    responses={
+        **NOT_FOUND_RESPONSE,
+        **CONFLICT_RESPONSE,
+        **UNPROCESSABLE_RESPONSE,
+        403: {"description": "The trip belongs to a different user."},
+    },
+)
 def upsert_feedback(
     trip_id: str,
     request: TripFeedbackRequest,
@@ -88,7 +108,12 @@ def upsert_feedback(
     return feedback
 
 
-@trip_router.get("/{trip_id}/feedback", response_model=TripFeedback)
+@trip_router.get(
+    "/{trip_id}/feedback",
+    response_model=TripFeedback,
+    summary="Get trip feedback",
+    responses=NOT_FOUND_RESPONSE,
+)
 def get_feedback(trip_id: str) -> TripFeedback:
     try:
         return profile_service.get_feedback(trip_id)
