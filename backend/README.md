@@ -51,7 +51,7 @@ SQLAlchemy + PostgreSQL/PostGIS
 - 支持数据库 upgrade、downgrade 和重复 upgrade 验证
 - 提供数据库健康检查；数据库不可用时 API 仍返回 HTTP 200，并通过 `database_status=unavailable` 标识状态
 
-当前 Alembic head 为 `20260713_03`。
+当前 Alembic head 为 `20260714_01`（用户落库：`users` 表新增 `name` + `preference` JSON 字段）。
 
 ### POI 地点数据库
 
@@ -136,7 +136,7 @@ Favorite 和 Feedback 均通过 Repository 持久化至 PostgreSQL，并保持�
 - Alembic `upgrade head`
 - Alembic `downgrade base`
 - Alembic 再次 `upgrade head`
-- `alembic current` 与 `alembic heads` 均为 `20260713_03 (head)`
+- `alembic current` 与 `alembic heads` 均为 `20260714_01 (head)`
 - `alembic check` 返回无待生成迁移
 
 ### POI 数据验证
@@ -278,6 +278,11 @@ Pop-Location
 | 方法 | 路径 | 说明 |
 |---|---|---|
 | GET | `/api/v1/health` | API 与数据库健康状态 |
+| POST | `/api/v1/users/register` | 注册用户并签发 JWT（落 PostgreSQL） |
+| POST | `/api/v1/users/login` | 极简登录：user_id 换 JWT（demo 不设密码） |
+| GET | `/api/v1/users/me` | Bearer token 获取当前用户 |
+| GET | `/api/v1/users/{user_id}` | 查询用户 |
+| PUT | `/api/v1/users/{user_id}/preferences` | 更新用户偏好（整体 JSON 落库） |
 | GET | `/api/v1/pois` | POI 列表和分类过滤 |
 | GET | `/api/v1/pois/nearby` | PostGIS 附近 POI 查询 |
 | GET | `/api/v1/pois/{poi_id}` | POI 详情 |
@@ -334,9 +339,50 @@ Remove-Item Env:PYTHONDONTWRITEBYTECODE -ErrorAction SilentlyContinue
 联调或交付前请确认：
 
 1. `docker compose ps` 显示数据库为 `healthy`。
-2. `alembic current` 与 `alembic heads` 均为 `20260713_03 (head)`。
+2. `alembic current` 与 `alembic heads` 均为 `20260714_01 (head)`。
 3. POI 和路线模板导入脚本已成功执行。
 4. `/api/v1/health` 返回 `database_status=ok`。
 5. Swagger UI 和 OpenAPI JSON 可正常访问。
 6. 全量 Pytest 测试通过。
 7. 工作区不包含 `.env`、`.venv`、trace 或 pytest cache 改动。
+
+## 12. Docker 一键启动（统一库，推荐）
+
+整个后端（数据库 + 应用 + 数据）都容器化，队友无需本地装 Python 依赖或手动建库。
+
+**前置**：已安装 Docker Desktop；本机已启动 QwenPaw（监听 `:8088`）。
+
+```bash
+# 1) 准备配置（填入 DashScope / QwenPaw / 高德 等 key）
+cp .env.example .env
+
+# 2) 一键起：统一数据库(PostGIS+pgvector) + 后端 + 自动建表导数据
+docker compose up -d --build
+
+# 3) 访问
+open http://localhost:8000/docs        # Swagger UI
+```
+
+`up` 会自动完成：建库并启用 `postgis`+`vector` 扩展 → alembic 迁移建表 → 导入 341 POI 与 6 路线模板 → 启动后端。后端会在数据就绪后才对外服务（依赖 `seed` 完成成功）。
+
+常用命令：
+
+```bash
+docker compose ps                       # db=healthy / seed=exited(0) / backend=running
+docker compose logs -f seed             # 看建表/导数据过程
+docker compose stop                     # 停（保留数据）
+docker compose down -v                  # 彻底重置（删库卷，下次 up 重新建库导数）
+```
+
+**RAG / 文化讲解（可选）**：默认不灌向量数据（省 API 费用）。需要时手动跑一次向量化，并在 `.env` 开启对应开关：
+
+```bash
+docker compose run --rm rag-seed        # 把 data/pois.json 向量化灌入 poi_chunks（~1 分钟）
+# .env 里设：PGVECTOR_ENABLED=true、GUIDE_AGENT_ENABLED=true
+```
+
+**说明**：
+
+- QwenPaw 本体**不在容器内**，每人本机跑 `:8088`；容器经 `host.docker.internal` 连宿主机（Mac/Windows 原生支持，Linux 自动加 `host-gateway`）。
+- 密钥不打进镜像，全部走宿主机 `.env`（`.dockerignore` 已排除）。
+- 统一库同时承载后端表（`pois`/`route_templates`/…）与 RAG 表（`poi_chunks`），共用一条 `DATABASE_URL`，不再有 PostGIS 与 pgvector 两个容器抢端口的问题。

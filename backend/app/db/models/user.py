@@ -20,6 +20,10 @@ class User(Base):
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     language: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    # name + preference：用户落库 + 极简登录新增（迁移 20260714_01）。
+    # preference 存完整 Preference（JSON），避免逐字段映射；旧列保留向后兼容。
+    name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    preference: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     travel_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
     duration_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     interests: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
