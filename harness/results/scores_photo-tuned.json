@@ -1,0 +1,636 @@
+{
+  "run_id": "photo-tuned",
+  "ts": "2026-07-13T19:51:32",
+  "guide_agent": "default",
+  "overall": 0.963,
+  "by_category": {
+    "route": null,
+    "guide": null,
+    "intent": null,
+    "review": null,
+    "photo": 0.963
+  },
+  "n": 20,
+  "cases": [
+    {
+      "checks": [
+        {
+          "name": "candidate_match",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_min",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": "议事亭前地",
+        "confidence": 0.95,
+        "description_head": "画面展示了一个开阔的广场，地面铺有标志性的黑白波浪纹葡式碎石。四周环绕着粉红色、黄色和白色的欧式新古典主义建筑。广场中央有一个圆形喷泉，有不少游客在漫步。"
+      },
+      "id": "p01",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_match",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_min",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": "妈祖阁（妈阁庙）",
+        "confidence": 0.75,
+        "description_head": "画面中悬挂着大量黄色的螺旋状盘香，呈圆锥形层层叠挂，顶部系有红色纸条。背景可见深色屋檐与部分竹林绿植，为典型中式庙宇供香场景。"
+      },
+      "id": "p02",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_match",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": false
+        },
+        {
+          "name": "description_min_len",
+          "passed": false
+        },
+        {
+          "name": "confidence_min",
+          "passed": true
+        }
+      ],
+      "score": 0.5,
+      "passed": 2,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": "大三巴牌坊",
+        "confidence": 0.98,
+        "description_head": ""
+      },
+      "id": "p03",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_match",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_min",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": "龙环葡韵",
+        "confidence": 0.92,
+        "description_head": "画面是一座两层薄荷绿色的葡式住宅建筑，白色装饰线脚勾勒出拱廊、栏杆和窗框。建筑前有拱形门廊和阳台，周围有绿树和灌木，前方草坪上立有一尊青铜人像雕塑。"
+      },
+      "id": "p04",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_null",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_max",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": null,
+        "confidence": 0.1,
+        "description_head": "画面是一张电子表格截图，标题为「Macau Quest Agent：澳門任務式智慧文旅 Agent」，包含任务活动列表、负责人、起止日期、状态栏（Complete/In Process/Stuck/Haven't Started）以及甘特图时间轴。"
+      },
+      "id": "p05",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_null",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_max",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": null,
+        "confidence": 0.1,
+        "description_head": "画面是一张柱状统计图，标题为「高赞笔记中核心关键词出现频次」。横轴有两个类别：左侧红色柱代表「攻略」出现167次，右侧青色柱代表「路线」出现63次。纵轴为「出现次数」，刻度从0到200。"
+      },
+      "id": "p06",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_match",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_min",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": "议事亭前地",
+        "confidence": 0.85,
+        "description_head": "画面为地面特写，展示黑白两色小石块拼成的波浪形葡式碎石路面（calçada portuguesa），石块排列整齐呈流动曲线，表面略有反光。"
+      },
+      "id": "p07",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_match",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_min",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": "妈祖阁（妈阁庙）",
+        "confidence": 0.99,
+        "description_head": "画面展示媽祖閣（媽閣廟）的正门入口。核心视觉证据：正门上方牌匾清晰可见「媽祖閣」三字；门两侧悬挂两个红色灯笼；门前左右各有一尊石狮；门内可看到香火缭绕、烟雾升腾；建筑为传统中式庙宇风格，绿琉璃瓦顶、装饰性屋脊；门前有石阶；广场铺有葡式碎石地面；周围绿树环绕，游客众多。"
+      },
+      "id": "p08",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_match",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_min",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": "大三巴牌坊",
+        "confidence": 0.95,
+        "description_head": "画面中央是一座宏伟的石质巴洛克风格教堂立面遗迹，顶部有十字架，立面布满精美浮雕，多个拱形窗洞通透可见。前方是宽阔的石阶，大量游客在台阶上参观拍照，天空云层厚重，整体为黑白影像。"
+      },
+      "id": "p09",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_match",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_min",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": "龙环葡韵",
+        "confidence": 0.92,
+        "description_head": "画面展示了一排薄荷绿色的葡式住宅建筑，外墙为淡绿色配白色线脚装饰，有拱形门廊和白色百叶窗。建筑前有碎石铺地的小径，两侧种植了树木和矮灌木，配有白色小栅栏。天空晴朗湛蓝，阳光明媚，整体呈现典型的澳门葡式建筑群风貌。"
+      },
+      "id": "p10",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_match",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_min",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": "玫瑰堂",
+        "confidence": 0.92,
+        "description_head": "画面是一座教堂的正面立面，整体为鹅黄色巴洛克风格。立面布满白色灰泥浮雕装饰，包括圆形徽章、卷草纹、菱形图案和檐口线脚。顶部有十字架。三组窗户配有深绿色百叶窗。大门位于正中下方，门上方有白色雕花装饰。右侧可见一栋现代米黄色公寓楼。"
+      },
+      "id": "p11",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_match",
+          "passed": false
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_min",
+          "passed": true
+        }
+      ],
+      "score": 0.75,
+      "passed": 3,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": "议事亭前地",
+        "confidence": 0.95,
+        "description_head": "画面展示了一个热闹的广场，地面铺着标志性的黑白葡式碎石波浪纹图案。右侧矗立着一座鹅黄色的巴洛克风格教堂，拥有白色的灰泥装饰和鲜绿色的百叶窗及大门。左侧有一棵高大的棕榈树，背景可见其他建筑和游客。"
+      },
+      "id": "p12",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_match",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_min",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": "东望洋灯塔",
+        "confidence": 0.92,
+        "description_head": "画面显示一座白色圆柱形灯塔，塔顶有红色灯室和蓝色栏杆，矗立在白色厚实的堡垒墙之上。灯塔旁有一座黄白相间的教堂建筑，顶部有十字架和四叶草形窗户。左侧有石阶，一人正拾级而上。背景是湛蓝天空和通讯天线。玻璃门上有中文标牌，可见「灯塔」「导览」等字样。"
+      },
+      "id": "p13",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_match",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_min",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": "东望洋灯塔",
+        "confidence": 0.92,
+        "description_head": "画面主体是一座白色圆柱形灯塔，顶部有红色灯室和风向标；灯塔旁是一座白墙黄边的葡式小教堂，屋顶有十字架，正面有四叶形花窗和深色大门。背景是晴朗蓝天，周围有游客和白色围墙。"
+      },
+      "id": "p14",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_null",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_max",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": null,
+        "confidence": 0.05,
+        "description_head": "画面是一座夜晚亮灯的埃菲尔铁塔，塔身被金色灯光照亮，灯光映照在上方云层上形成暖色光晕。天空多云，塔底可见城市灯光和远处建筑轮廓。"
+      },
+      "id": "p15",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_null",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_max",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": null,
+        "confidence": 0.0,
+        "description_head": "画面展示了一座临水的白色建筑，屋顶由多个贝壳状的白色壳体组成，背景是晴朗的蓝天和深蓝色的水面。"
+      },
+      "id": "p16",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_null",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_max",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": null,
+        "confidence": 0.0,
+        "description_head": "画面是一张横向条形统计图，标题为\"评论中游客表达类型频次分布\"。横轴标注\"累计出现次数\"，纵轴列出四个分类：信息困惑类（红色，93）、体力负担类（黄色，84）、文化理解类（绿色，60）、人流拥挤类（蓝色，34），各分类后附有括号内的关键词说明。"
+      },
+      "id": "p17",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_null",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_max",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": null,
+        "confidence": 0.0,
+        "description_head": "画面是一张柱状图，标题为「信息困惑类表达细分（估算分布，总计93次）」。横轴分为五个类别：「怎么」（红色柱，数值25）、「去哪」（青色柱，数值20）、「不会」（蓝色柱，数值18）、「不知道」（浅绿色柱，数值20）、「不懂」（浅黄色柱，数值10）。纵轴为「估算出现次数」，刻度从0到30。"
+      },
+      "id": "p18",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_null",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_max",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": null,
+        "confidence": 0.1,
+        "description_head": "画面是一张饼图，标题为'体力负担与路线相关表达细分（总计84次）'。图中包含四个扇区：红色区域标注'步行'占67.9%，黄色区域标注'累'占17.9%，绿色区域标注'回头路'占8.3%，蓝色区域标注'暴走'占6.0%。"
+      },
+      "id": "p19",
+      "category": "photo"
+    },
+    {
+      "checks": [
+        {
+          "name": "candidate_null",
+          "passed": true
+        },
+        {
+          "name": "description_keywords_any",
+          "passed": true
+        },
+        {
+          "name": "description_min_len",
+          "passed": true
+        },
+        {
+          "name": "confidence_max",
+          "passed": true
+        }
+      ],
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "detail": {
+        "source": "agent",
+        "candidate_poi": null,
+        "confidence": 0.0,
+        "description_head": "画面是一张统计柱状图，标题为「小红书澳门旅游攻略样本数据概览」。纵轴标注为「数量」，横轴分为四项：红色柱「高赞笔记」标值100，青色柱「用户评论」标值751，蓝色柱「点赞数(万)」标值10.5，浅绿色柱「收藏数(万)」标值11.4。"
+      },
+      "id": "p20",
+      "category": "photo"
+    }
+  ]
+}

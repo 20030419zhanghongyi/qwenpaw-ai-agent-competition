@@ -35,6 +35,20 @@ curl -X POST http://127.0.0.1:8088/api/skills/pool/refresh
 # 4. 在 Console Create New Agent / Skills 页给目标 agent 勾选启用该技能
 ```
 
+## 当前项目 Agent / Skill 映射（2026-07-13 已验证）
+
+运行态统一使用 `aliyun-tokenplan-intl/qwen3.6-plus`；各 Agent 已经真实调用烟测，不只是写入配置。
+
+| Agent ID | 名称 | 已启用技能 | 额外能力 |
+|---|---|---|---|
+| `route` | 路线微调 | `route-adjust` | 结构化 RouteAdjustment，失败回落规则版 |
+| `intent` | 需求理解 | `requirement-understand`、`fairness-gate` | 结构化 Preference |
+| `guide` | 文化讲解 | `macau-guide`、`source-attribution`、`anti-sycophancy` | RAG 取料 + 来源/置信度 |
+| `photo` | 拍照识别 | `photo-recognize`、`source-attribution` | 多模态 + 内置 `view_image` 工具 |
+| `reviewer` | 独立审核 | `content-safety-review` | pass / revise / block 独立裁定 |
+
+> `source-attribution` 不承担独立审核；生成结果仍由 `reviewer` 做后置安全裁定。
+
 ## 在 QwenPaw 里建路线 agent（P1 手动步骤）—— ✅ 已完成 + 端到端验证（2026-07-12）
 
 CLI 默认不在 PATH 时，用 **Console** 建：
@@ -99,9 +113,9 @@ CLI 默认不在 PATH 时，用 **Console** 建：
 > **坑**（route/intent 已踩过，同样适用）：技能不自动发现（content-safety-review 已 reconcile 过）；
 > 模型 provider 401（建 agent 分到失效 key 会秒退空返回，换可用 provider）。
 
-## 在 QwenPaw 里建讲解 agent（P2 手动步骤）—— 代码 + RAG 已就绪，待 Console 建档
+## 在 QwenPaw 里建讲解 agent（P2）—— ✅ 已建 + 端到端验证（2026-07-13，API 建档）
 
-讲解 agent（`guide`）的**后端已全部落地**（2026-07-13，Grace 主导）：
+讲解 agent（`guide`）的后端与运行态配置均已落地：
 - `backend/app/agents/guide_agent.py`（调 QwenPaw `guide` agent，输出 `{text, source_type, confidence, ai_generated, language}`）
 - `backend/app/features/guide/api.py`：`/guide/photo` 的 `_explain()` seam 已接通 RAG + guide agent；
   新增 `POST /api/v1/guide/generate`（POI 名/id + 偏好 → 讲解）
@@ -109,11 +123,12 @@ CLI 默认不在 PATH 时，用 **Console** 建：
   `text-embedding-v3` 向量化入库（`rag/ingest.py`），`rag/retrieve.py` 走余弦 top-k（库空/报错回落关键词）
 - 讲解素材：candidate_poi 已点名 → `get_poi_material` 精确取整 POI；否则 `retrieve()` 向量兜底
 
-**端到端已验证**（2026-07-13）：临时挂 `default` agent + 内联 schema 探针，「议事亭前地」取料 →
-生成 198 字讲解、`source_type=official`、`confidence=0.95`，`guide_agent._extract_json/_coerce` 正确解析。
-即取料→prompt→LLM→JSON→GuideExplanation 全通，**正式版只需建 guide agent**。
+**端到端已验证**（2026-07-13）：运行态 `guide` 使用
+`aliyun-tokenplan-intl/qwen3.6-plus`，启用 `macau-guide` / `source-attribution` /
+`anti-sycophancy`。真实请求返回结构化讲解、`source_type=official` 与合理置信度，
+即取料→prompt→LLM→JSON→GuideExplanation 全通。
 
-待你做（Console，~2 分钟）：
+运行态配置的复现步骤：
 1. Console → Create New Agent：name `文化讲解`，agent-id `guide`，挑已配的 text 模型
 2. `cp -R skills/macau-guide ~/.qwenpaw/skill_pool/` →
    `qwenpaw skills test ~/.qwenpaw/skill_pool/macau-guide` →
@@ -134,13 +149,15 @@ CLI 默认不在 PATH 时，用 **Console** 建：
 
 > **验证状态**：已完成。**全程用 API 建档，未手点 Console**：
 > 1. `cp -R skills/photo-recognize ~/.qwenpaw/skill_pool/` → `curl -X POST http://127.0.0.1:8088/api/skills/pool/refresh`（技能进池，`source=customized`）
-> 2. `POST /api/agents`（body `{id:"photo", name:"拍照识别", active_model:{provider_id:"aliyun-tokenplan-intl", model:"kimi-k2.5"}, skill_names:["photo-recognize"], language:"zh"}`）→ HTTP 201
-> 3. 验证：`active_model=kimi-k2.5`（多模态）、`view_image.enabled=true`（**内置工具不是 skill**，默认开、每个 agent 自动注册，技能网格里找不到是正常的）、`photo-recognize` 技能 `enabled:true/channels:all`（挂载形态同 guide 的 macau-guide）
+> 2. `POST /api/agents`（body `{id:"photo", name:"拍照识别", active_model:{provider_id:"aliyun-tokenplan-intl", model:"qwen3.6-plus"}, skill_names:["photo-recognize","source-attribution"], language:"zh"}`）→ HTTP 201
+> 3. 验证：`active_model=qwen3.6-plus`（多模态）、`view_image.enabled=true`（**内置工具不是 skill**，默认开、每个 agent 自动注册，技能网格里找不到是正常的）、`photo-recognize` / `source-attribution` 技能均为 `enabled:true`
 > 4. `.env` `PHOTO_AGENT_ENABLED=true` + 重启后端
 >
-> **端到端实测**（合成图：红顶黄墙建筑+太阳）：`POST /api/v1/guide/photo` → `source:"agent"`、`scrubbed:true`、`description` 精准（kimi-k2.5 经 `view_image` 看图，把「黄色小房子/红三角顶/棕门/绿草地/蓝天/黄太阳」一字不差读出）、`candidate_poi:null`+`confidence:0.1`（非澳门 POI 正确低置信）；讲解 seam 触发（向量兜底检 4 POI→guide 列举让用户选）、`review.decision=pass`（guide→reviewer 管道通）。trace `guide.photo` status=ok agent=photo 12.7s；`guide.review` status=agent agent=reviewer。
+> **端到端实测**（合成图：红顶黄墙建筑+太阳）：`POST /api/v1/guide/photo` → `source:"agent"`、`scrubbed:true`、`description` 精准；`candidate_poi:null`+低置信（非澳门 POI 正确回退）；讲解 seam 与 guide→reviewer 管道均已跑通。
 >
-> **待补**：用真实澳门建筑/街景照验识别命中率（KPI ≥75%）——合成图只验管线、验不了 POI 命中。低置信（如 0.1）时 explanation 仍会经向量兜底触发，是计划里 deferred 的「置信度不足兜底」增量，非 bug。
+> **真实图片评估**：2026-07-13 已冻结 20 条评测集（12 条澳门 POI 正样本 + 8 条负样本），
+> before/after 规则分从 **0.925 提升到 1.000**（20/20 满分通过），产物见
+> `harness/results/scores_photo-*.json` 和 `harness/reports/photo-agent-tuning.md`。
 
 拍照识别 agent（`photo`）的技能源已就位（`skills/photo-recognize/SKILL.md`），与 route/intent 平行。
 **关键差异：本 agent 必须挂多模态模型 + 启用 `view_image` 工具。**
@@ -153,8 +170,8 @@ CLI 默认不在 PATH 时，用 **Console** 建：
 > view_image」是唯一通路。
 
 1. Console → Create New Agent：name `拍照识别`，agent-id `photo`
-2. **模型选「支持视觉/多模态」的那个**。当前 `default`/`route` 用的 **glm-5 是纯文本**，会明确回
-   「我当前使用的模型不支持多模态输入」。若模型实际支持视觉却被报非多模态，在提供者设置里把
+2. **模型选「支持视觉/多模态」的那个**。当前实测使用
+   `aliyun-tokenplan-intl/qwen3.6-plus`；若模型实际支持视觉却被报非多模态，在提供者设置里把
    `supports_multimodal` 设为 `true`。
 3. **确认该 agent 启用了 `view_image` 工具**（agent 工具集里勾上——这是它看图的唯一途径）。
 4. `cp -R skills/photo-recognize ~/.qwenpaw/skill_pool/` →

@@ -71,13 +71,31 @@
 > 均无关键词命中会误 pass；(b) 过判可更正的事实错误 —— 「拨打120」（澳门应为 999，v06）规则
 > 版会误 block，agent 正确判 revise。这些 case 构成 agent vs 规则的 before/after 差。
 
+## photo 类（对 `photo_agent.recognize()` 结构化结果打分）
+
+评测器先把固定样本复制到**随机临时文件名**再调用 agent，避免模型从 `image_path` 文件名读到答案。
+正负样本使用同一套结构化输出：`description`、`candidate_poi`、`confidence`。
+
+| expect 键 | 检查逻辑 | 通过条件 |
+|---|---|---|
+| `candidate_any: [name,...]` | 归一化大小写/空白/标点后，与中英葡别名做包含式匹配 | 命中任一别名 = 1 |
+| `candidate_null: true` | 负样本不得硬猜澳门 POI | `candidate_poi is null` = 1 |
+| `description_keywords_any: [k,...]` | 描述是否包含至少一个可见视觉证据词 | 命中 ≥1 = 1 |
+| `description_min_len: N` | 描述字符数 ≥ N | 满足 = 1 |
+| `confidence_min: X` | 正样本识别置信度不低于阈值 | 满足 = 1 |
+| `confidence_max: X` | 负样本置信度不高于阈值 | 满足 = 1 |
+
+> photo 的 before/after 固定使用完全相同的 20 条样本：12 条澳门 POI 正样本（6 个景点、
+> 每个两个视角）+ 8 条负样本（2 条外地地标、6 条非实景图表）。规则分只核对 POI 命中、
+> 可见证据与置信度校准，不评价历史讲解；讲解仍由 guide/reviewer 管道负责。
+
 ## 记分产出（落 `harness/results/scores_<run>.json`）
 
 ```
 {
   "run_id": "...", "agent_map": {"route":"route","guide":"guide"}, "ts": "...",
   "overall": 0.0,                       # 0–1
-  "by_category": {"route": 0.0, "guide": 0.0, "intent": 0.0, "review": 0.0},
+  "by_category": {"route": 0.0, "guide": 0.0, "intent": 0.0, "review": 0.0, "photo": 0.0},
   "cases": [ {"id","category","checks":[{"name","passed"}],"score":0.0,"detail":...}, ... ]
 }
 ```

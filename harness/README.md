@@ -103,23 +103,24 @@ backend/app/
 
 ---
 
-## 7. 当前状态(2026-07-12)
+## 7. 当前状态(2026-07-13)
 
 - ✅ QwenPaw 部署完成(进程 + Console 200,API base `/api`,version `1.1.12.post3`)—— 基础部署达标
 - ✅ 已有实验 agent `QwenPaw_QA_Agent_0.2` + 自定义技能 `QA_source_index`(证明「会写 skill」)
-- ✅ 模型 provider 已配(Aliyun token plan;deepseek / glm 可测)
+- ✅ 模型 provider 已配(Aliyun token plan);route / intent / guide / photo / reviewer 均已建档并完成真实烟测
 - ✅ ethics 4 技能已有 prompt.md 草稿(`ethics/qwenpaw-skills/`)
 - ✅ **harness 骨架就位**:`harness/{datasets,rubrics,results,reports}` + `backend/app/{orchestrator,eval,guardrails,observability}` + `skills/` 全部建好
 - ✅ **P0 连接基座完成 + 端到端验证**:`qwenpaw_client.py`(契约 `POST /api/console/chat` SSE + `X-Agent-Id`) + `/agents/ping` + `trace.py`;`ask()` 已真实跑通(default agent,干净答复 + token/延迟落 trace)
 - ✅ **P1 路线 agent 完成 + 端到端验证(2026-07-12)**:QwenPaw 建 `route` agent + 挂 `route-adjust` 技能(reconcile 法见 `skills/README.md`)+ `.env` `ROUTE_AGENT_ENABLED=true`;thin prompt(无 schema)返回干净结构化 JSON;`POST /api/v1/routes/adjust` 实测 **`source=agent`**(agent 把「少走点路」→ `physical:less-walk` + `remove_tail`,引擎裁末端、压到 2.4km)。截图 ③④⑦ 已采集
-- 🟢 **P2 评测/调优 harness 骨架完成**:`datasets/cases.json`(17 条真实取材)+ `rubrics/`(规则+LLM-judge)+ `eval/{runner,scoring,compare}.py`;route 规则 baseline 已跑(overall **0.796**),出图工具已验证;**待**:把烟测改打 `route` agent 重跑 → 真实 before/after(截图⑥)+ 建讲解 guide agent
-- ⬜ 护栏 hook(P3)、可观测落库(P4)—— 待建
+- ✅ **P2 评测/调优 harness 可运行**:`datasets/cases.json` 共 53 条(route 9 / guide 8 / intent 8 / review 8 / photo 20)+ `rubrics/`(规则+LLM-judge)+ `eval/{runner,scoring,compare}.py`;拍照 Agent 同集 **0.925 → 1.000**，before/after HTML 已落盘
+- ✅ **P3 意图编排路由完成**:`POST /api/v1/orchestrator/route` 覆盖 5 个 Agent，支持 photo → guide 链与可解释 trace
+- ⬜ 护栏外层 hook(P3)、可观测落库(P4)—— 待建
 
 ---
 
 ## 8. 下一步 —— 回家继续的起点
 
-**进度**:P0✅ P1✅(route agent 端到端打通,截图③④⑦ 已采集)。剩余**唯一硬目标 = P2 评测调优**(产出 before/after,截图⑥,整份材料最强证据)。
+**进度**:P0✅ P1✅ P2 拍照调优✅ P3 意图路由✅。下一个硬目标是 route Agent 继续调优、多 Agent 串联与护栏 hook。
 
 ### 立即做:route agent vs 规则 before/after(截图⑥核心)
 
@@ -141,8 +142,8 @@ python -m app.eval.compare --runs rules-baseline route-agent
 # → harness/results/compare_rules-baseline_vs_route-agent.html,浏览器打开截图⑥
 ```
 
-### 然后:调优循环 + guide agent(见 [`plan.md`](./plan.md) P2)
+### 然后:调优循环 + 多 Agent 护栏(见 [`plan.md`](./plan.md) P2/P3)
 - **调优本体**:看哪条 case 分掉 → 改 `skills/route-adjust/SKILL.md` / 补 `harness/datasets/cases.json` → 换 `--run-id` 重跑 → `compare` 两两对比看涨分(分数曲线)
 - ⚠️ 诚实预期:规则打分只看结构化信号(physical/interests/keywords),agent 的语义优势(如 r06「小众别挤大三巴」规则版无信号)不一定在规则分上体现 → 必要时上 `rubrics/llm_judge_prompt.md` 的 LLM-judge
-- **第二能力线**:建 `guide` agent(`macau-guide` 技能已写好,同 route 流程:refresh + 挂技能)→ 跑 g01–g08
-- 之后再 P3(编排+ethics 护栏,截图⑧)、P4(可观测+提交三件套)
+- **多 Agent 能力线**:复用已建好的 intent / route / guide / photo / reviewer，完成需求理解 → 路线微调 → 讲解 → 审核串联
+- 之后补 P3 ethics 外层护栏(截图⑧)与 P4 可观测/提交三件套

@@ -1,5 +1,5 @@
 {
-  "_schema": "评测用例集。每条 case 由 backend/app/eval/runner.py 读取。\n  category: route | guide | intent | review\n  route 类 context: {route_id, preference} → 调 /routes/adjust（agent 或规则版）\n  guide 类 context: {poi_id} → 调讲解 agent\n  intent 类 context: {} → 调 /intent/parse（NL → Preference；INTENT_AGENT_ENABLED 决定 agent/规则）\n  review 类 context: {} → 调 /review/content（待审核文本 → pass/revise/block；REVIEWER_AGENT_ENABLED 决定 agent/规则）\n  expect 为可规则核对的期望信号（见 harness/rubrics/rule_checks.md）：\n    route → physical/interests 应被加入 preference_after；added_tag 期望节点被插入；\n           removed_tail 期望末端被裁；keywords_any 期望出现在解释里\n    guide  → keywords_any 期望出现在讲解里；max_len/min_len 长度约束\n    intent → duration（等值）/ interests / physical / travel_type 应进入 preference（子集匹配）\n    review → decision（等值）：pass / revise / block\n  source: 灵感出处（小红书真实评论/笔记，仅离线数据集，见 scripts/clean_xhs.py）",
+  "_schema": "评测用例集。每条 case 由 backend/app/eval/runner.py 读取。\n  category: route | guide | intent | review | photo\n  route 类 context: {route_id, preference} → 调 /routes/adjust（agent 或规则版）\n  guide 类 context: {poi_id} → 调讲解 agent\n  intent 类 context: {} → 调 /intent/parse（NL → Preference；INTENT_AGENT_ENABLED 决定 agent/规则）\n  review 类 context: {} → 调 /review/content（待审核文本 → pass/revise/block；REVIEWER_AGENT_ENABLED 决定 agent/规则）\n  photo 类 context: {image_path} → 调 photo_agent（复制到随机临时文件名后识别，防止标签泄漏）\n  expect 为可规则核对的期望信号（见 harness/rubrics/rule_checks.md）：\n    route → physical/interests 应被加入 preference_after；added_tag 期望节点被插入；\n           removed_tail 期望末端被裁；keywords_any 期望出现在解释里\n    guide  → keywords_any 期望出现在讲解里；max_len/min_len 长度约束\n    intent → duration（等值）/ interests / physical / travel_type 应进入 preference（子集匹配）\n    review → decision（等值）：pass / revise / block\n    photo  → candidate_any/candidate_null 核对地标；description_keywords_any 核对视觉证据；confidence_min/max 核对置信度校准\n  source: 灵感出处或图片授权信息（图片详见 harness/datasets/photos/README.md）",
   "cases": [
     {
       "id": "r01",
@@ -264,6 +264,166 @@
       "context": {},
       "expect": { "decision": "block" },
       "source": "医疗越界（非资质下诊断+用药建议）：规则红线词未覆盖（agent-edge，规则版会误 pass）"
+    },
+    {
+      "id": "p01",
+      "category": "photo",
+      "input": "识别议事亭前地全景",
+      "context": { "image_path": "harness/datasets/photos/senado_square.jpg" },
+      "expect": { "candidate_any": ["议事亭前地", "Senado Square", "Largo do Senado"], "description_keywords_any": ["广场", "碎石", "波浪", "葡式"], "description_min_len": 20, "confidence_min": 0.55 },
+      "source": "Wikimedia Commons，CC BY-SA 2.0；详见 photos/README.md"
+    },
+    {
+      "id": "p02",
+      "category": "photo",
+      "input": "识别妈阁庙盘香近景",
+      "context": { "image_path": "harness/datasets/photos/ama_temple.jpg" },
+      "expect": { "candidate_any": ["妈祖阁", "妈阁庙", "A-Ma Temple", "Templo de A-Má"], "description_keywords_any": ["盘香", "线香", "香环", "香塔"], "description_min_len": 20, "confidence_min": 0.4 },
+      "source": "Wikimedia Commons，CC BY 2.0；详见 photos/README.md"
+    },
+    {
+      "id": "p03",
+      "category": "photo",
+      "input": "识别大三巴牌坊正面",
+      "context": { "image_path": "harness/datasets/photos/st_pauls.jpg" },
+      "expect": { "candidate_any": ["大三巴牌坊", "大三巴", "Ruins of St. Paul's", "Ruins of Saint Paul"], "description_keywords_any": ["牌坊", "石质", "立面", "教堂", "拱门"], "description_min_len": 20, "confidence_min": 0.7 },
+      "source": "Wikimedia Commons，CC0 1.0；详见 photos/README.md"
+    },
+    {
+      "id": "p04",
+      "category": "photo",
+      "input": "识别龙环葡韵住宅",
+      "context": { "image_path": "harness/datasets/photos/taipa_houses.jpg" },
+      "expect": { "candidate_any": ["龙环葡韵", "龙环葡韵住宅式博物馆", "Taipa Houses", "Casas-Museu da Taipa"], "description_keywords_any": ["绿色", "薄荷绿", "住宅", "别墅", "葡式"], "description_min_len": 20, "confidence_min": 0.55 },
+      "source": "Wikimedia Commons，CC BY-SA 4.0；详见 photos/README.md"
+    },
+    {
+      "id": "p05",
+      "category": "photo",
+      "input": "非景点负样本：项目甘特图",
+      "context": { "image_path": "assets/style_reference_gantt.jpg" },
+      "expect": { "candidate_null": true, "description_keywords_any": ["甘特", "表格", "项目", "时间轴"], "description_min_len": 20, "confidence_max": 0.3 },
+      "source": "仓库现有项目资产"
+    },
+    {
+      "id": "p06",
+      "category": "photo",
+      "input": "非景点负样本：调研关键词图",
+      "context": { "image_path": "background/keyword_frequency.png" },
+      "expect": { "candidate_null": true, "description_keywords_any": ["关键词", "词频", "图表", "柱状"], "description_min_len": 20, "confidence_max": 0.3 },
+      "source": "仓库现有调研资产"
+    },
+    {
+      "id": "p07",
+      "category": "photo",
+      "input": "识别议事亭前地碎石路局部",
+      "context": { "image_path": "harness/datasets/photos/senado_tiles.jpg" },
+      "expect": { "candidate_any": ["议事亭前地", "Senado Square", "Largo do Senado"], "description_keywords_any": ["碎石", "波浪", "黑白", "地面", "路面"], "description_min_len": 20, "confidence_min": 0.4 },
+      "source": "Wikimedia Commons；详见 photos/README.md"
+    },
+    {
+      "id": "p08",
+      "category": "photo",
+      "input": "识别妈阁庙入口全景",
+      "context": { "image_path": "harness/datasets/photos/ama_temple_entrance.jpg" },
+      "expect": { "candidate_any": ["妈祖阁", "妈阁庙", "A-Ma Temple", "Templo de A-Má"], "description_keywords_any": ["入口", "牌坊", "庙", "石", "门"], "description_min_len": 20, "confidence_min": 0.5 },
+      "source": "Wikimedia Commons，CC BY-SA 4.0；详见 photos/README.md"
+    },
+    {
+      "id": "p09",
+      "category": "photo",
+      "input": "识别大三巴牌坊及石阶远景",
+      "context": { "image_path": "harness/datasets/photos/st_pauls_steps.jpg" },
+      "expect": { "candidate_any": ["大三巴牌坊", "大三巴", "Ruins of St. Paul's", "Ruins of Saint Paul"], "description_keywords_any": ["牌坊", "立面", "教堂", "石阶", "台阶"], "description_min_len": 20, "confidence_min": 0.65 },
+      "source": "Wikimedia Commons；详见 photos/README.md"
+    },
+    {
+      "id": "p10",
+      "category": "photo",
+      "input": "识别龙环葡韵建筑群远景",
+      "context": { "image_path": "harness/datasets/photos/taipa_houses_wide.jpg" },
+      "expect": { "candidate_any": ["龙环葡韵", "龙环葡韵住宅式博物馆", "Taipa Houses", "Casas-Museu da Taipa"], "description_keywords_any": ["绿色", "住宅", "别墅", "葡式", "建筑"], "description_min_len": 20, "confidence_min": 0.5 },
+      "source": "Wikimedia Commons，Public Domain；详见 photos/README.md"
+    },
+    {
+      "id": "p11",
+      "category": "photo",
+      "input": "识别玫瑰堂正面横景",
+      "context": { "image_path": "harness/datasets/photos/st_dominic_front.jpg" },
+      "expect": { "candidate_any": ["玫瑰堂", "板樟堂", "St. Dominic's Church", "Igreja de São Domingos"], "description_keywords_any": ["黄色", "鹅黄", "白色", "教堂", "巴洛克"], "description_min_len": 20, "confidence_min": 0.55 },
+      "source": "Wikimedia Commons，CC BY-SA 3.0；详见 photos/README.md"
+    },
+    {
+      "id": "p12",
+      "category": "photo",
+      "input": "识别玫瑰堂正面竖景",
+      "context": { "image_path": "harness/datasets/photos/st_dominic_tall.jpg" },
+      "expect": { "candidate_any": ["玫瑰堂", "板樟堂", "St. Dominic's Church", "Igreja de São Domingos"], "description_keywords_any": ["黄色", "鹅黄", "白色", "教堂", "巴洛克"], "description_min_len": 20, "confidence_min": 0.55 },
+      "source": "Wikimedia Commons，CC BY 2.0；详见 photos/README.md"
+    },
+    {
+      "id": "p13",
+      "category": "photo",
+      "input": "识别东望洋灯塔及小堂正面",
+      "context": { "image_path": "harness/datasets/photos/guia_lighthouse_front.jpg" },
+      "expect": { "candidate_any": ["东望洋灯塔", "东望洋炮台", "Guia Lighthouse", "Farol da Guia"], "description_keywords_any": ["灯塔", "白色", "圆柱", "红色", "小堂", "教堂"], "description_min_len": 20, "confidence_min": 0.55 },
+      "source": "Wikimedia Commons，CC BY-SA 4.0；详见 photos/README.md"
+    },
+    {
+      "id": "p14",
+      "category": "photo",
+      "input": "识别东望洋灯塔侧面",
+      "context": { "image_path": "harness/datasets/photos/guia_lighthouse_side.jpg" },
+      "expect": { "candidate_any": ["东望洋灯塔", "东望洋炮台", "Guia Lighthouse", "Farol da Guia"], "description_keywords_any": ["灯塔", "白色", "圆柱", "红色", "小堂", "教堂"], "description_min_len": 20, "confidence_min": 0.55 },
+      "source": "Wikimedia Commons，CC BY-SA 4.0；详见 photos/README.md"
+    },
+    {
+      "id": "p15",
+      "category": "photo",
+      "input": "非澳门负样本：埃菲尔铁塔",
+      "context": { "image_path": "harness/datasets/photos/negative_eiffel.jpg" },
+      "expect": { "candidate_null": true, "description_keywords_any": ["铁塔", "塔", "巴黎", "建筑"], "description_min_len": 20, "confidence_max": 0.3 },
+      "source": "Wikimedia Commons，CC0 1.0；详见 photos/README.md"
+    },
+    {
+      "id": "p16",
+      "category": "photo",
+      "input": "非澳门负样本：悉尼歌剧院",
+      "context": { "image_path": "harness/datasets/photos/negative_sydney.jpg" },
+      "expect": { "candidate_null": true, "description_keywords_any": ["歌剧院", "悉尼", "帆", "贝壳", "建筑"], "description_min_len": 20, "confidence_max": 0.3 },
+      "source": "Wikimedia Commons，CC0 1.0；详见 photos/README.md"
+    },
+    {
+      "id": "p17",
+      "category": "photo",
+      "input": "非景点负样本：表达类型图",
+      "context": { "image_path": "background/expression_types.png" },
+      "expect": { "candidate_null": true, "description_keywords_any": ["图表", "柱状", "类型", "表达"], "description_min_len": 20, "confidence_max": 0.3 },
+      "source": "仓库现有调研资产"
+    },
+    {
+      "id": "p18",
+      "category": "photo",
+      "input": "非景点负样本：困惑表达图",
+      "context": { "image_path": "background/confusion_expression_breakdown.png" },
+      "expect": { "candidate_null": true, "description_keywords_any": ["图表", "柱状", "困惑", "表达"], "description_min_len": 20, "confidence_max": 0.3 },
+      "source": "仓库现有调研资产"
+    },
+    {
+      "id": "p19",
+      "category": "photo",
+      "input": "非景点负样本：体力负担图",
+      "context": { "image_path": "background/physical_burden_breakdown.png" },
+      "expect": { "candidate_null": true, "description_keywords_any": ["图表", "柱状", "体力", "负担"], "description_min_len": 20, "confidence_max": 0.3 },
+      "source": "仓库现有调研资产"
+    },
+    {
+      "id": "p20",
+      "category": "photo",
+      "input": "非景点负样本：样本概览图",
+      "context": { "image_path": "background/sample_overview.png" },
+      "expect": { "candidate_null": true, "description_keywords_any": ["图表", "样本", "概览", "数量"], "description_min_len": 20, "confidence_max": 0.3 },
+      "source": "仓库现有调研资产"
     }
   ]
 }

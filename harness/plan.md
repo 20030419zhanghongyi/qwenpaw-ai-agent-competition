@@ -89,13 +89,14 @@
 - [ ] **★下一个立即项:route agent before/after(P1 已通,只差跑一次)** —— `ROUTE_AGENT_ENABLED=true python -m app.eval.runner --only route --run-id route-agent`(在 `backend/` 下,QwenPaw 要在跑)→ `python -m app.eval.compare --runs rules-baseline route-agent` → 截图⑥。规则 baseline 0.796 已存 `scores_rules-baseline.json`
 - [ ] 调优循环:看哪条 case 分低 → 改 `skills/route-adjust/SKILL.md` / 补 `cases.json` → 换 `--run-id` 重跑 → `compare` 看涨分(分数曲线)
 - [ ] ⚠️ 规则分只看结构化信号,agent 语义优势(如 r06 小众)可能不体现 → 必要时上 `rubrics/llm_judge_prompt.md` LLM-judge
-- [ ] 建讲解 agent(Console 建 `文化讲解` agent-id `guide`)+ `macau-guide` skill(reconcile 法注册,见 `skills/README.md`)—— 手动待做
+- [x] 建讲解 agent（`文化讲解`，agent-id `guide`）+ `macau-guide` / `source-attribution` / `anti-sycophancy` 技能 —— 2026-07-13 运行态漂移后于 2026-07-13 重新经 API 建档，使用 `aliyun-tokenplan-intl/qwen3.6-plus`，真实结构化讲解烟测通过
 - [ ] `ethics/qwenpaw-skills/source-attribution/prompt.md` → SKILL.md,挂进讲解 agent
 - [ ] POI 知识(`data/`)丢进 agent `file_store/`(截图⑤)
 - [ ] 跑 guide 类 g01–g08(`python -m app.eval.runner --only guide --guide-agent guide`)
-- [x] 建 `harness/datasets/`:`cases.json` 17 条(9 路线 + 8 讲解),从小红书真实评论/笔记取材
+- [x] 建 `harness/datasets/`:`cases.json`：路线/讲解样本 + 20 条拍照样本（12 正 + 8 负），拍照图片来源/授权可追溯
 - [x] 建 `harness/rubrics/`:`rule_checks.md`(规则项)+ `llm_judge_prompt.md`(LLM-judge)
 - [x] 写 `backend/app/eval/`:`runner.py` + `scoring.py`(跑批 + 规则打分 + 落 results);route 规则 baseline 已跑 overall **0.796**
+- [x] `photo` Agent 调优与真实多模态评估：同一 20 条冻结集 **0.925 → 1.000**，报告与 before/after HTML 已落盘
 - [x] 出图:`compare.py` 渲染自包含 HTML(SVG 柱状图 / before-after);baseline + projected 已出
 
 交付物:讲解 agent、测试集、rubric、跑批脚本、`results/` 分数图、调优记录。
@@ -107,8 +108,8 @@
 **目标**:多 agent 协作 + ethics 护栏。对齐 M4。
 
 任务:
-- [ ] 建 `需求理解` agent(若 P1/P2 未含)
-- [ ] `backend/app/orchestrator/`:意图分类 → 路由到对应 agent
+- [x] 建 `需求理解` agent（agent-id `intent`）+ `requirement-understand` / `fairness-gate` 技能 —— 2026-07-13 重新经 API 建档，真实 Preference JSON 烟测通过
+- [x] `backend/app/orchestrator/`:意图分类 → 路由到对应 agent —— 2026-07-13 已实现可解释规则路由与 `POST /api/v1/orchestrator/route`，覆盖 intent / route / guide / photo / reviewer，并支持 photo → guide 链；8 条专项测试通过
 - [ ] 多 agent 协作:`agents chat --from-agent … --to-agent …`(需求理解 → 路线微调 → 讲解)
 - [ ] `backend/app/guardrails/`:前置注入 `_ethics_base.md`;后置跑 `content-safety-review` + 事实核对 + 低置信回退
 - [ ] ethics 4 技能既挂内层 agent、也作外层 hook(两处都留截图)

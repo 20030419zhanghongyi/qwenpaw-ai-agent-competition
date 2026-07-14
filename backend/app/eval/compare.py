@@ -17,7 +17,6 @@ from __future__ import annotations
 import argparse
 import html
 import json
-from pathlib import Path
 
 from app.core.config import settings
 
@@ -58,12 +57,13 @@ def render_single(run: dict) -> str:
     rows.append(f'<text x="{left}" y="50" font-size="12" fill="#6b7280">'
                 f'route {run["by_category"].get("route")} · guide {run["by_category"].get("guide")} · '
                 f'intent {run["by_category"].get("intent")} · review {run["by_category"].get("review")} · '
+                f'photo {run["by_category"].get("photo")} · '
                 f'n={run["n"]}</text>')
     for i, c in enumerate(cases):
         y = top + i * (row_h + gap)
         score = c["score"]
         col = {"route": "#3aa6b2", "guide": "#f59e0b", "intent": "#8b5cf6",
-               "review": "#ef4444"}.get(c["category"], "#6b7280")
+               "review": "#ef4444", "photo": "#0f766e"}.get(c["category"], "#6b7280")
         rows.append(f'<text x="0" y="{y + row_h - 8:.1f}" font-size="12" fill="#334">'
                     f'{html.escape(c["id"] + " " + c["category"])}</text>')
         rows.append(_bar(left, y, max_w * score, row_h, col,
@@ -124,7 +124,8 @@ def main() -> None:
     if args.all or not runs:
         all_runs = _list_runs()
         if not all_runs:
-            print("没有 scores_*.json，先跑 runner。"); return
+            print("没有 scores_*.json，先跑 runner。")
+            return
         if not runs:
             runs = [all_runs[-1]]  # 默认最近一个
 

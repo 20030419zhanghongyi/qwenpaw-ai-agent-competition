@@ -9,6 +9,7 @@ from app.features.profile import api as profile_api
 from app.features.review import api as review_api
 from app.features.routes import api as routes_api
 from app.features.trips import api as trips_api
+from app.orchestrator import api as orchestrator_api
 
 api_router = APIRouter()
 api_router.include_router(health.router)
@@ -23,3 +24,4 @@ api_router.include_router(review_api.router)
 api_router.include_router(guide_api.router)
 api_router.include_router(pois_api.router)
 api_router.include_router(agents_api.router)
+api_router.include_router(orchestrator_api.router)

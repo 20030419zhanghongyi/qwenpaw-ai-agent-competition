@@ -3,11 +3,13 @@
 读 harness/datasets/cases.json → 逐条调对应能力 → 规则打分 → 落 harness/results/。
 - route 类：POST /api/v1/routes/adjust（经 TestClient，走真实端点；ROUTE_AGENT_ENABLED 决定 agent/规则）
 - guide 类：qwenpaw_client.ask(guide_agent) —— 真实 LLM 调用，可用 --skip-guide 跳过省 token
+- photo 类：photo_agent.recognize(随机临时图片路径) —— 真实多模态调用，避免文件名泄漏答案
 
 用法：
     python -m app.eval.runner --only route --run-id rules-baseline   # 纯规则，0 token
     python -m app.eval.runner --run-id full --guide-agent default    # 含 guide（耗 token）
     python -m app.eval.runner --only guide --guide-agent guide --limit 2
+    python -m app.eval.runner --only photo --run-id photo-baseline
 
 调优循环：改 SKILL.md/启用 agent 后换个 --run-id 重跑，scores_*.json 两两对比出 before/after。
 """
@@ -17,11 +19,14 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
+import tempfile
 import time
 from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+from app.agents import photo_agent
 from app.agents.qwenpaw_client import QwenPawClient, QwenPawError
 from app.core.config import settings
 from app.db.data import get_poi
@@ -73,12 +78,38 @@ def run_review_case(case: dict, client: TestClient) -> dict:
     return resp.json()
 
 
+def run_photo_case(case: dict) -> dict:
+    """调真实 photo agent，并用随机临时文件名避免从样本文件名泄漏答案。"""
+    repo_root = settings.repo_root.resolve()
+    image_path = (repo_root / case["context"]["image_path"]).resolve()
+    if not image_path.is_relative_to(repo_root):
+        raise ValueError(f"photo case 路径越出仓库：{image_path}")
+    if not image_path.is_file():
+        raise FileNotFoundError(f"photo case 图片不存在：{image_path}")
+
+    temp_path = ""
+    with tempfile.NamedTemporaryFile(suffix=image_path.suffix.lower() or ".jpg", delete=False) as tmp:
+        tmp.write(image_path.read_bytes())
+        temp_path = tmp.name
+    try:
+        result = photo_agent.recognize(temp_path, language=case.get("language", "zh-CN"))
+    finally:
+        try:
+            os.unlink(temp_path)
+        except OSError:
+            pass
+
+    if result is None:
+        return {"description": "", "candidate_poi": None, "confidence": 0.0, "source": "error"}
+    return {**result.model_dump(), "source": "agent"}
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="harness 评测跑批")
     ap.add_argument("--cases", default=str(CASES_PATH))
     ap.add_argument("--run-id", default=None, help="本次 run 名（默认 run-<ts>）")
     ap.add_argument("--guide-agent", default="default", help="讲解类调用的 agent id")
-    ap.add_argument("--only", choices=["route", "guide", "intent", "review"], default=None)
+    ap.add_argument("--only", choices=["route", "guide", "intent", "review", "photo"], default=None)
     ap.add_argument("--skip-guide", action="store_true", help="跳过 guide 类（省 LLM token）")
     ap.add_argument("--limit", type=int, default=None)
     args = ap.parse_args()
@@ -110,6 +141,9 @@ def main() -> None:
         elif c["category"] == "review":
             resp = run_review_case(c, tc)
             scored = scoring.score_review_case(c, resp)
+        elif c["category"] == "photo":
+            resp = run_photo_case(c)
+            scored = scoring.score_photo_case(c, resp)
         else:
             answer = run_guide_case(c, qp, args.guide_agent)
             scored = scoring.score_guide_case(c, answer)
@@ -117,8 +151,8 @@ def main() -> None:
         scored["id"] = c["id"]
         scored["category"] = c["category"]
         results.append(scored)
-        flag = "✓" if scored["score"] >= 0.99 else ("·" if scored["score"] > 0 else "✗")
-        print(f"  {flag} {c['id']:4} {c['category']:5} {scored['score']:.2f}  "
+        flag = "PASS" if scored["score"] >= 0.99 else ("PART" if scored["score"] > 0 else "FAIL")
+        print(f"  {flag:4} {c['id']:4} {c['category']:5} {scored['score']:.2f}  "
               f"({scored['passed']}/{scored['total']})")
 
     agg = scoring.aggregate(results)
@@ -137,7 +171,8 @@ def main() -> None:
 
     print(f"\noverall: {agg['overall']:.3f} | route: {agg['by_category'].get('route')} | "
           f"guide: {agg['by_category'].get('guide')} | intent: {agg['by_category'].get('intent')} | "
-          f"review: {agg['by_category'].get('review')} | n={agg['n']}")
+          f"review: {agg['by_category'].get('review')} | photo: {agg['by_category'].get('photo')} | "
+          f"n={agg['n']}")
     print(f"→ {path}")
     record_trace(kind="eval.run", status="ok", extra={"run_id": run_id, "overall": agg["overall"], "n": agg["n"]})
 
