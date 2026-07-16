@@ -126,9 +126,9 @@
 
 #### 接口任务
 
-- [ ] 接 `POST /api/v1/guide/trigger`
-- [ ] 接 `POST /api/v1/guide/generate`
-- [ ] 接 `POST /api/v1/guide/photo`
+- [ ] 接 `POST /api/v1/guide/trigger`（后端已就绪：确认提示 + 防重复）
+- [ ] 接 `POST /api/v1/guide/generate`（后端已就绪）
+- [ ] 接 `POST /api/v1/guide/photo`（后端已就绪：含低置信重拍/手选状态）
 - [ ] 接 TTS 返回的音频 URL
 
 #### 体验要求

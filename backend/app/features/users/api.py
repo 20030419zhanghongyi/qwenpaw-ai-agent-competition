@@ -22,7 +22,6 @@ from .models import (
     PreferenceUpdateResponse,
     RegisterRequest,
     UserDetailResponse,
-    UserMutationResponse,
 )
 from .service import (
     InvalidLanguageError,

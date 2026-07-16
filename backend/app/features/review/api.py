@@ -13,11 +13,12 @@ from __future__ import annotations
 import logging
 import re
 
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel, Field, field_validator
 
 from app.agents import reviewer_agent
 from app.core.config import settings
+from app.guardrails.runtime import rate_limit, sanitize_untrusted_text
 from app.observability.trace import record_trace
 
 logger = logging.getLogger("macau_storywalk.review")
@@ -26,8 +27,16 @@ router = APIRouter(prefix="/api/v1/review", tags=["review"])
 
 
 class ReviewRequest(BaseModel):
-    text: str
+    text: str = Field(min_length=1, max_length=4000)
     source_type: str | None = None   # official / academic / folklore / ai，可选提示
+
+    @field_validator("text")
+    @classmethod
+    def sanitize_text(cls, value: str) -> str:
+        value = sanitize_untrusted_text(value)
+        if not value:
+            raise ValueError("text must not be blank")
+        return value
 
 
 # --- 规则版 fallback：关键词红线扫描（保守，只认明确红线，语义判断留给 agent）---
@@ -97,7 +106,7 @@ def review_text(text: str, source_type: str | None = None) -> dict:
     return verdict
 
 
-@router.post("/content")
+@router.post("/content", dependencies=[Depends(rate_limit("text"))])
 def review(request: ReviewRequest) -> dict:
     """待上线内容 → 审核裁定（agent 先行，失败降级规则版）。"""
     verdict = review_text(request.text, request.source_type)

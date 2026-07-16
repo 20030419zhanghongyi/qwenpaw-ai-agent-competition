@@ -18,6 +18,7 @@ from app.db import models  # noqa: F401 - registers ORM tables
 from app.db.base import Base
 from app.db.health import ping_database
 from app.db.models import (
+    AuditEvent,
     Checkin,
     Favorite,
     RouteTemplate,
@@ -33,6 +34,7 @@ from app.main import app
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 TEST_DATABASE_NAME = "qwenpaw_test"
 EXPECTED_TABLES = {
+    "audit_events",
     "users",
     "trips",
     "trip_stops",
@@ -111,6 +113,12 @@ def test_engine_and_session_factory_are_synchronous():
 
 def test_metadata_contains_core_tables():
     assert set(Base.metadata.tables) == EXPECTED_TABLES
+
+
+def test_audit_event_table_columns():
+    assert {"event_id", "kind", "status", "subject_hash", "metadata_json", "created_at"} <= set(
+        AuditEvent.__table__.columns.keys()
+    )
 
 
 def test_users_table_columns():
@@ -197,6 +205,14 @@ def test_health_preserves_existing_fields(monkeypatch):
     data = client.get("/api/v1/health").json()
     assert {"status", "env", "dashscope_configured", "amap_configured"} <= set(data)
     assert data["status"] == "ok"
+
+
+def test_health_recognizes_amap_web_service_key(monkeypatch):
+    monkeypatch.setattr(health_api, "ping_database", lambda: True)
+    monkeypatch.setattr(health_api.settings, "amap_api_key", "")
+    monkeypatch.setattr(health_api.settings, "amap_web_service_key", "web-service-key")
+
+    assert client.get("/api/v1/health").json()["amap_configured"] is True
 
 
 def test_alembic_upgrade_downgrade_reupgrade_cycle(test_database_url: str):

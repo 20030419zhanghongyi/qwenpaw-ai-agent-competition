@@ -1,16 +1,22 @@
 import logging
 
-from fastapi import APIRouter, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 from app.agents import route_agent
 from app.api.contracts import NOT_FOUND_RESPONSE, UNPROCESSABLE_RESPONSE
 from app.core.config import settings
+from app.db.session import get_db
+from app.guardrails.runtime import rate_limit
 from app.models.user import Preference
 from app.observability.trace import record_trace
 
 from .adjuster import RouteAdjustRequest, adjust_route
-from .models import RouteAdjustResponse, RouteMatchResponse, RouteTemplateResponse
+from .models import RouteAdjustResponse, RouteMatchResponse, RouteTemplateResponse, WalkPathRequest, WalkPathResponse
 from .service import route_service
+from .walking import WalkingPathError, build_walk_path
 
 logger = logging.getLogger("macau_storywalk.routes")
 
@@ -55,6 +61,7 @@ def match(pref: Preference) -> dict:
     summary="Adjust a route",
     description="Apply the existing route-adjustment behavior to a persisted template.",
     responses={**NOT_FOUND_RESPONSE, **UNPROCESSABLE_RESPONSE},
+    dependencies=[Depends(rate_limit("text"))],
 )
 def adjust(request: RouteAdjustRequest) -> dict:
     """路线微调接口（P1：QwenPaw 路线 agent 驱动，规则版作 fallback）。
@@ -90,6 +97,21 @@ def adjust(request: RouteAdjustRequest) -> dict:
         extra={"route_id": request.route_id},
     )
     return result
+
+
+@router.post(
+    "/walk-path",
+    response_model=WalkPathResponse,
+    summary="Build an AMap walking path for ordered POIs",
+    responses={**NOT_FOUND_RESPONSE, 503: {"description": "Walking service unavailable"}},
+)
+def walk_path(request: WalkPathRequest, database: Annotated[Session, Depends(get_db)]) -> dict:
+    try:
+        return build_walk_path(request.poi_ids, database)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"POIs not found: {exc}") from exc
+    except WalkingPathError as exc:
+        raise HTTPException(status_code=503, detail=f"walking path unavailable: {exc}") from exc
 
 
 @router.get(

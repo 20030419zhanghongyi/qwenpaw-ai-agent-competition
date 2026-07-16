@@ -8,8 +8,9 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
+from app.guardrails.runtime import sanitize_untrusted_text
 from app.models.user import Preference
 
 from .candidate_selector import build_candidate_pool
@@ -21,8 +22,16 @@ from .route_constructor import construct_route
 
 class RouteAdjustRequest(BaseModel):
     route_id: str
-    instruction: str
+    instruction: str = Field(min_length=1, max_length=4000)
     preference: Preference
+
+    @field_validator("instruction")
+    @classmethod
+    def sanitize_instruction(cls, value: str) -> str:
+        value = sanitize_untrusted_text(value)
+        if not value:
+            raise ValueError("instruction must not be blank")
+        return value
 
 
 def adjust_route(request: RouteAdjustRequest, preference_override: Preference | None = None) -> dict:

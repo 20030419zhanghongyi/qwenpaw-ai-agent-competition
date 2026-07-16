@@ -162,6 +162,8 @@ flowchart TB
 POST /api/v1/guide/trigger     # 位置触发讲解
 GET  /api/v1/poi/{id}          # POI 详情与 timeline
 POST /api/v1/guide/photo       # 拍照识别后生成讲解（可选扩展）
+POST /api/v1/guide/tts         # 四语语音合成 → 私有 OSS 短期 URL
+POST /api/v1/routes/walk-path  # 有序 POI → 高德步行分段/polyline
 ```
 
 #### 3.3.2 智能路线规划模块

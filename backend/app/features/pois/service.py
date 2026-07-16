@@ -18,10 +18,11 @@ class PoiService:
         self,
         *,
         category: str | None,
+        query: str | None,
         offset: int,
         limit: int,
     ) -> list[PoiResponse]:
-        return self._repository.list_pois(category=category, offset=offset, limit=limit)
+        return self._repository.list_pois(category=category, query=query, offset=offset, limit=limit)
 
     def get_poi(self, poi_id: str) -> PoiResponse:
         poi = self._repository.get_by_id(poi_id)

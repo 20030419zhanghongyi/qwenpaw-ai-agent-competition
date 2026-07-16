@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.user import Preference
 
@@ -63,3 +63,29 @@ class RouteAdjustResponse(BaseModel):
     applied_constraints: list[str]
     explanation: dict[str, Any]
     source: str
+
+
+class WalkPathRequest(BaseModel):
+    poi_ids: list[str] = Field(min_length=2, max_length=12)
+
+    @field_validator("poi_ids")
+    @classmethod
+    def poi_ids_must_be_unique(cls, value: list[str]) -> list[str]:
+        if len(value) != len(set(value)):
+            raise ValueError("poi_ids must not contain duplicates")
+        return value
+
+
+class WalkSegmentResponse(BaseModel):
+    from_poi_id: str
+    to_poi_id: str
+    walk_m: int = Field(ge=0)
+    walk_min: int = Field(ge=0)
+    polyline: str
+
+
+class WalkPathResponse(BaseModel):
+    segments: list[WalkSegmentResponse]
+    total_walk_m: int = Field(ge=0)
+    total_walk_min: int = Field(ge=0)
+    polyline: str

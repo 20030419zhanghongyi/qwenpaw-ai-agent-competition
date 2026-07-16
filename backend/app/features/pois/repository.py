@@ -1,7 +1,7 @@
 """SQLAlchemy queries for PostGIS-backed POIs."""
 
 from geoalchemy2 import Geography
-from sqlalchemy import cast, func, select
+from sqlalchemy import cast, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.db.models import Poi
@@ -71,12 +71,16 @@ class PoiRepository:
         self,
         *,
         category: str | None,
+        query: str | None,
         offset: int,
         limit: int,
     ) -> list[PoiResponse]:
         statement = select(Poi).order_by(Poi.poi_id).offset(offset).limit(limit)
         if category:
             statement = statement.where(Poi.category == category)
+        if query:
+            pattern = f"%{query.strip()}%"
+            statement = statement.where(or_(Poi.poi_name.ilike(pattern), Poi.alias.ilike(pattern)))
         return [self._to_response(record) for record in self._session.scalars(statement)]
 
     @staticmethod

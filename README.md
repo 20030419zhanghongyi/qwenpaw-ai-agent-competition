@@ -41,7 +41,9 @@ An AI-powered travel companion for exploring Macau's historic districts. Deliver
 
 ## Current Stage
 
-Feature and framework design finalized. Moving into implementation.
+后端核心闭环已可用：用户/偏好、路线匹配与 Agent 微调、RAG 讲解、拍照识别、位置触发、
+高德步行路径、四语 TTS 与去标识审计均已落地。当前重点转为前端接入地图/播放器/确认弹层，
+以及使用真实高德、DashScope、OSS 与 QwenPaw 配置完成端到端 smoke test。
 
 ## Project Goal
 

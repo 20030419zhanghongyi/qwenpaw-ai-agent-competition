@@ -3,6 +3,7 @@
 - ``POST /api/v1/guide/photo``：上传图 → scrub 脱敏 → photo agent 看图识别 → guide agent 讲解
   （识别恒走 photo agent；讲解走 guide agent + RAG，guide 未启用则 ``explanation`` 留空）。
 - ``POST /api/v1/guide/generate``：POI 名/id + 偏好 → RAG 取料 → guide agent 讲解。
+- ``POST /api/v1/guide/trigger``：位置 → 最近 POI 提示（用户确认后才生成讲解）。
 
 讲解素材策略（``_gather_material``）：candidate_poi 已点名 → ``get_poi_material`` 精确取整 POI
 （最稳，不靠向量）；否则 ``retrieve()`` 向量找相关 POI 兜底。
@@ -17,15 +18,24 @@ import logging
 import os
 import tempfile
 import time
+from typing import Annotated
 
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from pydantic import BaseModel, Field, field_validator
+from sqlalchemy.orm import Session
 
 from app.agents import guide_agent, photo_agent
 from app.core.config import settings
+from app.db.session import get_db
+from app.features.pois.models import NearbyPoiResponse
+from app.features.pois.service import PoiService
 from app.features.review.api import review_text
+from app.guardrails.runtime import rate_limit, record_audit, sanitize_untrusted_text
 from app.observability.trace import record_trace
 from app.tools.scrub import scrub
+
+from .trigger_state import trigger_state
+from .tts import TTSUnavailableError, VOICE_BY_LANGUAGE, synthesize_to_oss
 
 # rag/ 在仓库根（不在 backend/app 内）；config.py 导入时已把仓库根加进 sys.path
 from rag.retrieve import get_poi_material, retrieve
@@ -39,6 +49,7 @@ _MAX_BYTES = 8 * 1024 * 1024  # 8MB
 
 # block 裁定下，讲解正文替换为这句安全 fallback（原始不安全文本不外泄）
 _BLOCK_FALLBACK = "（该讲解未通过安全审核，已暂缓展示，请稍后重试。）"
+_LOW_CONFIDENCE_THRESHOLD = 0.6
 
 
 def _review_guide_text(text: str) -> dict:
@@ -112,12 +123,144 @@ def _explain(
 
 
 class GuideRequest(BaseModel):
-    poi: str                             # POI 名字（中/英/葡）或 id
+    poi: str = Field(min_length=1, max_length=255)  # POI 名字（中/英/葡）或 id
     language: str = "zh-CN"
     interests: list[str] | None = None   # history / architecture / food / photo / culture
 
+    @field_validator("poi")
+    @classmethod
+    def sanitize_poi(cls, value: str) -> str:
+        value = sanitize_untrusted_text(value, max_length=255)
+        if not value:
+            raise ValueError("poi must not be blank")
+        return value
 
-@router.post("/photo")
+
+class GuideTriggerRequest(BaseModel):
+    """Anonymous location check used before the user opts into a narration."""
+
+    longitude: float = Field(ge=-180, le=180)
+    latitude: float = Field(ge=-90, le=90)
+    session_id: str = Field(min_length=1, max_length=128)
+    radius_m: float = Field(default=80, ge=10, le=500)
+    language: str = "zh-CN"
+
+    @field_validator("session_id")
+    @classmethod
+    def session_id_must_not_be_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("session_id must not be blank")
+        return value
+
+
+class GuideTriggerResponse(BaseModel):
+    triggered: bool
+    reason: str | None = None
+    poi: NearbyPoiResponse | None = None
+    distance_m: float | None = Field(default=None, ge=0)
+    prompt: str | None = None
+    guide_request: GuideRequest | None = None
+
+
+class TTSRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=20_000)
+    language: str = "zh-CN"
+
+    @field_validator("text")
+    @classmethod
+    def sanitize_text(cls, value: str) -> str:
+        value = sanitize_untrusted_text(value, max_length=20_000)
+        if not value:
+            raise ValueError("text must not be blank")
+        return value
+
+    @field_validator("language")
+    @classmethod
+    def require_supported_language(cls, value: str) -> str:
+        if value not in VOICE_BY_LANGUAGE:
+            raise ValueError("unsupported TTS language")
+        return value
+
+
+class TTSResponse(BaseModel):
+    audio_url: str
+    expires_in: int
+    content_type: str
+    language: str
+    voice: str
+
+
+@router.post(
+    "/trigger",
+    response_model=GuideTriggerResponse,
+    summary="Detect a nearby POI before generating a guide narration",
+)
+def trigger(
+    req: GuideTriggerRequest,
+    database: Annotated[Session, Depends(get_db)],
+) -> GuideTriggerResponse:
+    """Return one nearby POI prompt without calling the guide agent.
+
+    The client should show the prompt and call ``/guide/generate`` only after
+    the user confirms. The session identifier is only used in process memory
+    for the ten-minute duplicate-prompt cooldown and is never traced or stored.
+    """
+    nearby = PoiService(database).nearby(
+        longitude=req.longitude,
+        latitude=req.latitude,
+        radius_m=req.radius_m,
+        limit=1,
+    )
+    if not nearby:
+        record_trace(
+            kind="guide.trigger",
+            status="no_nearby_poi",
+            extra={"radius_m": req.radius_m, "triggered": False},
+        )
+        return GuideTriggerResponse(triggered=False, reason="no_nearby_poi")
+
+    poi = nearby[0]
+    allowed = trigger_state.allow_prompt(session_id=req.session_id, poi_id=poi.poi_id)
+    if not allowed:
+        record_trace(
+            kind="guide.trigger",
+            status="recently_triggered",
+            extra={
+                "poi_id": poi.poi_id,
+                "distance_m": poi.distance_m,
+                "radius_m": req.radius_m,
+                "triggered": False,
+            },
+        )
+        return GuideTriggerResponse(
+            triggered=False,
+            reason="recently_triggered",
+            poi=poi,
+            distance_m=poi.distance_m,
+        )
+
+    prompt = f"你已靠近{poi.poi_name}，要听讲解吗？"
+    record_trace(
+        kind="guide.trigger",
+        status="prompted",
+        extra={
+            "poi_id": poi.poi_id,
+            "distance_m": poi.distance_m,
+            "radius_m": req.radius_m,
+            "triggered": True,
+        },
+    )
+    return GuideTriggerResponse(
+        triggered=True,
+        poi=poi,
+        distance_m=poi.distance_m,
+        prompt=prompt,
+        guide_request=GuideRequest(poi=poi.poi_name, language=req.language),
+    )
+
+
+@router.post("/photo", dependencies=[Depends(rate_limit("expensive"))])
 async def photo(
     file: UploadFile = File(..., description="用户在澳门街头拍的照片（jpeg/png/webp，≤8MB）"),
     language: str = Query("zh-CN", description="描述/讲解语言：zh-CN/zh-TW/en/pt"),
@@ -169,8 +312,18 @@ async def photo(
         status, source = "error", "error"
         description, candidate_poi, confidence, error = "", None, 0.0, "photo agent unavailable or parse failed"
 
-    # ── 讲解 seam：guide agent + RAG（guide 未启用 / 失败 → explanation=null）──
-    explanation = _explain(description, candidate_poi, language=language)
+    uncertain = source != "agent" or confidence < _LOW_CONFIDENCE_THRESHOLD or not candidate_poi
+    recognition_status = "uncertain" if uncertain else "identified"
+    low_confidence_hint = None
+    next_actions: list[str] = []
+    if uncertain:
+        # A low-confidence candidate is not a fact and must not trigger RAG narration.
+        candidate_poi = None
+        low_confidence_hint = "未能确定照片中的地点，建议重拍或手动选择地点。"
+        next_actions = ["retake", "manual_select"]
+
+    # ── 讲解 seam：only a high-confidence canonical POI may trigger guide/RAG ──
+    explanation = _explain(description, candidate_poi, language=language) if not uncertain else None
 
     # ── guide → reviewer 管道：讲解正文过审（block → 安全 fallback，不外泄）──
     photo_review = None
@@ -189,6 +342,7 @@ async def photo(
             "candidate_poi": candidate_poi,
             "confidence": confidence,
             "explained": explanation is not None,
+            "recognition_status": recognition_status,
         },
     )
 
@@ -203,10 +357,14 @@ async def photo(
         "scrubbed": True,
         "source": source,
         "error": error,
+        "recognition_status": recognition_status,
+        "low_confidence_hint": low_confidence_hint,
+        "next_actions": next_actions,
+        "manual_selection_endpoint": "/api/v1/pois?q=<keyword>",
     }
 
 
-@router.post("/generate")
+@router.post("/generate", dependencies=[Depends(rate_limit("text"))])
 def generate(req: GuideRequest) -> dict:
     """POI + 偏好 → 文化讲解（RAG 取料 → guide agent；agent 不可用降级空讲解，不 500）。"""
     if not settings.guide_agent_enabled:
@@ -260,3 +418,31 @@ def generate(req: GuideRequest) -> dict:
         "blocked": blocked,
         "error": None,
     }
+
+
+@router.post("/tts", response_model=TTSResponse, dependencies=[Depends(rate_limit("expensive"))])
+def tts(req: TTSRequest) -> TTSResponse:
+    """Text-to-speech with fixed four-language voices and private OSS delivery."""
+    try:
+        result = synthesize_to_oss(req.text, req.language)
+    except TTSUnavailableError as exc:
+        record_audit(
+            kind="guide.tts",
+            status="unavailable",
+            input_chars=len(req.text),
+            metadata={"language": req.language},
+        )
+        raise HTTPException(status_code=503, detail=f"TTS unavailable: {exc}; retry later") from exc
+    record_audit(
+        kind="guide.tts",
+        status="ok",
+        input_chars=len(req.text),
+        metadata={"language": req.language, "voice": result["voice"]},
+    )
+    return TTSResponse(
+        audio_url=str(result["audio_url"]),
+        expires_in=int(result["expires_in"]),
+        content_type=str(result["content_type"]),
+        language=req.language,
+        voice=str(result["voice"]),
+    )

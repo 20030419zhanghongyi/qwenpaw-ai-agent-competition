@@ -107,6 +107,12 @@ P2：
 - 再加入 embedding 相似度排序
 - 形成“规则 + 向量”的候选点召回
 
+## 已补充的地图路径能力
+
+`POST /api/v1/routes/walk-path` 已作为独立高德 direction 适配层落地：前端提交模板或 Agent 调整后的
+有序 `poi_ids`，即可获得逐段距离、步行时间和 polyline。它不进入规则排线热路径，因此高德异常不会阻断
+`/routes/adjust`；前端在调整后重新请求路径即可同步地图数据。
+
 ## 本轮验收
 
 - `/routes/match` 在没有 `weights.json` 时仍能返回稳定结果
