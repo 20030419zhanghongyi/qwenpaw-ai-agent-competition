@@ -41,8 +41,8 @@ curl -X POST http://127.0.0.1:8088/api/skills/pool/refresh   # 不自动发现�
 | `fairness-gate` | intent（需求理解，作后置复核） | 结构化偏好不得含禁止特征 |
 | `content-safety-review` | 独立审核 agent / 外层 guardrail hook（P3） | 高风险内容上线前 pass/revise/block |
 
-> 上述「外层 guardrail hook」（前置注入 base、后置跑审核）由 `backend/app/guardrails/`（P3）落地，目前是占位。
-> Console 内挂技能 =「内层 agent 自带伦理」，guardrail hook =「外层强制」，两处都要留证据（plan §P3）。
+> `backend/app/guardrails/` 已落地文本隔离、Agent/上传端点分级限流、去标识 trace 与 PostgreSQL 审计。
+> guide/photo 输出仍通过 reviewer 管道审核；共享伦理基线继续由 Console 技能挂载到内层 Agent，两层均需保留运行证据。
 
 ### 配置要点（团队按平台实际 UI 微调）
 

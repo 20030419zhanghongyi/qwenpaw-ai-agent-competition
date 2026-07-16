@@ -6,6 +6,7 @@
 
 from functools import lru_cache
 from pathlib import Path
+import sys as _sys
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -15,7 +16,6 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 # 让 backend 能 import 仓库根下的 rag/（RAG 模块在仓库根、不在 backend/app 内）。
 # config 被几乎所有模块早 import，放在这里保证 rag 可用。
-import sys as _sys
 if str(REPO_ROOT) not in _sys.path:
     _sys.path.insert(0, str(REPO_ROOT))
 
@@ -70,7 +70,7 @@ class Settings(BaseSettings):
     reviewer_agent_enabled: bool = False
     qwen_vision_model: str = "qwen-vl-max"
     qwen_embedding_model: str = "text-embedding-v3"
-    qwen_tts_model: str = "cosyvoice-v1"
+    qwen_tts_model: str = "qwen3-tts-flash"
 
     # 高德地图
     amap_api_key: str = ""
@@ -93,6 +93,21 @@ class Settings(BaseSettings):
     weather_api_key: str = ""
     crowd_api_key: str = ""
     tts_api_key: str = ""
+
+    # 阿里云 OSS（TTS 私有音频对象）
+    oss_endpoint: str = ""
+    oss_region: str = ""
+    oss_bucket: str = ""
+    oss_access_key_id: str = ""
+    oss_access_key_secret: str = ""
+    oss_audio_prefix: str = "tts"
+    oss_signed_url_ttl_seconds: int = 3600
+
+    # Guardrails / audit
+    audit_hash_salt: str = ""
+    audit_retention_days: int = 30
+    model_version: str = "qwenpaw-managed"
+    prompt_version: str = "ethics-v1"
 
     @property
     def repo_root(self) -> Path:

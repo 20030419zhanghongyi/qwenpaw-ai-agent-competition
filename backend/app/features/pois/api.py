@@ -24,10 +24,11 @@ router = APIRouter(prefix="/api/v1/pois", tags=["pois"])
 def list_pois(
     database: Annotated[Session, Depends(get_db)],
     category: str | None = None,
+    q: str | None = Query(default=None, min_length=1, max_length=100),
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=500, ge=1, le=1000),
 ) -> list[PoiResponse]:
-    return PoiService(database).list_pois(category=category, offset=offset, limit=limit)
+    return PoiService(database).list_pois(category=category, query=q, offset=offset, limit=limit)
 
 
 @router.get(

@@ -111,7 +111,7 @@
 - [x] 建 `需求理解` agent（agent-id `intent`）+ `requirement-understand` / `fairness-gate` 技能 —— 2026-07-13 重新经 API 建档，真实 Preference JSON 烟测通过
 - [x] `backend/app/orchestrator/`:意图分类 → 路由到对应 agent —— 2026-07-13 已实现可解释规则路由与 `POST /api/v1/orchestrator/route`，覆盖 intent / route / guide / photo / reviewer，并支持 photo → guide 链；8 条专项测试通过
 - [ ] 多 agent 协作:`agents chat --from-agent … --to-agent …`(需求理解 → 路线微调 → 讲解)
-- [ ] `backend/app/guardrails/`:前置注入 `_ethics_base.md`;后置跑 `content-safety-review` + 事实核对 + 低置信回退
+- [~] `backend/app/guardrails/`:文本隔离、分级限流、去标识 trace、审计落库与 photo 低置信回退已实现；共享基线的运行时强制注入/事实核对仍待补证
 - [ ] ethics 4 技能既挂内层 agent、也作外层 hook(两处都留截图)
 
 交付物:orchestrator、guardrails、多 agent 协作链路。

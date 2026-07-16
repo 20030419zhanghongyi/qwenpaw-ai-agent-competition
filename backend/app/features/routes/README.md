@@ -30,6 +30,7 @@
 - 模板路线初筛
 - 无 API key 的候选 POI 召回
 - 无 API key 的约束式排线
+- 基于高德 direction 的真实步行路径（有序 POI → 分段距离/时间/polyline）
 - 路线相关 API
 - 路线功能文档、计划、checklist
 
@@ -180,6 +181,9 @@ backend/app/features/routes/
 - `POST /api/v1/routes/adjust`
 
 它是**无 API key 的规则版 adjust 接口**，先支持少量高频自然语言偏好，后续可平滑替换成 Agent 版本。
+
+另有 `POST /api/v1/routes/walk-path`：前端提交模板或调整后的有序 `poi_ids`，后端返回高德逐段
+`walk_m`、`walk_min` 与 polyline。该接口独立于规则排线，高德不可用时返回 503，不拖垮路线调整。
 
 ## 设计原则
 

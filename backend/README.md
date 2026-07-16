@@ -125,6 +125,16 @@ Favorite 和 Feedback 均通过 Repository 持久化至 PostgreSQL，并保持�
 
 ## 4. 验证实验与测试结果
 
+### 2026-07-16 导览与安全增量
+
+- `POST /api/v1/guide/trigger`：PostGIS 附近 POI 触发；匿名会话同一 POI 10 分钟防重复，确认后才调讲解。
+- `POST /api/v1/routes/walk-path`：有序 POI → 高德逐段距离、时间与 polyline。
+- `POST /api/v1/guide/tts`：普通话、粤语、英语、葡语固定音色；私有 OSS 短期 URL。
+- `/guide/photo` 的低置信度明确返回 `uncertain`、重拍/手选动作，并阻止不确定结果进入 RAG 讲解。
+- 全 Agent 入口文本隔离、分级限流、去标识 trace 与 PostgreSQL `audit_events`（30 天留存）。
+
+缺少高德、TTS 或 OSS 配置时，相关接口明确返回 503，不伪造路径或音频 URL。
+
 以下结果在本地 PostGIS 容器和项目虚拟环境中完成验证。
 
 ### 数据库验证

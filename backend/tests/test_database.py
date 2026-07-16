@@ -18,6 +18,7 @@ from app.db import models  # noqa: F401 - registers ORM tables
 from app.db.base import Base
 from app.db.health import ping_database
 from app.db.models import (
+    AuditEvent,
     Checkin,
     Favorite,
     RouteTemplate,
@@ -33,6 +34,7 @@ from app.main import app
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 TEST_DATABASE_NAME = "qwenpaw_test"
 EXPECTED_TABLES = {
+    "audit_events",
     "users",
     "trips",
     "trip_stops",
@@ -111,6 +113,12 @@ def test_engine_and_session_factory_are_synchronous():
 
 def test_metadata_contains_core_tables():
     assert set(Base.metadata.tables) == EXPECTED_TABLES
+
+
+def test_audit_event_table_columns():
+    assert {"event_id", "kind", "status", "subject_hash", "metadata_json", "created_at"} <= set(
+        AuditEvent.__table__.columns.keys()
+    )
 
 
 def test_users_table_columns():

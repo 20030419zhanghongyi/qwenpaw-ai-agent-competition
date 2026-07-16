@@ -5,7 +5,7 @@ from collections.abc import Callable
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.db.models import RouteTemplate, RouteTemplateStop
+from app.db.models import RouteTemplate
 from app.db.session import SessionLocal
 
 

@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import logging
 import threading
+import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -42,19 +43,21 @@ def record_trace(
     status: str = "ok",
     extra: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """记录一条调用 trace 并落盘，返回该事件 dict。
+    """Record de-identified operational trace metadata.
 
-    字段对齐 plan §B：{ts, kind, agent_id, chat_id, input_summary,
-    output_summary, latency_ms, tokens, status, ...extra}。
+    The legacy summary arguments are accepted for compatibility but are reduced
+    to character counts and a non-reversible digest before persistence.
     """
     event: dict[str, Any] = {
         "ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
         "kind": kind,
         "status": status,
         "agent_id": agent_id,
-        "chat_id": chat_id,
-        "input_summary": input_summary,
-        "output_summary": output_summary,
+        "chat_id_hash": _digest(chat_id),
+        "input_chars": len(input_summary) if input_summary else None,
+        "input_hash": _digest(input_summary),
+        "output_chars": len(output_summary) if output_summary else None,
+        "output_hash": _digest(output_summary),
         "latency_ms": latency_ms,
         "tokens": tokens,
     }
@@ -76,3 +79,7 @@ def record_trace(
         logger.warning("trace 落盘失败：%s", exc)
 
     return event
+
+
+def _digest(value: str | None) -> str | None:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()[:16] if value else None

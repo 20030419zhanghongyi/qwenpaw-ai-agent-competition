@@ -20,6 +20,7 @@
 - [x] `POST /api/v1/routes/match` 已返回扩展字段：`selected_template` / `candidate_pois` / `applied_constraints` / `explanation`
 - [x] `/api/v1/routes/adjust` 已提供可用的规则版占位接口
 - [x] `/api/v1/routes/adjust` 已支持少走路 / 拍照点补充 / 顺路优化等高频指令骨架
+- [x] `POST /api/v1/routes/walk-path` 已接高德 direction：有序 POI 返回逐段距离、步行时间与 polyline；外部服务失败明确 503
 
 ## 本轮仍待补强
 

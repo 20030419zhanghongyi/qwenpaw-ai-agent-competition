@@ -25,6 +25,7 @@ from typing import Any, Iterator
 import httpx
 
 from app.core.config import settings
+from app.guardrails.runtime import record_audit
 from app.observability.trace import record_trace
 
 logger = logging.getLogger("macau_storywalk.qwenpaw")
@@ -182,6 +183,16 @@ class QwenPawClient:
             output_summary=(result.get("text") or "")[:200],
             latency_ms=latency_ms,
             tokens=result.get("tokens"),
+        )
+        record_audit(
+            kind="qwenpaw.ask",
+            status="ok",
+            subject=sid,
+            agent_id=agent_id,
+            latency_ms=latency_ms,
+            tokens=result.get("tokens"),
+            input_chars=len(text),
+            output_chars=len(result.get("text") or ""),
         )
         return result.get("text", "")
 
