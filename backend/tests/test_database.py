@@ -207,6 +207,14 @@ def test_health_preserves_existing_fields(monkeypatch):
     assert data["status"] == "ok"
 
 
+def test_health_recognizes_amap_web_service_key(monkeypatch):
+    monkeypatch.setattr(health_api, "ping_database", lambda: True)
+    monkeypatch.setattr(health_api.settings, "amap_api_key", "")
+    monkeypatch.setattr(health_api.settings, "amap_web_service_key", "web-service-key")
+
+    assert client.get("/api/v1/health").json()["amap_configured"] is True
+
+
 def test_alembic_upgrade_downgrade_reupgrade_cycle(test_database_url: str):
     config = _alembic_config(test_database_url)
     isolated_engine = build_engine(test_database_url)

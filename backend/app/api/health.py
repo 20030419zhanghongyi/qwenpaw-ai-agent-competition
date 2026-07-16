@@ -37,6 +37,8 @@ def health() -> HealthResponse:
         status="ok",
         env=settings.app_env,
         dashscope_configured=bool(settings.dashscope_api_key),
-        amap_configured=bool(settings.amap_api_key),
+        # Either key enables an AMap capability: the JS key serves the frontend,
+        # while the Web Service key is used by backend walking directions.
+        amap_configured=bool(settings.amap_api_key or settings.amap_web_service_key),
         database_status=database_status,
     )
