@@ -1,11 +1,17 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LANG_OPTIONS, t, type Lang } from "./i18n";
 import {
   getPois,
+  getWalkPath,
+  generateGuide,
+  triggerGuide,
   matchRoutes,
+  type GuideNarration,
+  type GuideRequest,
   type MatchResult,
   type POI,
   type Preference,
+  type WalkPath,
 } from "./api/client";
 
 type Step = "lang" | "pref" | "result";
@@ -153,8 +159,39 @@ function ResultView({
   onBack: () => void;
 }) {
   const top = matches[0];
-  const poiMap = useMemo(() => new Map(pois.map((p) => [p.id, p])), [pois]);
+  const poiMap = useMemo(() => new Map(pois.map((p) => [p.poi_id, p])), [pois]);
   const tt = (k: string) => t(lang, k);
+  const orderedNodes = top.route.nodes.slice().sort((a, b) => a.order - b.order);
+  const [walkPath, setWalkPath] = useState<WalkPath | null>(null);
+  const [guideRequest, setGuideRequest] = useState<GuideRequest | null>(null);
+  const [narration, setNarration] = useState<GuideNarration | null>(null);
+  const [guideError, setGuideError] = useState<string | null>(null);
+  const [guideLoading, setGuideLoading] = useState(false);
+
+  useEffect(() => {
+    getWalkPath(orderedNodes.map((node) => node.poi_id)).then(setWalkPath).catch(() => setWalkPath(null));
+  }, [top.route.id]);
+
+  function checkLocation() {
+    setGuideError(null);
+    if (!navigator.geolocation) { setGuideError("此浏览器不支持定位，请从节点列表选择地点。"); return; }
+    navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+      try {
+        const sessionId = localStorage.getItem("storywalk-session") ?? crypto.randomUUID();
+        localStorage.setItem("storywalk-session", sessionId);
+        const result = await triggerGuide(coords.longitude, coords.latitude, sessionId, lang);
+        if (result.triggered && result.guide_request) setGuideRequest(result.guide_request);
+        else setGuideError(result.reason === "recently_triggered" ? "这个地点刚刚已提示过。" : "80 米内没有可讲解地点。");
+      } catch (error) { setGuideError((error as Error).message); }
+    }, () => setGuideError("无法取得当前位置，请允许浏览器定位权限。"));
+  }
+
+  async function confirmGuide(request: GuideRequest) {
+    setGuideLoading(true); setGuideError(null);
+    try { setNarration(await generateGuide(request)); setGuideRequest(null); }
+    catch (error) { setGuideError((error as Error).message); }
+    finally { setGuideLoading(false); }
+  }
 
   return (
     <>
@@ -169,6 +206,8 @@ function ResultView({
           体力 {top.route.physical_level}
         </p>
         <p>{top.route.description}</p>
+        {walkPath && <p className="route-metrics">真实步行：{walkPath.total_walk_m} 米 · 约 {walkPath.total_walk_min} 分钟</p>}
+        <button className="primary" onClick={checkLocation}>检查我是否靠近讲解点</button>
         <p className="muted">{tt("reasons")}</p>
         <div className="row">
           {top.reasons.map((r, i) => (
@@ -179,27 +218,29 @@ function ResultView({
 
       <div className="card">
         <h2>{tt("nodes")}</h2>
-        {top.route.nodes
-          .slice()
-          .sort((a, b) => a.order - b.order)
+        {orderedNodes
           .map((n) => {
             const poi = poiMap.get(n.poi_id);
             return (
               <div key={n.poi_id} className="node">
-                <strong>{n.order}. {poi?.name_zh ?? n.poi_id}</strong>
-                <div className="muted">建议停留 {n.suggested_stay_min} 分钟{poi ? ` · ${poi.district}` : ""}</div>
+                <strong>{n.order}. {poi?.poi_name ?? n.poi_id}</strong>
+                <div className="muted">建议停留 {n.suggested_stay_min} 分钟{poi ? ` · ${poi.address}` : ""}</div>
                 {n.note && <div>{n.note}</div>}
                 {poi && (
                   <div style={{ marginTop: 8 }}>
-                    <div>{poi.intro}</div>
-                    <div className="muted" style={{ marginTop: 6 }}>观察建议：{poi.observation_tips}</div>
-                    <span className="muted">内容来源：{poi.source_type}</span>
+                    <div className="muted">{poi.category}</div>
+                    <span className="muted">数据来源：{poi.source}</span>
                   </div>
                 )}
               </div>
             );
           })}
       </div>
+      {(guideRequest || narration || guideError) && <div className="card guide-panel">
+        {guideRequest && <><h2>附近讲解</h2><p>已靠近 {guideRequest.poi}，要听讲解吗？</p><button className="primary" disabled={guideLoading} onClick={() => confirmGuide(guideRequest)}>{guideLoading ? "正在生成…" : "生成讲解"}</button></>}
+        {narration?.text && <><h2>讲解</h2><p>{narration.text}</p><p className="muted">可信度：{Math.round(narration.confidence * 100)}%</p></>}
+        {guideError && <p className="guide-error">{guideError}</p>}
+      </div>}
     </>
   );
 }

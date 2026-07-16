@@ -58,6 +58,16 @@ button.primary {
 }
 button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.route-metrics {
+  background: #fff7dc;
+  border-radius: 8px;
+  color: #66500a;
+  font-size: 0.9rem;
+  padding: 9px 10px;
+}
+.guide-panel { border-color: #e7c45c; }
+.guide-error { color: var(--primary); font-size: 0.9rem; }
+
 .muted { color: var(--muted); font-size: 0.85rem; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .steps { color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; }
