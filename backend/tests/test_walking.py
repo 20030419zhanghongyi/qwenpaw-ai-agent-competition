@@ -9,6 +9,7 @@ from sqlalchemy import delete
 from app.db.models import Poi
 from app.db.session import SessionLocal
 from app.features.routes import api as routes_api
+from app.features.routes import walking
 from app.features.routes.walking import AmapWalkingClient, WalkingPathError, build_walk_path
 from app.main import app
 from scripts.import_pois import PoiImportRow, upsert_pois
@@ -21,7 +22,7 @@ class FakeWalkingClient:
     def segment(self, _origin, _destination):
         return {
             "distance": "120",
-            "duration": "95",
+            "cost": {"duration": "95"},
             "steps": [{"polyline": "113.1,22.1;113.2,22.2"}],
         }
 
@@ -78,3 +79,27 @@ def test_walk_path_api_contract_and_errors(monkeypatch):
 def test_walking_client_requires_web_service_key():
     with pytest.raises(WalkingPathError, match="not configured"):
         AmapWalkingClient(api_key="").segment((113.5, 22.1), (113.6, 22.2))
+
+
+def test_walking_client_requests_cost_and_polyline(monkeypatch):
+    captured: dict = {}
+
+    class Response:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return {
+                "status": "1",
+                "route": {"paths": [{"distance": "100", "cost": {"duration": "80"}, "steps": []}]},
+            }
+
+    def fake_get(_url, *, params, timeout):
+        captured.update(params)
+        assert timeout == 10.0
+        return Response()
+
+    monkeypatch.setattr(walking.httpx, "get", fake_get)
+    AmapWalkingClient(api_key="test-key").segment((113.5, 22.1), (113.6, 22.2))
+
+    assert captured["show_fields"] == "cost,polyline"

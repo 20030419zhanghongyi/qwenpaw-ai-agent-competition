@@ -29,6 +29,8 @@ class AmapWalkingClient:
             "key": self._api_key,
             "origin": f"{origin[0]:.6f},{origin[1]:.6f}",
             "destination": f"{destination[0]:.6f},{destination[1]:.6f}",
+            # AMap v5 returns duration and step polylines only when explicitly requested.
+            "show_fields": "cost,polyline",
             "output": "json",
         }
         try:
@@ -60,7 +62,8 @@ def build_walk_path(poi_ids: list[str], database: Session, *, client: AmapWalkin
         origin, destination = pois[from_id], pois[to_id]
         path = client.segment((origin.longitude, origin.latitude), (destination.longitude, destination.latitude))
         distance = int(float(path.get("distance") or 0))
-        duration = int(float(path.get("duration") or 0))
+        cost = path.get("cost") or {}
+        duration = int(float(cost.get("duration") or path.get("duration") or 0))
         steps = path.get("steps") or []
         polyline = ";".join(str(step.get("polyline") or "") for step in steps if step.get("polyline"))
         total_distance += distance
