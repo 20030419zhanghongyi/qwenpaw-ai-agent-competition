@@ -1,0 +1,867 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import mapImg from "@/assets/macau-map.jpg";
+import {
+  triggerGuide,
+  type GuideTriggerResponse,
+} from "@/api/client";
+import { ReasonChips } from "@/components/route/ReasonChips";
+import { RouteNodeList, type DisplayNode } from "@/components/route/RouteNodeList";
+import { t } from "@/i18n";
+import { formatWalkMeta } from "@/lib/preference";
+import { useWalk } from "@/state/WalkContext";
+
+/** Decorative marker positions on the illustrative map (not geo-accurate). */
+const MARKER_SLOTS = [
+  { top: "62%", left: "34%" },
+  { top: "50%", left: "46%" },
+  { top: "34%", left: "56%" },
+  { top: "42%", left: "64%" },
+  { top: "28%", left: "58%" },
+  { top: "22%", left: "48%" },
+  { top: "38%", left: "40%" },
+  { top: "70%", left: "42%" },
+];
+
+const TRIM_NOTE_RE = /(?:\s*已按约束缩短末端节点。)+/g;
+
+/** Strip repeated constructor notes from cached route blurbs. */
+function cleanRouteBlurb(text: unknown): string {
+  if (typeof text !== "string") return "";
+  return text.replace(TRIM_NOTE_RE, "").replace(/\s+/g, " ").trim();
+}
+
+function markerPathForCount(count: number): string {
+  const slots = MARKER_SLOTS.slice(0, Math.max(0, count));
+  if (slots.length < 2) return "";
+  return slots
+    .map((slot, i) => {
+      const x = Number.parseFloat(slot.left);
+      const y = Number.parseFloat(slot.top);
+      return `${i === 0 ? "M" : "L"}${x},${y}`;
+    })
+    .join(" ");
+}
+
+type TriggerMode = "gps" | "simulated";
+
+interface NarrationState {
+  poiName: string;
+  text: string;
+  sourceType?: string;
+  audioUrl?: string;
+  ttsFailed?: boolean;
+}
+
+function readGuideSessionId(): string {
+  const key = "macau-storywalk-guide-session";
+  try {
+    const existing = sessionStorage.getItem(key);
+    if (existing) return existing;
+    const next = `walk-${crypto.randomUUID()}`;
+    sessionStorage.setItem(key, next);
+    return next;
+  } catch {
+    return `walk-${Date.now()}`;
+  }
+}
+
+export function RouteResultPage() {
+  const navigate = useNavigate();
+  const { session, language } = useWalk();
+  const [sheetOpen, setSheetOpen] = useState<"peek" | "half" | "full">("half");
+  const [dayIndex, setDayIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [guiding, setGuiding] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [statusNote, setStatusNote] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const [triggerOpen, setTriggerOpen] = useState(false);
+  const [triggerMode, setTriggerMode] = useState<TriggerMode>("gps");
+  const [triggerPayload, setTriggerPayload] = useState<GuideTriggerResponse | null>(null);
+
+  const [narration, setNarration] = useState<NarrationState | null>(null);
+  const guideSessionId = useRef(readGuideSessionId());
+  const triggerOpenRef = useRef(false);
+  const generatingRef = useRef(false);
+  const checkingRef = useRef(false);
+  const lastGpsCheckRef = useRef(0);
+  const nodesRef = useRef<DisplayNode[]>([]);
+
+  const dayMatches = session?.matches?.length ? session.matches : session?.match ? [session.match] : [];
+  const match = dayMatches[Math.min(dayIndex, Math.max(dayMatches.length - 1, 0))] ?? session?.match;
+  const preference = session?.preference;
+  const poisById = session?.poisById ?? {};
+  const route = match?.route;
+  const isMultiDay = (dayMatches.length > 1) || preference?.duration === "multi-day";
+
+  useEffect(() => {
+    setCurrentIndex(0);
+    setTriggerOpen(false);
+    setNarration(null);
+    setGuiding(false);
+  }, [dayIndex]);
+
+  const nodes = useMemo(() => {
+    if (!route) return [];
+    const sorted = [...(route.nodes ?? [])].sort((a, b) => a.order - b.order);
+    return sorted.map((node, index): DisplayNode => {
+      const poi = poisById[node.poi_id];
+      return {
+        poiId: node.poi_id,
+        order: node.order,
+        name: poi?.poi_name ?? node.poi_id,
+        subtitle: poi?.alias ?? poi?.category,
+        note: node.note || poi?.address || t(language, "nodeNoteFallback"),
+        stayMin: node.suggested_stay_min,
+        state:
+          index === currentIndex ? "current" : index === currentIndex + 1 ? "next" : "upcoming",
+      };
+    });
+  }, [route, poisById, language, currentIndex]);
+
+  useEffect(() => {
+    nodesRef.current = nodes;
+  }, [nodes]);
+
+  useEffect(() => {
+    triggerOpenRef.current = triggerOpen;
+  }, [triggerOpen]);
+
+  useEffect(() => {
+    generatingRef.current = generating;
+  }, [generating]);
+
+  useEffect(() => {
+    checkingRef.current = checking;
+  }, [checking]);
+
+  useEffect(() => {
+    if (!guiding) return;
+    if (!navigator.geolocation) {
+      setStatusNote(t(language, "gpsUnsupported"));
+      return;
+    }
+
+    setStatusNote(t(language, "gpsWatching"));
+    setError(null);
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        if (triggerOpenRef.current || generatingRef.current || checkingRef.current) return;
+        const now = Date.now();
+        if (now - lastGpsCheckRef.current < 8000) return;
+        lastGpsCheckRef.current = now;
+
+        const { longitude, latitude } = pos.coords;
+        void (async () => {
+          checkingRef.current = true;
+          setChecking(true);
+          try {
+            const res = await triggerGuide({
+              longitude,
+              latitude,
+              session_id: guideSessionId.current,
+              radius_m: 100,
+              language,
+            });
+            if (res.triggered || (res.poi && res.reason === "recently_triggered")) {
+              setTriggerPayload(res);
+              setTriggerMode("gps");
+              setTriggerOpen(true);
+              setNarration(null);
+              setError(null);
+              setStatusNote(null);
+              if (res.poi?.poi_id) {
+                const idx = nodesRef.current.findIndex((n) => n.poiId === res.poi?.poi_id);
+                if (idx >= 0) setCurrentIndex(idx);
+              }
+            } else {
+              setStatusNote(t(language, "gpsNoNearby"));
+            }
+          } catch (err) {
+            setError(err instanceof Error ? err.message : t(language, "guideError"));
+          } finally {
+            checkingRef.current = false;
+            setChecking(false);
+          }
+        })();
+      },
+      () => {
+        setStatusNote(t(language, "locationDenied"));
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 20_000,
+      },
+    );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, [guiding, language]);
+
+  if (!session || !match || !route) {
+    return (
+      <main className="flex flex-1 flex-col items-center justify-center bg-paper px-6 py-16 text-center">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-sage-deep">
+          {t(language, "navItinerary")}
+        </p>
+        <h1 className="mb-3 font-display text-3xl text-ink">{t(language, "itineraryEmptyTitle")}</h1>
+        <p className="mb-8 max-w-md text-sm leading-relaxed text-ink-soft">
+          {t(language, "itineraryEmptyLead")}
+        </p>
+        <Link
+          to="/preferences"
+          className="rounded-full bg-sage-deep px-6 py-3.5 text-sm font-medium text-paper transition hover:bg-moss"
+        >
+          {t(language, "itineraryEmptyCta")}
+        </Link>
+      </main>
+    );
+  }
+
+  const meta = formatWalkMeta({
+    stops: nodes.length,
+    walkKm: route.walk_distance_km ?? 0,
+    durationHours: route.duration_hours ?? 0,
+    physicalLevel: route.physical_level ?? "medium",
+    stopsLabel: t(language, "stops"),
+    about: t(language, "aboutHours"),
+    physical: {
+      low: t(language, "physicalLow"),
+      med: t(language, "physicalMed"),
+      high: t(language, "physicalHigh"),
+    },
+  });
+
+  const explanation = cleanRouteBlurb(
+    typeof match.explanation?.summary === "string"
+      ? match.explanation.summary
+      : route.description,
+  );
+  const mapPath = markerPathForCount(Math.min(nodes.length, MARKER_SLOTS.length));
+
+  const currentNode = nodes[currentIndex] ?? nodes[0];
+  const triggerPoiName =
+    triggerPayload?.poi?.poi_name ??
+    triggerPayload?.guide_request?.poi ??
+    currentNode?.name ??
+    "POI";
+
+  async function simulateNearCurrentStop() {
+    if (!currentNode) return;
+    const poi = poisById[currentNode.poiId];
+    if (!poi) {
+      setError(t(language, "guideError"));
+      return;
+    }
+
+    setGuiding(true);
+    setChecking(true);
+    setError(null);
+    setStatusNote(t(language, "checkingNear"));
+    try {
+      const res = await triggerGuide({
+        longitude: poi.longitude,
+        latitude: poi.latitude,
+        session_id: guideSessionId.current,
+        radius_m: 120,
+        language,
+      });
+      if (res.triggered || (res.poi && res.reason === "recently_triggered")) {
+        setTriggerPayload(res);
+        setTriggerMode("simulated");
+        setTriggerOpen(true);
+        setNarration(null);
+        setStatusNote(null);
+      } else {
+        setError(t(language, "guideError"));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t(language, "guideError"));
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  function handleStartGuide() {
+    setGuiding(true);
+    setTriggerOpen(false);
+    setNarration(null);
+    setError(null);
+    lastGpsCheckRef.current = 0;
+    setStatusNote(t(language, "gpsWatching"));
+  }
+
+  function handleNextStop() {
+    if (currentIndex >= nodes.length - 1) return;
+    setCurrentIndex((i) => i + 1);
+    setTriggerOpen(false);
+    setNarration(null);
+    setStatusNote(t(language, "gpsWatching"));
+  }
+
+  function handleSelectStop(index: number) {
+    if (index < 0 || index >= nodes.length || index === currentIndex) return;
+    setCurrentIndex(index);
+    setTriggerOpen(false);
+    setNarration(null);
+    setStatusNote(guiding ? t(language, "gpsWatching") : null);
+  }
+
+  async function handleAcceptGuide() {
+    const poiName =
+      triggerPayload?.guide_request?.poi ??
+      triggerPayload?.poi?.poi_name ??
+      currentNode?.name;
+    if (!poiName) return;
+
+    const poiId = triggerPayload?.poi?.poi_id ?? currentNode?.poiId ?? "";
+    const next = nodes[currentIndex + 1];
+    setTriggerOpen(false);
+    setGenerating(false);
+    setNarration(null);
+    const params = new URLSearchParams({
+      poi: poiId || poiName,
+      name: poiName,
+      from: "walk",
+    });
+    if (next) {
+      params.set("next", next.name);
+      params.set("nextId", next.poiId);
+    } else {
+      params.set("next", "");
+    }
+    navigate(`/guide?${params.toString()}`);
+  }
+
+  const askLabel =
+    triggerMode === "simulated"
+      ? t(language, "triggerAskSimulated")
+      : triggerPayload?.prompt || t(language, "triggerAsk");
+
+  return (
+    <main className="relative flex flex-1 flex-col bg-paper text-ink">
+      <div className="sticky top-14 z-30 flex shrink-0 items-center justify-between border-b border-line/60 bg-paper/90 px-5 py-2.5 backdrop-blur-md lg:px-8">
+        <Link to="/profile" className="text-sm text-ink-soft hover:text-ink">
+          {t(language, "adjustPrefs")}
+        </Link>
+        <div className="flex items-center gap-2">
+          <span className="inline-block size-1.5 rounded-full bg-sage-deep" />
+          <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-sage-deep">
+            {guiding ? t(language, "guidingActive") : t(language, "activeRoute")}
+          </span>
+        </div>
+        <Link to="/profile" className="text-sm text-ink-soft hover:text-ink">
+          {t(language, "adjustSoon")}
+        </Link>
+      </div>
+
+      <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start">
+        <div className="relative min-h-[50dvh] overflow-hidden bg-paper-warm lg:sticky lg:top-[7.25rem] lg:h-[calc(100dvh-7.25rem)] lg:min-h-0">
+          <img
+            src={mapImg}
+            alt={t(language, "mapAlt")}
+            className="absolute inset-0 h-full w-full object-cover opacity-90"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-sage-deep/5 via-transparent to-clay/10" />
+
+          {mapPath ? (
+            <svg
+              className="pointer-events-none absolute inset-0 h-full w-full"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              aria-hidden
+            >
+              <path
+                d={mapPath}
+                fill="none"
+                stroke="var(--color-sage-deep)"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeDasharray="1.2 1.4"
+                vectorEffect="non-scaling-stroke"
+                style={{ strokeWidth: 2.5 }}
+              />
+            </svg>
+          ) : null}
+
+          {nodes.slice(0, MARKER_SLOTS.length).map((p, i) => (
+            <PoiMarker
+              key={p.poiId}
+              node={p}
+              pos={MARKER_SLOTS[i]}
+              onSelect={() => handleSelectStop(i)}
+            />
+          ))}
+
+          <button
+            type="button"
+            aria-label={t(language, "locateMe")}
+            disabled={checking || generating}
+            onClick={() => {
+              setGuiding(true);
+              lastGpsCheckRef.current = 0;
+              setStatusNote(t(language, "gpsWatching"));
+            }}
+            className="absolute bottom-24 right-5 z-10 grid size-11 place-items-center rounded-full border border-line bg-paper text-sage-deep shadow-[var(--shadow-soft)] hover:bg-paper-warm disabled:opacity-50 lg:bottom-8 lg:right-8"
+          >
+            ◎
+          </button>
+
+          {(statusNote || error) && !triggerOpen && !narration ? (
+            <div className="absolute left-1/2 top-6 z-10 w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 rounded-2xl border border-line bg-paper/95 px-4 py-3 text-sm shadow-[var(--shadow-soft)] lg:left-8 lg:top-auto lg:bottom-8 lg:translate-x-0">
+              {error ? (
+                <p className="text-clay">{error}</p>
+              ) : (
+                <p className="text-ink-soft">{statusNote}</p>
+              )}
+            </div>
+          ) : null}
+
+          {triggerOpen ? (
+            <div className="pointer-events-auto absolute left-1/2 top-6 z-20 w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 lg:bottom-8 lg:left-8 lg:top-auto lg:w-80 lg:translate-x-0">
+              <TriggerModal
+                poiName={triggerPoiName}
+                nearLabel={t(language, "triggerNear")}
+                askLabel={askLabel}
+                dismissLabel={t(language, "triggerDismiss")}
+                acceptLabel={
+                  generating ? t(language, "generatingGuide") : t(language, "triggerAccept")
+                }
+                busy={generating}
+                onAccept={() => void handleAcceptGuide()}
+                onDismiss={() => setTriggerOpen(false)}
+              />
+            </div>
+          ) : null}
+
+          {narration ? (
+            <div className="pointer-events-auto absolute left-1/2 top-6 z-20 w-[calc(100%-2.5rem)] max-w-md -translate-x-1/2 lg:bottom-8 lg:left-8 lg:top-auto lg:translate-x-0">
+              <NarrationCard
+                title={t(language, "narrationTitle")}
+                poiName={narration.poiName}
+                text={narration.text || t(language, "narrationEmpty")}
+                sourceType={narration.sourceType}
+                audioUrl={narration.audioUrl}
+                ttsHint={narration.ttsFailed ? t(language, "ttsUnavailable") : null}
+                closeLabel={t(language, "narrationClose")}
+                onClose={() => setNarration(null)}
+              />
+            </div>
+          ) : null}
+        </div>
+
+        <aside className="hidden border-l border-line/70 bg-paper lg:sticky lg:top-[7.25rem] lg:block lg:max-h-[calc(100dvh-7.25rem)] lg:overflow-y-auto lg:overscroll-contain">
+          <RouteInfoPanel
+            title={route.name}
+            theme={route.theme}
+            meta={meta}
+            reasons={match.reasons}
+            explanation={explanation}
+            nodes={nodes}
+            lockScroll={false}
+            chapterLabel={t(language, "chapterIII")}
+            itineraryLabel={t(language, "itinerary")}
+            simulateLabel={t(language, "simulateNear")}
+            startGuideLabel={
+              checking
+                ? t(language, "checkingNear")
+                : guiding
+                  ? t(language, "nextStopGuide")
+                  : t(language, "startGuide")
+            }
+            startDisabled={checking || generating}
+            onSimulate={() => void simulateNearCurrentStop()}
+            onStartGuide={() => (guiding ? handleNextStop() : handleStartGuide())}
+            onSelectStop={handleSelectStop}
+            curatorSuffix={t(language, "curatorSuffix")}
+            stayLabel={t(language, "stayMinutes")}
+            multiDay={
+              isMultiDay
+                ? {
+                    label: t(language, "dayPlanLabel"),
+                    days: dayMatches.map((_, i) =>
+                      t(language, "dayN").replace("{n}", String(i + 1)),
+                    ),
+                    activeIndex: dayIndex,
+                    onSelect: setDayIndex,
+                  }
+                : null
+            }
+          />
+        </aside>
+      </div>
+
+      <div
+        className={`fixed inset-x-0 bottom-0 z-40 flex flex-col rounded-t-3xl border-t border-line bg-paper shadow-[0_-8px_32px_rgba(47,49,40,0.12)] transition-all duration-300 lg:hidden ${
+          sheetOpen === "full"
+            ? "h-[92dvh]"
+            : sheetOpen === "half"
+              ? "h-[56dvh]"
+              : "h-[176px]"
+        }`}
+      >
+        <button
+          type="button"
+          onClick={() =>
+            setSheetOpen(
+              sheetOpen === "peek" ? "half" : sheetOpen === "half" ? "full" : "peek",
+            )
+          }
+          className="flex w-full shrink-0 justify-center py-3"
+          aria-label="sheet"
+        >
+          <span className="h-1 w-10 rounded-full bg-line" />
+        </button>
+        <div className="min-h-0 flex-1">
+          <RouteInfoPanel
+            title={route.name}
+            theme={route.theme}
+            meta={meta}
+            reasons={match.reasons}
+            explanation={explanation}
+            nodes={nodes}
+            compact={sheetOpen === "peek"}
+            lockScroll
+            chapterLabel={t(language, "chapterIII")}
+            itineraryLabel={t(language, "itinerary")}
+            simulateLabel={t(language, "simulateNear")}
+            startGuideLabel={
+              checking
+                ? t(language, "checkingNear")
+                : guiding
+                  ? t(language, "nextStopGuide")
+                  : t(language, "startGuide")
+            }
+            startDisabled={checking || generating}
+            onSimulate={() => void simulateNearCurrentStop()}
+            onStartGuide={() => (guiding ? handleNextStop() : handleStartGuide())}
+            onSelectStop={handleSelectStop}
+            curatorSuffix={t(language, "curatorSuffix")}
+            stayLabel={t(language, "stayMinutes")}
+            multiDay={
+              isMultiDay
+                ? {
+                    label: t(language, "dayPlanLabel"),
+                    days: dayMatches.map((_, i) =>
+                      t(language, "dayN").replace("{n}", String(i + 1)),
+                    ),
+                    activeIndex: dayIndex,
+                    onSelect: setDayIndex,
+                  }
+                : null
+            }
+          />
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function PoiMarker({
+  node,
+  pos,
+  onSelect,
+}: {
+  node: DisplayNode;
+  pos: { top: string; left: string };
+  onSelect?: () => void;
+}) {
+  const isCurrent = node.state === "current";
+  const isNext = node.state === "next";
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-label={node.name}
+      className="absolute -translate-x-1/2 -translate-y-1/2"
+      style={{ top: pos.top, left: pos.left }}
+    >
+      {isCurrent ? (
+        <span
+          aria-hidden
+          className="absolute inset-0 -m-3 animate-ping rounded-full bg-sage-deep/25"
+        />
+      ) : null}
+      <div
+        className={`relative grid place-items-center rounded-full border-[3px] border-paper shadow-[var(--shadow-soft)] ${
+          isCurrent
+            ? "size-11 bg-sage-deep text-paper"
+            : isNext
+              ? "size-9 bg-paper text-sage-deep ring-2 ring-sage-deep"
+              : "size-8 bg-paper text-ink-soft ring-1 ring-line"
+        }`}
+      >
+        <span className="font-serif text-xs font-bold">{node.order}</span>
+      </div>
+      {isCurrent ? (
+        <div className="absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2.5 py-1 text-[10px] font-medium uppercase tracking-widest text-paper">
+          {node.name}
+        </div>
+      ) : null}
+    </button>
+  );
+}
+
+function TriggerModal({
+  poiName,
+  nearLabel,
+  askLabel,
+  dismissLabel,
+  acceptLabel,
+  busy,
+  onAccept,
+  onDismiss,
+}: {
+  poiName: string;
+  nearLabel: string;
+  askLabel: string;
+  dismissLabel: string;
+  acceptLabel: string;
+  busy?: boolean;
+  onAccept: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-line bg-paper p-5 shadow-[var(--shadow-lift)]">
+      <div className="mb-4 flex items-start gap-3">
+        <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-sage-deep/10 font-serif text-lg text-sage-deep">
+          ✦
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-ink">
+            {nearLabel} <span className="text-sage-deep">{poiName}</span>
+          </p>
+          <p className="mt-0.5 text-xs text-ink-soft">{askLabel}</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onDismiss}
+          className="h-11 rounded-full border border-line bg-card text-sm font-medium text-ink hover:bg-paper-warm disabled:opacity-50"
+        >
+          {dismissLabel}
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onAccept}
+          className="h-11 rounded-full bg-sage-deep text-sm font-medium text-paper hover:bg-moss disabled:opacity-60"
+        >
+          {acceptLabel}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function NarrationCard({
+  title,
+  poiName,
+  text,
+  sourceType,
+  audioUrl,
+  ttsHint,
+  closeLabel,
+  onClose,
+}: {
+  title: string;
+  poiName: string;
+  text: string;
+  sourceType?: string;
+  audioUrl?: string;
+  ttsHint?: string | null;
+  closeLabel: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="max-h-[70vh] overflow-y-auto rounded-2xl border border-line bg-paper p-5 shadow-[var(--shadow-lift)]">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sage-deep">
+            {title}
+          </p>
+          <h3 className="mt-1 font-display text-lg text-ink">{poiName}</h3>
+          {sourceType ? (
+            <p className="mt-1 text-[11px] text-ink-soft">source · {sourceType}</p>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="shrink-0 text-xs text-ink-soft hover:text-ink"
+        >
+          {closeLabel}
+        </button>
+      </div>
+      <p className="text-sm leading-relaxed text-ink">{text}</p>
+      {audioUrl ? (
+        <audio className="mt-4 w-full" controls src={audioUrl} preload="none">
+          <track kind="captions" />
+        </audio>
+      ) : ttsHint ? (
+        <p className="mt-3 text-xs text-ink-soft">{ttsHint}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function RouteInfoPanel({
+  title,
+  theme,
+  meta,
+  reasons,
+  explanation,
+  nodes,
+  compact,
+  lockScroll = true,
+  chapterLabel,
+  itineraryLabel,
+  simulateLabel,
+  startGuideLabel,
+  startDisabled,
+  onSimulate,
+  onStartGuide,
+  onSelectStop,
+  curatorSuffix,
+  stayLabel,
+  multiDay,
+}: {
+  title: string;
+  theme: string;
+  meta: string[];
+  reasons: string[];
+  explanation: string;
+  nodes: DisplayNode[];
+  compact?: boolean;
+  /** When true, panel fills parent and scrolls internally (mobile sheet). */
+  lockScroll?: boolean;
+  chapterLabel: string;
+  itineraryLabel: string;
+  simulateLabel: string;
+  startGuideLabel: string;
+  startDisabled?: boolean;
+  onSimulate: () => void;
+  onStartGuide: () => void;
+  onSelectStop?: (index: number) => void;
+  curatorSuffix: string;
+  stayLabel: string;
+  multiDay?: {
+    label: string;
+    days: string[];
+    activeIndex: number;
+    onSelect: (index: number) => void;
+  } | null;
+}) {
+  return (
+    <div className={lockScroll ? "flex h-full min-h-0 flex-col" : "flex flex-col"}>
+      <div
+        className={
+          lockScroll ? "min-h-0 flex-1 overflow-y-auto overscroll-contain" : undefined
+        }
+      >
+        <div className="px-6 pt-4 lg:px-8 lg:pt-8">
+          {multiDay ? (
+            <div className="mb-5">
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-soft">
+                {multiDay.label}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {multiDay.days.map((label, i) => {
+                  const active = i === multiDay.activeIndex;
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => multiDay.onSelect(i)}
+                      className={`rounded-full border px-3.5 py-1.5 text-xs transition ${
+                        active
+                          ? "border-sage-deep bg-sage-deep text-paper"
+                          : "border-line bg-card text-ink hover:border-sage"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-sage-deep">
+            {chapterLabel} · {theme}
+          </p>
+          <h2 className="font-display text-2xl leading-tight text-ink lg:text-3xl">{title}</h2>
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-soft">
+            {meta.map((item, i) => (
+              <span key={item} className="flex items-center gap-3">
+                {i > 0 ? <span className="size-1 rounded-full bg-line" /> : null}
+                <span className={i === meta.length - 1 ? "text-ochre" : undefined}>{item}</span>
+              </span>
+            ))}
+          </div>
+
+          {!compact ? (
+            <>
+              <div className="mt-5">
+                <ReasonChips reasons={reasons} />
+              </div>
+              {explanation ? (
+                <p className="mt-6 text-xs italic leading-relaxed text-ink-soft">
+                  「{explanation}」{curatorSuffix}
+                </p>
+              ) : null}
+            </>
+          ) : null}
+        </div>
+
+        {!compact ? (
+          <div className="mt-8 px-6 pb-6 lg:px-8">
+            <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-soft">
+              {itineraryLabel}
+            </p>
+            <RouteNodeList
+              nodes={nodes}
+              stayLabel={stayLabel}
+              onSelectIndex={onSelectStop}
+            />
+          </div>
+        ) : null}
+      </div>
+
+      <div
+        className={
+          lockScroll
+            ? "relative z-20 shrink-0 border-t border-line bg-paper px-6 py-4 lg:px-8 lg:py-5"
+            : "sticky bottom-0 z-20 border-t border-line bg-paper/95 px-6 py-4 backdrop-blur-md lg:px-8 lg:py-5"
+        }
+      >
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            disabled={startDisabled}
+            onClick={onSimulate}
+            className="h-12 shrink-0 rounded-full border border-line bg-paper px-4 text-sm text-ink hover:bg-paper-warm disabled:pointer-events-none disabled:opacity-50 sm:px-5"
+          >
+            {simulateLabel}
+          </button>
+          <button
+            type="button"
+            disabled={startDisabled}
+            onClick={onStartGuide}
+            className="flex-1 rounded-full bg-sage-deep py-3.5 text-center font-medium text-paper shadow-[var(--shadow-soft)] hover:bg-moss disabled:pointer-events-none disabled:opacity-60"
+          >
+            {startGuideLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

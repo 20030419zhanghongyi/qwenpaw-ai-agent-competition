@@ -13,19 +13,18 @@ React + Vite + TypeScript 前端。当前目标不是一次做成完整旅游产
 
 ## 当前定位
 
-当前代码处于 **Phase 2 前半段**：
+当前代码处于 **Phase 2 Web MVP**：
 
-- 已有基础单页流程：语言选择、偏好输入、路线结果
-- 已接后端基础接口：`/health`、`/pois`、`/routes/match`
-- 结果页可展示路线说明、推荐理由、节点讲解摘要
+- 三页流程：语言选择 → 偏好输入 → 路线结果（插画地图占位）
+- 已接：`POST /api/v1/routes/match`、`GET /api/v1/pois`
+- 结果页展示路线说明、推荐理由、节点列表（POI 名称由列表接口补全）
+- 视觉来自 Lovable 设计包（Morandi 纸色 + sage）
 
 尚未完成：
 
-- 地图视图与步行 polyline
-- 路线轻度调整 UI
-- 自然语言微调路线
-- 位置触发讲解
-- 语音播放与拍照识别
+- 真地图与步行 polyline
+- 路线轻度调整 UI / `routes/adjust`
+- 位置触发讲解、语音、拍照识别
 
 ## 启动
 
@@ -61,19 +60,30 @@ VITE_API_BASE_URL=
 frontend/
 ├── README.md
 ├── FRONTEND_PLAN.md
+├── design/
 ├── index.html
 ├── package.json
-├── tsconfig.json
-├── tsconfig.node.json
 ├── vite.config.ts
 └── src/
     ├── main.tsx
     ├── App.tsx
-    ├── i18n.ts
     ├── index.css
-    └── api/
-        └── client.ts
+    ├── api/client.ts
+    ├── types/
+    ├── lib/preference.ts
+    ├── state/WalkContext.tsx
+    ├── pages/
+    │   ├── LanguagePage.tsx
+    │   ├── PreferencePage.tsx
+    │   └── RouteResultPage.tsx
+    ├── components/
+    │   ├── brand/
+    │   ├── common/
+    │   └── route/
+    └── assets/
 ```
+
+流程：`/` 语言 → `/preferences` 偏好并调用 `POST /api/v1/routes/match` → `/walk` 展示匹配结果（插画地图占位 + 节点列表 + 推荐理由）。
 
 ## 现有模块说明
 

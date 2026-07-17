@@ -30,7 +30,15 @@
     "poi_ruins_st_paul": 3,
     "poi_na_tcha": 1,
     "poi_old_city_walls": 1,
-    "poi_mount_fortress": 2
+    "poi_mount_fortress": 2,
+    "poi_0020": 3,
+    "poi_0021": 3,
+    "poi_0107": 2,
+    "poi_0027": 3,
+    "poi_0230": 2,
+    "poi_0231": 2,
+    "poi_0109": 2,
+    "poi_0110": 2
   },
   "crowd_risk": {
     "poi_senado": 3,
@@ -62,7 +70,15 @@
     "poi_ruins_st_paul": 3,
     "poi_na_tcha": 1,
     "poi_old_city_walls": 1,
-    "poi_mount_fortress": 2
+    "poi_mount_fortress": 2,
+    "poi_0020": 2,
+    "poi_0021": 2,
+    "poi_0107": 1,
+    "poi_0027": 2,
+    "poi_0230": 1,
+    "poi_0231": 1,
+    "poi_0109": 1,
+    "poi_0110": 1
   },
   "pain_point_tags": {
     "poi_senado": ["人多"],

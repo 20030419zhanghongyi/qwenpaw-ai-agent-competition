@@ -907,10 +907,17 @@
       "alias": "",
       "district": "路氹填海区",
       "theme": [
+        "建筑",
+        "摄影",
         "文化"
       ],
       "suitable_for": [
-        "culture"
+        "architecture",
+        "photo",
+        "culture",
+        "friends",
+        "family",
+        "relax"
       ],
       "coordinates": {
         "lat": 22.144416,
@@ -938,10 +945,17 @@
       "alias": "",
       "district": "路氹填海区",
       "theme": [
+        "建筑",
+        "摄影",
         "文化"
       ],
       "suitable_for": [
-        "culture"
+        "architecture",
+        "photo",
+        "culture",
+        "friends",
+        "family",
+        "relax"
       ],
       "coordinates": {
         "lat": 22.140644,
@@ -1154,10 +1168,17 @@
       "alias": "",
       "district": "路氹填海区",
       "theme": [
+        "建筑",
+        "摄影",
         "文化"
       ],
       "suitable_for": [
-        "culture"
+        "architecture",
+        "photo",
+        "culture",
+        "friends",
+        "family",
+        "relax"
       ],
       "coordinates": {
         "lat": 22.144773,
@@ -3770,10 +3791,17 @@
       "alias": "",
       "district": "路氹填海区",
       "theme": [
+        "建筑",
+        "摄影",
         "文化"
       ],
       "suitable_for": [
-        "culture"
+        "architecture",
+        "photo",
+        "culture",
+        "friends",
+        "family",
+        "relax"
       ],
       "coordinates": {
         "lat": 22.142878,
@@ -3833,10 +3861,16 @@
       "alias": "",
       "district": "路氹填海区",
       "theme": [
+        "建筑",
+        "摄影",
         "文化"
       ],
       "suitable_for": [
-        "culture"
+        "architecture",
+        "photo",
+        "culture",
+        "friends",
+        "relax"
       ],
       "coordinates": {
         "lat": 22.146112,
@@ -3864,10 +3898,17 @@
       "alias": "",
       "district": "路氹填海区",
       "theme": [
+        "建筑",
+        "摄影",
         "文化"
       ],
       "suitable_for": [
-        "culture"
+        "architecture",
+        "photo",
+        "culture",
+        "friends",
+        "family",
+        "relax"
       ],
       "coordinates": {
         "lat": 22.137926,
@@ -7944,10 +7985,15 @@
       "alias": "",
       "district": "路氹填海区",
       "theme": [
+        "摄影",
         "文化"
       ],
       "suitable_for": [
-        "culture"
+        "photo",
+        "culture",
+        "friends",
+        "family",
+        "relax"
       ],
       "coordinates": {
         "lat": 22.144679,

@@ -3,24 +3,32 @@
 - ``INTENT_AGENT_ENABLED=true`` 且 intent agent 可用时：先调 agent 把自然语言翻成
   Preference（source="agent"）
 - 否则降级规则版关键词解析（source="rules"），保证接口永不被 agent 抖动打穿
+- ``/guide``：多轮偏好引导对话（AI 先提问），足够信息后返回 Preference
 """
 
 from __future__ import annotations
 
 import logging
+import re
+import uuid
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field, field_validator
 
 from app.agents import intent_agent
+from app.agents.qwenpaw_client import QwenPawClient, QwenPawError
 from app.core.config import settings
 from app.guardrails.runtime import rate_limit, sanitize_untrusted_text
-from app.models.user import Preference
+from app.models.user import SUPPORTED_LANGS, Preference
 from app.observability.trace import record_trace
 
 logger = logging.getLogger("macau_storywalk.intent")
 
 router = APIRouter(prefix="/api/v1/intent", tags=["intent"])
+
+# 引导对话用 default agent：intent agent 技能强制「只输出 JSON」，不适合多轮提问。
+GUIDE_AGENT_ID = "default"
 
 
 class IntentParseRequest(BaseModel):
@@ -35,29 +43,102 @@ class IntentParseRequest(BaseModel):
         return value
 
 
+class IntentGuideRequest(BaseModel):
+    action: Literal["start", "message"] = "start"
+    session_id: str | None = Field(default=None, max_length=120)
+    message: str | None = Field(default=None, max_length=2000)
+    language: str = "zh-CN"
+    # 用户已发送的轮次（含本轮），供脚本 fallback 推进提问
+    user_turn: int = Field(default=0, ge=0, le=40)
+    # 累计用户原话（换行拼接），用于每轮软解析回填下方选项
+    transcript: str | None = Field(default=None, max_length=8000)
+
+    @field_validator("message")
+    @classmethod
+    def sanitize_message(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = sanitize_untrusted_text(value)
+        return value or None
+
+    @field_validator("transcript")
+    @classmethod
+    def sanitize_transcript(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = sanitize_untrusted_text(value)
+        return value or None
+
+    @field_validator("language")
+    @classmethod
+    def validate_language(cls, value: str) -> str:
+        if value not in SUPPORTED_LANGS:
+            return "zh-CN"
+        return value
+
+
 # --- 规则版 fallback：关键词扫描（保守，只认字面，语义留给 agent）---
 
-_PHYS_LESS_WALK = ("不想太累", "少走", "轻松", "别太累", "走不动")
-_PHYS_NO_BACKTRACK = ("不要回头路", "别绕路", "顺路")
+_PHYS_LESS_WALK = ("不想太累", "少走", "轻松", "别太累", "走不动", "less walk", "not too tired")
+_PHYS_NO_BACKTRACK = ("不要回头路", "别绕路", "顺路", "no backtrack", "one way")
 
-_DUR_FULL = ("一整", "全天", "玩一天", "玩一整天")
-_DUR_EVENING = ("晚上", "夜间", "夜游", "夜景")
-_DUR_HALF = ("半天", "几小时", "下午", "上午")
+_DUR_MULTI = (
+    "多日",
+    "几天",
+    "两天",
+    "三天",
+    "兩天",
+    "三天",
+    "待几天",
+    "待好幾天",
+    "待好几天",
+    "玩几天",
+    "玩兩天",
+    "玩两天",
+    "2天",
+    "3天",
+    "multi-day",
+    "multi day",
+    "several days",
+    "a few days",
+    "dois dias",
+    "vários dias",
+    "varios dias",
+)
+_DUR_FULL = ("一整", "全天", "玩一天", "玩一整天", "full day", "whole day", "all day")
+_DUR_EVENING = ("晚上", "夜间", "夜游", "夜景", "evening", "night")
+_DUR_HALF = ("半天", "几小时", "下午", "上午", "half day", "half-day", "few hours")
 
-_INTEREST_PHOTO = ("拍照", "摄影", "出片", "机位", "打卡")
-_INTEREST_FOOD = ("美食", "吃", "小吃", "葡挞", "茶餐厅", "甜品")
-_INTEREST_HISTORY = ("历史", "遗迹", "老街", "古迹")
-_INTEREST_ARCH = ("建筑", "教堂", "牌坊", "庙")
-_INTEREST_CULTURE = ("文化", "故事", "博物馆", "展览")
+_INTEREST_PHOTO = ("拍照", "摄影", "出片", "机位", "打卡", "photo", "photograph")
+_INTEREST_FOOD = ("美食", "吃", "小吃", "葡挞", "茶餐厅", "甜品", "food", "snack")
+_INTEREST_HISTORY = ("历史", "遗迹", "老街", "古迹", "history", "heritage")
+_INTEREST_ARCH = ("建筑", "教堂", "牌坊", "庙", "architecture", "church")
+_INTEREST_CULTURE = ("文化", "故事", "博物馆", "展览", "culture", "museum")
 
-_TRAVEL_FAMILY = ("带老人", "带小孩", "亲子", "家庭", "一家", "长辈")
-_TRAVEL_SOLO = ("一个人", "独自", "自己", "单人")
-_TRAVEL_FRIENDS = ("朋友", "情侣", "约会", "闺蜜", "两个人")
-_TRAVEL_RELAX = ("休闲", "放松", "随便逛", "慢节奏")
+_TRAVEL_FAMILY = ("带老人", "带小孩", "亲子", "家庭", "一家", "长辈", "family", "kids", "parents")
+_TRAVEL_SOLO = ("一个人", "独自", "自己", "单人", "solo", "alone")
+_TRAVEL_FRIENDS = ("朋友", "情侣", "约会", "闺蜜", "两个人", "friends", "couple")
+_TRAVEL_RELAX = ("休闲", "放松", "随便逛", "慢节奏", "relax", "slow")
+_THEME_COTAI = (
+    "路氹",
+    "金光大道",
+    "威尼斯人",
+    "巴黎人",
+    "伦敦人",
+    "度假村",
+    "赌场",
+    "cotai",
+    "casino",
+    "venetian",
+    "parisian",
+)
+_THEME_HERITAGE = ("历史城区", "旧城", "世遗", "heritage", "historic")
+_THEME_FAMILY = ("亲子", "带小孩", "family theme")
 
 
 def _append_if_any(pref: Preference, text: str, keywords: tuple[str, ...], field: str, tag: str) -> None:
-    if any(k in text for k in keywords) and tag not in getattr(pref, field):
+    lower = text.lower()
+    if any(k.lower() in lower for k in keywords) and tag not in getattr(pref, field):
         getattr(pref, field).append(tag)
 
 
@@ -66,32 +147,231 @@ def parse_intent_rules(text: str) -> Preference:
     t = (text or "").strip()
     pref = Preference()  # 默认 duration=half-day, party_size=1, language=zh-CN
 
-    # duration（互斥，按显式程度排序）
-    if any(k in t for k in _DUR_FULL):
+    if any(k.lower() in t.lower() for k in _DUR_MULTI):
+        pref.duration = "multi-day"
+    elif any(k.lower() in t.lower() for k in _DUR_FULL):
         pref.duration = "full-day"
-    elif any(k in t for k in _DUR_EVENING):
+    elif any(k.lower() in t.lower() for k in _DUR_EVENING):
         pref.duration = "evening"
-    elif any(k in t for k in _DUR_HALF):
+    elif any(k.lower() in t.lower() for k in _DUR_HALF):
         pref.duration = "half-day"
 
-    # physical
     _append_if_any(pref, t, _PHYS_LESS_WALK, "physical", "less-walk")
     _append_if_any(pref, t, _PHYS_NO_BACKTRACK, "physical", "no-backtrack")
 
-    # interests
     _append_if_any(pref, t, _INTEREST_PHOTO, "interests", "photo")
     _append_if_any(pref, t, _INTEREST_FOOD, "interests", "food")
     _append_if_any(pref, t, _INTEREST_HISTORY, "interests", "history")
     _append_if_any(pref, t, _INTEREST_ARCH, "interests", "architecture")
     _append_if_any(pref, t, _INTEREST_CULTURE, "interests", "culture")
 
-    # travel_type
     _append_if_any(pref, t, _TRAVEL_FAMILY, "travel_type", "family")
     _append_if_any(pref, t, _TRAVEL_SOLO, "travel_type", "solo")
     _append_if_any(pref, t, _TRAVEL_FRIENDS, "travel_type", "friends")
     _append_if_any(pref, t, _TRAVEL_RELAX, "travel_type", "relax")
 
+    _append_if_any(pref, t, _THEME_COTAI, "themes", "cotai")
+    _append_if_any(pref, t, _THEME_HERITAGE, "themes", "heritage")
+    _append_if_any(pref, t, _THEME_FAMILY, "themes", "family")
+
     return pref
+
+
+_OPENERS: dict[str, str] = {
+    "zh-CN": (
+        "你好，我是澳迹同行的漫游助手。先从最重要的开始——"
+        "今天你想逛多久？半日、一日，还是夜间小走？"
+    ),
+    "zh-TW": (
+        "你好，我是澳跡同行的漫遊助手。先從最重要的開始——"
+        "今天你想逛多久？半日、一日，還是夜間小走？"
+    ),
+    "en": (
+        "Hi — I’m your Macau StoryWalk guide. Let’s start simple: "
+        "how long do you want to wander — half day, full day, multi-day, or an evening stroll?"
+    ),
+    "pt": (
+        "Olá — sou o guia do Macau StoryWalk. Vamos começar pelo essencial: "
+        "quanto tempo quer passear hoje — meio dia, dia inteiro, ou um passeio noturno?"
+    ),
+}
+
+
+def _guide_bootstrap_prompt(language: str) -> str:
+    return (
+        "You are the Macau StoryWalk preference guide (澳迹同行).\n"
+        f"Speak ONLY in language code `{language}` "
+        "(zh-CN simplified Chinese, zh-TW traditional Chinese, en English, pt Portuguese).\n"
+        "Goal: learn the traveler's preferences through a short multi-turn chat.\n"
+        "Ask about, one question at a time: duration, companions, interests, walking comfort.\n"
+        "Rules:\n"
+        "1) Ask exactly ONE short question per reply.\n"
+        "2) Be warm and concise (1–3 sentences).\n"
+        "3) Do NOT invent preferences the user did not say.\n"
+        "4) Until you have enough to plan, do NOT output JSON.\n"
+        "5) When enough info is collected, first give a one-sentence confirmation, "
+        "then on a NEW line output ONLY this JSON object "
+        "(no markdown fence):\n"
+        '{"duration":"half-day|full-day|evening|multi-day|custom","party_size":1,'
+        '"travel_type":["solo|friends|family|relax"],'
+        '"interests":["history|architecture|food|photo|culture"],'
+        '"physical":["normal|less-walk|no-backtrack"],'
+        f'"language":"{language}"}}\n\n'
+        "Now greet the traveler and ask your first question about duration."
+    )
+
+
+def _extract_preference_json(text: str) -> Preference | None:
+    """从引导回复中抽出 Preference；失败返回 None。"""
+    if not text:
+        return None
+    obj = intent_agent._extract_json(text)  # noqa: SLF001 - 复用同一解析器
+    if obj is None:
+        return None
+    try:
+        return intent_agent._coerce(obj)  # noqa: SLF001
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _strip_json_for_display(text: str) -> str:
+    """聊天气泡里去掉尾部 JSON，只留自然语言。"""
+    if not text:
+        return text
+    match = re.search(r"\{[\s\S]*\}\s*$", text.strip())
+    if not match:
+        return text.strip()
+    cleaned = text[: match.start()].strip()
+    return cleaned or text.strip()
+
+
+def _preference_ready(pref: Preference) -> bool:
+    """至少有兴趣或行走偏好或同行类型之一，才算可回填。"""
+    return bool(pref.interests or pref.physical or pref.travel_type)
+
+
+def _guide_with_qwenpaw(
+    *,
+    session_id: str,
+    action: str,
+    message: str | None,
+    language: str,
+) -> tuple[str, Preference | None, str]:
+    """返回 (reply, preference|None, source)."""
+    client = QwenPawClient()
+    if action == "start":
+        prompt = _guide_bootstrap_prompt(language)
+    else:
+        user_text = (message or "").strip()
+        if not user_text:
+            raise ValueError("message required")
+        prompt = (
+            f"[Language lock: reply ONLY in `{language}`]\n"
+            f"Traveler said: {user_text}"
+        )
+
+    reply = client.ask(GUIDE_AGENT_ID, prompt, session_id=session_id, session_name="pref-guide")
+    pref = _extract_preference_json(reply)
+    if pref is not None:
+        pref.language = language
+        return _strip_json_for_display(reply), pref, "agent"
+    return reply.strip(), None, "agent"
+
+
+def _merge_preferences(base: Preference, overlay: Preference) -> Preference:
+    """增量合并：列表取并集；时长优先用 overlay（若 overlay 有明确非空信号）。"""
+    travel = list(dict.fromkeys([*(base.travel_type or []), *(overlay.travel_type or [])]))
+    interests = list(dict.fromkeys([*(base.interests or []), *(overlay.interests or [])]))
+    physical = list(dict.fromkeys([*(base.physical or []), *(overlay.physical or [])]))
+    # duration：overlay 有明确时长信号时采用
+    if overlay.duration in {"full-day", "evening", "multi-day"}:
+        duration = overlay.duration
+    elif base.duration in {"full-day", "evening", "multi-day"} and overlay.duration == "half-day":
+        duration = base.duration
+    else:
+        duration = overlay.duration or base.duration
+    return Preference(
+        duration=duration,
+        party_size=max(base.party_size or 1, overlay.party_size or 1),
+        travel_type=travel,
+        interests=interests,
+        themes=list(dict.fromkeys([*(base.themes or []), *(overlay.themes or [])])),
+        physical=physical,
+        language=overlay.language or base.language,
+    )
+
+
+def _soft_preference_from_transcript(transcript: str, language: str) -> Preference | None:
+    """从累计用户话软解析；若完全没命中任何偏好信号则返回 None。"""
+    if not (transcript or "").strip():
+        return None
+    soft = parse_intent_rules(transcript)
+    soft.language = language
+    # parse_intent_rules 默认 duration=half-day；用「是否命中关键词」判断有无信号
+    hit = bool(soft.interests or soft.physical or soft.travel_type or soft.themes)
+    lower = transcript.lower()
+    duration_hit = any(
+        k.lower() in lower
+        for k in (*_DUR_MULTI, *_DUR_FULL, *_DUR_EVENING, *_DUR_HALF)
+    )
+    if not hit and not duration_hit:
+        return None
+    if not duration_hit:
+        # 避免默认 half-day 覆盖用户已选手动选项：前端用 custom 哨兵
+        soft.duration = "custom"
+    return soft
+
+
+def _guide_scripted_fallback(
+    *,
+    action: str,
+    message: str | None,
+    language: str,
+    turn_count: int,
+) -> tuple[str, Preference | None, str]:
+    """QwenPaw 不可用时的脚本式引导（仍保持 AI-first 提问体验）。"""
+    opener = _OPENERS.get(language, _OPENERS["zh-CN"])
+    if action == "start":
+        return opener, None, "script"
+
+    pref = parse_intent_rules(message or "")
+    pref.language = language
+
+    followups = {
+        "zh-CN": {
+            "duration": "好的。那你是一个人，还是和朋友/家人一起？",
+            "travel": "想多看哪一类？历史、建筑、美食、摄影，还是轻松逛逛？",
+            "interest": "步行上有没有偏好？例如少走路、少爬坡、避免回头路。",
+            "done": "明白了，我已记下你的偏好，可以点下方生成路线；也可继续补充。",
+        },
+        "zh-TW": {
+            "duration": "好的。那你是一個人，還是和朋友／家人一起？",
+            "travel": "想多看哪一類？歷史、建築、美食、攝影，還是輕鬆逛逛？",
+            "interest": "步行上有沒有偏好？例如少走路、少爬坡、避免回頭路。",
+            "done": "明白了，我已記下你的偏好，可以點下方生成路線；也可繼續補充。",
+        },
+        "en": {
+            "duration": "Got it. Are you solo, or with friends/family?",
+            "travel": "What draws you most — history, architecture, food, photo, or a relaxed wander?",
+            "interest": "Any walking preferences — less walking, fewer hills, or no backtracking?",
+            "done": "Perfect — I’ve noted your preferences. You can generate a route below, or keep refining.",
+        },
+        "pt": {
+            "duration": "Perfeito. Vai sozinho, ou com amigos/família?",
+            "travel": "O que mais lhe interessa — história, arquitetura, comida, foto, ou um passeio calmo?",
+            "interest": "Alguma preferência de caminhada — menos andar, menos subidas, ou sem voltar atrás?",
+            "done": "Ótimo — anotei as preferências. Pode gerar o percurso abaixo, ou continuar a afinar.",
+        },
+    }
+    copy = followups.get(language, followups["en"])
+
+    if turn_count <= 1:
+        return copy["duration"], None, "script"
+    if turn_count == 2:
+        return copy["travel"], None, "script"
+    if turn_count == 3:
+        return copy["interest"], None, "script"
+    return copy["done"], pref if _preference_ready(pref) else pref, "script"
 
 
 @router.post("/parse", dependencies=[Depends(rate_limit("text"))])
@@ -115,3 +395,72 @@ def parse(request: IntentParseRequest) -> dict:
         input_summary=request.text[:200],
     )
     return {"preference": pref.model_dump(), "source": source}
+
+
+@router.post("/guide", dependencies=[Depends(rate_limit("text"))])
+def guide(request: IntentGuideRequest) -> dict[str, Any]:
+    """多轮偏好引导：AI 先提问，逐步确认后返回 Preference。"""
+    if request.action == "message" and not (request.message or "").strip():
+        return {
+            "session_id": request.session_id or "",
+            "reply": _OPENERS.get(request.language, _OPENERS["zh-CN"]),
+            "ready": False,
+            "preference": None,
+            "source": "script",
+            "error": "empty_message",
+        }
+
+    session_id = request.session_id or f"pref-guide-{uuid.uuid4().hex[:12]}"
+    source = "script"
+    reply = ""
+    preference: Preference | None = None
+    turn_count = request.user_turn or (1 if request.action == "message" else 0)
+
+    try:
+        reply, preference, source = _guide_with_qwenpaw(
+            session_id=session_id,
+            action=request.action,
+            message=request.message,
+            language=request.language,
+        )
+    except (QwenPawError, ValueError, Exception) as exc:  # noqa: BLE001
+        logger.info("preference guide 降级脚本：%s", exc)
+        reply, preference, source = _guide_scripted_fallback(
+            action=request.action,
+            message=request.message,
+            language=request.language,
+            turn_count=turn_count,
+        )
+
+    ready = False
+    if preference is not None and source == "agent":
+        ready = True
+    elif preference is not None and source == "script" and _preference_ready(preference):
+        ready = True
+
+    # 每轮用累计 transcript 软解析，保证下方选项实时联动
+    transcript = (request.transcript or request.message or "").strip()
+    soft = _soft_preference_from_transcript(transcript, request.language)
+    preview: Preference | None = preference
+    if soft and preference:
+        preview = _merge_preferences(soft, preference)
+    elif soft:
+        preview = soft
+    elif preference:
+        preview = preference
+
+    record_trace(
+        kind="intent.guide",
+        status=source,
+        agent_id=GUIDE_AGENT_ID if source == "agent" else None,
+        input_summary=(request.message or request.action)[:200],
+        output_summary=reply[:200],
+    )
+
+    return {
+        "session_id": session_id,
+        "reply": reply,
+        "ready": ready,
+        "preference": preview.model_dump() if preview else None,
+        "source": source,
+    }

@@ -9,22 +9,122 @@
       "duration_hours": 7.5,
       "walk_distance_km": 3.44,
       "physical_level": "medium",
-      "suitable_for": ["history", "architecture", "culture", "solo", "friends"],
+      "suitable_for": [
+        "history",
+        "architecture",
+        "culture",
+        "solo",
+        "friends"
+      ],
       "nodes": [
-        { "poi_id": "poi_ama", "order": 1, "suggested_stay_min": 35, "note": "从妈祖信仰与山地庙宇布局认识历史城区南端", "replaceable_with": [] },
-        { "poi_id": "poi_moorish_barracks", "order": 2, "suggested_stay_min": 15, "note": "从公共道路观察尖拱回廊与花岗石基座", "replaceable_with": [] },
-        { "poi_id": "poi_mandarin_house", "order": 3, "suggested_stay_min": 40, "note": "按开放动线观察大型院落与中西装饰", "replaceable_with": [] },
-        { "poi_id": "poi_lilau", "order": 4, "suggested_stay_min": 20, "note": "理解旧水源、坡地住宅与聚居历史", "replaceable_with": [] },
-        { "poi_id": "poi_st_lawrence", "order": 5, "suggested_stay_min": 25, "note": "留意高台、前地与教堂入口的过渡", "replaceable_with": [] },
-        { "poi_id": "poi_st_joseph", "order": 6, "suggested_stay_min": 25, "note": "观察石阶与巴洛克圣堂立面", "replaceable_with": ["poi_ho_tung_library"] },
-        { "poi_id": "poi_dom_pedro_v", "order": 7, "suggested_stay_min": 25, "note": "认识西式剧院与澳门表演文化", "replaceable_with": ["poi_ho_tung_library"] },
-        { "poi_id": "poi_st_augustine", "order": 8, "suggested_stay_min": 20, "note": "从岗顶前地观察教堂与街道关系", "replaceable_with": ["poi_ho_tung_library"] },
-        { "poi_id": "poi_senado", "order": 9, "suggested_stay_min": 30, "note": "在城市广场整理南段沿线脉络", "replaceable_with": ["poi_leal_senado"] },
-        { "poi_id": "poi_st_dominic", "order": 10, "suggested_stay_min": 20, "note": "比较古典立面与巴洛克祭坛", "replaceable_with": [] },
-        { "poi_id": "poi_ruins_st_paul", "order": 11, "suggested_stay_min": 30, "note": "阅读教堂遗址的中西图像和城市位置", "replaceable_with": [] },
-        { "poi_id": "poi_na_tcha", "order": 12, "suggested_stay_min": 15, "note": "比较庙宇与大三巴遗址的尺度", "replaceable_with": [] },
-        { "poi_id": "poi_old_city_walls", "order": 13, "suggested_stay_min": 10, "note": "观察旧城防御边界的夯土遗存", "replaceable_with": [] },
-        { "poi_id": "poi_mount_fortress", "order": 14, "suggested_stay_min": 30, "note": "从炮台理解历史城区防御体系", "replaceable_with": ["poi_fatong"] }
+        {
+          "poi_id": "poi_ama",
+          "order": 1,
+          "suggested_stay_min": 35,
+          "note": "从妈祖信仰与山地庙宇布局认识历史城区南端",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_moorish_barracks",
+          "order": 2,
+          "suggested_stay_min": 15,
+          "note": "从公共道路观察尖拱回廊与花岗石基座",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_mandarin_house",
+          "order": 3,
+          "suggested_stay_min": 40,
+          "note": "按开放动线观察大型院落与中西装饰",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_lilau",
+          "order": 4,
+          "suggested_stay_min": 20,
+          "note": "理解旧水源、坡地住宅与聚居历史",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_st_lawrence",
+          "order": 5,
+          "suggested_stay_min": 25,
+          "note": "留意高台、前地与教堂入口的过渡",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_st_joseph",
+          "order": 6,
+          "suggested_stay_min": 25,
+          "note": "观察石阶与巴洛克圣堂立面",
+          "replaceable_with": [
+            "poi_ho_tung_library"
+          ]
+        },
+        {
+          "poi_id": "poi_dom_pedro_v",
+          "order": 7,
+          "suggested_stay_min": 25,
+          "note": "认识西式剧院与澳门表演文化",
+          "replaceable_with": [
+            "poi_ho_tung_library"
+          ]
+        },
+        {
+          "poi_id": "poi_st_augustine",
+          "order": 8,
+          "suggested_stay_min": 20,
+          "note": "从岗顶前地观察教堂与街道关系",
+          "replaceable_with": [
+            "poi_ho_tung_library"
+          ]
+        },
+        {
+          "poi_id": "poi_senado",
+          "order": 9,
+          "suggested_stay_min": 30,
+          "note": "在城市广场整理南段沿线脉络",
+          "replaceable_with": [
+            "poi_leal_senado"
+          ]
+        },
+        {
+          "poi_id": "poi_st_dominic",
+          "order": 10,
+          "suggested_stay_min": 20,
+          "note": "比较古典立面与巴洛克祭坛",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_ruins_st_paul",
+          "order": 11,
+          "suggested_stay_min": 30,
+          "note": "阅读教堂遗址的中西图像和城市位置",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_na_tcha",
+          "order": 12,
+          "suggested_stay_min": 15,
+          "note": "比较庙宇与大三巴遗址的尺度",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_old_city_walls",
+          "order": 13,
+          "suggested_stay_min": 10,
+          "note": "观察旧城防御边界的夯土遗存",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_mount_fortress",
+          "order": 14,
+          "suggested_stay_min": 30,
+          "note": "从炮台理解历史城区防御体系",
+          "replaceable_with": [
+            "poi_fatong"
+          ]
+        }
       ],
       "description": "由妈阁经议事亭前地向大三巴及大炮台单向推进的预设模板，串联庙宇、住宅、教堂、剧院、广场与防御遗存。步行路径约3.44公里、路由时间约46分钟；建议停留340分钟，另预留约64分钟用于用餐、台阶和机动。路线不代表实时开放或唯一最优方案。"
     },
@@ -36,18 +136,87 @@
       "duration_hours": 4.0,
       "walk_distance_km": 1.44,
       "physical_level": "medium",
-      "suitable_for": ["history", "architecture", "photo", "culture", "solo", "friends"],
+      "suitable_for": [
+        "history",
+        "architecture",
+        "photo",
+        "culture",
+        "solo",
+        "friends"
+      ],
       "nodes": [
-        { "poi_id": "poi_senado", "order": 1, "suggested_stay_min": 15, "note": "先读广场尺度与波浪铺地", "replaceable_with": [] },
-        { "poi_id": "poi_leal_senado", "order": 2, "suggested_stay_min": 20, "note": "观察市政建筑立面与葡式瓷砖", "replaceable_with": [] },
-        { "poi_id": "poi_holy_house_mercy", "order": 3, "suggested_stay_min": 15, "note": "比较白色券廊和柱式层次", "replaceable_with": [] },
-        { "poi_id": "poi_cathedral", "order": 4, "suggested_stay_min": 20, "note": "观察主教座堂与前地围合关系", "replaceable_with": [] },
-        { "poi_id": "poi_lou_kau", "order": 5, "suggested_stay_min": 25, "note": "辨认中式大宅中的西方装饰材料", "replaceable_with": [] },
-        { "poi_id": "poi_st_dominic", "order": 6, "suggested_stay_min": 20, "note": "比较古典立面与巴洛克祭坛", "replaceable_with": [] },
-        { "poi_id": "poi_ruins_st_paul", "order": 7, "suggested_stay_min": 30, "note": "从远近两个尺度阅读花岗石前壁", "replaceable_with": [] },
-        { "poi_id": "poi_na_tcha", "order": 8, "suggested_stay_min": 15, "note": "比较庙宇与大三巴遗址的尺度和材料", "replaceable_with": [] },
-        { "poi_id": "poi_old_city_walls", "order": 9, "suggested_stay_min": 10, "note": "观察夯土墙体与砖券洞", "replaceable_with": [] },
-        { "poi_id": "poi_mount_fortress", "order": 10, "suggested_stay_min": 30, "note": "以炮台防御空间收束建筑主题", "replaceable_with": ["poi_fatong"] }
+        {
+          "poi_id": "poi_senado",
+          "order": 1,
+          "suggested_stay_min": 15,
+          "note": "先读广场尺度与波浪铺地",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_leal_senado",
+          "order": 2,
+          "suggested_stay_min": 20,
+          "note": "观察市政建筑立面与葡式瓷砖",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_holy_house_mercy",
+          "order": 3,
+          "suggested_stay_min": 15,
+          "note": "比较白色券廊和柱式层次",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_cathedral",
+          "order": 4,
+          "suggested_stay_min": 20,
+          "note": "观察主教座堂与前地围合关系",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_lou_kau",
+          "order": 5,
+          "suggested_stay_min": 25,
+          "note": "辨认中式大宅中的西方装饰材料",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_st_dominic",
+          "order": 6,
+          "suggested_stay_min": 20,
+          "note": "比较古典立面与巴洛克祭坛",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_ruins_st_paul",
+          "order": 7,
+          "suggested_stay_min": 30,
+          "note": "从远近两个尺度阅读花岗石前壁",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_na_tcha",
+          "order": 8,
+          "suggested_stay_min": 15,
+          "note": "比较庙宇与大三巴遗址的尺度和材料",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_old_city_walls",
+          "order": 9,
+          "suggested_stay_min": 10,
+          "note": "观察夯土墙体与砖券洞",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_mount_fortress",
+          "order": 10,
+          "suggested_stay_min": 30,
+          "note": "以炮台防御空间收束建筑主题",
+          "replaceable_with": [
+            "poi_fatong"
+          ]
+        }
       ],
       "description": "从议事亭前地走向大炮台的建筑观察模板，覆盖市政、慈善、宗教、民居与防御建筑。步行路径约1.44公里、路由时间约19分钟；建议停留200分钟，预留约20分钟机动。后段有石阶与坡度，不能据此宣称无障碍。"
     },
@@ -59,13 +228,55 @@
       "duration_hours": 3.0,
       "walk_distance_km": 0.99,
       "physical_level": "medium",
-      "suitable_for": ["architecture", "photo", "culture", "solo", "friends"],
+      "suitable_for": [
+        "architecture",
+        "photo",
+        "culture",
+        "solo",
+        "friends"
+      ],
       "nodes": [
-        { "poi_id": "poi_paixao", "order": 1, "suggested_stay_min": 20, "note": "观察短巷纵深和连续立面", "replaceable_with": ["poi_na_tcha"] },
-        { "poi_id": "poi_ruins_st_paul", "order": 2, "suggested_stay_min": 30, "note": "从前地与石阶下方建立整体构图", "replaceable_with": ["poi_na_tcha"] },
-        { "poi_id": "poi_mount_fortress", "order": 3, "suggested_stay_min": 30, "note": "用城墙、炮位与城市方位组织画面", "replaceable_with": [] },
-        { "poi_id": "poi_fatong", "order": 4, "suggested_stay_min": 25, "note": "记录坡巷高差与旧区街面", "replaceable_with": [] },
-        { "poi_id": "poi_sv_lazaro", "order": 5, "suggested_stay_min": 25, "note": "以教堂前地和社区尺度收尾", "replaceable_with": ["poi_fatong"] }
+        {
+          "poi_id": "poi_paixao",
+          "order": 1,
+          "suggested_stay_min": 20,
+          "note": "观察短巷纵深和连续立面",
+          "replaceable_with": [
+            "poi_na_tcha"
+          ]
+        },
+        {
+          "poi_id": "poi_ruins_st_paul",
+          "order": 2,
+          "suggested_stay_min": 30,
+          "note": "从前地与石阶下方建立整体构图",
+          "replaceable_with": [
+            "poi_na_tcha"
+          ]
+        },
+        {
+          "poi_id": "poi_mount_fortress",
+          "order": 3,
+          "suggested_stay_min": 30,
+          "note": "用城墙、炮位与城市方位组织画面",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_fatong",
+          "order": 4,
+          "suggested_stay_min": 25,
+          "note": "记录坡巷高差与旧区街面",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_sv_lazaro",
+          "order": 5,
+          "suggested_stay_min": 25,
+          "note": "以教堂前地和社区尺度收尾",
+          "replaceable_with": [
+            "poi_fatong"
+          ]
+        }
       ],
       "description": "从恋爱巷经大三巴、大炮台向望德堂区推进的摄影模板，重点是建筑尺度、坡巷纵深和城市层次，而非承诺特定光线。步行路径约0.99公里、路由时间约13分钟；建议停留130分钟，另预留约37分钟用于坡道、取景和机动。"
     },
@@ -77,11 +288,37 @@
       "duration_hours": 3.0,
       "walk_distance_km": 0.94,
       "physical_level": "low",
-      "suitable_for": ["food", "culture", "friends", "family", "relax"],
+      "suitable_for": [
+        "food",
+        "culture",
+        "friends",
+        "family",
+        "relax"
+      ],
       "nodes": [
-        { "poi_id": "poi_senado", "order": 1, "suggested_stay_min": 25, "note": "从城市广场理解中区公共生活", "replaceable_with": ["poi_leal_senado"] },
-        { "poi_id": "poi_florindo", "order": 2, "suggested_stay_min": 45, "note": "观察百年街道与当代餐饮功能的叠合", "replaceable_with": [] },
-        { "poi_id": "poi_xiahuan", "order": 3, "suggested_stay_min": 50, "note": "以不妨碍经营为前提观察公共街市", "replaceable_with": [] }
+        {
+          "poi_id": "poi_senado",
+          "order": 1,
+          "suggested_stay_min": 25,
+          "note": "从城市广场理解中区公共生活",
+          "replaceable_with": [
+            "poi_leal_senado"
+          ]
+        },
+        {
+          "poi_id": "poi_florindo",
+          "order": 2,
+          "suggested_stay_min": 45,
+          "note": "观察百年街道与当代餐饮功能的叠合",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_xiahuan",
+          "order": 3,
+          "suggested_stay_min": 50,
+          "note": "以不妨碍经营为前提观察公共街市",
+          "replaceable_with": []
+        }
       ],
       "description": "由议事亭前地经福隆新街走向下环街市的单向模板，以公共空间、老街功能转变和社区饮食环境为主题。步行路径约0.94公里、路由时间约12分钟；建议停留120分钟，另预留约45分钟用餐和机动。具体摊档及营业状态以现场为准。"
     },
@@ -93,11 +330,37 @@
       "duration_hours": 3.0,
       "walk_distance_km": 0.39,
       "physical_level": "low",
-      "suitable_for": ["food", "architecture", "photo", "culture", "friends", "family", "relax"],
+      "suitable_for": [
+        "food",
+        "architecture",
+        "photo",
+        "culture",
+        "friends",
+        "family",
+        "relax"
+      ],
       "nodes": [
-        { "poi_id": "poi_rua_cunha", "order": 1, "suggested_stay_min": 50, "note": "观察步行商业街与旧区生活，按现场情况选择餐饮", "replaceable_with": [] },
-        { "poi_id": "poi_carmo", "order": 2, "suggested_stay_min": 30, "note": "从嘉模前地观察教堂与绿地", "replaceable_with": [] },
-        { "poi_id": "poi_taipa_houses", "order": 3, "suggested_stay_min": 45, "note": "认识葡式住宅建筑群及其文化再利用", "replaceable_with": [] }
+        {
+          "poi_id": "poi_rua_cunha",
+          "order": 1,
+          "suggested_stay_min": 50,
+          "note": "观察步行商业街与旧区生活，按现场情况选择餐饮",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_carmo",
+          "order": 2,
+          "suggested_stay_min": 30,
+          "note": "从嘉模前地观察教堂与绿地",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_taipa_houses",
+          "order": 3,
+          "suggested_stay_min": 45,
+          "note": "认识葡式住宅建筑群及其文化再利用",
+          "replaceable_with": []
+        }
       ],
       "description": "官也街、嘉模圣母堂与龙环葡韵组成的短距离亲子模板。步行路径约0.39公里、路由时间约5分钟；建议停留125分钟，另预留约45分钟用于用餐、休息和机动。低距离不等同于全程无障碍，仍应留意现场坡度与通行安排。"
     },
@@ -109,13 +372,140 @@
       "duration_hours": 2.5,
       "walk_distance_km": 0.49,
       "physical_level": "low",
-      "suitable_for": ["history", "architecture", "photo", "culture", "solo", "friends", "family", "relax"],
+      "suitable_for": [
+        "history",
+        "architecture",
+        "photo",
+        "culture",
+        "solo",
+        "friends",
+        "family",
+        "relax"
+      ],
       "nodes": [
-        { "poi_id": "poi_coloane_pier", "order": 1, "suggested_stay_min": 25, "note": "从旧码头理解路环水路交通历史", "replaceable_with": [] },
-        { "poi_id": "poi_eanes_square", "order": 2, "suggested_stay_min": 35, "note": "在社区前地观察街巷连接与日常使用", "replaceable_with": [] },
-        { "poi_id": "poi_coloane_chapel", "order": 3, "suggested_stay_min": 30, "note": "从广场观察教堂立面与社区历史", "replaceable_with": [] }
+        {
+          "poi_id": "poi_coloane_pier",
+          "order": 1,
+          "suggested_stay_min": 25,
+          "note": "从旧码头理解路环水路交通历史",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_eanes_square",
+          "order": 2,
+          "suggested_stay_min": 35,
+          "note": "在社区前地观察街巷连接与日常使用",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_coloane_chapel",
+          "order": 3,
+          "suggested_stay_min": 30,
+          "note": "从广场观察教堂立面与社区历史",
+          "replaceable_with": []
+        }
       ],
       "description": "由路环码头经恩尼斯总统前地至圣方济各圣堂的短距离休闲模板，路径约0.49公里、路由时间约6分钟；建议停留90分钟，另预留约40分钟休息和机动。临水边缘、宗教活动及临时通行情况均以现场标识为准。"
+    },
+    {
+      "id": "cotai_theme_europe_halfday",
+      "name": "路氹主题建筑摄影半日线",
+      "theme": "摄影",
+      "duration_label": "半日",
+      "duration_hours": 4.5,
+      "walk_distance_km": 1.8,
+      "physical_level": "low",
+      "suitable_for": [
+        "architecture",
+        "photo",
+        "culture",
+        "friends",
+        "family",
+        "relax"
+      ],
+      "nodes": [
+        {
+          "poi_id": "poi_0020",
+          "order": 1,
+          "suggested_stay_min": 70,
+          "note": "室内大运河与圣马可广场主题街区，适合观察主题建筑与人造天幕；博彩区域仅限合资格人士",
+          "replaceable_with": [
+            "poi_0114"
+          ]
+        },
+        {
+          "poi_id": "poi_0021",
+          "order": 2,
+          "suggested_stay_min": 50,
+          "note": "经连廊步行至巴黎人，重点拍摄埃菲尔铁塔复制品外立面与夜景灯光",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0107",
+          "order": 3,
+          "suggested_stay_min": 50,
+          "note": "伦敦人外立面与大笨钟主题景观，建议傍晚至夜间取景；步行连廊连通，开放与灯光时间以现场为准",
+          "replaceable_with": []
+        }
+      ],
+      "description": "路氹金光大道室内连廊为主的主题建筑摄影半日模板：威尼斯人→巴黎人→伦敦人。强调主题度假村外立面、室内街景与灯光，而非博彩活动。步行约1.8公里、节奏轻松；场馆开放、灯光秀与临时通行均以现场为准。连廊与免费穿梭巴士可按体力灵活衔接。"
+    },
+    {
+      "id": "cotai_resort_show_halfday",
+      "name": "路氹综合度假区景观半日线",
+      "theme": "休闲",
+      "duration_label": "半日",
+      "duration_hours": 4.0,
+      "walk_distance_km": 2.2,
+      "physical_level": "low",
+      "suitable_for": [
+        "architecture",
+        "photo",
+        "culture",
+        "friends",
+        "family",
+        "relax"
+      ],
+      "nodes": [
+        {
+          "poi_id": "poi_0027",
+          "order": 1,
+          "suggested_stay_min": 45,
+          "note": "永利皇宫外立面与度假区入口景观",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0230",
+          "order": 2,
+          "suggested_stay_min": 35,
+          "note": "环湖观光缆车视角，留意排队与运营时段",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0231",
+          "order": 3,
+          "suggested_stay_min": 30,
+          "note": "表演湖音乐喷泉，演出时刻以现场公告为准",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0109",
+          "order": 4,
+          "suggested_stay_min": 40,
+          "note": "新濠天地摩珀斯酒店外骨骼建筑；可用免费穿梭巴士衔接",
+          "replaceable_with": [
+            "poi_0110"
+          ]
+        },
+        {
+          "poi_id": "poi_0110",
+          "order": 5,
+          "suggested_stay_min": 35,
+          "note": "新濠影汇『8』字形摩天轮立面，适合夜景摄影",
+          "replaceable_with": []
+        }
+      ],
+      "description": "路氹综合度假区景观半日模板：永利皇宫（缆车/表演湖）→新濠天地（摩珀斯）→新濠影汇（影汇之星）。侧重建筑外观、公共景观与灯光，不引导博彩消费。节点间以室内连廊或度假区免费穿梭巴士衔接；步行约2.2公里，体力要求低。演出、缆车与开放时间以现场为准。"
     }
   ]
 }

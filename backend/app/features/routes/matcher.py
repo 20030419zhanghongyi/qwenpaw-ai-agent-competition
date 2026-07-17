@@ -17,6 +17,40 @@ from .route_constructor import construct_route
 from .repository import list_templates
 from app.db.data import load_weights
 
+# UI / Preference.themes → 路线模板 theme 字段
+_THEME_TO_ROUTE: dict[str, set[str]] = {
+    "heritage": {"文化"},
+    "architecture": {"建筑"},
+    "photo": {"摄影"},
+    "food": {"美食"},
+    "family": {"亲子"},
+    "leisure": {"休闲"},
+    "cotai": {"摄影", "休闲"},  # 路氹度假区主题建筑 / 景观线
+}
+
+def _diversify_by_theme(
+    results: list[tuple[int, list[str], dict]], top_k: int
+) -> list[tuple[int, list[str], dict]]:
+    """Prefer distinct route themes so a multi-day plan covers different areas."""
+    picked: list[tuple[int, list[str], dict]] = []
+    seen_themes: set[str] = set()
+    for item in results:
+        theme = str(item[2].get("route", {}).get("theme") or item[2].get("selected_template") or "")
+        if theme and theme in seen_themes:
+            continue
+        picked.append(item)
+        if theme:
+            seen_themes.add(theme)
+        if len(picked) >= top_k:
+            return picked
+    for item in results:
+        if item in picked:
+            continue
+        picked.append(item)
+        if len(picked) >= top_k:
+            break
+    return picked
+
 
 def match_routes(pref: Preference, top_k: int = 3) -> list[dict]:
     """根据偏好返回 top_k 条最匹配的路线结果。
@@ -45,6 +79,21 @@ def match_routes(pref: Preference, top_k: int = 3) -> list[dict]:
         elif pref.duration == "full-day" and "一日" in label:
             score += 3
             reasons.append("时长契合「一日游」")
+        elif pref.duration == "evening":
+            hours = float(template.get("duration_hours") or 0)
+            if hours and hours <= 3.5:
+                score += 3
+                reasons.append("时长契合「夜间/短途」节奏")
+            elif "半日" in label:
+                score += 2
+                reasons.append("半日模板可压缩为夜间漫步")
+        elif pref.duration == "multi-day":
+            if "一日" in label:
+                score += 4
+                reasons.append("适合作为多日行程中的完整一天")
+            elif "半日" in label:
+                score += 2
+                reasons.append("适合作为多日行程中的半日分区线")
 
         # 体力匹配
         if "less-walk" in pref.physical and template.get("physical_level") == "low":
@@ -64,6 +113,19 @@ def match_routes(pref: Preference, top_k: int = 3) -> list[dict]:
         if hit_travel:
             score += len(hit_travel)
             reasons.append(f"适合：{'、'.join(hit_travel)}")
+
+        # 主题匹配（历史城区 / 路氹度假村等）
+        wanted_themes: set[str] = set()
+        for tag in pref.themes or []:
+            wanted_themes |= _THEME_TO_ROUTE.get(tag, set())
+        route_theme = str(template.get("theme") or "")
+        template_id = str(template.get("id") or "")
+        if wanted_themes and route_theme in wanted_themes:
+            score += 4
+            reasons.append(f"主题契合「{route_theme}」")
+        if "cotai" in (pref.themes or []) and "cotai" in template_id:
+            score += 6
+            reasons.append("契合路氹度假区主题线")
 
         # 离线调研热度加成（若有权重表）
         hot = sum(poi_heat.get(node["poi_id"], 0) for node in template["nodes"])
@@ -99,6 +161,9 @@ def match_routes(pref: Preference, top_k: int = 3) -> list[dict]:
         )
 
     results.sort(key=lambda x: x[0], reverse=True)
-    top = results[:top_k]
+    if pref.duration == "multi-day":
+        top = _diversify_by_theme(results, top_k)
+    else:
+        top = results[:top_k]
 
     return [result for _, _, result in top]
