@@ -289,6 +289,24 @@ def test_route_constructor_prefers_replacement_before_trim_for_walk_limit():
     assert any("按少走路约束调整" in item for item in constraints)
 
 
+def test_route_constructor_does_not_spam_trim_note_in_description():
+    template = get_template("heritage_fullday")
+    assert template is not None
+    pool = build_candidate_pool(template)
+    original = template.get("description", "")
+
+    class Pref:
+        duration = "half-day"
+        physical = ["less-walk"]
+        interests = ["history"]
+
+    route, constraints = construct_route(template, Pref(), candidate_pois=pool)
+    assert route["description"] == original
+    assert route["description"].count("已按约束缩短末端节点") == 0
+    if len(route["nodes"]) < len(template["nodes"]):
+        assert "已按约束缩短末端节点" in constraints
+
+
 # ---------------------------------------------------------------------------
 # 以下为「无 API key 阶段」补强用例：覆盖此前未测的空白场景，全部纯规则、不依赖外部 API。
 # ---------------------------------------------------------------------------

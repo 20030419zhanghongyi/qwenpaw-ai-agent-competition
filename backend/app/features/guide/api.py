@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import tempfile
 import time
 from typing import Annotated
@@ -34,8 +35,10 @@ from app.guardrails.runtime import rate_limit, record_audit, sanitize_untrusted_
 from app.observability.trace import record_trace
 from app.tools.scrub import scrub
 
+from .preset_script import build_preset_narration
 from .trigger_state import trigger_state
 from .tts import TTSUnavailableError, VOICE_BY_LANGUAGE, synthesize_to_oss
+from .web_search import format_web_material, search_web
 
 # rag/ 在仓库根（不在 backend/app 内）；config.py 导入时已把仓库根加进 sys.path
 from rag.retrieve import get_poi_material, retrieve
@@ -51,6 +54,18 @@ _MAX_BYTES = 8 * 1024 * 1024  # 8MB
 _BLOCK_FALLBACK = "（该讲解未通过安全审核，已暂缓展示，请稍后重试。）"
 _LOW_CONFIDENCE_THRESHOLD = 0.6
 
+_ASK_FALLBACK = {
+    "zh-CN": "根据现有资料，我暂时只能这样回答：{snippet}",
+    "zh-TW": "根據現有資料，我暫時只能這樣回答：{snippet}",
+    "en": "From the materials we have, here’s what I can say: {snippet}",
+    "pt": "Com o material disponível, posso dizer: {snippet}",
+}
+_ASK_EMPTY = {
+    "zh-CN": "手头资料里没有直接答案。你可以换个问法，或拍一张现场照片让我辨认。",
+    "zh-TW": "手頭資料裡沒有直接答案。你可以換個問法，或拍一張現場照片讓我辨認。",
+    "en": "I don’t have a direct answer in the materials. Try rephrasing, or upload a photo.",
+    "pt": "Não há resposta direta no material. Reformule, ou envie uma foto.",
+}
 
 def _review_guide_text(text: str) -> dict:
     """guide 生成文本 → reviewer 上线前把关（guide→reviewer 管道）。
@@ -126,6 +141,8 @@ class GuideRequest(BaseModel):
     poi: str = Field(min_length=1, max_length=255)  # POI 名字（中/英/葡）或 id
     language: str = "zh-CN"
     interests: list[str] | None = None   # history / architecture / food / photo / culture
+    # 行程下一站名称；传空字符串表示末站；省略则无行程收尾语
+    next_stop: str | None = None
 
     @field_validator("poi")
     @classmethod
@@ -134,6 +151,115 @@ class GuideRequest(BaseModel):
         if not value:
             raise ValueError("poi must not be blank")
         return value
+
+    @field_validator("next_stop")
+    @classmethod
+    def sanitize_next_stop(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return sanitize_untrusted_text(value, max_length=255)
+
+
+class GuideAskRequest(BaseModel):
+    poi: str = Field(min_length=1, max_length=255)
+    question: str = Field(min_length=1, max_length=1000)
+    language: str = "zh-CN"
+    interests: list[str] | None = None
+
+    @field_validator("poi")
+    @classmethod
+    def sanitize_poi(cls, value: str) -> str:
+        value = sanitize_untrusted_text(value, max_length=255)
+        if not value:
+            raise ValueError("poi must not be blank")
+        return value
+
+    @field_validator("question")
+    @classmethod
+    def sanitize_question(cls, value: str) -> str:
+        value = sanitize_untrusted_text(value, max_length=1000)
+        if not value:
+            raise ValueError("question must not be blank")
+        return value
+
+
+def _material_snippet_answer(
+    question: str, material: str, *, language: str
+) -> tuple[str, bool]:
+    """从资料挑相关句。返回 (answer, is_weak)。weak=关键词几乎对不上。"""
+    if not material.strip():
+        return _ASK_EMPTY.get(language, _ASK_EMPTY["zh-CN"]), True
+    tokens = [t for t in re.split(r"[\s,，。？?！!、；;：:]+", question.lower()) if len(t) >= 2]
+    # 去掉过短/无信息中文虚词
+    stop = {"这个", "那个", "什么", "为什么", "怎么", "怎樣", "為什麼", "上面", "下面", "有没有", "可以"}
+    tokens = [t for t in tokens if t not in stop]
+    sentences = [
+        s.strip()
+        for s in re.split(r"[。！？!?\n]+", material)
+        if s.strip()
+    ]
+    scored: list[tuple[int, str]] = []
+    for s in sentences:
+        score = sum(1 for t in tokens if t in s.lower())
+        if score:
+            scored.append((score, s))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    weak = not scored or (scored[0][0] < 1 if tokens else True)
+    if tokens and scored and scored[0][0] >= 2:
+        weak = False
+    elif tokens and not scored:
+        weak = True
+    elif tokens and scored and scored[0][0] == 1 and len(tokens) >= 2:
+        weak = True
+
+    picked = [s for _, s in scored[:2]] or (sentences[:2] if not tokens else [])
+    cleaned = []
+    for s in picked:
+        cleaned.append(
+            re.sub(
+                r"^(intro|history|architecture|story|observation_tips)\s*:\s*",
+                "",
+                s,
+                flags=re.IGNORECASE,
+            ).strip()
+        )
+    snippet = "。".join(c for c in cleaned if c)
+    if snippet and not snippet.endswith(("。", ".", "!", "？", "?")):
+        snippet += "。"
+    if not snippet:
+        return _ASK_EMPTY.get(language, _ASK_EMPTY["zh-CN"]), True
+    if weak:
+        # 弱相关时仍给摘录，但标记 weak，让上层走联网
+        tmpl = _ASK_FALLBACK.get(language, _ASK_FALLBACK["zh-CN"])
+        return tmpl.format(snippet=snippet), True
+    tmpl = _ASK_FALLBACK.get(language, _ASK_FALLBACK["zh-CN"])
+    return tmpl.format(snippet=snippet), False
+
+
+def _web_snippet_answer(
+    question: str,
+    hits: list[dict[str, str]],
+    *,
+    language: str,
+    poi_name: str,
+) -> str:
+    if not hits:
+        return _ASK_EMPTY.get(language, _ASK_EMPTY["zh-CN"])
+    body = " ".join(str(h.get("snippet") or "") for h in hits[:2]).strip()
+    # 压成较短口语段
+    body = re.sub(r"\s+", " ", body)
+    if len(body) > 420:
+        body = body[:420].rstrip() + "…"
+    cite = "；".join(
+        f"{h.get('title') or '资料'}（{h.get('source') or 'web'}）" for h in hits[:2]
+    )
+    templates = {
+        "zh-CN": f"关于「{poi_name}」与你的问题，结合公开资料可以这样理解：{body} 参考：{cite}。",
+        "zh-TW": f"關於「{poi_name}」與你的問題，結合公開資料可以這樣理解：{body} 參考：{cite}。",
+        "en": f"About {poi_name} and your question, public sources suggest: {body} Sources: {cite}.",
+        "pt": f"Sobre {poi_name} e a sua pergunta, fontes públicas sugerem: {body} Fontes: {cite}.",
+    }
+    return templates.get(language, templates["zh-CN"])
 
 
 class GuideTriggerRequest(BaseModel):
@@ -364,34 +490,208 @@ async def photo(
     }
 
 
-@router.post("/generate", dependencies=[Depends(rate_limit("text"))])
-def generate(req: GuideRequest) -> dict:
-    """POI + 偏好 → 文化讲解（RAG 取料 → guide agent；agent 不可用降级空讲解，不 500）。"""
-    if not settings.guide_agent_enabled:
-        raise HTTPException(
-            status_code=503,
-            detail="guide disabled (need guide agent in QwenPaw + GUIDE_AGENT_ENABLED=true)",
-        )
+@router.post("/ask", dependencies=[Depends(rate_limit("text"))])
+def ask(
+    req: GuideAskRequest,
+    enhance: Annotated[
+        bool, Query(description="是否调用 guide agent 深度回答（较慢）")
+    ] = False,
+    web: Annotated[
+        bool, Query(description="本地资料不够时是否联网检索公开百科")
+    ] = True,
+) -> dict:
+    """就当前 POI 追问。
+
+    流程：本地资料摘录 →（弱相关时）维基/公开检索补充 → 可选 guide agent 综合。
+    """
+    t0 = time.perf_counter()
     poi_name, material = _gather_material(req.poi, req.poi)
     if not material:
-        raise HTTPException(status_code=404, detail=f"找不到 POI 资料：{req.poi}")
+        preset = build_preset_narration(req.poi, language=req.language, interests=req.interests)
+        if preset and preset.get("text"):
+            poi_name = str(preset.get("poi_name") or req.poi)
+            material = str(preset["text"])
+        else:
+            raise HTTPException(status_code=404, detail=f"找不到 POI 资料：{req.poi}")
 
+    display_name = poi_name or req.poi
+    local_answer, weak = _material_snippet_answer(
+        req.question, material, language=req.language
+    )
+    answer_text = local_answer
+    source = "rules"
+    confidence = 0.55 if not weak else 0.35
+    ai_generated = False
+    error = None
+    web_hits: list[dict[str, str]] = []
+    used_web = False
+
+    # 本地对不上问题时联网补充（也可在 enhance 时一并检索）
+    if web and (weak or enhance):
+        query = f"{display_name} {req.question}".strip()
+        web_hits = search_web(query, language=req.language, k=3)
+        if not web_hits and req.language.startswith("zh"):
+            # 中文没命中时再试英文检索
+            web_hits = search_web(query, language="en", k=3)
+        if web_hits:
+            used_web = True
+            web_material = format_web_material(web_hits, language=req.language)
+            combined = f"{material}\n\n{web_material}"
+
+            if settings.guide_agent_enabled and (enhance or weak):
+                expl = guide_agent.answer(
+                    display_name,
+                    req.question,
+                    material=combined,
+                    language=req.language,
+                    interests=req.interests,
+                )
+                if expl and expl.text.strip():
+                    answer_text = expl.text
+                    confidence = max(float(expl.confidence or 0.7), 0.7)
+                    ai_generated = True
+                    source = "agent+web"
+                else:
+                    answer_text = _web_snippet_answer(
+                        req.question,
+                        web_hits,
+                        language=req.language,
+                        poi_name=display_name,
+                    )
+                    source = "web"
+                    confidence = 0.65
+                    error = "guide agent unavailable; served web snippets"
+            else:
+                answer_text = _web_snippet_answer(
+                    req.question,
+                    web_hits,
+                    language=req.language,
+                    poi_name=display_name,
+                )
+                source = "web"
+                confidence = 0.65
+
+    elif enhance and settings.guide_agent_enabled:
+        expl = guide_agent.answer(
+            display_name,
+            req.question,
+            material=material,
+            language=req.language,
+            interests=req.interests,
+        )
+        if expl and expl.text.strip():
+            answer_text = expl.text
+            confidence = expl.confidence
+            ai_generated = True
+            source = "agent"
+        else:
+            error = "guide agent unavailable; served material snippet"
+
+    out_text, review = _apply_review(answer_text, path="ask")
+    latency_ms = int((time.perf_counter() - t0) * 1000)
+    record_trace(
+        kind="guide.ask",
+        status="ok",
+        agent_id="guide" if source.startswith("agent") else None,
+        input_summary=f"{req.poi}:{req.question[:120]}",
+        output_summary=out_text[:200],
+        latency_ms=latency_ms,
+        extra={
+            "source": source,
+            "enhance": enhance,
+            "web": used_web,
+            "weak_local": weak,
+            "web_hits": len(web_hits),
+        },
+    )
+    return {
+        "poi_name": display_name,
+        "question": req.question,
+        "text": out_text,
+        "language": req.language,
+        "source": source,
+        "confidence": confidence,
+        "ai_generated": ai_generated,
+        "blocked": review.get("decision") == "block",
+        "error": error,
+        "review": review,
+        "web_used": used_web,
+        "web_sources": [
+            {"title": h.get("title"), "url": h.get("url"), "source": h.get("source")}
+            for h in web_hits[:3]
+        ],
+    }
+
+
+@router.post("/generate", dependencies=[Depends(rate_limit("text"))])
+def generate(
+    req: GuideRequest,
+    enhance: Annotated[bool, Query(description="是否再用 guide agent 深度改写（较慢）")] = False,
+) -> dict:
+    """POI + 偏好 → 文化讲解。
+
+    默认走预设话术（POI 资料拼接 + 兴趣轻量个性化），毫秒级返回。
+    ``enhance=true`` 且 guide agent 启用时，再调用 LLM 改写（可选）。
+    """
     t0 = time.perf_counter()
-    expl = guide_agent.generate(poi_name, material=material, language=req.language, interests=req.interests)
+    preset = build_preset_narration(
+        req.poi,
+        language=req.language,
+        interests=req.interests,
+        next_stop=req.next_stop,
+    )
+    if preset is None:
+        # 回退：旧 gather 路径仍找不到则 404
+        poi_name, material = _gather_material(req.poi, req.poi)
+        if not material:
+            raise HTTPException(status_code=404, detail=f"找不到 POI 资料：{req.poi}")
+        preset = {
+            "text": material.split("\n")[0][:500],
+            "source_type": "ai",
+            "confidence": 0.5,
+            "ai_generated": False,
+            "language": req.language,
+            "source": "preset",
+            "poi_name": poi_name or req.poi,
+            "blocked": False,
+            "error": None,
+            "review": None,
+        }
+
+    # 快速路径：预设话术
+    if not enhance or not settings.guide_agent_enabled:
+        latency_ms = int((time.perf_counter() - t0) * 1000)
+        record_trace(
+            kind="guide.generate",
+            status="ok",
+            agent_id=None,
+            input_summary=req.poi[:200],
+            output_summary=str(preset.get("text", ""))[:200],
+            latency_ms=latency_ms,
+            extra={"source": "preset", "interests": req.interests or []},
+        )
+        return preset
+
+    # 可选增强：guide agent 改写预设稿
+    poi_name, material = _gather_material(req.poi, req.poi)
+    expl = guide_agent.generate(
+        poi_name or str(preset.get("poi_name") or req.poi),
+        material=material or str(preset.get("text") or ""),
+        language=req.language,
+        interests=req.interests,
+    )
     latency_ms = int((time.perf_counter() - t0) * 1000)
 
-    if expl is None:
-        logger.info("guide agent 不可用或解析失败，降级空讲解")
-        record_trace(kind="guide.generate", status="error", input_summary=req.poi[:200], latency_ms=latency_ms)
-        return {
-            "text": "",
-            "source_type": "ai",
-            "confidence": 0.0,
-            "ai_generated": True,
-            "language": req.language,
-            "source": "error",
-            "error": "guide agent unavailable",
-        }
+    if expl is None or not expl.text.strip():
+        record_trace(
+            kind="guide.generate",
+            status="preset_fallback",
+            input_summary=req.poi[:200],
+            latency_ms=latency_ms,
+            extra={"error": "guide agent unavailable"},
+        )
+        preset["error"] = "guide agent unavailable; served preset"
+        return preset
 
     record_trace(
         kind="guide.generate",
@@ -400,13 +700,11 @@ def generate(req: GuideRequest) -> dict:
         input_summary=req.poi[:200],
         output_summary=expl.text[:200],
         latency_ms=latency_ms,
-        extra={"source_type": expl.source_type, "confidence": expl.confidence},
+        extra={"source_type": expl.source_type, "confidence": expl.confidence, "enhanced": True},
     )
 
-    # ── guide → reviewer 管道：讲解正文过审（block → 安全 fallback 拦截，不外泄）──
     out_text, review = _apply_review(expl.text, path="generate")
     blocked = review.get("decision") == "block"
-
     return {
         "text": out_text,
         "source_type": expl.source_type,

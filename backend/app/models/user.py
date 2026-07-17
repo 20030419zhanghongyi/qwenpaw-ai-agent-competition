@@ -13,10 +13,11 @@ SUPPORTED_LANGS = ("zh-CN", "zh-TW", "en", "pt")
 
 class Preference(BaseModel):
     """用户偏好输入 —— 路线配对的依据。"""
-    duration: str = "half-day"           # half-day / full-day / evening / custom
+    duration: str = "half-day"           # half-day / full-day / evening / multi-day / custom
     party_size: int = 1
     travel_type: list[str] = []          # solo / friends / family / relax ...
     interests: list[str] = []            # history / architecture / food / photo ...
+    themes: list[str] = []               # heritage / architecture / photo / food / family / leisure / cotai
     physical: list[str] = []             # normal / less-walk / no-backtrack
     language: str = "zh-CN"
 

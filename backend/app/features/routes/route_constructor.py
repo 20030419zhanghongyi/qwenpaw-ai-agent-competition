@@ -53,14 +53,20 @@ def construct_route(route: dict, pref: Preference, candidate_pois: list[dict] | 
             applied_constraints.append("在预算允许内按兴趣补充候选节点")
 
     if duration_limit is not None:
+        before_nodes = len(planned.get("nodes", []))
         planned, changed = _fit_duration(planned, duration_limit, candidate_pois or [])
         if changed:
             applied_constraints.append(f"按时长约束调整至 {duration_limit} 小时内")
+            if len(planned.get("nodes", [])) < before_nodes:
+                applied_constraints.append("已按约束缩短末端节点")
 
     if "less-walk" in pref.physical:
+        before_nodes = len(planned.get("nodes", []))
         planned, changed = _fit_walk(planned, walk_limit, candidate_pois or [])
         if changed:
             applied_constraints.append(f"按少走路约束调整至约 {walk_limit}km")
+            if len(planned.get("nodes", [])) < before_nodes:
+                applied_constraints.append("已按约束缩短末端节点")
 
     if "no-backtrack" in pref.physical:
         planned, changed = _reorder_for_continuity(planned)
@@ -239,7 +245,8 @@ def _trim_tail_node(route: dict) -> tuple[dict, bool]:
     route["nodes"] = nodes
     route["duration_hours"] = max(1.5, round(route.get("duration_hours", 0.0) - (removed.get("suggested_stay_min", 30) / 60.0), 1))
     route["walk_distance_km"] = max(1.0, round(route.get("walk_distance_km", 0.0) - 0.5, 1))
-    route["description"] = f"{route.get('description', '')} 已按约束缩短末端节点。".strip()
+    # Keep description as the template blurb only. Trim notes belong in applied_constraints
+    # (via _fit_duration / _fit_walk), otherwise a multi-trim loop repeats the same suffix.
     return route, True
 
 

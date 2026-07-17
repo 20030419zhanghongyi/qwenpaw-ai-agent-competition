@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Brand tokens — Morandi palette */
+  --color-paper: var(--paper);
+  --color-paper-warm: var(--paper-warm);
+  --color-sage: var(--sage);
+  --color-sage-deep: var(--sage-deep);
+  --color-moss: var(--moss);
+  --color-clay: var(--clay);
+  --color-ochre: var(--ochre);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+
+  --font-serif: "Playfair Display", "Noto Serif SC", "Noto Serif TC", Georgia, serif;
+  --font-sans: "Inter", "Noto Sans SC", "Noto Sans TC", system-ui, sans-serif;
+  --font-display: "Fraunces", "Noto Serif SC", "Noto Serif TC", Georgia, serif;
+}
+
+:root {
+  --radius: 0.875rem;
+
+  /* Morandi palette in oklch */
+  --paper: oklch(0.965 0.012 90);
+  --paper-warm: oklch(0.94 0.018 88);
+  --sage: oklch(0.62 0.038 145);
+  --sage-deep: oklch(0.42 0.032 155);
+  --moss: oklch(0.32 0.028 155);
+  --clay: oklch(0.68 0.042 45);
+  --ochre: oklch(0.72 0.075 78);
+  --ink: oklch(0.26 0.012 110);
+  --ink-soft: oklch(0.48 0.012 110);
+  --line: oklch(0.88 0.014 90);
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: oklch(0.985 0.008 90);
+  --card-foreground: var(--ink);
+  --primary: var(--sage-deep);
+  --primary-foreground: oklch(0.985 0.008 90);
+  --secondary: var(--paper-warm);
+  --secondary-foreground: var(--ink);
+  --muted: var(--paper-warm);
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--ochre);
+  --accent-foreground: var(--ink);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--sage);
+
+  --shadow-soft: 0 1px 2px oklch(0.3 0.02 110 / 0.06), 0 6px 20px oklch(0.3 0.02 110 / 0.06);
+  --shadow-lift: 0 8px 32px oklch(0.3 0.02 110 / 0.12);
+}
+
+@utility bg-azulejo {
+  background-image: radial-gradient(
+    circle at 50% 50%,
+    var(--color-sage) 0.6px,
+    transparent 0.7px
+  );
+  background-size: 14px 14px;
+  opacity: 0.35;
+}
+
+@utility calcada-wave {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='10' viewBox='0 0 40 10' fill='none'><path d='M0 5C5 5 5 0 10 0C15 0 15 5 20 5C25 5 25 10 30 10C35 10 35 5 40 5' stroke='%237E9082' stroke-width='1'/></svg>");
+  background-repeat: repeat-x;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html,
+  body,
+  #root {
+    min-height: 100%;
+    min-height: 100dvh;
+  }
+  html,
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  #root {
+    display: flex;
+    flex-direction: column;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+}
+
+@keyframes thinking-sway {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateY(-4px) rotate(8deg);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.thinking-dot {
+  display: inline-block;
+  animation: thinking-sway 1.1s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.thinking-dot:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.thinking-dot:nth-child(3) {
+  animation-delay: 0.36s;
+}
