@@ -76,12 +76,19 @@ class WalkPathRequest(BaseModel):
         return value
 
 
+class TransitModeResponse(BaseModel):
+    kind: str
+    label: str
+
+
 class WalkSegmentResponse(BaseModel):
     from_poi_id: str
     to_poi_id: str
     walk_m: int = Field(ge=0)
     walk_min: int = Field(ge=0)
     polyline: str
+    bus_lines: list[str] = Field(default_factory=list)
+    modes: list[TransitModeResponse] = Field(default_factory=list)
 
 
 class WalkPathResponse(BaseModel):

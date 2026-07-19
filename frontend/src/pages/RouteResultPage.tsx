@@ -1,15 +1,88 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import mapImg from "@/assets/macau-map.jpg";
 import {
+  fetchWalkPath,
   triggerGuide,
   type GuideTriggerResponse,
 } from "@/api/client";
 import { ReasonChips } from "@/components/route/ReasonChips";
-import { RouteNodeList, type DisplayNode } from "@/components/route/RouteNodeList";
+import {
+  RouteNodeList,
+  type DisplayNode,
+  type WalkLeg,
+} from "@/components/route/RouteNodeList";
 import { t } from "@/i18n";
 import { formatWalkMeta } from "@/lib/preference";
 import { useWalk } from "@/state/WalkContext";
+import type { POI } from "@/types";
+
+type SheetSnap = "peek" | "half" | "full";
+
+const SHEET_PEEK_PX = 176;
+const SHEET_SNAPS: SheetSnap[] = ["peek", "half", "full"];
+
+function sheetHeightPx(snap: SheetSnap, viewportH = window.innerHeight): number {
+  if (snap === "full") return viewportH * 0.92;
+  if (snap === "half") return viewportH * 0.56;
+  return SHEET_PEEK_PX;
+}
+
+function nearestSheetSnap(height: number, viewportH = window.innerHeight): SheetSnap {
+  let best: SheetSnap = "half";
+  let bestDist = Number.POSITIVE_INFINITY;
+  for (const snap of SHEET_SNAPS) {
+    const dist = Math.abs(sheetHeightPx(snap, viewportH) - height);
+    if (dist < bestDist) {
+      best = snap;
+      bestDist = dist;
+    }
+  }
+  return best;
+}
+
+function nextSheetSnap(snap: SheetSnap): SheetSnap {
+  if (snap === "peek") return "half";
+  if (snap === "half") return "full";
+  return "peek";
+}
+
+function haversineMeters(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const r = 6371000;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * r * Math.asin(Math.sqrt(a));
+}
+
+function estimateWalkLegs(poiIds: string[], poisById: Record<string, POI>): WalkLeg[] {
+  const legs: WalkLeg[] = [];
+  for (let i = 0; i < poiIds.length - 1; i += 1) {
+    const from = poisById[poiIds[i]];
+    const to = poisById[poiIds[i + 1]];
+    if (!from || !to) {
+      legs.push({ walkM: 0, walkMin: 0 });
+      continue;
+    }
+    const meters = Math.round(
+      haversineMeters(from.latitude, from.longitude, to.latitude, to.longitude),
+    );
+    // ~4.8 km/h walking pace
+    legs.push({
+      walkM: meters,
+      walkMin: Math.max(1, Math.ceil(meters / 80)),
+    });
+  }
+  return legs;
+}
 
 /** Decorative marker positions on the illustrative map (not geo-accurate). */
 const MARKER_SLOTS = [
@@ -69,7 +142,10 @@ function readGuideSessionId(): string {
 export function RouteResultPage() {
   const navigate = useNavigate();
   const { session, language } = useWalk();
-  const [sheetOpen, setSheetOpen] = useState<"peek" | "half" | "full">("half");
+  const [sheetOpen, setSheetOpen] = useState<SheetSnap>("half");
+  const [sheetDragHeight, setSheetDragHeight] = useState<number | null>(null);
+  const [walkLegs, setWalkLegs] = useState<WalkLeg[]>([]);
+  const [walkLegsLoading, setWalkLegsLoading] = useState(false);
   const [dayIndex, setDayIndex] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [guiding, setGuiding] = useState(false);
@@ -89,6 +165,55 @@ export function RouteResultPage() {
   const checkingRef = useRef(false);
   const lastGpsCheckRef = useRef(0);
   const nodesRef = useRef<DisplayNode[]>([]);
+  const sheetDragRef = useRef<{
+    pointerId: number;
+    startY: number;
+    startHeight: number;
+    moved: boolean;
+  } | null>(null);
+
+  const sheetDragging = sheetDragHeight != null;
+  const sheetHeight = sheetDragHeight ?? sheetHeightPx(sheetOpen);
+
+  function onSheetHandlePointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (event.button !== 0) return;
+    const startHeight = sheetDragHeight ?? sheetHeightPx(sheetOpen);
+    sheetDragRef.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      startHeight,
+      moved: false,
+    };
+    setSheetDragHeight(startHeight);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function onSheetHandlePointerMove(event: ReactPointerEvent<HTMLButtonElement>) {
+    const drag = sheetDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const delta = drag.startY - event.clientY;
+    if (Math.abs(delta) > 4) drag.moved = true;
+    const maxH = sheetHeightPx("full");
+    const minH = sheetHeightPx("peek");
+    const next = Math.min(maxH, Math.max(minH, drag.startHeight + delta));
+    setSheetDragHeight(next);
+  }
+
+  function endSheetHandleDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    const drag = sheetDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const height = sheetDragHeight ?? drag.startHeight;
+    sheetDragRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (!drag.moved) {
+      setSheetOpen((snap) => nextSheetSnap(snap));
+    } else {
+      setSheetOpen(nearestSheetSnap(height));
+    }
+    setSheetDragHeight(null);
+  }
 
   const dayMatches = session?.matches?.length ? session.matches : session?.match ? [session.match] : [];
   const match = dayMatches[Math.min(dayIndex, Math.max(dayMatches.length - 1, 0))] ?? session?.match;
@@ -125,6 +250,51 @@ export function RouteResultPage() {
   useEffect(() => {
     nodesRef.current = nodes;
   }, [nodes]);
+
+  const nodePoiIds = useMemo(() => nodes.map((n) => n.poiId), [nodes]);
+  const nodePoiKey = nodePoiIds.join("|");
+
+  useEffect(() => {
+    if (nodePoiIds.length < 2) {
+      setWalkLegs([]);
+      setWalkLegsLoading(false);
+      return;
+    }
+    const expectedLegs = nodePoiIds.length - 1;
+    const fallback = estimateWalkLegs(nodePoiIds, poisById);
+    setWalkLegs(fallback);
+    setWalkLegsLoading(true);
+    let active = true;
+    const applyLegs = (res: Awaited<ReturnType<typeof fetchWalkPath>>) => {
+      const legs = (res.segments ?? []).map((seg) => ({
+        walkM: seg.walk_m,
+        walkMin: seg.walk_min,
+        busLines: seg.bus_lines ?? [],
+      }));
+      if (legs.length === expectedLegs) setWalkLegs(legs);
+    };
+    fetchWalkPath(nodePoiIds)
+      .then((res) => {
+        if (active) applyLegs(res);
+      })
+      .catch(() =>
+        // one retry after transient AMap / backend 503
+        new Promise((resolve) => window.setTimeout(resolve, 600)).then(() =>
+          active ? fetchWalkPath(nodePoiIds).then(applyLegs) : undefined,
+        ),
+      )
+      .catch(() => {
+        // keep haversine fallback
+      })
+      .finally(() => {
+        if (active) setWalkLegsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+    // poisById used for fallback only when ids change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodePoiKey]);
 
   useEffect(() => {
     triggerOpenRef.current = triggerOpen;
@@ -346,8 +516,8 @@ export function RouteResultPage() {
 
   return (
     <main className="relative flex flex-1 flex-col bg-paper text-ink">
-      <div className="sticky top-14 z-30 flex shrink-0 items-center justify-between border-b border-line/60 bg-paper/90 px-5 py-2.5 backdrop-blur-md lg:px-8">
-        <Link to="/profile" className="text-sm text-ink-soft hover:text-ink">
+      <div className="sticky top-14 z-30 grid shrink-0 grid-cols-[1fr_auto_1fr] items-center border-b border-line/60 bg-paper/90 px-5 py-2.5 backdrop-blur-md lg:px-8">
+        <Link to="/profile" className="justify-self-start text-sm text-ink-soft hover:text-ink">
           {t(language, "adjustPrefs")}
         </Link>
         <div className="flex items-center gap-2">
@@ -356,9 +526,6 @@ export function RouteResultPage() {
             {guiding ? t(language, "guidingActive") : t(language, "activeRoute")}
           </span>
         </div>
-        <Link to="/profile" className="text-sm text-ink-soft hover:text-ink">
-          {t(language, "adjustSoon")}
-        </Link>
       </div>
 
       <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start">
@@ -465,6 +632,8 @@ export function RouteResultPage() {
             reasons={match.reasons}
             explanation={explanation}
             nodes={nodes}
+            legs={walkLegs}
+            legsLoading={walkLegsLoading}
             lockScroll={false}
             chapterLabel={t(language, "chapterIII")}
             itineraryLabel={t(language, "itinerary")}
@@ -482,6 +651,9 @@ export function RouteResultPage() {
             onSelectStop={handleSelectStop}
             curatorSuffix={t(language, "curatorSuffix")}
             stayLabel={t(language, "stayMinutes")}
+            walkLegLabel={t(language, "walkLegLabel")}
+            busLegLabel={t(language, "busLegLabel")}
+            legsLoadingLabel={t(language, "walkLegsLoading")}
             multiDay={
               isMultiDay
                 ? {
@@ -499,22 +671,18 @@ export function RouteResultPage() {
       </div>
 
       <div
-        className={`fixed inset-x-0 bottom-0 z-40 flex flex-col rounded-t-3xl border-t border-line bg-paper shadow-[0_-8px_32px_rgba(47,49,40,0.12)] transition-all duration-300 lg:hidden ${
-          sheetOpen === "full"
-            ? "h-[92dvh]"
-            : sheetOpen === "half"
-              ? "h-[56dvh]"
-              : "h-[176px]"
+        className={`fixed inset-x-0 bottom-0 z-40 flex flex-col rounded-t-3xl border-t border-line bg-paper shadow-[0_-8px_32px_rgba(47,49,40,0.12)] lg:hidden ${
+          sheetDragging ? "" : "transition-[height] duration-300 ease-out"
         }`}
+        style={{ height: sheetHeight }}
       >
         <button
           type="button"
-          onClick={() =>
-            setSheetOpen(
-              sheetOpen === "peek" ? "half" : sheetOpen === "half" ? "full" : "peek",
-            )
-          }
-          className="flex w-full shrink-0 justify-center py-3"
+          onPointerDown={onSheetHandlePointerDown}
+          onPointerMove={onSheetHandlePointerMove}
+          onPointerUp={endSheetHandleDrag}
+          onPointerCancel={endSheetHandleDrag}
+          className="flex w-full shrink-0 cursor-grab touch-none justify-center py-3 active:cursor-grabbing"
           aria-label="sheet"
         >
           <span className="h-1 w-10 rounded-full bg-line" />
@@ -527,6 +695,8 @@ export function RouteResultPage() {
             reasons={match.reasons}
             explanation={explanation}
             nodes={nodes}
+            legs={walkLegs}
+            legsLoading={walkLegsLoading}
             compact={sheetOpen === "peek"}
             lockScroll
             chapterLabel={t(language, "chapterIII")}
@@ -545,6 +715,9 @@ export function RouteResultPage() {
             onSelectStop={handleSelectStop}
             curatorSuffix={t(language, "curatorSuffix")}
             stayLabel={t(language, "stayMinutes")}
+            walkLegLabel={t(language, "walkLegLabel")}
+            busLegLabel={t(language, "busLegLabel")}
+            legsLoadingLabel={t(language, "walkLegsLoading")}
             multiDay={
               isMultiDay
                 ? {
@@ -721,6 +894,8 @@ function RouteInfoPanel({
   reasons,
   explanation,
   nodes,
+  legs = [],
+  legsLoading = false,
   compact,
   lockScroll = true,
   chapterLabel,
@@ -733,6 +908,9 @@ function RouteInfoPanel({
   onSelectStop,
   curatorSuffix,
   stayLabel,
+  walkLegLabel,
+  busLegLabel,
+  legsLoadingLabel,
   multiDay,
 }: {
   title: string;
@@ -741,6 +919,8 @@ function RouteInfoPanel({
   reasons: string[];
   explanation: string;
   nodes: DisplayNode[];
+  legs?: WalkLeg[];
+  legsLoading?: boolean;
   compact?: boolean;
   /** When true, panel fills parent and scrolls internally (mobile sheet). */
   lockScroll?: boolean;
@@ -754,6 +934,9 @@ function RouteInfoPanel({
   onSelectStop?: (index: number) => void;
   curatorSuffix: string;
   stayLabel: string;
+  walkLegLabel: string;
+  busLegLabel: string;
+  legsLoadingLabel?: string;
   multiDay?: {
     label: string;
     days: string[];
@@ -829,7 +1012,12 @@ function RouteInfoPanel({
             </p>
             <RouteNodeList
               nodes={nodes}
+              legs={legs}
+              legsLoading={legsLoading}
               stayLabel={stayLabel}
+              walkLegLabel={walkLegLabel}
+              busLegLabel={busLegLabel}
+              legsLoadingLabel={legsLoadingLabel}
               onSelectIndex={onSelectStop}
             />
           </div>

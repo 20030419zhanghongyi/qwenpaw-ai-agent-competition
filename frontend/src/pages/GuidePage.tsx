@@ -60,6 +60,7 @@ export function GuidePage() {
   const [pois, setPois] = useState<POI[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
+  const [listReloadKey, setListReloadKey] = useState(0);
   const [selected, setSelected] = useState<POI | null>(null);
   const [generating, setGenerating] = useState(false);
   const [narration, setNarration] = useState<GuideGenerateResponse | null>(null);
@@ -80,31 +81,34 @@ export function GuidePage() {
   const deepLoaded = useRef<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
     setLoadingList(true);
-    listPois({ limit: 500 })
+    setListError(null);
+    listPois({ limit: 500 }, { signal: controller.signal })
       .then((rows) => {
-        if (!cancelled) {
-          setPois(rows);
-          setListError(null);
-        }
+        if (controller.signal.aborted) return;
+        setPois(Array.isArray(rows) ? rows : []);
+        setListError(null);
       })
       .catch((err) => {
-        if (!cancelled) {
-          setListError(
-            err instanceof Error && err.message.includes("Failed to fetch")
-              ? t(language, "backendDown")
-              : t(language, "guideSearchError"),
-          );
-        }
+        if (controller.signal.aborted) return;
+        const message = err instanceof Error ? err.message : "";
+        setListError(
+          message.includes("Failed to fetch") || message.includes("NetworkError")
+            ? t(language, "backendDown")
+            : t(language, "guideSearchError"),
+        );
+        setPois([]);
       })
       .finally(() => {
-        if (!cancelled) setLoadingList(false);
+        if (!controller.signal.aborted) setLoadingList(false);
       });
     return () => {
-      cancelled = true;
+      controller.abort();
     };
-  }, [language]);
+    // language only affects error copy; reload via listReloadKey / mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listReloadKey]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -404,12 +408,21 @@ export function GuidePage() {
               />
             </label>
             {listError ? (
-              <p className="mb-4 rounded-2xl border border-clay/30 bg-clay/10 px-4 py-3 text-sm">
-                {listError}
-              </p>
+              <div className="mb-4 rounded-2xl border border-clay/30 bg-clay/10 px-4 py-3 text-sm">
+                <p>{listError}</p>
+                <button
+                  type="button"
+                  onClick={() => setListReloadKey((n) => n + 1)}
+                  className="mt-3 text-sm font-medium text-sage-deep underline-offset-2 hover:underline"
+                >
+                  {t(language, "retry")}
+                </button>
+              </div>
             ) : null}
             {loadingList ? (
               <p className="text-sm text-ink-soft">{t(language, "guideSearching")}</p>
+            ) : filtered.length === 0 ? (
+              <p className="text-sm text-ink-soft">{t(language, "guideNoResults")}</p>
             ) : (
               <ul className="grid gap-2 sm:grid-cols-2">
                 {filtered.map((poi) => (

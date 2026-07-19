@@ -1,8 +1,10 @@
-"""AMap v5 walking-direction adapter for ordered POI sequences."""
+"""AMap v5 walking + transit adapters for ordered POI sequences."""
 
 from __future__ import annotations
 
 import math
+import re
+import time
 from typing import Any
 
 import httpx
@@ -12,6 +14,13 @@ from app.core.config import settings
 from app.features.pois.repository import PoiRepository
 
 AMAP_WALKING_URL = "https://restapi.amap.com/v5/direction/walking"
+AMAP_TRANSIT_URL = "https://restapi.amap.com/v5/direction/transit/integrated"
+# AMap citycode for Macau SAR — "澳门" is rejected by v5 as INVALID_PARAMS.
+MACAU_CITYCODE = "1852"
+# Skip bus suggestions when the walk is already this short.
+MIN_WALK_M_FOR_TRANSIT = 350
+# Drop only extreme detours (Macau bus routes are often not shortest-path).
+MAX_TRANSIT_WALK_RATIO = 8.0
 
 
 class WalkingPathError(RuntimeError):
@@ -33,18 +42,61 @@ class AmapWalkingClient:
             "show_fields": "cost,polyline",
             "output": "json",
         }
+        last_error: Exception | None = None
+        # One retry absorbs transient AMap QPS / soft rejects.
+        for attempt in range(2):
+            try:
+                response = httpx.get(AMAP_WALKING_URL, params=params, timeout=10.0)
+                response.raise_for_status()
+                payload = response.json()
+            except (httpx.HTTPError, ValueError) as exc:
+                last_error = WalkingPathError("AMap walking service is unavailable")
+                last_error.__cause__ = exc
+                time.sleep(0.25)
+                continue
+            if str(payload.get("status")) != "1":
+                last_error = WalkingPathError("AMap walking service rejected the route request")
+                time.sleep(0.35)
+                continue
+            paths = (payload.get("route") or {}).get("paths") or []
+            if not paths:
+                last_error = WalkingPathError("AMap returned no walking path")
+                time.sleep(0.25)
+                continue
+            return paths[0]
+        assert last_error is not None
+        raise last_error
+
+    def transit_options(
+        self,
+        origin: tuple[float, float],
+        destination: tuple[float, float],
+        *,
+        city: str = MACAU_CITYCODE,
+    ) -> list[dict[str, Any]]:
+        """Return transit plans; empty list on soft failure (keeps walk-path usable)."""
+        if not self._api_key:
+            return []
+        params = {
+            "key": self._api_key,
+            "origin": f"{origin[0]:.6f},{origin[1]:.6f}",
+            "destination": f"{destination[0]:.6f},{destination[1]:.6f}",
+            "city1": city,
+            "city2": city,
+            "AlternativeRoute": "3",
+            "strategy": "0",
+            "output": "json",
+            "show_fields": "cost",
+        }
         try:
-            response = httpx.get(AMAP_WALKING_URL, params=params, timeout=10.0)
+            response = httpx.get(AMAP_TRANSIT_URL, params=params, timeout=10.0)
             response.raise_for_status()
             payload = response.json()
-        except (httpx.HTTPError, ValueError) as exc:
-            raise WalkingPathError("AMap walking service is unavailable") from exc
+        except (httpx.HTTPError, ValueError):
+            return []
         if str(payload.get("status")) != "1":
-            raise WalkingPathError("AMap walking service rejected the route request")
-        paths = (payload.get("route") or {}).get("paths") or []
-        if not paths:
-            raise WalkingPathError("AMap returned no walking path")
-        return paths[0]
+            return []
+        return list((payload.get("route") or {}).get("transits") or [])
 
 
 def build_walk_path(poi_ids: list[str], database: Session, *, client: AmapWalkingClient | None = None) -> dict:
@@ -58,9 +110,12 @@ def build_walk_path(poi_ids: list[str], database: Session, *, client: AmapWalkin
     total_distance = 0
     total_duration = 0
     polylines: list[str] = []
+    # Sequential AMap calls — parallel bursts trip free-tier QPS and 503 the whole path.
     for from_id, to_id in zip(poi_ids, poi_ids[1:]):
         origin, destination = pois[from_id], pois[to_id]
-        path = client.segment((origin.longitude, origin.latitude), (destination.longitude, destination.latitude))
+        origin_ll = (origin.longitude, origin.latitude)
+        dest_ll = (destination.longitude, destination.latitude)
+        path = client.segment(origin_ll, dest_ll)
         distance = int(float(path.get("distance") or 0))
         cost = path.get("cost") or {}
         duration = int(float(cost.get("duration") or path.get("duration") or 0))
@@ -70,18 +125,75 @@ def build_walk_path(poi_ids: list[str], database: Session, *, client: AmapWalkin
         total_duration += duration
         if polyline:
             polylines.append(polyline)
+
+        bus_lines = _bus_lines_for_segment(client, origin_ll, dest_ll, walk_m=distance)
+        modes = [{"kind": "walk", "label": "步行"}]
+        for line in bus_lines:
+            modes.append({"kind": "bus", "label": line})
+
         segments.append(
             {
                 "from_poi_id": from_id,
                 "to_poi_id": to_id,
                 "walk_m": distance,
-                "walk_min": math.ceil(duration / 60),
+                "walk_min": math.ceil(duration / 60) if duration else max(1, math.ceil(distance / 80)),
                 "polyline": polyline,
+                "bus_lines": bus_lines,
+                "modes": modes,
             }
         )
     return {
         "segments": segments,
         "total_walk_m": total_distance,
-        "total_walk_min": math.ceil(total_duration / 60),
+        "total_walk_min": math.ceil(total_duration / 60) if total_duration else max(1, math.ceil(total_distance / 80)),
         "polyline": ";".join(polylines),
     }
+
+
+def _bus_lines_for_segment(
+    client: AmapWalkingClient,
+    origin: tuple[float, float],
+    destination: tuple[float, float],
+    *,
+    walk_m: int,
+) -> list[str]:
+    if walk_m < MIN_WALK_M_FOR_TRANSIT:
+        return []
+    transit_fn = getattr(client, "transit_options", None)
+    if not callable(transit_fn):
+        return []
+    plans = transit_fn(origin, destination) or []
+    lines: list[str] = []
+    seen: set[str] = set()
+    for plan in plans:
+        plan_distance = int(float(plan.get("distance") or 0))
+        if walk_m > 0 and plan_distance > walk_m * MAX_TRANSIT_WALK_RATIO:
+            continue
+        for name in _extract_bus_line_names(plan):
+            if name not in seen:
+                seen.add(name)
+                lines.append(name)
+        if len(lines) >= 5:
+            break
+    return lines[:5]
+
+
+def _extract_bus_line_names(plan: dict[str, Any]) -> list[str]:
+    names: list[str] = []
+    for segment in plan.get("segments") or []:
+        bus = segment.get("bus") or {}
+        buslines = bus.get("buslines") if isinstance(bus, dict) else None
+        if not buslines and isinstance(bus, list):
+            buslines = bus
+        for line in buslines or []:
+            if not isinstance(line, dict):
+                continue
+            raw = str(line.get("name") or "").strip()
+            if not raw:
+                continue
+            short = re.split(r"[（(]", raw, maxsplit=1)[0].strip()
+            typ = str(line.get("type") or "")
+            # Prefer ordinary bus / Macau routes; still keep metro if present.
+            if short:
+                names.append(short if "地铁" not in typ else short)
+    return names
