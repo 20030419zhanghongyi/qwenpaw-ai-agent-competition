@@ -4,7 +4,7 @@ from .audit import AuditEvent
 from .profile import Favorite, TripFeedback
 from .poi import Poi
 from .route import RouteTemplate, RouteTemplateStop
-from .trip import Checkin, Trip, TripStop
+from .trip import Checkin, Postcard, Trip, TripStop
 from .user import User
 
 __all__ = [
@@ -12,6 +12,7 @@ __all__ = [
     "AuditEvent",
     "Favorite",
     "Poi",
+    "Postcard",
     "RouteTemplate",
     "RouteTemplateStop",
     "Trip",

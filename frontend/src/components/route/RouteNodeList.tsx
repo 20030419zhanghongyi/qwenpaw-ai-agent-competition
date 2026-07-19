@@ -8,17 +8,37 @@ export interface DisplayNode {
   state: "current" | "next" | "upcoming";
 }
 
+export interface WalkLeg {
+  walkM: number;
+  walkMin: number;
+  busLines?: string[];
+}
+
 export function RouteNodeList({
   nodes,
+  legs = [],
+  legsLoading = false,
   stayLabel = "min",
+  walkLegLabel = "步行约 {min} 分钟 · {dist}",
+  busLegLabel = "巴士 {lines}",
+  legsLoadingLabel = "正在查询步行与巴士…",
   onSelectIndex,
 }: {
   nodes: DisplayNode[];
+  /** Legs[i] connects nodes[i] → nodes[i + 1]. */
+  legs?: WalkLeg[];
+  legsLoading?: boolean;
   stayLabel?: string;
+  walkLegLabel?: string;
+  busLegLabel?: string;
+  legsLoadingLabel?: string;
   onSelectIndex?: (index: number) => void;
 }) {
   return (
-    <ol className="relative space-y-6">
+    <ol className="relative space-y-0">
+      {legsLoading ? (
+        <p className="mb-3 pl-12 text-[11px] tracking-wide text-ink-soft">{legsLoadingLabel}</p>
+      ) : null}
       <span className="absolute bottom-2 left-[15px] top-2 w-px bg-line" aria-hidden />
       {nodes.map((p, index) => {
         const selectable = Boolean(onSelectIndex);
@@ -33,40 +53,70 @@ export function RouteNodeList({
             ? "cursor-pointer hover:scale-105 hover:ring-2 hover:ring-sage focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
             : "",
         ].join(" ");
+        const leg = legs[index];
+        const busLines = (leg?.busLines ?? []).filter(Boolean);
 
         return (
-          <li key={p.poiId} className="relative flex gap-4">
-            {selectable ? (
-              <button
-                type="button"
-                aria-current={p.state === "current" ? "step" : undefined}
-                aria-label={p.name}
-                onClick={() => onSelectIndex?.(index)}
-                className={markerClass}
-              >
-                {p.order}
-              </button>
-            ) : (
-              <div className={markerClass}>{p.order}</div>
-            )}
-            <div className="min-w-0 flex-1 pb-1">
+          <li key={p.poiId} className="relative">
+            <div className="flex gap-4">
               {selectable ? (
                 <button
                   type="button"
+                  aria-current={p.state === "current" ? "step" : undefined}
+                  aria-label={p.name}
                   onClick={() => onSelectIndex?.(index)}
-                  className="w-full rounded-lg text-left transition hover:bg-paper-warm/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage/40"
+                  className={markerClass}
                 >
-                  <NodeCopy node={p} stayLabel={stayLabel} />
+                  {p.order}
                 </button>
               ) : (
-                <NodeCopy node={p} stayLabel={stayLabel} />
+                <div className={markerClass}>{p.order}</div>
               )}
+              <div className="min-w-0 flex-1 pb-1">
+                {selectable ? (
+                  <button
+                    type="button"
+                    onClick={() => onSelectIndex?.(index)}
+                    className="w-full rounded-lg text-left transition hover:bg-paper-warm/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage/40"
+                  >
+                    <NodeCopy node={p} stayLabel={stayLabel} />
+                  </button>
+                ) : (
+                  <NodeCopy node={p} stayLabel={stayLabel} />
+                )}
+              </div>
             </div>
+            {leg && index < nodes.length - 1 ? (
+              <div className="relative ml-[15px] flex flex-col items-start gap-1.5 py-3 pl-8">
+                <span
+                  className="absolute left-0 top-0 h-full w-px bg-sage/40"
+                  aria-hidden
+                />
+                <span className="rounded-full border border-sage/30 bg-sage-deep/[0.06] px-3 py-1 text-[11px] tracking-wide text-sage-deep">
+                  {formatWalkLeg(walkLegLabel, leg)}
+                </span>
+                {busLines.length > 0 ? (
+                  <span className="rounded-full border border-ochre/35 bg-ochre/10 px-3 py-1 text-[11px] tracking-wide text-ink">
+                    {busLegLabel.replace("{lines}", busLines.join(" · "))}
+                  </span>
+                ) : null}
+              </div>
+            ) : index < nodes.length - 1 ? (
+              <div className="h-6" aria-hidden />
+            ) : null}
           </li>
         );
       })}
     </ol>
   );
+}
+
+function formatWalkLeg(template: string, leg: WalkLeg): string {
+  const dist =
+    leg.walkM >= 1000
+      ? `${(leg.walkM / 1000).toFixed(leg.walkM >= 10000 ? 0 : 1)} km`
+      : `${leg.walkM} m`;
+  return template.replace("{min}", String(leg.walkMin)).replace("{dist}", dist);
 }
 
 function NodeCopy({ node, stayLabel }: { node: DisplayNode; stayLabel: string }) {

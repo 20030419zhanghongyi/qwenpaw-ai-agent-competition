@@ -27,6 +27,32 @@ class FakeWalkingClient:
         }
 
 
+class FakeWalkingClientWithTransit(FakeWalkingClient):
+    def segment(self, _origin, _destination):
+        return {
+            "distance": "600",
+            "cost": {"duration": "420"},
+            "steps": [{"polyline": "113.1,22.1;113.2,22.2"}],
+        }
+
+    def transit_options(self, _origin, _destination, *, city: str = "1852"):
+        return [
+            {
+                "distance": "900",
+                "segments": [
+                    {
+                        "bus": {
+                            "buslines": [
+                                {"name": "6B路(妈阁交通枢纽--山顶医院)", "type": "普通公交线路"},
+                                {"name": "18路(妈阁--白鸽巢)", "type": "普通公交线路"},
+                            ]
+                        }
+                    }
+                ],
+            }
+        ]
+
+
 @pytest.fixture(autouse=True)
 def walking_pois():
     with SessionLocal() as session:
@@ -63,6 +89,16 @@ def test_build_walk_path_aggregates_segments():
     assert result["total_walk_min"] == 4
     assert [segment["from_poi_id"] for segment in result["segments"]] == IDS[:-1]
     assert all(segment["walk_min"] == 2 for segment in result["segments"])
+    assert all(segment["bus_lines"] == [] for segment in result["segments"])
+
+
+def test_build_walk_path_includes_amap_bus_lines():
+    with SessionLocal() as session:
+        result = build_walk_path(IDS[:2], session, client=FakeWalkingClientWithTransit())
+    segment = result["segments"][0]
+    assert segment["bus_lines"] == ["6B路", "18路"]
+    assert {"kind": "walk", "label": "步行"} in segment["modes"]
+    assert {"kind": "bus", "label": "6B路"} in segment["modes"]
 
 
 def test_walk_path_api_contract_and_errors(monkeypatch):

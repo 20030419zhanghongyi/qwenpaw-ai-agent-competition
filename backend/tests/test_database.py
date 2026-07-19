@@ -21,6 +21,7 @@ from app.db.models import (
     AuditEvent,
     Checkin,
     Favorite,
+    Postcard,
     RouteTemplate,
     RouteTemplateStop,
     Trip,
@@ -39,6 +40,7 @@ EXPECTED_TABLES = {
     "trips",
     "trip_stops",
     "checkins",
+    "postcards",
     "favorites",
     "trip_feedback",
     "pois",
@@ -145,6 +147,10 @@ def test_trip_stops_order_unique_constraint():
 
 def test_checkins_unique_constraint():
     assert "uq_checkins_trip_poi" in _unique_constraint_names(Checkin.__table__)
+
+
+def test_postcards_unique_constraint():
+    assert "uq_postcards_trip_poi" in _unique_constraint_names(Postcard.__table__)
 
 
 def test_favorites_unique_constraint():
