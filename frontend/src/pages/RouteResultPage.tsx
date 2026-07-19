@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import mapImg from "@/assets/macau-map.jpg";
 import {
-  fetchWalkPath,
   triggerGuide,
   type GuideTriggerResponse,
 } from "@/api/client";
+import { fetchRouteWalkPath } from "@/api/routes";
+import { MapRouteView } from "@/components/map";
 import { ReasonChips } from "@/components/route/ReasonChips";
 import {
   RouteNodeList,
@@ -84,36 +84,12 @@ function estimateWalkLegs(poiIds: string[], poisById: Record<string, POI>): Walk
   return legs;
 }
 
-/** Decorative marker positions on the illustrative map (not geo-accurate). */
-const MARKER_SLOTS = [
-  { top: "62%", left: "34%" },
-  { top: "50%", left: "46%" },
-  { top: "34%", left: "56%" },
-  { top: "42%", left: "64%" },
-  { top: "28%", left: "58%" },
-  { top: "22%", left: "48%" },
-  { top: "38%", left: "40%" },
-  { top: "70%", left: "42%" },
-];
-
 const TRIM_NOTE_RE = /(?:\s*已按约束缩短末端节点。)+/g;
 
 /** Strip repeated constructor notes from cached route blurbs. */
 function cleanRouteBlurb(text: unknown): string {
   if (typeof text !== "string") return "";
   return text.replace(TRIM_NOTE_RE, "").replace(/\s+/g, " ").trim();
-}
-
-function markerPathForCount(count: number): string {
-  const slots = MARKER_SLOTS.slice(0, Math.max(0, count));
-  if (slots.length < 2) return "";
-  return slots
-    .map((slot, i) => {
-      const x = Number.parseFloat(slot.left);
-      const y = Number.parseFloat(slot.top);
-      return `${i === 0 ? "M" : "L"}${x},${y}`;
-    })
-    .join(" ");
 }
 
 type TriggerMode = "gps" | "simulated";
@@ -265,7 +241,7 @@ export function RouteResultPage() {
     setWalkLegs(fallback);
     setWalkLegsLoading(true);
     let active = true;
-    const applyLegs = (res: Awaited<ReturnType<typeof fetchWalkPath>>) => {
+    const applyLegs = (res: Awaited<ReturnType<typeof fetchRouteWalkPath>>) => {
       const legs = (res.segments ?? []).map((seg) => ({
         walkM: seg.walk_m,
         walkMin: seg.walk_min,
@@ -273,14 +249,14 @@ export function RouteResultPage() {
       }));
       if (legs.length === expectedLegs) setWalkLegs(legs);
     };
-    fetchWalkPath(nodePoiIds)
+    fetchRouteWalkPath(nodePoiIds)
       .then((res) => {
         if (active) applyLegs(res);
       })
       .catch(() =>
         // one retry after transient AMap / backend 503
         new Promise((resolve) => window.setTimeout(resolve, 600)).then(() =>
-          active ? fetchWalkPath(nodePoiIds).then(applyLegs) : undefined,
+          active ? fetchRouteWalkPath(nodePoiIds).then(applyLegs) : undefined,
         ),
       )
       .catch(() => {
@@ -413,8 +389,6 @@ export function RouteResultPage() {
       ? match.explanation.summary
       : route.description,
   );
-  const mapPath = markerPathForCount(Math.min(nodes.length, MARKER_SLOTS.length));
-
   const currentNode = nodes[currentIndex] ?? nodes[0];
   const triggerPoiName =
     triggerPayload?.poi?.poi_name ??
@@ -530,42 +504,14 @@ export function RouteResultPage() {
 
       <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start">
         <div className="relative min-h-[50dvh] overflow-hidden bg-paper-warm lg:sticky lg:top-[7.25rem] lg:h-[calc(100dvh-7.25rem)] lg:min-h-0">
-          <img
-            src={mapImg}
-            alt={t(language, "mapAlt")}
-            className="absolute inset-0 h-full w-full object-cover opacity-90"
-            loading="lazy"
+          <MapRouteView
+            poiIds={nodePoiIds}
+            currentPoiId={currentNode?.poiId}
+            onSelectPoi={(poiId) => {
+              const index = nodes.findIndex((node) => node.poiId === poiId);
+              if (index >= 0) handleSelectStop(index);
+            }}
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-sage-deep/5 via-transparent to-clay/10" />
-
-          {mapPath ? (
-            <svg
-              className="pointer-events-none absolute inset-0 h-full w-full"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-              aria-hidden
-            >
-              <path
-                d={mapPath}
-                fill="none"
-                stroke="var(--color-sage-deep)"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeDasharray="1.2 1.4"
-                vectorEffect="non-scaling-stroke"
-                style={{ strokeWidth: 2.5 }}
-              />
-            </svg>
-          ) : null}
-
-          {nodes.slice(0, MARKER_SLOTS.length).map((p, i) => (
-            <PoiMarker
-              key={p.poiId}
-              node={p}
-              pos={MARKER_SLOTS[i]}
-              onSelect={() => handleSelectStop(i)}
-            />
-          ))}
 
           <button
             type="button"
@@ -734,51 +680,6 @@ export function RouteResultPage() {
         </div>
       </div>
     </main>
-  );
-}
-
-function PoiMarker({
-  node,
-  pos,
-  onSelect,
-}: {
-  node: DisplayNode;
-  pos: { top: string; left: string };
-  onSelect?: () => void;
-}) {
-  const isCurrent = node.state === "current";
-  const isNext = node.state === "next";
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-label={node.name}
-      className="absolute -translate-x-1/2 -translate-y-1/2"
-      style={{ top: pos.top, left: pos.left }}
-    >
-      {isCurrent ? (
-        <span
-          aria-hidden
-          className="absolute inset-0 -m-3 animate-ping rounded-full bg-sage-deep/25"
-        />
-      ) : null}
-      <div
-        className={`relative grid place-items-center rounded-full border-[3px] border-paper shadow-[var(--shadow-soft)] ${
-          isCurrent
-            ? "size-11 bg-sage-deep text-paper"
-            : isNext
-              ? "size-9 bg-paper text-sage-deep ring-2 ring-sage-deep"
-              : "size-8 bg-paper text-ink-soft ring-1 ring-line"
-        }`}
-      >
-        <span className="font-serif text-xs font-bold">{node.order}</span>
-      </div>
-      {isCurrent ? (
-        <div className="absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2.5 py-1 text-[10px] font-medium uppercase tracking-widest text-paper">
-          {node.name}
-        </div>
-      ) : null}
-    </button>
   );
 }
 
