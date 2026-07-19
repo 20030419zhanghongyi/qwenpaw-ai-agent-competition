@@ -3,12 +3,15 @@ import type { LanguageCode, POI, Preference, RouteMatchResponse } from "@/types"
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const method = (init?.method ?? "GET").toUpperCase();
+  const headers = new Headers(init?.headers);
+  if (method !== "GET" && method !== "HEAD" && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
     ...init,
+    headers,
   });
 
   if (!response.ok) {
@@ -36,17 +39,64 @@ export function matchRoutes(preference: Preference): Promise<RouteMatchResponse>
   });
 }
 
-export function listPois(params?: {
-  q?: string;
-  category?: string;
-  limit?: number;
-}): Promise<POI[]> {
+export interface WalkSegment {
+  from_poi_id: string;
+  to_poi_id: string;
+  walk_m: number;
+  walk_min: number;
+  polyline: string;
+  bus_lines?: string[];
+  modes?: Array<{ kind: string; label: string }>;
+}
+
+export interface WalkPathResponse {
+  segments: WalkSegment[];
+  total_walk_m: number;
+  total_walk_min: number;
+  polyline: string;
+}
+
+/** Dedupe StrictMode remounts for the same POI chain; never cache failures. */
+const walkPathInflight = new Map<string, Promise<WalkPathResponse>>();
+
+export function fetchWalkPath(poiIds: string[]): Promise<WalkPathResponse> {
+  const key = poiIds.join("|");
+  const existing = walkPathInflight.get(key);
+  if (existing) return existing;
+
+  const pending = request<WalkPathResponse>("/api/v1/routes/walk-path", {
+    method: "POST",
+    body: JSON.stringify({ poi_ids: poiIds }),
+  }).then(
+    (res) => {
+      window.setTimeout(() => {
+        if (walkPathInflight.get(key) === pending) walkPathInflight.delete(key);
+      }, 30_000);
+      return res;
+    },
+    (err) => {
+      walkPathInflight.delete(key);
+      throw err;
+    },
+  );
+  walkPathInflight.set(key, pending);
+  return pending;
+}
+
+export function listPois(
+  params?: {
+    q?: string;
+    category?: string;
+    limit?: number;
+  },
+  init?: RequestInit,
+): Promise<POI[]> {
   const search = new URLSearchParams();
   if (params?.q) search.set("q", params.q);
   if (params?.category) search.set("category", params.category);
   if (params?.limit != null) search.set("limit", String(params.limit));
   const qs = search.toString();
-  return request<POI[]>(`/api/v1/pois${qs ? `?${qs}` : ""}`);
+  return request<POI[]>(`/api/v1/pois${qs ? `?${qs}` : ""}`, init);
 }
 
 export function parseIntent(text: string): Promise<{

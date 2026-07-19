@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, utc_now
@@ -41,6 +41,7 @@ class Trip(Base):
     user: Mapped[User] = relationship(back_populates="trips")
     stops: Mapped[list[TripStop]] = relationship(back_populates="trip")
     checkins: Mapped[list[Checkin]] = relationship(back_populates="trip")
+    postcards: Mapped[list[Postcard]] = relationship(back_populates="trip")
     feedback: Mapped[TripFeedback | None] = relationship(back_populates="trip", uselist=False)
 
 
@@ -75,3 +76,30 @@ class Checkin(Base):
     )
 
     trip: Mapped[Trip] = relationship(back_populates="checkins")
+
+
+class Postcard(Base):
+    """A privacy-scrubbed, shareable postcard generated from a completed trip stop."""
+
+    __tablename__ = "postcards"
+    __table_args__ = (
+        UniqueConstraint("trip_id", "poi_id", name="uq_postcards_trip_poi"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_string)
+    trip_id: Mapped[str] = mapped_column(ForeignKey("trips.id"), index=True, nullable=False)
+    poi_id: Mapped[str] = mapped_column(String(128), index=True, nullable=False)
+    stop_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    caption: Mapped[str] = mapped_column(Text, nullable=False)
+    caption_source: Mapped[str] = mapped_column(String(32), nullable=False)
+    source_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    ai_generated: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    language: Mapped[str] = mapped_column(String(16), nullable=False)
+    review_decision: Mapped[str] = mapped_column(String(16), nullable=False)
+    image_svg: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    photo_scrubbed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, server_default=func.now(), nullable=False
+    )
+
+    trip: Mapped[Trip] = relationship(back_populates="postcards")

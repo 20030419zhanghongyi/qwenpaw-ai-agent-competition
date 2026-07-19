@@ -8,6 +8,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.db.models import Checkin as CheckinRecord
+from app.db.models import Postcard as PostcardRecord
 from app.db.models import Trip as TripRecord
 from app.db.models import TripStop as TripStopRecord
 from app.db.models import User as UserRecord
@@ -148,6 +149,7 @@ class SqlAlchemyTripRepository:
         if not trip_ids:
             return
         with self._session_factory() as session:
+            session.execute(delete(PostcardRecord).where(PostcardRecord.trip_id.in_(trip_ids)))
             session.execute(delete(CheckinRecord).where(CheckinRecord.trip_id.in_(trip_ids)))
             session.execute(delete(TripStopRecord).where(TripStopRecord.trip_id.in_(trip_ids)))
             session.execute(delete(TripRecord).where(TripRecord.id.in_(trip_ids)))
