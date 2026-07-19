@@ -1,12 +1,12 @@
 import type { LanguageCode } from "@/types";
-import type { RouteAdjustmentResult } from "@/types/routes";
+import type { RouteAdjustmentDraft } from "@/types/routes";
 
 interface RouteAdjustmentPanelProps {
   language: LanguageCode;
   instruction: string;
   busy: boolean;
   error: string | null;
-  draft: RouteAdjustmentResult | null;
+  draft: RouteAdjustmentDraft | null;
   poiNames: Record<string, string>;
   onInstructionChange: (instruction: string) => void;
   onSubmit: () => void;
@@ -30,6 +30,7 @@ const COPY: Record<
     reordered: string;
     reasons: string;
     route: string;
+    noChanges: string;
     confirm: string;
     cancel: string;
   }
@@ -48,6 +49,7 @@ const COPY: Record<
     reordered: "重排",
     reasons: "调整原因",
     route: "调整后路线",
+    noChanges: "没有检测到节点增删或顺序变化，请换一种说法后重试。当前路线不会被覆盖。",
     confirm: "确认采用",
     cancel: "保留原路线",
   },
@@ -65,6 +67,7 @@ const COPY: Record<
     reordered: "重排",
     reasons: "調整原因",
     route: "調整後路線",
+    noChanges: "未檢測到節點增刪或順序變化，請換一種說法後重試。目前路線不會被覆蓋。",
     confirm: "確認採用",
     cancel: "保留原路線",
   },
@@ -82,6 +85,7 @@ const COPY: Record<
     reordered: "Reordered",
     reasons: "Why it changed",
     route: "Adjusted route",
+    noChanges: "No stop or ordering change was detected. Try rephrasing your request; the current route will be kept.",
     confirm: "Use this route",
     cancel: "Keep original",
   },
@@ -99,6 +103,7 @@ const COPY: Record<
     reordered: "Reordenado",
     reasons: "Motivos do ajuste",
     route: "Percurso ajustado",
+    noChanges: "Não foi detetada alteração nas paragens ou na ordem. Reformule o pedido; o percurso atual será mantido.",
     confirm: "Usar este percurso",
     cancel: "Manter o original",
   },
@@ -180,6 +185,15 @@ export function RouteAdjustmentPanel({
             poiNames={poiNames}
           />
 
+          {!draft.has_actual_changes ? (
+            <p
+              role="status"
+              className="mt-4 rounded-xl border border-ochre/35 bg-ochre/10 px-3 py-2.5 text-xs leading-relaxed text-ink"
+            >
+              {copy.noChanges}
+            </p>
+          ) : null}
+
           {draft.rationale.length > 0 ? (
             <div className="mt-4">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-soft">
@@ -220,7 +234,8 @@ export function RouteAdjustmentPanel({
             <button
               type="button"
               onClick={onConfirm}
-              className="rounded-full bg-sage-deep px-4 py-2.5 text-sm font-medium text-paper hover:bg-moss"
+              disabled={!draft.has_actual_changes}
+              className="rounded-full bg-sage-deep px-4 py-2.5 text-sm font-medium text-paper hover:bg-moss disabled:pointer-events-none disabled:opacity-45"
             >
               {copy.confirm}
             </button>

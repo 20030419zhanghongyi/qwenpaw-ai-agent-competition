@@ -23,9 +23,10 @@ import {
 } from "@/components/route/RouteNodeList";
 import { t } from "@/i18n";
 import { formatWalkMeta } from "@/lib/preference";
+import { buildRouteAdjustmentDraft } from "@/lib/route-adjustment";
 import { useWalk } from "@/state/WalkContext";
 import type { POI } from "@/types";
-import type { RouteAdjustmentResult, RoutePoi } from "@/types/routes";
+import type { RouteAdjustmentDraft, RoutePoi } from "@/types/routes";
 
 type SheetSnap = "peek" | "half" | "full";
 
@@ -142,7 +143,7 @@ export function RouteResultPage() {
   const [adjustInstruction, setAdjustInstruction] = useState("");
   const [adjusting, setAdjusting] = useState(false);
   const [adjustError, setAdjustError] = useState<string | null>(null);
-  const [adjustDraft, setAdjustDraft] = useState<RouteAdjustmentResult | null>(null);
+  const [adjustDraft, setAdjustDraft] = useState<RouteAdjustmentDraft | null>(null);
   const [adjustmentPois, setAdjustmentPois] = useState<RoutePoi[]>([]);
 
   const [triggerOpen, setTriggerOpen] = useState(false);
@@ -441,7 +442,7 @@ export function RouteResultPage() {
         instruction,
         preference: activePreference,
       });
-      setAdjustDraft(result);
+      setAdjustDraft(buildRouteAdjustmentDraft(route, result));
 
       const adjustedPoiIds = [...result.route.nodes]
         .sort((a, b) => a.order - b.order)
@@ -461,7 +462,7 @@ export function RouteResultPage() {
   }
 
   function handleConfirmAdjustment() {
-    if (!adjustDraft) return;
+    if (!adjustDraft?.has_actual_changes) return;
     const previousPoiId = currentNode?.poiId;
     const acceptedMatch = {
       ...match,
