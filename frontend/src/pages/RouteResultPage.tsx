@@ -1,11 +1,20 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import {
-  triggerGuide,
-  type GuideTriggerResponse,
-} from "@/api/client";
-import { fetchRouteWalkPath } from "@/api/routes";
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { triggerGuide, type GuideTriggerResponse } from "@/api/guide-trigger";
+import {
+  adjustRoute,
+  fetchRoutePois,
+  fetchRouteWalkPath,
+} from "@/api/routes";
 import { MapRouteView } from "@/components/map";
+import { RouteAdjustmentPanel } from "@/components/route-adjust";
 import { ReasonChips } from "@/components/route/ReasonChips";
 import {
   RouteNodeList,
@@ -16,6 +25,7 @@ import { t } from "@/i18n";
 import { formatWalkMeta } from "@/lib/preference";
 import { useWalk } from "@/state/WalkContext";
 import type { POI } from "@/types";
+import type { RouteAdjustmentResult, RoutePoi } from "@/types/routes";
 
 type SheetSnap = "peek" | "half" | "full";
 
@@ -117,7 +127,7 @@ function readGuideSessionId(): string {
 
 export function RouteResultPage() {
   const navigate = useNavigate();
-  const { session, language } = useWalk();
+  const { session, language, setSession } = useWalk();
   const [sheetOpen, setSheetOpen] = useState<SheetSnap>("half");
   const [sheetDragHeight, setSheetDragHeight] = useState<number | null>(null);
   const [walkLegs, setWalkLegs] = useState<WalkLeg[]>([]);
@@ -129,6 +139,11 @@ export function RouteResultPage() {
   const [generating, setGenerating] = useState(false);
   const [statusNote, setStatusNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [adjustInstruction, setAdjustInstruction] = useState("");
+  const [adjusting, setAdjusting] = useState(false);
+  const [adjustError, setAdjustError] = useState<string | null>(null);
+  const [adjustDraft, setAdjustDraft] = useState<RouteAdjustmentResult | null>(null);
+  const [adjustmentPois, setAdjustmentPois] = useState<RoutePoi[]>([]);
 
   const [triggerOpen, setTriggerOpen] = useState(false);
   const [triggerMode, setTriggerMode] = useState<TriggerMode>("gps");
@@ -203,6 +218,9 @@ export function RouteResultPage() {
     setTriggerOpen(false);
     setNarration(null);
     setGuiding(false);
+    setAdjustDraft(null);
+    setAdjustmentPois([]);
+    setAdjustError(null);
   }, [dayIndex]);
 
   const nodes = useMemo(() => {
@@ -350,7 +368,18 @@ export function RouteResultPage() {
     };
   }, [guiding, language]);
 
-  if (!session || !match || !route) {
+  const adjustmentPoiNames = useMemo(() => {
+    const names: Record<string, string> = {};
+    for (const [poiId, poi] of Object.entries(poisById)) {
+      names[poiId] = poi.poi_name;
+    }
+    for (const poi of adjustmentPois) {
+      names[poi.poi_id] = poi.poi_name;
+    }
+    return names;
+  }, [poisById, adjustmentPois]);
+
+  if (!session || !match || !route || !preference) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center bg-paper px-6 py-16 text-center">
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-sage-deep">
@@ -370,6 +399,8 @@ export function RouteResultPage() {
     );
   }
 
+  const activeSession = session;
+  const activePreference = preference;
   const meta = formatWalkMeta({
     stops: nodes.length,
     walkKm: route.walk_distance_km ?? 0,
@@ -395,6 +426,101 @@ export function RouteResultPage() {
     triggerPayload?.guide_request?.poi ??
     currentNode?.name ??
     "POI";
+
+  async function handleAdjustRoute() {
+    const instruction = adjustInstruction.trim();
+    if (!instruction || adjusting) return;
+
+    setAdjusting(true);
+    setAdjustError(null);
+    setAdjustDraft(null);
+    setAdjustmentPois([]);
+    try {
+      const result = await adjustRoute({
+        route_id: route.id,
+        instruction,
+        preference: activePreference,
+      });
+      setAdjustDraft(result);
+
+      const adjustedPoiIds = [...result.route.nodes]
+        .sort((a, b) => a.order - b.order)
+        .map((node) => node.poi_id);
+      try {
+        setAdjustmentPois(await fetchRoutePois(adjustedPoiIds));
+      } catch {
+        // The preview can still use POI ids; MapRouteView retries after confirmation.
+      }
+    } catch (reason) {
+      setAdjustError(
+        reason instanceof Error ? reason.message : "Route adjustment failed",
+      );
+    } finally {
+      setAdjusting(false);
+    }
+  }
+
+  function handleConfirmAdjustment() {
+    if (!adjustDraft) return;
+    const previousPoiId = currentNode?.poiId;
+    const acceptedMatch = {
+      ...match,
+      route: adjustDraft.route,
+      selected_template: adjustDraft.selected_template,
+      candidate_pois: adjustDraft.candidate_pois,
+      applied_constraints: adjustDraft.applied_constraints,
+      explanation: adjustDraft.explanation,
+      reasons:
+        adjustDraft.rationale.length > 0
+          ? adjustDraft.rationale
+          : match.reasons,
+    };
+    const acceptedMatches = [...dayMatches];
+    acceptedMatches[dayIndex] = acceptedMatch;
+
+    const nextPoisById = { ...activeSession.poisById };
+    for (const poi of adjustmentPois) {
+      nextPoisById[poi.poi_id] = poi;
+    }
+    setSession({
+      ...activeSession,
+      preference: adjustDraft.preference_after,
+      match: acceptedMatches[0] ?? acceptedMatch,
+      matches: acceptedMatches,
+      poisById: nextPoisById,
+    });
+
+    const acceptedNodes = [...adjustDraft.route.nodes].sort((a, b) => a.order - b.order);
+    const retainedIndex = previousPoiId
+      ? acceptedNodes.findIndex((node) => node.poi_id === previousPoiId)
+      : -1;
+    setCurrentIndex(retainedIndex >= 0 ? retainedIndex : 0);
+    setAdjustInstruction("");
+    setAdjustDraft(null);
+    setAdjustmentPois([]);
+    setAdjustError(null);
+    setTriggerOpen(false);
+    setNarration(null);
+  }
+
+  const adjustmentPanel = (
+    <RouteAdjustmentPanel
+      language={language}
+      instruction={adjustInstruction}
+      busy={adjusting}
+      error={adjustError}
+      draft={adjustDraft}
+      poiNames={adjustmentPoiNames}
+      onInstructionChange={setAdjustInstruction}
+      onSubmit={() => void handleAdjustRoute()}
+      onConfirm={handleConfirmAdjustment}
+      onCancel={() => {
+        setAdjustDraft(null);
+        setAdjustmentPois([]);
+        setAdjustError(null);
+      }}
+    />
+  );
 
   async function simulateNearCurrentStop() {
     if (!currentNode) return;
@@ -577,6 +703,7 @@ export function RouteResultPage() {
             meta={meta}
             reasons={match.reasons}
             explanation={explanation}
+            adjustmentPanel={adjustmentPanel}
             nodes={nodes}
             legs={walkLegs}
             legsLoading={walkLegsLoading}
@@ -640,6 +767,7 @@ export function RouteResultPage() {
             meta={meta}
             reasons={match.reasons}
             explanation={explanation}
+            adjustmentPanel={adjustmentPanel}
             nodes={nodes}
             legs={walkLegs}
             legsLoading={walkLegsLoading}
@@ -794,6 +922,7 @@ function RouteInfoPanel({
   meta,
   reasons,
   explanation,
+  adjustmentPanel,
   nodes,
   legs = [],
   legsLoading = false,
@@ -819,6 +948,7 @@ function RouteInfoPanel({
   meta: string[];
   reasons: string[];
   explanation: string;
+  adjustmentPanel?: ReactNode;
   nodes: DisplayNode[];
   legs?: WalkLeg[];
   legsLoading?: boolean;
@@ -902,6 +1032,7 @@ function RouteInfoPanel({
                   「{explanation}」{curatorSuffix}
                 </p>
               ) : null}
+              {adjustmentPanel}
             </>
           ) : null}
         </div>

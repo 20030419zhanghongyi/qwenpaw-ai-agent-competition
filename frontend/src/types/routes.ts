@@ -1,3 +1,5 @@
+import type { MatchExplanation, Preference, RouteNode, RouteTemplate } from "@/types";
+
 export interface RoutePoi {
   poi_id: string;
   poi_name: string;
@@ -31,4 +33,32 @@ export interface WalkPathResponse {
   total_walk_m: number;
   total_walk_min: number;
   polyline: string;
+}
+
+export interface RouteAdjustmentRequest {
+  route_id: string;
+  instruction: string;
+  preference: Preference;
+}
+
+export type RouteNodeChange = RouteNode & {
+  poi_name?: string;
+  previous_order?: number;
+  new_order?: number;
+};
+
+export interface RouteAdjustmentResult {
+  selected_template: string;
+  instruction: string;
+  preference_before: Preference;
+  preference_after: Preference;
+  route: RouteTemplate;
+  candidate_pois: Array<Record<string, unknown>>;
+  removed_nodes: RouteNodeChange[];
+  added_nodes: RouteNodeChange[];
+  reordered_nodes: RouteNodeChange[];
+  rationale: string[];
+  applied_constraints: string[];
+  explanation: MatchExplanation;
+  source: "agent" | "rules" | string;
 }

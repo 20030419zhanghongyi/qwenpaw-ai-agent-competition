@@ -1,4 +1,9 @@
-import type { RoutePoi, WalkPathResponse } from "@/types/routes";
+import type {
+  RouteAdjustmentRequest,
+  RouteAdjustmentResult,
+  RoutePoi,
+  WalkPathResponse,
+} from "@/types/routes";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
@@ -71,4 +76,13 @@ export async function fetchRoutePois(
   }
 
   return uniqueIds.map((poiId) => byId.get(poiId)).filter((poi): poi is RoutePoi => Boolean(poi));
+}
+
+export function adjustRoute(
+  adjustment: RouteAdjustmentRequest,
+): Promise<RouteAdjustmentResult> {
+  return request<RouteAdjustmentResult>("/api/v1/routes/adjust", {
+    method: "POST",
+    body: JSON.stringify(adjustment),
+  });
 }
