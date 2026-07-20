@@ -1,16 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { listPois, matchRoutes } from "@/api/client";
 import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
+import { TripDaysStepper } from "@/components/preference/TripDaysStepper";
 import { t } from "@/i18n";
 import {
   applyPreferenceToForm,
   toPreference,
+  TRIP_DAYS_DEFAULT,
   type PreferenceFormState,
   type ThemeTag,
   type WalkTag,
 } from "@/lib/preference";
+import { PORT_OPTIONS, portLabel } from "@/lib/ports";
+import { useAuth } from "@/state/AuthContext";
 import { useWalk } from "@/state/WalkContext";
 import type { LanguageCode } from "@/types";
 
@@ -61,52 +65,105 @@ const WALK_OPTIONS: Array<{
 
 const emptyForm = (language: LanguageCode): PreferenceFormState => ({
   duration: "half",
+  tripDays: TRIP_DAYS_DEFAULT,
   interests: [],
   themes: [],
   companion: "solo",
   walkTags: [],
   customNote: "",
   language,
+  entryPort: null,
+  exitPort: null,
+  travelDate: null,
 });
 
 export function ProfilePage() {
   const navigate = useNavigate();
+  const { isAuthenticated, user, logout } = useAuth();
   const { language, setLanguage, preference, session, updatePreference, saveMatch } =
     useWalk();
   const [duration, setDuration] = useState<PreferenceFormState["duration"]>("half");
+  const [tripDays, setTripDays] = useState(TRIP_DAYS_DEFAULT);
   const [interests, setInterests] = useState<string[]>([]);
   const [themes, setThemes] = useState<ThemeTag[]>([]);
   const [companion, setCompanion] = useState<PreferenceFormState["companion"]>("solo");
   const [walkTags, setWalkTags] = useState<WalkTag[]>([]);
+  const [entryPort, setEntryPort] = useState<string | null>(null);
+  const [exitPort, setExitPort] = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const formRef = useRef<PreferenceFormState>(emptyForm(language));
+
+  useEffect(() => {
+    formRef.current = {
+      duration,
+      tripDays,
+      interests,
+      themes,
+      companion,
+      walkTags,
+      customNote: "",
+      language,
+      entryPort,
+      exitPort,
+      travelDate: preference?.travel_date ?? null,
+    };
+  }, [
+    duration,
+    tripDays,
+    interests,
+    themes,
+    companion,
+    walkTags,
+    language,
+    entryPort,
+    exitPort,
+    preference?.travel_date,
+  ]);
 
   useEffect(() => {
     if (!preference) {
-      setDuration("half");
-      setInterests([]);
-      setThemes([]);
-      setCompanion("solo");
-      setWalkTags([]);
+      const cleared = emptyForm(language);
+      formRef.current = cleared;
+      setDuration(cleared.duration);
+      setTripDays(cleared.tripDays);
+      setInterests(cleared.interests);
+      setThemes(cleared.themes);
+      setCompanion(cleared.companion);
+      setWalkTags(cleared.walkTags);
+      setEntryPort(cleared.entryPort);
+      setExitPort(cleared.exitPort);
       return;
     }
-    const form = applyPreferenceToForm(preference, emptyForm(language));
+    // Merge onto the live editor (via formRef), not emptyForm. emptyForm always
+    // starts at duration=half / tripDays=3, so applyPreferenceToForm treated every
+    // multi-day preference without trip_days as a fresh multi switch and reset
+    // the stepper to 3 — wiping an in-progress day count before regenerate.
+    const form = applyPreferenceToForm(preference, formRef.current);
+    formRef.current = form;
     setDuration(form.duration);
+    setTripDays(form.tripDays);
     setInterests(form.interests);
     setThemes(form.themes);
     setCompanion(form.companion);
     setWalkTags(form.walkTags);
+    setEntryPort(form.entryPort);
+    setExitPort(form.exitPort);
   }, [preference, language]);
 
   const snapshot = (): PreferenceFormState => ({
     duration,
+    tripDays,
     interests,
     themes,
     companion,
     walkTags,
     customNote: "",
     language,
+    entryPort,
+    exitPort,
+    travelDate: preference?.travel_date ?? null,
   });
 
   const savePrefs = () => {
@@ -168,7 +225,50 @@ export function ProfilePage() {
           {t(language, "profileLead")}
         </p>
 
+        <section className="mb-8 rounded-2xl border border-line bg-card px-5 py-4 shadow-[var(--shadow-soft)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-sage-deep">
+            {t(language, "authAccount")}
+          </p>
+          {isAuthenticated && user ? (
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-ink">
+                {t(language, "authSignedInAs").replace("{id}", user.user_id)}
+              </p>
+              <button
+                type="button"
+                onClick={logout}
+                className="rounded-full border border-line px-4 py-2 text-sm text-ink transition hover:border-sage"
+              >
+                {t(language, "authLogout")}
+              </button>
+            </div>
+          ) : (
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-ink-soft">{t(language, "authPrompt")}</p>
+              <Link
+                to="/auth"
+                className="rounded-full bg-sage-deep px-4 py-2 text-sm font-medium text-paper transition hover:bg-moss"
+              >
+                {t(language, "authLink")}
+              </Link>
+            </div>
+          )}
+        </section>
+
         <AzulejoBand className="mb-8" />
+
+        <section className="mb-8 rounded-2xl border border-line bg-card px-5 py-4 shadow-[var(--shadow-soft)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-sage-deep">
+            {t(language, "profilePostcards")}
+          </p>
+          <p className="mt-2 text-sm text-ink-soft">{t(language, "profilePostcardsLead")}</p>
+          <Link
+            to="/postcards"
+            className="mt-4 inline-flex h-10 items-center rounded-full border border-sage-deep px-4 text-sm font-medium text-sage-deep transition hover:bg-sage-deep hover:text-paper"
+          >
+            {t(language, "postcardOpenGallery")}
+          </Link>
+        </section>
 
         <div className="overflow-hidden rounded-[1.75rem] border border-sage-deep/25 bg-gradient-to-b from-card via-card to-paper-warm shadow-[var(--shadow-soft)]">
           <div className="border-b border-line/80 bg-sage-deep/[0.06] px-5 py-4 sm:px-7">
@@ -212,12 +312,65 @@ export function ProfilePage() {
                   <button
                     key={id}
                     type="button"
-                    onClick={() => setDuration(id)}
+                    onClick={() => {
+                      formRef.current = { ...formRef.current, duration: id };
+                      setDuration(id);
+                    }}
                     className={`rounded-2xl border px-3 py-3 text-sm transition ${chip(duration === id)}`}
                   >
                     {t(language, key)}
                   </button>
                 ))}
+              </div>
+              {duration === "multi" ? (
+                <TripDaysStepper
+                  language={language}
+                  value={tripDays}
+                  onChange={(n) => {
+                    formRef.current = { ...formRef.current, tripDays: n };
+                    setTripDays(n);
+                  }}
+                />
+              ) : null}
+            </section>
+
+            <section className="py-6">
+              <h2 className="mb-1 font-display text-xl text-ink">{t(language, "portsTitle")}</h2>
+              <p className="mb-3 text-xs text-ink-soft">{t(language, "portsCaption")}</p>
+              <div className="space-y-4">
+                <div>
+                  <p className="mb-2 text-xs font-medium text-ink">{t(language, "entryPortLabel")}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {PORT_OPTIONS.map((port) => (
+                      <button
+                        key={`entry-${port.poiId}`}
+                        type="button"
+                        onClick={() => setEntryPort(entryPort === port.poiId ? null : port.poiId)}
+                        className={`rounded-full border px-4 py-2 text-sm transition ${chip(entryPort === port.poiId)}`}
+                      >
+                        {portLabel(port.poiId, language)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="mb-2 text-xs font-medium text-ink">{t(language, "exitPortLabel")}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {PORT_OPTIONS.map((port) => (
+                      <button
+                        key={`exit-${port.poiId}`}
+                        type="button"
+                        onClick={() => setExitPort(exitPort === port.poiId ? null : port.poiId)}
+                        className={`rounded-full border px-4 py-2 text-sm transition ${chip(exitPort === port.poiId)}`}
+                      >
+                        {portLabel(port.poiId, language)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {!entryPort || !exitPort ? (
+                  <p className="text-xs text-ink-soft">{t(language, "portsOptionalHint")}</p>
+                ) : null}
               </div>
             </section>
 

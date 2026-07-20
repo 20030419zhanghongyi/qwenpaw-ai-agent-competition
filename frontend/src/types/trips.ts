@@ -26,6 +26,8 @@ export interface TripWithProgress {
 export interface CreateTripInput {
   user_id: string;
   route_id: string;
+  /** Current walk nodes (adjusted route); overrides template stops when set. */
+  stop_poi_ids?: string[];
 }
 
 export interface CheckInInput {

@@ -74,16 +74,28 @@ class TripService:
             progress=TripProgressResponse.model_validate(progress.model_dump()),
         )
 
-    def create_trip(self, user_id: str, route_id: str) -> TripWithProgressResponse:
+    def create_trip(
+        self,
+        user_id: str,
+        route_id: str,
+        stop_poi_ids: list[str] | None = None,
+    ) -> TripWithProgressResponse:
         route = get_template(route_id)
         if route is None:
             raise RouteNotFoundError(f"Route not found: {route_id}")
-        stop_poi_ids = self._extract_stop_poi_ids(route)
-        if not stop_poi_ids:
-            raise InvalidRouteError(f"Route has no valid POI stops: {route_id}")
+
+        if stop_poi_ids is not None:
+            resolved_stops = self._normalize_stop_poi_ids(stop_poi_ids)
+            if not resolved_stops:
+                raise InvalidRouteError("stop_poi_ids must include at least one POI")
+        else:
+            resolved_stops = self._extract_stop_poi_ids(route)
+            if not resolved_stops:
+                raise InvalidRouteError(f"Route has no valid POI stops: {route_id}")
+
         with SessionLocal() as session:
-            pois = PoiRepository(session).get_by_ids(stop_poi_ids)
-        missing_poi_ids = [poi_id for poi_id in stop_poi_ids if poi_id not in pois]
+            pois = PoiRepository(session).get_by_ids(resolved_stops)
+        missing_poi_ids = [poi_id for poi_id in resolved_stops if poi_id not in pois]
         if missing_poi_ids:
             raise InvalidRouteError(
                 f"Route references unknown POIs: {', '.join(missing_poi_ids)}"
@@ -95,12 +107,26 @@ class TripService:
             user_id=user_id,
             route_id=route_id,
             status=TripStatus.ACTIVE,
-            stop_poi_ids=stop_poi_ids,
+            stop_poi_ids=resolved_stops,
             checked_in_poi_ids=[],
             created_at=now,
             updated_at=now,
         )
         return self._with_progress(self._repository.create_trip(trip))
+
+    @staticmethod
+    def _normalize_stop_poi_ids(stop_poi_ids: list[str]) -> list[str]:
+        normalized: list[str] = []
+        seen: set[str] = set()
+        for poi_id in stop_poi_ids:
+            if not isinstance(poi_id, str):
+                continue
+            cleaned = poi_id.strip()
+            if not cleaned or cleaned in seen:
+                continue
+            seen.add(cleaned)
+            normalized.append(cleaned)
+        return normalized
 
     def get_trip(self, trip_id: str) -> TripWithProgressResponse:
         trip = self._repository.get_trip(trip_id)

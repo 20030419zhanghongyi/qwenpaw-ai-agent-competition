@@ -103,6 +103,10 @@ class Settings(BaseSettings):
     oss_audio_prefix: str = "tts"
     oss_signed_url_ttl_seconds: int = 3600
 
+    # 大麦／票务：无公开免费 API。淘宝开放平台 alibaba.damai.* 需合作方 AppKey，暂不接入。
+    # damai_app_key: str = ""
+    # damai_app_secret: str = ""
+
     # Guardrails / audit
     audit_hash_salt: str = ""
     audit_retention_days: int = 30

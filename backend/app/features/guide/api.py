@@ -7,6 +7,7 @@
 
 讲解素材策略（``_gather_material``）：candidate_poi 已点名 → ``get_poi_material`` 精确取整 POI
 （最稳，不靠向量）；否则 ``retrieve()`` 向量找相关 POI 兜底。
+Ask 追问（``/ask``）为 **web-first**：短超时联网为主，``_gather_material_fast`` 仅作本地点缀/兜底。
 
 失败纪律（对齐 routes/intent）：开关关 → 503；agent 抖动 / 解析失败 → 不抛穿，
 返回空结果 + ``error`` 字段，仍 200。
@@ -38,7 +39,7 @@ from app.tools.scrub import scrub
 from .preset_script import build_preset_narration
 from .trigger_state import trigger_state
 from .tts import TTSUnavailableError, VOICE_BY_LANGUAGE, synthesize_to_oss
-from .web_search import format_web_material, search_web
+from .web_search import format_web_material, search_web_multi
 
 # rag/ 在仓库根（不在 backend/app 内）；config.py 导入时已把仓库根加进 sys.path
 from rag.retrieve import get_poi_material, retrieve
@@ -60,12 +61,64 @@ _ASK_FALLBACK = {
     "en": "From the materials we have, here’s what I can say: {snippet}",
     "pt": "Com o material disponível, posso dizer: {snippet}",
 }
+# 仅在本地 + 联网都失败时使用（有联网能力时不要过早甩出「手头没有资料」）
 _ASK_EMPTY = {
-    "zh-CN": "手头资料里没有直接答案。你可以换个问法，或拍一张现场照片让我辨认。",
-    "zh-TW": "手頭資料裡沒有直接答案。你可以換個問法，或拍一張現場照片讓我辨認。",
-    "en": "I don’t have a direct answer in the materials. Try rephrasing, or upload a photo.",
-    "pt": "Não há resposta direta no material. Reformule, ou envie uma foto.",
+    "zh-CN": "本地和公开网页都没找到可靠答案。你可以换个问法，或拍一张现场照片让我辨认。",
+    "zh-TW": "本地和公開網頁都沒找到可靠答案。你可以換個問法，或拍一張現場照片讓我辨認。",
+    "en": "Neither local notes nor public web sources had a solid answer. Try rephrasing, or upload a photo.",
+    "pt": "Nem as notas locais nem a web pública tiveram uma resposta sólida. Reformule, ou envie uma foto.",
 }
+_PURPOSE_INTENT = re.compile(
+    r"(干什么|做什麼|做什么|用途|原来|原來|原先|前身|功能|用来|用來|作什麼|作什么|what\s+was|used\s+for|original)",
+    re.IGNORECASE,
+)
+_PURPOSE_HINTS = ("原为", "原為", "前身", "曾是", "用作", "建成", "历史", "歷史", "教堂", "学院", "學院")
+_ASK_STOP = {
+    "这个",
+    "那个",
+    "什么",
+    "什麼",
+    "为什么",
+    "為什麼",
+    "怎么",
+    "怎樣",
+    "怎样",
+    "上面",
+    "下面",
+    "有没有",
+    "有沒有",
+    "可以",
+    "一下",
+    "请问",
+    "請問",
+    "告诉",
+    "告訴",
+    "我想",
+    "know",
+    "what",
+    "when",
+    "where",
+    "which",
+    "about",
+    "please",
+    "this",
+    "that",
+    "building",
+}
+_REFUSAL_MARKERS = (
+    "手头资料里没有",
+    "手頭資料裡沒有",
+    "资料里没有直接",
+    "資料裡沒有直接",
+    "没有直接答案",
+    "沒有直接答案",
+    "本地和公开网页都没找到",
+    "本地和公開網頁都沒找到",
+    "no direct answer",
+    "don't have a direct",
+    "do not have a direct",
+    "não há resposta direta",
+)
 
 def _review_guide_text(text: str) -> dict:
     """guide 生成文本 → reviewer 上线前把关（guide→reviewer 管道）。
@@ -113,6 +166,18 @@ def _gather_material(candidate_poi: str | None, description: str) -> tuple[str, 
                 f"相关资料 {i + 1}（{c['name']}）:\n{c['text']}" for i, c in enumerate(chunks)
             )
             return ("", material)
+    return ("", "")
+
+
+def _gather_material_fast(poi: str, *, language: str, interests: list[str] | None) -> tuple[str, str]:
+    """Ask 用的轻量本地取料：精确 POI / 预设话术，不跑向量检索（避免拖慢 web-first）。"""
+    got = get_poi_material(poi)
+    if got and got[1]:
+        return got
+    preset = build_preset_narration(poi, language=language, interests=interests)
+    if preset and preset.get("text"):
+        name = str(preset.get("poi_name") or poi)
+        return name, str(preset["text"])
     return ("", "")
 
 
@@ -183,16 +248,52 @@ class GuideAskRequest(BaseModel):
         return value
 
 
+def _question_tokens(question: str) -> list[str]:
+    """从追问里抽检索词。中文无空格时切 2–4 字片，避免整句当一个 token。"""
+    q = (question or "").strip().lower()
+    if not q:
+        return []
+    parts = [p for p in re.split(r"[\s,，。？?！!、；;：:]+", q) if p]
+    tokens: list[str] = []
+    for part in parts:
+        if re.search(r"[\u4e00-\u9fff]", part):
+            for run in re.findall(r"[\u4e00-\u9fff]+", part):
+                if len(run) >= 2:
+                    tokens.append(run)
+                for n in (2, 3, 4):
+                    if len(run) < n:
+                        continue
+                    for i in range(len(run) - n + 1):
+                        tokens.append(run[i : i + n])
+            tokens.extend(re.findall(r"[a-z0-9]{2,}", part))
+        elif len(part) >= 2:
+            tokens.append(part)
+    if _PURPOSE_INTENT.search(q):
+        tokens.extend(_PURPOSE_HINTS)
+    seen: set[str] = set()
+    out: list[str] = []
+    for t in tokens:
+        if t in _ASK_STOP or t in seen:
+            continue
+        seen.add(t)
+        out.append(t)
+    return out
+
+
+def _looks_like_refusal(text: str) -> bool:
+    low = (text or "").strip().lower()
+    if not low:
+        return True
+    return any(m.lower() in low for m in _REFUSAL_MARKERS)
+
+
 def _material_snippet_answer(
     question: str, material: str, *, language: str
 ) -> tuple[str, bool]:
     """从资料挑相关句。返回 (answer, is_weak)。weak=关键词几乎对不上。"""
     if not material.strip():
-        return _ASK_EMPTY.get(language, _ASK_EMPTY["zh-CN"]), True
-    tokens = [t for t in re.split(r"[\s,，。？?！!、；;：:]+", question.lower()) if len(t) >= 2]
-    # 去掉过短/无信息中文虚词
-    stop = {"这个", "那个", "什么", "为什么", "怎么", "怎樣", "為什麼", "上面", "下面", "有没有", "可以"}
-    tokens = [t for t in tokens if t not in stop]
+        return "", True
+    tokens = _question_tokens(question)
     sentences = [
         s.strip()
         for s in re.split(r"[。！？!?\n]+", material)
@@ -200,16 +301,28 @@ def _material_snippet_answer(
     ]
     scored: list[tuple[int, str]] = []
     for s in sentences:
-        score = sum(1 for t in tokens if t in s.lower())
+        sl = s.lower()
+        # 长 token 权重大，减少无意义 2-gram 刷分
+        score = 0
+        for t in tokens:
+            if t.lower() in sl:
+                score += 3 if len(t) >= 3 else 1
         if score:
             scored.append((score, s))
     scored.sort(key=lambda x: x[0], reverse=True)
-    weak = not scored or (scored[0][0] < 1 if tokens else True)
-    if tokens and scored and scored[0][0] >= 2:
-        weak = False
+    weak = True
+    if tokens and scored:
+        top = scored[0][0]
+        # 命中用途/历史暗示或累计分够高 → 本地可用
+        if top >= 3 or (top >= 2 and len(tokens) <= 3):
+            weak = False
+        elif top >= 1 and any(h in scored[0][1] for h in _PURPOSE_HINTS):
+            weak = False
+        else:
+            weak = True
     elif tokens and not scored:
         weak = True
-    elif tokens and scored and scored[0][0] == 1 and len(tokens) >= 2:
+    elif not tokens:
         weak = True
 
     picked = [s for _, s in scored[:2]] or (sentences[:2] if not tokens else [])
@@ -227,13 +340,38 @@ def _material_snippet_answer(
     if snippet and not snippet.endswith(("。", ".", "!", "？", "?")):
         snippet += "。"
     if not snippet:
-        return _ASK_EMPTY.get(language, _ASK_EMPTY["zh-CN"]), True
-    if weak:
-        # 弱相关时仍给摘录，但标记 weak，让上层走联网
-        tmpl = _ASK_FALLBACK.get(language, _ASK_FALLBACK["zh-CN"])
-        return tmpl.format(snippet=snippet), True
+        return "", True
     tmpl = _ASK_FALLBACK.get(language, _ASK_FALLBACK["zh-CN"])
-    return tmpl.format(snippet=snippet), False
+    return tmpl.format(snippet=snippet), weak
+
+
+def _web_search_queries(poi_name: str, question: str, *, limit: int = 2) -> list[str]:
+    """构造联网检索查询（默认最多 2 条，控延迟）。
+
+    优先：``POI + 问题``；用途类追问再加 ``POI 历史/原为``；否则 POI 名本身。
+    """
+    poi = (poi_name or "").strip()
+    q = (question or "").strip()
+    queries: list[str] = []
+    if poi and q:
+        queries.append(f"{poi} {q}")
+    if poi and _PURPOSE_INTENT.search(q):
+        queries.append(f"{poi} 历史 原为")
+    elif poi:
+        queries.append(poi)
+    elif q:
+        queries.append(q)
+    seen: set[str] = set()
+    out: list[str] = []
+    for item in queries:
+        key = item.strip()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(key)
+        if len(out) >= limit:
+            break
+    return out
 
 
 def _web_snippet_answer(
@@ -497,48 +635,59 @@ def ask(
         bool, Query(description="是否调用 guide agent 深度回答（较慢）")
     ] = False,
     web: Annotated[
-        bool, Query(description="本地资料不够时是否联网检索公开百科")
+        bool, Query(description="是否联网检索公开百科（默认开启，作为主回答来源）")
     ] = True,
 ) -> dict:
     """就当前 POI 追问。
 
-    流程：本地资料摘录 →（弱相关时）维基/公开检索补充 → 可选 guide agent 综合。
+    **Web-first**（本地 KB 偏稀）：默认先短超时联网检索公开百科并合成答案；
+    本地仅轻量取料作点缀/兜底，不挡联网。``enhance=true`` 时才调用 guide agent。
     """
     t0 = time.perf_counter()
-    poi_name, material = _gather_material(req.poi, req.poi)
-    if not material:
-        preset = build_preset_narration(req.poi, language=req.language, interests=req.interests)
-        if preset and preset.get("text"):
-            poi_name = str(preset.get("poi_name") or req.poi)
-            material = str(preset["text"])
-        else:
-            raise HTTPException(status_code=404, detail=f"找不到 POI 资料：{req.poi}")
-
+    # 轻量本地（无向量检索）；不拖慢 web-first
+    poi_name, material = _gather_material_fast(
+        req.poi, language=req.language, interests=req.interests
+    )
     display_name = poi_name or req.poi
+    # web-first：本地无料仍可用 POI 名去搜；仅 web=false 且无料时 404
+    if not material and not web:
+        raise HTTPException(status_code=404, detail=f"找不到 POI 资料：{req.poi}")
+
     local_answer, weak = _material_snippet_answer(
         req.question, material, language=req.language
     )
-    answer_text = local_answer
-    source = "rules"
-    confidence = 0.55 if not weak else 0.35
+    if not (local_answer or "").strip():
+        weak = True
+
+    answer_text = ""
+    source = "empty"
+    confidence = 0.3
     ai_generated = False
     error = None
     web_hits: list[dict[str, str]] = []
     used_web = False
 
-    # 本地对不上问题时联网补充（也可在 enhance 时一并检索）
-    if web and (weak or enhance):
-        query = f"{display_name} {req.question}".strip()
-        web_hits = search_web(query, language=req.language, k=3)
-        if not web_hits and req.language.startswith("zh"):
-            # 中文没命中时再试英文检索
-            web_hits = search_web(query, language="en", k=3)
+    # ── 主路径：联网检索（短预算并行；agent 仅 enhance）──
+    if web:
+        queries = _web_search_queries(display_name, req.question, limit=2)
+        web_hits = search_web_multi(
+            queries, language=req.language, k=2, max_queries=2, budget_s=2.5
+        )
         if web_hits:
             used_web = True
             web_material = format_web_material(web_hits, language=req.language)
-            combined = f"{material}\n\n{web_material}"
+            # 本地有料则作轻量点缀，不依赖相关度
+            combined = (
+                f"{material}\n\n{web_material}".strip() if material else web_material
+            )
+            web_answer = _web_snippet_answer(
+                req.question,
+                web_hits,
+                language=req.language,
+                poi_name=display_name,
+            )
 
-            if settings.guide_agent_enabled and (enhance or weak):
+            if enhance and settings.guide_agent_enabled:
                 expl = guide_agent.answer(
                     display_name,
                     req.question,
@@ -546,46 +695,63 @@ def ask(
                     language=req.language,
                     interests=req.interests,
                 )
-                if expl and expl.text.strip():
+                if (
+                    expl
+                    and expl.text.strip()
+                    and not _looks_like_refusal(expl.text)
+                ):
                     answer_text = expl.text
                     confidence = max(float(expl.confidence or 0.7), 0.7)
                     ai_generated = True
                     source = "agent+web"
                 else:
-                    answer_text = _web_snippet_answer(
-                        req.question,
-                        web_hits,
-                        language=req.language,
-                        poi_name=display_name,
-                    )
+                    answer_text = web_answer
                     source = "web"
                     confidence = 0.65
-                    error = "guide agent unavailable; served web snippets"
+                    if expl is None:
+                        error = "guide agent unavailable; served web snippets"
+                    elif _looks_like_refusal(expl.text):
+                        error = "guide agent refused; served web snippets"
             else:
-                answer_text = _web_snippet_answer(
-                    req.question,
-                    web_hits,
-                    language=req.language,
-                    poi_name=display_name,
-                )
+                answer_text = web_answer
                 source = "web"
                 confidence = 0.65
 
-    elif enhance and settings.guide_agent_enabled:
-        expl = guide_agent.answer(
-            display_name,
-            req.question,
-            material=material,
-            language=req.language,
-            interests=req.interests,
-        )
-        if expl and expl.text.strip():
-            answer_text = expl.text
-            confidence = expl.confidence
-            ai_generated = True
-            source = "agent"
+    # ── 兜底：强相关本地摘录 / enhance 仅本地 / 空答案（不甩「手头没有」）──
+    if not (answer_text or "").strip():
+        if not weak and (local_answer or "").strip():
+            answer_text = local_answer
+            source = "rules"
+            confidence = 0.55
+            if enhance and settings.guide_agent_enabled and material.strip():
+                expl = guide_agent.answer(
+                    display_name,
+                    req.question,
+                    material=material,
+                    language=req.language,
+                    interests=req.interests,
+                )
+                if (
+                    expl
+                    and expl.text.strip()
+                    and not _looks_like_refusal(expl.text)
+                ):
+                    answer_text = expl.text
+                    confidence = expl.confidence
+                    ai_generated = True
+                    source = "agent"
+                else:
+                    error = "guide agent unavailable; served material snippet"
         else:
-            error = "guide agent unavailable; served material snippet"
+            answer_text = _ASK_EMPTY.get(req.language, _ASK_EMPTY["zh-CN"])
+            confidence = 0.25
+            source = "empty"
+
+    # 拒答文案兜底（避免泄漏「手头资料里没有」；空答案模板本身含拒答标记，跳过）
+    if source != "empty" and _looks_like_refusal(answer_text) and not used_web:
+        answer_text = _ASK_EMPTY.get(req.language, _ASK_EMPTY["zh-CN"])
+        confidence = min(confidence, 0.3)
+        source = "empty"
 
     out_text, review = _apply_review(answer_text, path="ask")
     latency_ms = int((time.perf_counter() - t0) * 1000)
@@ -602,6 +768,7 @@ def ask(
             "web": used_web,
             "weak_local": weak,
             "web_hits": len(web_hits),
+            "strategy": "web_first",
         },
     )
     return {
@@ -647,6 +814,12 @@ def generate(
             raise HTTPException(status_code=404, detail=f"找不到 POI 资料：{req.poi}")
         preset = {
             "text": material.split("\n")[0][:500],
+            "sections": [
+                {
+                    "id": "overview",
+                    "body": material.split("\n")[0][:500],
+                }
+            ],
             "source_type": "ai",
             "confidence": 0.5,
             "ai_generated": False,
@@ -705,13 +878,18 @@ def generate(
 
     out_text, review = _apply_review(expl.text, path="generate")
     blocked = review.get("decision") == "block"
+    # Keep POI-field sections for pictorial UI; agent rewrite only replaces flat TTS text.
     return {
         "text": out_text,
+        "sections": preset.get("sections") or [],
         "source_type": expl.source_type,
         "confidence": expl.confidence,
         "ai_generated": expl.ai_generated,
         "language": expl.language,
         "source": "agent",
+        "poi_name": preset.get("poi_name"),
+        "poi_id": preset.get("poi_id"),
+        "next_stop": preset.get("next_stop"),
         "review": review,
         "blocked": blocked,
         "error": None,

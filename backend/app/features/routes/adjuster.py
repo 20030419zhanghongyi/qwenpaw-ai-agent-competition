@@ -15,9 +15,10 @@ from app.models.user import Preference
 
 from .candidate_selector import build_candidate_pool
 from .explain import build_explanation
+from .geo_order import reorder_nodes_geographically, route_is_cotai_heavy
 from .poi_metadata import get_poi_metadata, list_poi_metadata
 from .repository import get_template
-from .route_constructor import construct_route
+from .route_constructor import annotate_ticketed_attractions, construct_route
 
 
 class RouteAdjustRequest(BaseModel):
@@ -47,11 +48,15 @@ def adjust_route(request: RouteAdjustRequest, preference_override: Preference | 
 
     original_pref = request.preference
     if preference_override is not None:
-        # agent 路径：偏好已由 route_agent 叠加好，直接用
-        adjusted_pref = preference_override
+        # agent 路径：偏好已由 route_agent 叠加好；再叠一层具名地标偏好（cotai 等）
+        adjusted_pref = _apply_instruction_to_preference(
+            preference_override, request.instruction
+        )
     else:
         # 规则路径：关键词解析
-        adjusted_pref = _apply_instruction_to_preference(original_pref, request.instruction)
+        adjusted_pref = _apply_instruction_to_preference(
+            original_pref, request.instruction
+        )
     original_node_ids = [node["poi_id"] for node in template.get("nodes", [])]
 
     candidate_pois = build_candidate_pool(template)
@@ -64,6 +69,8 @@ def adjust_route(request: RouteAdjustRequest, preference_override: Preference | 
     added_nodes = _merge_constructor_added_nodes(original_node_ids, route, candidate_pois, added_nodes)
     removed_nodes = _merge_constructor_removed_nodes(original_node_ids, route, removed_nodes)
     applied_constraints.extend(adjust_notes)
+    # Named inserts may add ticketed stops after construct_route; re-annotate.
+    applied_constraints.extend(annotate_ticketed_attractions(route))
 
     explanation = build_explanation(
         template_id=template["id"],
@@ -88,6 +95,21 @@ def adjust_route(request: RouteAdjustRequest, preference_override: Preference | 
     }
 
 
+# 高频具名地标 → 规范 poi_id（微调「我想去××」用）
+_NAMED_LANDMARKS: list[tuple[tuple[str, ...], str]] = [
+    (("威尼斯人", "venetian"), "poi_0020"),
+    (("巴黎人", "parisian"), "poi_0021"),
+    (("伦敦人", "倫敦人", "londoner", "大笨钟", "大本钟"), "poi_0107"),
+    (("永利皇宫", "永利"), "poi_0027"),
+    (("新濠影汇", "影汇之星", "studio city"), "poi_0110"),
+    (("新濠天地", "摩珀斯", "city of dreams"), "poi_0109"),
+    (("澳门银河", "银河"), "poi_0112"),
+    (("大三巴",), "poi_0001"),
+    (("议事亭前地", "议事亭"), "poi_0002"),
+    (("妈阁庙",), "poi_0011"),
+]
+
+
 def _apply_instruction_to_preference(pref: Preference, instruction: str) -> Preference:
     updated = pref.model_copy(deep=True)
     text = instruction.strip()
@@ -108,7 +130,62 @@ def _apply_instruction_to_preference(pref: Preference, instruction: str) -> Pref
         if "food" not in updated.interests:
             updated.interests.append("food")
 
+    # 点名路氹地标时补上 cotai，便于后续匹配解释
+    cotai_poi_ids = {
+        "poi_0020",
+        "poi_0021",
+        "poi_0107",
+        "poi_0027",
+        "poi_0109",
+        "poi_0110",
+        "poi_0112",
+    }
+    if any(poi_id in cotai_poi_ids for poi_id in resolve_named_poi_ids(text)):
+        if "cotai" not in (updated.themes or []):
+            updated.themes = [*(updated.themes or []), "cotai"]
+
     return updated
+
+
+def resolve_named_poi_ids(instruction: str) -> list[str]:
+    """从自然语言里解析想去的具名 POI（规则优先，避免只改文案不改节点）。"""
+    text = instruction.strip()
+    if not text:
+        return []
+    lower = text.lower()
+    found: list[str] = []
+
+    for aliases, poi_id in _NAMED_LANDMARKS:
+        hit = False
+        for alias in aliases:
+            if alias.isascii():
+                if alias.lower() in lower:
+                    hit = True
+                    break
+            elif alias in text:
+                hit = True
+                break
+        if hit and poi_id not in found:
+            found.append(poi_id)
+
+    if found:
+        return found
+
+    # 兜底：用 POI 中文名 / 别名子串匹配（名称至少 2 字）
+    for poi in list_poi_metadata():
+        poi_id = str(poi.get("id") or "")
+        if not poi_id or poi_id in found:
+            continue
+        for label in (poi.get("name_zh"), poi.get("alias"), poi.get("name_en")):
+            label_s = str(label or "").strip()
+            if len(label_s) < 2:
+                continue
+            if label_s in text or (label_s.isascii() and label_s.lower() in lower):
+                found.append(poi_id)
+                break
+        if len(found) >= 3:
+            break
+    return found
 
 
 def _apply_route_mutations(route: dict, instruction: str, candidate_pois: list[dict]) -> tuple[dict, list[dict], list[dict], list[dict], list[str]]:
@@ -117,6 +194,13 @@ def _apply_route_mutations(route: dict, instruction: str, candidate_pois: list[d
     removed_nodes: list[dict] = []
     reordered_nodes: list[dict] = []
     notes: list[str] = []
+
+    # 具名地标优先：如「我想去威尼斯人」
+    named_ids = resolve_named_poi_ids(text)
+    if named_ids:
+        route, named_added, named_notes = _add_named_pois(route, named_ids)
+        added_nodes.extend(named_added)
+        notes.extend(named_notes)
 
     if any(keyword in text for keyword in ("加个拍照点", "多一点拍照", "加一个拍照点", "想拍照")):
         route, added = _add_candidate_node(route, candidate_pois, prefer_photo=True)
@@ -136,13 +220,67 @@ def _apply_route_mutations(route: dict, instruction: str, candidate_pois: list[d
             removed_nodes.append(removed)
             notes.append("已移除末端节点以降低步行与停留负担")
 
-    if any(keyword in text for keyword in ("不要回头路", "别绕路", "顺路一点")):
-        route, reordered = _reorder_by_district(route)
+    if any(keyword in text for keyword in ("不要回头路", "别绕路", "顺路一点")) or (
+        named_ids and route_is_cotai_heavy(route.get("nodes", []))
+    ):
+        route, reordered = _reorder_by_district(
+            route, start_poi_id=named_ids[0] if named_ids else None
+        )
         if reordered:
             reordered_nodes.extend(reordered)
-            notes.append("已按街区连续性重排节点")
+            notes.append("已按坐标顺路重排节点")
 
     return route, added_nodes, removed_nodes, reordered_nodes, notes
+
+
+def _add_named_pois(route: dict, poi_ids: list[str]) -> tuple[dict, list[dict], list[str]]:
+    """把用户点名的 POI 插入当前路线（保留进/出境口岸锚点）。"""
+    added: list[dict] = []
+    notes: list[str] = []
+    nodes = sorted(route.get("nodes", []), key=lambda item: item["order"])
+    current_ids = {node["poi_id"] for node in nodes}
+
+    for poi_id in poi_ids:
+        meta = get_poi_metadata(poi_id) or {}
+        label = str(meta.get("name_zh") or poi_id)
+        if poi_id in current_ids:
+            notes.append(f"「{label}」已在当前路线中")
+            continue
+
+        entry = [n for n in nodes if n.get("anchor") == "entry"]
+        exit_nodes = [n for n in nodes if n.get("anchor") == "exit"]
+        middle = [n for n in nodes if n.get("anchor") not in {"entry", "exit"}]
+
+        new_node = {
+            "poi_id": poi_id,
+            "order": 0,
+            "suggested_stay_min": 45,
+            "note": f"按你的要求加入：{label}",
+            "replaceable_with": [],
+        }
+        middle.append(new_node)
+        nodes = [*entry, *middle, *exit_nodes]
+        _renumber(nodes)
+        current_ids.add(poi_id)
+        added.append(
+            {
+                "poi_id": poi_id,
+                "based_on": middle[0]["poi_id"] if middle else poi_id,
+                "reasons": [f"用户点名加入「{label}」"],
+            }
+        )
+        notes.append(f"已加入「{label}」")
+        route["duration_hours"] = round(float(route.get("duration_hours") or 0) + 0.7, 1)
+        route["walk_distance_km"] = round(float(route.get("walk_distance_km") or 0) + 0.5, 1)
+
+    # 插入后按路氹走廊重排：龙环(北)→金光西→中→永利东→影汇南
+    # （避免 威尼斯人→龙环→新濠 的北向折返）
+    start_id = poi_ids[0] if poi_ids else None
+    nodes, geo_changed = reorder_nodes_geographically(nodes, start_poi_id=start_id)
+    route["nodes"] = nodes
+    if geo_changed:
+        notes.append("已按坐标顺路重排，减少路氹回头路")
+    return route, added, notes
 
 
 def _suggest_added_nodes(instruction: str, candidate_pois: list[dict], route: dict) -> list[dict]:
@@ -258,9 +396,18 @@ def _remove_tail_node(route: dict) -> tuple[dict, dict | None]:
     return route, {"poi_id": removed["poi_id"], "reason": "按少走路偏好移除末端节点"}
 
 
-def _reorder_by_district(route: dict) -> tuple[dict, list[dict]]:
+def _reorder_by_district(
+    route: dict, *, start_poi_id: str | None = None
+) -> tuple[dict, list[dict]]:
     nodes = sorted(route.get("nodes", []), key=lambda item: item["order"])
     original = [node["poi_id"] for node in nodes]
+    if route_is_cotai_heavy(nodes) or any(_coords_available(node["poi_id"]) for node in nodes):
+        nodes, changed = reorder_nodes_geographically(nodes, start_poi_id=start_poi_id)
+        route["nodes"] = nodes
+        updated = [node["poi_id"] for node in nodes]
+        if not changed:
+            return route, []
+        return route, [{"from": original, "to": updated}]
     nodes.sort(key=lambda node: (_district_rank(node["poi_id"]), node["order"]))
     _renumber(nodes)
     updated = [node["poi_id"] for node in nodes]
@@ -268,6 +415,12 @@ def _reorder_by_district(route: dict) -> tuple[dict, list[dict]]:
     if original == updated:
         return route, []
     return route, [{"from": original, "to": updated}]
+
+
+def _coords_available(poi_id: str) -> bool:
+    poi = get_poi_metadata(poi_id) or {}
+    raw = poi.get("coordinates")
+    return isinstance(raw, dict) and raw.get("lat") is not None and raw.get("lng") is not None
 
 
 def _district_rank(poi_id: str) -> tuple[str, str]:

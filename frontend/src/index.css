@@ -157,3 +157,16 @@
 .thinking-dot:nth-child(3) {
   animation-delay: 0.36s;
 }
+
+/* Keep AMap logo/copyright inside the map pane (they use high z-index). */
+.map-route-view,
+.map-route-view .amap-container {
+  overflow: hidden !important;
+}
+
+.map-route-view .amap-logo,
+.map-route-view .amap-copyright {
+  z-index: 1 !important;
+  max-width: 100%;
+  pointer-events: none;
+}

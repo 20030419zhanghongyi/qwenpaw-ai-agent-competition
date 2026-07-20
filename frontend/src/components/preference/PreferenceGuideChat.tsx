@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { guideIntent, parseIntent } from "@/api/client";
 import { t } from "@/i18n";
+import { stripChatMarkdown } from "@/lib/chatText";
 import { inferPreferenceFromText } from "@/lib/preference";
 import type { LanguageCode, Preference } from "@/types";
 
@@ -98,7 +99,9 @@ export function PreferenceGuideChat({
     try {
       const res = await guideIntent({ action: "start", language: lang });
       setSessionId(res.session_id);
-      setMessages([{ id: `a-${Date.now()}`, role: "assistant", text: res.reply }]);
+      setMessages([
+        { id: `a-${Date.now()}`, role: "assistant", text: stripChatMarkdown(res.reply) },
+      ]);
       if (res.preference) onApplyPreference(res.preference);
       if (res.ready) markReady(true);
     } catch (err) {
@@ -151,7 +154,7 @@ export function PreferenceGuideChat({
       setUserTurn(nextTurn);
       setMessages((prev) => [
         ...prev,
-        { id: `a-${Date.now()}`, role: "assistant", text: res.reply },
+        { id: `a-${Date.now()}`, role: "assistant", text: stripChatMarkdown(res.reply) },
       ]);
       // 后端 preference 先合并；再用全文推断盖住缺省/弱信号（如默认 half-day）
       if (res.preference) onApplyPreference(res.preference);
@@ -207,7 +210,7 @@ export function PreferenceGuideChat({
                   : "border border-line bg-paper text-ink"
               }`}
             >
-              {m.text}
+              {m.role === "assistant" ? stripChatMarkdown(m.text) : m.text}
             </div>
           </div>
         ))}

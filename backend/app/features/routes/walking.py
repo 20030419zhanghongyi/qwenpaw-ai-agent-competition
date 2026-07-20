@@ -126,7 +126,8 @@ def build_walk_path(poi_ids: list[str], database: Session, *, client: AmapWalkin
         if polyline:
             polylines.append(polyline)
 
-        bus_lines = _bus_lines_for_segment(client, origin_ll, dest_ll, walk_m=distance)
+        bus_info = _bus_info_for_segment(client, origin_ll, dest_ll, walk_m=distance)
+        bus_lines = bus_info["bus_lines"]
         modes = [{"kind": "walk", "label": "步行"}]
         for line in bus_lines:
             modes.append({"kind": "bus", "label": line})
@@ -139,6 +140,8 @@ def build_walk_path(poi_ids: list[str], database: Session, *, client: AmapWalkin
                 "walk_min": math.ceil(duration / 60) if duration else max(1, math.ceil(distance / 80)),
                 "polyline": polyline,
                 "bus_lines": bus_lines,
+                "bus_from_stop": bus_info["bus_from_stop"],
+                "bus_to_stop": bus_info["bus_to_stop"],
                 "modes": modes,
             }
         )
@@ -150,36 +153,49 @@ def build_walk_path(poi_ids: list[str], database: Session, *, client: AmapWalkin
     }
 
 
-def _bus_lines_for_segment(
+def _bus_info_for_segment(
     client: AmapWalkingClient,
     origin: tuple[float, float],
     destination: tuple[float, float],
     *,
     walk_m: int,
-) -> list[str]:
+) -> dict[str, Any]:
+    empty = {"bus_lines": [], "bus_from_stop": None, "bus_to_stop": None}
     if walk_m < MIN_WALK_M_FOR_TRANSIT:
-        return []
+        return empty
     transit_fn = getattr(client, "transit_options", None)
     if not callable(transit_fn):
-        return []
+        return empty
     plans = transit_fn(origin, destination) or []
     lines: list[str] = []
     seen: set[str] = set()
+    from_stop: str | None = None
+    to_stop: str | None = None
     for plan in plans:
         plan_distance = int(float(plan.get("distance") or 0))
         if walk_m > 0 and plan_distance > walk_m * MAX_TRANSIT_WALK_RATIO:
             continue
-        for name in _extract_bus_line_names(plan):
-            if name not in seen:
+        for ride in _extract_bus_rides(plan):
+            if from_stop is None and ride["from_stop"] and ride["to_stop"]:
+                from_stop = ride["from_stop"]
+                to_stop = ride["to_stop"]
+            name = ride["line"]
+            if name and name not in seen:
                 seen.add(name)
                 lines.append(name)
+            if len(lines) >= 5:
+                break
         if len(lines) >= 5:
             break
-    return lines[:5]
+    return {
+        "bus_lines": lines[:5],
+        "bus_from_stop": from_stop,
+        "bus_to_stop": to_stop,
+    }
 
 
-def _extract_bus_line_names(plan: dict[str, Any]) -> list[str]:
-    names: list[str] = []
+def _extract_bus_rides(plan: dict[str, Any]) -> list[dict[str, str | None]]:
+    rides: list[dict[str, str | None]] = []
     for segment in plan.get("segments") or []:
         bus = segment.get("bus") or {}
         buslines = bus.get("buslines") if isinstance(bus, dict) else None
@@ -192,8 +208,11 @@ def _extract_bus_line_names(plan: dict[str, Any]) -> list[str]:
             if not raw:
                 continue
             short = re.split(r"[（(]", raw, maxsplit=1)[0].strip()
-            typ = str(line.get("type") or "")
-            # Prefer ordinary bus / Macau routes; still keep metro if present.
-            if short:
-                names.append(short if "地铁" not in typ else short)
-    return names
+            if not short:
+                continue
+            departure = line.get("departure_stop") or line.get("departureStop") or {}
+            arrival = line.get("arrival_stop") or line.get("arrivalStop") or {}
+            from_name = str(departure.get("name") or "").strip() or None
+            to_name = str(arrival.get("name") or "").strip() or None
+            rides.append({"line": short, "from_stop": from_name, "to_stop": to_name})
+    return rides

@@ -4,16 +4,19 @@ import { listPois, matchRoutes, parseIntent } from "@/api/client";
 import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { PreferenceGuideChat } from "@/components/preference/PreferenceGuideChat";
+import { TripDaysStepper } from "@/components/preference/TripDaysStepper";
 import { t } from "@/i18n";
 import {
   applyPreferenceToForm,
   changedFormKeys,
   durationLabelKey,
   toPreference,
+  TRIP_DAYS_DEFAULT,
   type PreferenceFormState,
   type ThemeTag,
   type WalkTag,
 } from "@/lib/preference";
+import { PORT_OPTIONS, portLabel } from "@/lib/ports";
 import { useWalk } from "@/state/WalkContext";
 import type { Preference } from "@/types";
 
@@ -66,10 +69,13 @@ export function PreferencePage() {
   const navigate = useNavigate();
   const { language, saveMatch } = useWalk();
   const [duration, setDuration] = useState<PreferenceFormState["duration"]>("half");
+  const [tripDays, setTripDays] = useState(TRIP_DAYS_DEFAULT);
   const [interests, setInterests] = useState<string[]>([]);
   const [themes, setThemes] = useState<ThemeTag[]>([]);
   const [companion, setCompanion] = useState<PreferenceFormState["companion"]>("solo");
   const [walkTags, setWalkTags] = useState<WalkTag[]>([]);
+  const [entryPort, setEntryPort] = useState<string | null>(null);
+  const [exitPort, setExitPort] = useState<string | null>(null);
   const [customNote, setCustomNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,25 +84,44 @@ export function PreferencePage() {
   const adjustersRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<PreferenceFormState>({
     duration: "half",
+    tripDays: TRIP_DAYS_DEFAULT,
     interests: [],
     themes: [],
     companion: "solo",
     walkTags: [],
     customNote: "",
     language,
+    entryPort: null,
+    exitPort: null,
+    travelDate: null,
   });
 
   useEffect(() => {
     formRef.current = {
       duration,
+      tripDays,
       interests,
       themes,
       companion,
       walkTags,
       customNote,
       language,
+      entryPort,
+      exitPort,
+      travelDate: formRef.current.travelDate,
     };
-  }, [duration, interests, themes, companion, walkTags, customNote, language]);
+  }, [
+    duration,
+    tripDays,
+    interests,
+    themes,
+    companion,
+    walkTags,
+    customNote,
+    language,
+    entryPort,
+    exitPort,
+  ]);
 
   useEffect(() => {
     if (flash.size === 0) return;
@@ -109,10 +134,13 @@ export function PreferencePage() {
     // 展开时强制用累计回填结果刷一遍，避免对话阶段的 setState 与首屏不同步
     const snapshot = formRef.current;
     setDuration(snapshot.duration);
+    setTripDays(snapshot.tripDays);
     setInterests([...snapshot.interests]);
     setThemes([...snapshot.themes]);
     setCompanion(snapshot.companion);
     setWalkTags([...snapshot.walkTags]);
+    setEntryPort(snapshot.entryPort);
+    setExitPort(snapshot.exitPort);
     adjustersRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [showAdjusters]);
 
@@ -122,6 +150,9 @@ export function PreferencePage() {
     ...formRef.current,
     customNote,
     language,
+    // Prefer ref (updated synchronously on chip click) so generate never drops ports.
+    entryPort: formRef.current.entryPort ?? entryPort,
+    exitPort: formRef.current.exitPort ?? exitPort,
   });
 
   const applyFromChat = (pref: Preference) => {
@@ -132,10 +163,13 @@ export function PreferencePage() {
     const keys = changedFormKeys(before, next);
     if (keys.length) setFlash(new Set(keys));
     setDuration(next.duration);
+    setTripDays(next.tripDays);
     setInterests(next.interests);
     setThemes(next.themes);
     setCompanion(next.companion);
     setWalkTags(next.walkTags);
+    setEntryPort(next.entryPort);
+    setExitPort(next.exitPort);
   };
 
   const flashClass = (key: string, active: boolean) =>
@@ -149,6 +183,11 @@ export function PreferencePage() {
   const selectDuration = (id: PreferenceFormState["duration"]) => {
     formRef.current = { ...formRef.current, duration: id };
     setDuration(id);
+  };
+
+  const selectTripDays = (n: number) => {
+    formRef.current = { ...formRef.current, tripDays: n };
+    setTripDays(n);
   };
 
   const selectCompanion = (id: PreferenceFormState["companion"]) => {
@@ -201,6 +240,18 @@ export function PreferencePage() {
           }
           if (parsed.preference.duration) {
             preference.duration = parsed.preference.duration;
+          }
+          if (typeof parsed.preference.trip_days === "number") {
+            preference.trip_days = parsed.preference.trip_days;
+          }
+          if (parsed.preference.entry_port) {
+            preference.entry_port = parsed.preference.entry_port;
+          }
+          if (parsed.preference.exit_port) {
+            preference.exit_port = parsed.preference.exit_port;
+          }
+          if (parsed.preference.travel_date) {
+            preference.travel_date = parsed.preference.travel_date;
           }
         } catch {
           // chips still work
@@ -339,6 +390,75 @@ export function PreferencePage() {
                   );
                 })}
               </div>
+              {duration === "multi" ? (
+                <TripDaysStepper
+                  language={language}
+                  value={tripDays}
+                  disabled={loading}
+                  highlighted={flash.has("tripDays")}
+                  onChange={selectTripDays}
+                />
+              ) : null}
+            </Section>
+
+            <Section title={t(language, "portsTitle")} caption={t(language, "portsCaption")}>
+              <div className="space-y-4">
+                <div>
+                  <p className="mb-2 text-xs font-medium text-ink">{t(language, "entryPortLabel")}</p>
+                  <div className="flex flex-wrap gap-2.5">
+                    {PORT_OPTIONS.map((port) => {
+                      const active = entryPort === port.poiId;
+                      return (
+                        <button
+                          key={`entry-${port.poiId}`}
+                          type="button"
+                          disabled={loading}
+                          onClick={() => {
+                            const next = active ? null : port.poiId;
+                            formRef.current = { ...formRef.current, entryPort: next };
+                            setEntryPort(next);
+                          }}
+                          className={`rounded-full border px-4 py-2 text-sm transition ${flashClass(
+                            `entryPort:${port.poiId}`,
+                            active,
+                          )}`}
+                        >
+                          {portLabel(port.poiId, language)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <p className="mb-2 text-xs font-medium text-ink">{t(language, "exitPortLabel")}</p>
+                  <div className="flex flex-wrap gap-2.5">
+                    {PORT_OPTIONS.map((port) => {
+                      const active = exitPort === port.poiId;
+                      return (
+                        <button
+                          key={`exit-${port.poiId}`}
+                          type="button"
+                          disabled={loading}
+                          onClick={() => {
+                            const next = active ? null : port.poiId;
+                            formRef.current = { ...formRef.current, exitPort: next };
+                            setExitPort(next);
+                          }}
+                          className={`rounded-full border px-4 py-2 text-sm transition ${flashClass(
+                            `exitPort:${port.poiId}`,
+                            active,
+                          )}`}
+                        >
+                          {portLabel(port.poiId, language)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                {!entryPort || !exitPort ? (
+                  <p className="text-xs text-ink-soft">{t(language, "portsOptionalHint")}</p>
+                ) : null}
+              </div>
             </Section>
 
             <Section title={t(language, "themesTitle")} caption={t(language, "themesCaption")}>
@@ -469,6 +589,9 @@ export function PreferencePage() {
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
             <div className="hidden text-xs text-ink-soft sm:block">
               {t(language, "selectedSummary")} · {t(language, durationLabelKey(duration))}
+              {duration === "multi"
+                ? ` · ${t(language, "tripDaysPlay").replace("{n}", String(tripDays))}`
+                : null}
               <span className="mx-2 text-line">·</span>
               {interests.length} {t(language, "interestsCount")}
             </div>

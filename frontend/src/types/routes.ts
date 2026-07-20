@@ -25,6 +25,8 @@ export interface WalkSegment {
   walk_min: number;
   polyline: string;
   bus_lines?: string[];
+  bus_from_stop?: string | null;
+  bus_to_stop?: string | null;
   modes?: TransitMode[];
 }
 

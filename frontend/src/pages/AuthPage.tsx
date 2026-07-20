@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/state/AuthContext";
 import type { LanguageCode } from "@/types";
 
@@ -7,12 +7,20 @@ type Mode = "login" | "register";
 
 export function AuthPage() {
   const navigate = useNavigate();
-  const { login, register, error, clearError } = useAuth();
-  const [mode, setMode] = useState<Mode>("login");
+  const [searchParams] = useSearchParams();
+  const { login, register, error, clearError, isAuthenticated, isRestoring } = useAuth();
+  const initialMode = searchParams.get("mode") === "register" ? "register" : "login";
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [userId, setUserId] = useState("");
   const [name, setName] = useState("");
   const [language, setLanguage] = useState<LanguageCode>("zh-CN");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!isRestoring && isAuthenticated) {
+      navigate("/preferences", { replace: true });
+    }
+  }, [isAuthenticated, isRestoring, navigate]);
 
   const changeMode = (nextMode: Mode) => {
     setMode(nextMode);
@@ -43,10 +51,21 @@ export function AuthPage() {
     }
   };
 
+  if (isRestoring) {
+    return (
+      <main className="flex min-h-dvh items-center justify-center bg-paper px-5 py-12">
+        <p className="text-sm text-ink-soft">正在恢复登录状态…</p>
+      </main>
+    );
+  }
+
   return (
     <main className="flex min-h-dvh items-center justify-center bg-paper px-5 py-12">
       <section className="w-full max-w-md rounded-3xl border border-line bg-card p-6 shadow-[var(--shadow-soft)] sm:p-8">
-        <h1 className="font-display text-3xl text-ink">
+        <Link to="/" className="text-sm text-ink-soft transition hover:text-ink">
+          ← 返回首页
+        </Link>
+        <h1 className="mt-4 font-display text-3xl text-ink">
           {mode === "login" ? "登录" : "注册"}
         </h1>
         <p className="mt-2 text-sm text-ink-soft">

@@ -2,12 +2,16 @@
 
 用于 /guide/ask 在本地 POI 资料不够时补充公开百科信息。
 失败一律返回空列表，由调用方降级，不抛穿。
+
+延迟约束：单请求短超时 + 总预算（默认 2.5s）+ 查询并行，避免多查询串行拖垮 UX。
 """
 
 from __future__ import annotations
 
 import logging
 import re
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 from urllib.parse import quote
 
@@ -16,7 +20,11 @@ import httpx
 logger = logging.getLogger("macau_storywalk.web_search")
 
 _UA = "MacauStoryWalk/0.1 (competition; guide-ask; contact: local)"
-_TIMEOUT = 8.0
+# 单次 HTTP：短超时，宁可 miss 也不拖垮 ask
+_TIMEOUT = 2.0
+# 整次 search_web_multi 墙钟预算（秒）
+_DEFAULT_BUDGET_S = 2.5
+_MAX_WORKERS = 4
 
 
 def _wiki_lang(language: str) -> str:
@@ -27,13 +35,15 @@ def _wiki_lang(language: str) -> str:
     return "en"
 
 
-def _get_json(url: str) -> Any | None:
+def _get_json(url: str, *, timeout: float = _TIMEOUT) -> Any | None:
     try:
+        # trust_env=False：避免继承坏掉的 HTTP(S)_PROXY 导致检索静默全失败
         resp = httpx.get(
             url,
             headers={"User-Agent": _UA, "Accept": "application/json"},
-            timeout=_TIMEOUT,
+            timeout=timeout,
             follow_redirects=True,
+            trust_env=False,
         )
         if resp.status_code != 200:
             return None
@@ -43,7 +53,18 @@ def _get_json(url: str) -> Any | None:
         return None
 
 
-def _wikipedia_hits(query: str, *, language: str, k: int) -> list[dict[str, str]]:
+def _strip_html(raw: str) -> str:
+    return re.sub(r"<[^>]+>", "", raw or "").strip()
+
+
+def _wikipedia_hits(
+    query: str,
+    *,
+    language: str,
+    k: int,
+    fetch_summary: bool = True,
+) -> list[dict[str, str]]:
+    """维基检索。默认只取首条摘要（1 次额外 HTTP）；其余用 search snippet，省延迟。"""
     lang = _wiki_lang(language)
     search_url = (
         f"https://{lang}.wikipedia.org/w/api.php"
@@ -52,29 +73,33 @@ def _wikipedia_hits(query: str, *, language: str, k: int) -> list[dict[str, str]
     )
     data = _get_json(search_url)
     if not isinstance(data, dict):
-        # 简中失败时试英文
         if lang != "en":
-            return _wikipedia_hits(query, language="en", k=k)
+            return _wikipedia_hits(query, language="en", k=k, fetch_summary=fetch_summary)
         return []
 
+    rows = list((data.get("query") or {}).get("search") or [])
     hits: list[dict[str, str]] = []
-    for row in (data.get("query") or {}).get("search") or []:
+    for i, row in enumerate(rows):
         title = str(row.get("title") or "").strip()
         if not title:
             continue
-        summary_url = (
-            f"https://{lang}.wikipedia.org/api/rest_v1/page/summary/{quote(title, safe='')}"
-        )
-        summary = _get_json(summary_url)
-        extract = ""
         page_url = f"https://{lang}.wikipedia.org/wiki/{quote(title.replace(' ', '_'))}"
-        if isinstance(summary, dict):
-            extract = str(summary.get("extract") or "").strip()
-            page_url = str(summary.get("content_urls", {}).get("desktop", {}).get("page") or page_url)
-        if not extract:
-            # fallback: strip HTML from search snippet
-            raw = str(row.get("snippet") or "")
-            extract = re.sub(r"<[^>]+>", "", raw).strip()
+        extract = _strip_html(str(row.get("snippet") or ""))
+        # 仅首条拉完整 summary；其余用 search snippet，避免 k 次串行 HTTP
+        if fetch_summary and i == 0:
+            summary_url = (
+                f"https://{lang}.wikipedia.org/api/rest_v1/page/summary/"
+                f"{quote(title, safe='')}"
+            )
+            summary = _get_json(summary_url)
+            if isinstance(summary, dict):
+                extract = str(summary.get("extract") or extract).strip()
+                page_url = str(
+                    summary.get("content_urls", {})
+                    .get("desktop", {})
+                    .get("page")
+                    or page_url
+                )
         if extract:
             hits.append(
                 {
@@ -107,7 +132,7 @@ def _duckduckgo_hit(query: str) -> list[dict[str, str]]:
                 "source": "duckduckgo",
             }
         )
-    for topic in (data.get("RelatedTopics") or [])[:3]:
+    for topic in (data.get("RelatedTopics") or [])[:2]:
         if not isinstance(topic, dict):
             continue
         text = str(topic.get("Text") or "").strip()
@@ -125,14 +150,28 @@ def _duckduckgo_hit(query: str) -> list[dict[str, str]]:
 
 
 def search_web(query: str, *, language: str = "zh-CN", k: int = 3) -> list[dict[str, str]]:
-    """返回 [{title, snippet, url, source}, ...]。"""
+    """返回 [{title, snippet, url, source}, ...]。Wiki + DDG 并行。"""
     q = (query or "").strip()
     if not q:
         return []
     results: list[dict[str, str]] = []
     seen: set[str] = set()
 
-    for hit in _wikipedia_hits(q, language=language, k=k) + _duckduckgo_hit(q):
+    wiki_hits: list[dict[str, str]] = []
+    ddg_hits: list[dict[str, str]] = []
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        fut_wiki = pool.submit(_wikipedia_hits, q, language=language, k=k)
+        fut_ddg = pool.submit(_duckduckgo_hit, q)
+        try:
+            wiki_hits = fut_wiki.result()
+        except Exception as exc:  # noqa: BLE001
+            logger.info("wikipedia 并行失败：%s", exc)
+        try:
+            ddg_hits = fut_ddg.result()
+        except Exception as exc:  # noqa: BLE001
+            logger.info("duckduckgo 并行失败：%s", exc)
+
+    for hit in wiki_hits + ddg_hits:
         key = hit.get("url") or hit.get("title") or ""
         if not key or key in seen:
             continue
@@ -140,6 +179,92 @@ def search_web(query: str, *, language: str = "zh-CN", k: int = 3) -> list[dict[
         results.append(hit)
         if len(results) >= k:
             break
+    return results
+
+
+def _merge_hits(
+    hits: list[dict[str, str]],
+    *,
+    seen: set[str],
+    results: list[dict[str, str]],
+    k: int,
+) -> bool:
+    """合并命中；满 k 返回 True。"""
+    for hit in hits:
+        key = hit.get("url") or hit.get("title") or ""
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        results.append(hit)
+        if len(results) >= k:
+            return True
+    return False
+
+
+def search_web_multi(
+    queries: list[str],
+    *,
+    language: str = "zh-CN",
+    k: int = 3,
+    max_queries: int = 2,
+    budget_s: float = _DEFAULT_BUDGET_S,
+) -> list[dict[str, str]]:
+    """多查询并行检索并去重；受总预算约束，超时即返回已有结果。
+
+    - 最多 ``max_queries`` 条（默认 2）
+    - 墙钟 ``budget_s``（默认 2.5s）用尽即停
+    - 中文查询仅在首轮无结果时再试英文维基（避免每条双倍串行）
+    """
+    cleaned: list[str] = []
+    seen_q: set[str] = set()
+    for raw in queries:
+        q = (raw or "").strip()
+        if not q or q in seen_q:
+            continue
+        seen_q.add(q)
+        cleaned.append(q)
+        if len(cleaned) >= max_queries:
+            break
+    if not cleaned:
+        return []
+
+    t0 = time.perf_counter()
+    results: list[dict[str, str]] = []
+    seen: set[str] = set()
+
+    def _one(q: str, lang: str) -> list[dict[str, str]]:
+        remaining = budget_s - (time.perf_counter() - t0)
+        if remaining <= 0.05:
+            return []
+        return search_web(q, language=lang, k=k)
+
+    with ThreadPoolExecutor(max_workers=min(_MAX_WORKERS, len(cleaned))) as pool:
+        futs = {pool.submit(_one, q, language): q for q in cleaned}
+        try:
+            for fut in as_completed(futs, timeout=max(0.05, budget_s)):
+                if time.perf_counter() - t0 >= budget_s:
+                    break
+                try:
+                    hits = fut.result()
+                except Exception as exc:  # noqa: BLE001
+                    logger.info("search_web_multi 查询失败：%s", exc)
+                    continue
+                if _merge_hits(hits, seen=seen, results=results, k=k):
+                    return results
+        except TimeoutError:
+            logger.info("search_web_multi 预算用尽（%.1fs）", budget_s)
+
+    # 首轮无结果且中文：预算内再试英文（单查询，失败快）
+    if (
+        not results
+        and language.startswith("zh")
+        and time.perf_counter() - t0 < budget_s
+    ):
+        remaining = budget_s - (time.perf_counter() - t0)
+        if remaining > 0.2:
+            hits = search_web(cleaned[0], language="en", k=k)
+            _merge_hits(hits, seen=seen, results=results, k=k)
+
     return results
 
 
