@@ -12,4 +12,6 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Runtime traces (local-only)
 harness/results/traces/traces.jsonl
