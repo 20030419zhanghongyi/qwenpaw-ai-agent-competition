@@ -3,14 +3,19 @@
 运行：  pytest -q
 """
 
-from app.db.data import load_weights
-from app.features.routes.candidate_selector import build_candidate_pool, select_candidates_for_node
-from app.features.routes.route_constructor import construct_route
-from app.features.routes.explain import build_explanation
-from app.features.routes.repository import get_template, list_templates
-from app.features.routes.poi_metadata import get_poi_metadata
 from fastapi.testclient import TestClient
 
+from app.agents.route_agent import RouteAdjustment
+from app.db.data import load_weights
+from app.features.routes import api as routes_api
+from app.features.routes.candidate_selector import (
+    build_candidate_pool,
+    select_candidates_for_node,
+)
+from app.features.routes.explain import build_explanation
+from app.features.routes.poi_metadata import get_poi_metadata
+from app.features.routes.repository import get_template, list_templates
+from app.features.routes.route_constructor import construct_route
 from app.main import app
 
 client = TestClient(app)
@@ -360,6 +365,58 @@ def test_route_adjust_supports_food_point_suggestion():
     )
 
 
+def test_route_adjust_applies_agent_action_fields(monkeypatch):
+    monkeypatch.setattr(routes_api.settings, "route_agent_enabled", True)
+    monkeypatch.setattr(
+        routes_api.route_agent,
+        "parse_route_adjustment",
+        lambda *_args: RouteAdjustment(add_nodes=["food"]),
+    )
+    payload = {
+        "route_id": "culture_halfday",
+        "instruction": "安排一个补给点",
+        "preference": {
+            "duration": "half-day",
+            "interests": ["culture"],
+            "travel_type": ["solo"],
+            "physical": [],
+            "language": "zh-CN",
+        },
+    }
+
+    response = client.post("/api/v1/routes/adjust", json=payload)
+
+    assert response.status_code == 200
+    assert response.json()["source"] == "agent"
+    assert "food" in response.json()["preference_after"]["interests"]
+
+
+def test_route_adjust_falls_back_when_agent_action_is_empty(monkeypatch):
+    monkeypatch.setattr(routes_api.settings, "route_agent_enabled", True)
+    monkeypatch.setattr(
+        routes_api.route_agent,
+        "parse_route_adjustment",
+        lambda *_args: RouteAdjustment(notes="未识别到可执行的偏好调整"),
+    )
+    payload = {
+        "route_id": "culture_halfday",
+        "instruction": "想吃点东西",
+        "preference": {
+            "duration": "half-day",
+            "interests": ["culture"],
+            "travel_type": ["solo"],
+            "physical": [],
+            "language": "zh-CN",
+        },
+    }
+
+    response = client.post("/api/v1/routes/adjust", json=payload)
+
+    assert response.status_code == 200
+    assert response.json()["source"] == "rules"
+    assert "food" in response.json()["preference_after"]["interests"]
+
+
 def test_construct_route_no_backtrack_actually_reorders_nodes():
     """no-backtrack 约束应真正按街区连续性重排节点顺序，而不只是附加一条说明文字。"""
     template = get_template("heritage_fullday")
@@ -371,7 +428,10 @@ def test_construct_route_no_backtrack_actually_reorders_nodes():
         physical = ["no-backtrack"]
         interests = ["history"]
 
-    original_order = [node["poi_id"] for node in sorted(template["nodes"], key=lambda i: i["order"])]
+    original_order = [
+        node["poi_id"]
+        for node in sorted(template["nodes"], key=lambda item: item["order"])
+    ]
     route, constraints = construct_route(template, Pref(), candidate_pois=pool)
     new_order = [node["poi_id"] for node in sorted(route["nodes"], key=lambda i: i["order"])]
     assert new_order != original_order

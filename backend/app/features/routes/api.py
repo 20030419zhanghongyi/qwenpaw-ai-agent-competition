@@ -14,7 +14,13 @@ from app.models.user import Preference
 from app.observability.trace import record_trace
 
 from .adjuster import RouteAdjustRequest, adjust_route
-from .models import RouteAdjustResponse, RouteMatchResponse, RouteTemplateResponse, WalkPathRequest, WalkPathResponse
+from .models import (
+    RouteAdjustResponse,
+    RouteMatchResponse,
+    RouteTemplateResponse,
+    WalkPathRequest,
+    WalkPathResponse,
+)
 from .service import route_service
 from .walking import WalkingPathError, build_walk_path
 
@@ -77,11 +83,14 @@ def adjust(request: RouteAdjustRequest) -> dict:
         adjustment = route_agent.parse_route_adjustment(
             request.instruction, request.preference, request.route_id
         )
-        if adjustment is not None:
-            pref_override = route_agent.apply_adjustment_to_preference(request.preference, adjustment)
+        if adjustment is not None and route_agent.is_actionable(adjustment):
+            pref_override = route_agent.apply_adjustment_to_preference(
+                request.preference,
+                adjustment,
+            )
             source = "agent"
         else:
-            logger.info("route agent 不可用或解析失败，降级规则版")
+            logger.info("route agent 不可用、解析失败或无可执行动作，降级规则版")
 
     try:
         result = adjust_route(request, preference_override=pref_override)

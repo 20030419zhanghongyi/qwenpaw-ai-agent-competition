@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import uuid
 from typing import Any
 
 from pydantic import ValidationError
@@ -105,7 +106,12 @@ def parse_intent(text: str, *, client: QwenPawClient | None = None) -> Preferenc
     """调 intent agent 解析需求。任一环节失败返回 None（→ 调用方降级规则版）。"""
     client = client or QwenPawClient()
     try:
-        reply = client.ask(INTENT_AGENT_ID, _build_prompt(text), session_name="harness-intent")
+        reply = client.ask(
+            INTENT_AGENT_ID,
+            _build_prompt(text),
+            session_id=f"harness-intent-{uuid.uuid4().hex}",
+            session_name="harness-intent",
+        )
     except QwenPawError as exc:
         logger.info("intent agent 调用失败，降级规则版：%s", exc)
         return None
