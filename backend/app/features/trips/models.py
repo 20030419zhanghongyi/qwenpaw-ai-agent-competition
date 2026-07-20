@@ -33,6 +33,13 @@ class TripProgress(BaseModel):
 class TripCreateRequest(BaseModel):
     user_id: str = Field(min_length=1)
     route_id: str = Field(min_length=1)
+    stop_poi_ids: list[str] | None = Field(
+        default=None,
+        description=(
+            "Optional ordered stops from the constructed / adjusted walk; "
+            "overrides template nodes when provided."
+        ),
+    )
 
 
 class CheckinRequest(BaseModel):

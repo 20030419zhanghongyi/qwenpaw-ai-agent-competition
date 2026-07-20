@@ -468,34 +468,34 @@
       ],
       "nodes": [
         {
-          "poi_id": "poi_0027",
+          "poi_id": "poi_0109",
           "order": 1,
+          "suggested_stay_min": 40,
+          "note": "新濠天地摩珀斯酒店外骨骼建筑；可用免费穿梭巴士衔接",
+          "replaceable_with": [
+            "poi_0110"
+          ]
+        },
+        {
+          "poi_id": "poi_0027",
+          "order": 2,
           "suggested_stay_min": 45,
           "note": "永利皇宫外立面与度假区入口景观",
           "replaceable_with": []
         },
         {
           "poi_id": "poi_0230",
-          "order": 2,
+          "order": 3,
           "suggested_stay_min": 35,
           "note": "环湖观光缆车视角，留意排队与运营时段",
           "replaceable_with": []
         },
         {
           "poi_id": "poi_0231",
-          "order": 3,
+          "order": 4,
           "suggested_stay_min": 30,
           "note": "表演湖音乐喷泉，演出时刻以现场公告为准",
           "replaceable_with": []
-        },
-        {
-          "poi_id": "poi_0109",
-          "order": 4,
-          "suggested_stay_min": 40,
-          "note": "新濠天地摩珀斯酒店外骨骼建筑；可用免费穿梭巴士衔接",
-          "replaceable_with": [
-            "poi_0110"
-          ]
         },
         {
           "poi_id": "poi_0110",
@@ -505,7 +505,7 @@
           "replaceable_with": []
         }
       ],
-      "description": "路氹综合度假区景观半日模板：永利皇宫（缆车/表演湖）→新濠天地（摩珀斯）→新濠影汇（影汇之星）。侧重建筑外观、公共景观与灯光，不引导博彩消费。节点间以室内连廊或度假区免费穿梭巴士衔接；步行约2.2公里，体力要求低。演出、缆车与开放时间以现场为准。"
+      "description": "路氹综合度假区景观半日模板：新濠天地（摩珀斯）→永利皇宫（缆车/表演湖）→新濠影汇（影汇之星）。沿金光大道中→东走廊再落南段，减少西向折返；侧重建筑外观、公共景观与灯光，不引导博彩消费。节点间以室内连廊或度假区免费穿梭巴士衔接；步行约2.2公里，体力要求低。演出、缆车与开放时间以现场为准。"
     }
   ]
 }

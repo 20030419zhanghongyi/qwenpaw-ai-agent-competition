@@ -38,12 +38,17 @@ def _raise_http_error(exc: Exception) -> None:
     response_model=TripWithProgressResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a trip",
-    description="Create a persisted trip from a database-backed route template.",
+    description=(
+        "Create a persisted trip from a route template. "
+        "Optional stop_poi_ids overrides template nodes with the constructed / adjusted walk order."
+    ),
     responses={**NOT_FOUND_RESPONSE, **UNPROCESSABLE_RESPONSE},
 )
 def create_trip(request: TripCreateRequest) -> TripWithProgressResponse:
     try:
-        return trip_service.create_trip(request.user_id, request.route_id)
+        return trip_service.create_trip(
+            request.user_id, request.route_id, request.stop_poi_ids
+        )
     except (RouteNotFoundError, InvalidRouteError) as exc:
         _raise_http_error(exc)
 

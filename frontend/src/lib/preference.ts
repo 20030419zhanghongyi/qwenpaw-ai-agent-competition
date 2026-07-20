@@ -17,25 +17,6 @@ const DURATION_FROM_API: Record<string, PreferenceFormState["duration"] | undefi
   custom: undefined,
 };
 
-/** UI interest ids → backend interest tags */
-const INTEREST_MAP: Record<string, string> = {
-  history: "history",
-  arch: "architecture",
-  food: "food",
-  photo: "photo",
-  culture: "culture",
-  relax: "relax",
-};
-
-const INTEREST_FROM_API: Record<string, string> = {
-  history: "history",
-  architecture: "arch",
-  food: "food",
-  photo: "photo",
-  culture: "culture",
-  relax: "relax",
-};
-
 /** Walking UI tags that map directly to backend Preference.physical */
 const PHYSICAL_BACKEND_TAGS = new Set(["less-walk", "no-backtrack"]);
 
@@ -69,14 +50,56 @@ const THEME_TAGS = new Set<ThemeTag>([
   "cotai",
 ]);
 
+/** Multi-day day count (matches backend TRIP_DAYS_*) */
+export const TRIP_DAYS_MIN = 2;
+export const TRIP_DAYS_MAX = 5;
+export const TRIP_DAYS_DEFAULT = 3;
+
+export function clampTripDays(n: number): number {
+  if (!Number.isFinite(n)) return TRIP_DAYS_DEFAULT;
+  return Math.min(TRIP_DAYS_MAX, Math.max(TRIP_DAYS_MIN, Math.round(n)));
+}
+
+/** UI interest ids → backend interest tags */
+const INTEREST_MAP: Record<string, string> = {
+  history: "history",
+  arch: "architecture",
+  food: "food",
+  photo: "photo",
+  culture: "culture",
+  relax: "relax",
+};
+
+const INTEREST_FROM_API: Record<string, string> = {
+  history: "history",
+  architecture: "arch",
+  food: "food",
+  photo: "photo",
+  culture: "culture",
+  relax: "relax",
+};
+
 export interface PreferenceFormState {
   duration: "half" | "full" | "night" | "multi";
+  /** Days for multi-day plans; ignored unless duration === "multi" */
+  tripDays: number;
   interests: string[];
   themes: ThemeTag[];
   companion: "solo" | "friends" | "family";
   walkTags: WalkTag[];
   customNote: string;
   language: LanguageCode;
+  entryPort: string | null;
+  exitPort: string | null;
+  travelDate: string | null;
+}
+
+function todayIso(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 export function toPreference(form: PreferenceFormState): Preference {
@@ -91,14 +114,19 @@ export function toPreference(form: PreferenceFormState): Preference {
   }
   if (physical.length === 0) physical.push("normal");
 
+  const duration = DURATION_MAP[form.duration] ?? "half-day";
   return {
-    duration: DURATION_MAP[form.duration] ?? "half-day",
+    duration,
     party_size: form.companion === "solo" ? 1 : form.companion === "friends" ? 2 : 3,
     travel_type: [form.companion],
     interests: form.interests.map((id) => INTEREST_MAP[id] ?? id),
     themes: [...form.themes],
     physical,
     language: form.language,
+    entry_port: form.entryPort,
+    exit_port: form.exitPort,
+    travel_date: form.travelDate || todayIso(),
+    trip_days: duration === "multi-day" ? clampTripDays(form.tripDays) : null,
   };
 }
 
@@ -141,16 +169,41 @@ export function applyPreferenceToForm(
   }
 
   const mappedDuration = DURATION_FROM_API[pref.duration];
+  let tripDays = current.tripDays;
+  if (typeof pref.trip_days === "number") {
+    tripDays = clampTripDays(pref.trip_days);
+  } else if (mappedDuration === "multi" && current.duration !== "multi") {
+    tripDays = TRIP_DAYS_DEFAULT;
+  }
 
   return {
     ...current,
     duration: mappedDuration ?? current.duration,
+    tripDays,
     interests: [...interests],
     themes: [...themes],
     companion,
     walkTags: [...walkTags],
     language: (pref.language as LanguageCode) || current.language,
+    entryPort: pref.entry_port ?? current.entryPort,
+    exitPort: pref.exit_port ?? current.exitPort,
+    travelDate: pref.travel_date ?? current.travelDate,
   };
+}
+
+function inferTripDaysFromText(raw: string, t: string): number | null {
+  const digit = t.match(/([2-5])\s*-?\s*(?:天|日|days?|dias?)/i);
+  if (digit) return clampTripDays(Number(digit[1]));
+  const wordPairs: Array<[RegExp, number]> = [
+    [/两天|兩天|两日|兩日|两晚|兩晚|two\s*days|dois\s*dias/, 2],
+    [/三天|三日|三晚|three\s*days|tr[eê]s\s*dias/, 3],
+    [/四天|四日|four\s*days|quatro\s*dias/, 4],
+    [/五天|五日|five\s*days|cinco\s*dias/, 5],
+  ];
+  for (const [re, days] of wordPairs) {
+    if (re.test(t) || re.test(raw)) return days;
+  }
+  return null;
 }
 
 /** 从用户一句话即时推断 Preference（聊天→选项实时联动）。 */
@@ -170,7 +223,11 @@ export function inferPreferenceFromText(
     language,
   };
 
-  if (
+  const tripDays = inferTripDaysFromText(raw, t);
+  if (tripDays != null) {
+    pref.duration = "multi-day";
+    pref.trip_days = tripDays;
+  } else if (
     /多日|几天|幾天|两天|兩天|三天|住两|住兩|待几天|待幾天|玩几天|玩幾天|2\s*天|3\s*天|两晚|兩晚|三晚|multi[\s-]*day|several\s*days|a\s*few\s*days|long\s*weekend|v[aá]rios\s*dias|dois\s*dias/.test(
       t,
     ) ||
@@ -247,6 +304,25 @@ export function inferPreferenceFromText(
     if (!pref.physical.includes("less-walk")) pref.physical.push("less-walk");
   }
 
+  const portHits: string[] = [];
+  if (/关闸|拱北|gongbei|portas\s*do\s*cerco/.test(t)) portHits.push("poi_port_guanja");
+  if (/青茂|qingmao/.test(t)) portHits.push("poi_port_qingmao");
+  if (/横琴|hengqin/.test(t)) portHits.push("poi_port_hengqin");
+  if (/港珠澳|大桥口岸|hzmb/.test(t)) portHits.push("poi_port_hzmb");
+  if (/外港|outer\s*harbour|outer\s*harbor/.test(t)) portHits.push("poi_port_outer_harbor");
+  if (/内港|inner\s*harbour|inner\s*harbor|湾仔口岸/.test(t)) portHits.push("poi_0071");
+  if (portHits.length === 1) {
+    const only = portHits[0];
+    if (/出|离|出境|leave|exit|sair/.test(t) && !/进|入|入境|entry|entrar/.test(t)) {
+      pref.exit_port = only;
+    } else {
+      pref.entry_port = only;
+    }
+  } else if (portHits.length >= 2) {
+    pref.entry_port = portHits[0];
+    pref.exit_port = portHits[portHits.length - 1];
+  }
+
   return pref;
 }
 
@@ -257,6 +333,7 @@ export function changedFormKeys(
 ): string[] {
   const keys: string[] = [];
   if (before.duration !== after.duration) keys.push(`duration:${after.duration}`);
+  if (before.tripDays !== after.tripDays) keys.push("tripDays");
   if (before.companion !== after.companion) keys.push(`companion:${after.companion}`);
   for (const id of after.interests) {
     if (!before.interests.includes(id)) keys.push(`interest:${id}`);
@@ -266,6 +343,12 @@ export function changedFormKeys(
   }
   for (const id of after.walkTags) {
     if (!before.walkTags.includes(id)) keys.push(`walk:${id}`);
+  }
+  if (before.entryPort !== after.entryPort && after.entryPort) {
+    keys.push(`entryPort:${after.entryPort}`);
+  }
+  if (before.exitPort !== after.exitPort && after.exitPort) {
+    keys.push(`exitPort:${after.exitPort}`);
   }
   return keys;
 }

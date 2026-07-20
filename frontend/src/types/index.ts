@@ -11,6 +11,13 @@ export interface Preference {
   themes: string[];
   physical: string[];
   language: string;
+  /** Border-crossing poi_id for entry / exit anchors */
+  entry_port?: string | null;
+  exit_port?: string | null;
+  /** YYYY-MM-DD for event / congestion estimates */
+  travel_date?: string | null;
+  /** Multi-day plan length (2–5); used as match top_k when duration is multi-day */
+  trip_days?: number | null;
 }
 
 export interface RouteNode {
@@ -19,6 +26,8 @@ export interface RouteNode {
   suggested_stay_min: number;
   note: string;
   replaceable_with: string[];
+  /** Fixed border anchors from preference */
+  anchor?: "entry" | "exit" | string;
 }
 
 export interface RouteTemplate {

@@ -1,0 +1,69 @@
+import type { LanguageCode } from "@/types";
+import type { Postcard, PostcardListResponse } from "@/types/postcards";
+
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+
+export class PostcardApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = "PostcardApiError";
+  }
+}
+
+async function parseError(response: Response): Promise<string> {
+  let detail = `${response.status} ${response.statusText}`;
+  try {
+    const body = (await response.json()) as { detail?: unknown };
+    if (typeof body.detail === "string") detail = body.detail;
+    else if (body.detail != null) detail = JSON.stringify(body.detail);
+  } catch {
+    // Keep the HTTP status text when the response is not JSON.
+  }
+  return detail;
+}
+
+/** Absolute URL for a rendered postcard SVG (usable in <img src>). */
+export function postcardImageSrc(imageUrlOrId: string): string {
+  if (imageUrlOrId.startsWith("http://") || imageUrlOrId.startsWith("https://")) {
+    return imageUrlOrId;
+  }
+  if (imageUrlOrId.startsWith("/")) {
+    return `${API_BASE}${imageUrlOrId}`;
+  }
+  return `${API_BASE}/api/v1/postcards/${encodeURIComponent(imageUrlOrId)}/image`;
+}
+
+export async function createPostcard(args: {
+  tripId: string;
+  poiId: string;
+  photo: File;
+  language: LanguageCode | string;
+}): Promise<Postcard> {
+  const form = new FormData();
+  form.append("poi_id", args.poiId);
+  form.append("language", args.language);
+  form.append("photo", args.photo);
+
+  const response = await fetch(
+    `${API_BASE}/api/v1/trips/${encodeURIComponent(args.tripId)}/postcards`,
+    { method: "POST", body: form },
+  );
+  if (!response.ok) {
+    throw new PostcardApiError(await parseError(response), response.status);
+  }
+  return response.json() as Promise<Postcard>;
+}
+
+export async function listTripPostcards(tripId: string): Promise<Postcard[]> {
+  const response = await fetch(
+    `${API_BASE}/api/v1/trips/${encodeURIComponent(tripId)}/postcards`,
+  );
+  if (!response.ok) {
+    throw new PostcardApiError(await parseError(response), response.status);
+  }
+  const body = (await response.json()) as PostcardListResponse;
+  return body.postcards ?? [];
+}

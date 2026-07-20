@@ -88,6 +88,8 @@ class WalkSegmentResponse(BaseModel):
     walk_min: int = Field(ge=0)
     polyline: str
     bus_lines: list[str] = Field(default_factory=list)
+    bus_from_stop: str | None = None
+    bus_to_stop: str | None = None
     modes: list[TransitModeResponse] = Field(default_factory=list)
 
 

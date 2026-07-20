@@ -43,8 +43,18 @@ class FakeWalkingClientWithTransit(FakeWalkingClient):
                     {
                         "bus": {
                             "buslines": [
-                                {"name": "6B路(妈阁交通枢纽--山顶医院)", "type": "普通公交线路"},
-                                {"name": "18路(妈阁--白鸽巢)", "type": "普通公交线路"},
+                                {
+                                    "name": "6B路(妈阁交通枢纽--山顶医院)",
+                                    "type": "普通公交线路",
+                                    "departure_stop": {"name": "妈阁交通枢纽"},
+                                    "arrival_stop": {"name": "亚婆井前地"},
+                                },
+                                {
+                                    "name": "18路(妈阁--白鸽巢)",
+                                    "type": "普通公交线路",
+                                    "departure_stop": {"name": "妈阁交通枢纽"},
+                                    "arrival_stop": {"name": "亚婆井前地"},
+                                },
                             ]
                         }
                     }
@@ -97,6 +107,8 @@ def test_build_walk_path_includes_amap_bus_lines():
         result = build_walk_path(IDS[:2], session, client=FakeWalkingClientWithTransit())
     segment = result["segments"][0]
     assert segment["bus_lines"] == ["6B路", "18路"]
+    assert segment["bus_from_stop"] == "妈阁交通枢纽"
+    assert segment["bus_to_stop"] == "亚婆井前地"
     assert {"kind": "walk", "label": "步行"} in segment["modes"]
     assert {"kind": "bus", "label": "6B路"} in segment["modes"]
 

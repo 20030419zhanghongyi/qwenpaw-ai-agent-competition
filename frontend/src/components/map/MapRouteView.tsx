@@ -262,7 +262,7 @@ export function MapRouteView({
   }, [copy.loadFailed, copy.missingKey, copy.noStops, copy.pathFailed, poiKey]);
 
   return (
-    <div className="absolute inset-0 bg-paper-warm">
+    <div className="map-route-view absolute inset-0 z-0 overflow-hidden bg-paper-warm [contain:paint]">
       <div ref={containerRef} className="h-full w-full" aria-label="route map" />
       {loading ? (
         <div className="pointer-events-none absolute inset-0 grid place-items-center bg-paper-warm/90">

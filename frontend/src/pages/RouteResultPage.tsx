@@ -21,9 +21,14 @@ import {
   type DisplayNode,
   type WalkLeg,
 } from "@/components/route/RouteNodeList";
+import { TripControls } from "@/components/trip/TripControls";
 import { t } from "@/i18n";
+import { resolveTripUserId } from "@/lib/guestUser";
 import { formatWalkMeta } from "@/lib/preference";
+import { ensurePreferencePortAnchors, portLabel } from "@/lib/ports";
 import { buildRouteAdjustmentDraft } from "@/lib/route-adjustment";
+import { useAuth } from "@/state/AuthContext";
+import { useTrip } from "@/state/TripContext";
 import { useWalk } from "@/state/WalkContext";
 import type { POI } from "@/types";
 import type { RouteAdjustmentDraft, RoutePoi } from "@/types/routes";
@@ -129,6 +134,9 @@ function readGuideSessionId(): string {
 export function RouteResultPage() {
   const navigate = useNavigate();
   const { session, language, setSession } = useWalk();
+  const { userId: authUserId } = useAuth();
+  const { trip, loading: tripLoading, simulateArrive } = useTrip();
+  const tripUserId = resolveTripUserId(authUserId);
   const [sheetOpen, setSheetOpen] = useState<SheetSnap>("half");
   const [sheetDragHeight, setSheetDragHeight] = useState<number | null>(null);
   const [walkLegs, setWalkLegs] = useState<WalkLeg[]>([]);
@@ -226,21 +234,36 @@ export function RouteResultPage() {
 
   const nodes = useMemo(() => {
     if (!route) return [];
-    const sorted = [...(route.nodes ?? [])].sort((a, b) => a.order - b.order);
+    // Stale matches (or prefs saved after match) may omit port anchors — merge from preference.
+    const sorted = ensurePreferencePortAnchors(route.nodes ?? [], preference, language);
     return sorted.map((node, index): DisplayNode => {
       const poi = poisById[node.poi_id];
+      const anchor =
+        node.anchor === "entry" || node.anchor === "exit"
+          ? node.anchor
+          : node.poi_id === preference?.entry_port
+            ? "entry"
+            : node.poi_id === preference?.exit_port
+              ? "exit"
+              : null;
+      const portSubtitle =
+        anchor === "entry"
+          ? t(language, "entryPortSubtitle")
+          : anchor === "exit"
+            ? t(language, "exitPortSubtitle")
+            : null;
       return {
         poiId: node.poi_id,
         order: node.order,
-        name: poi?.poi_name ?? node.poi_id,
-        subtitle: poi?.alias ?? poi?.category,
+        name: poi?.poi_name || portLabel(node.poi_id, language) || node.poi_id,
+        subtitle: portSubtitle ?? poi?.alias ?? poi?.category,
         note: node.note || poi?.address || t(language, "nodeNoteFallback"),
         stayMin: node.suggested_stay_min,
         state:
           index === currentIndex ? "current" : index === currentIndex + 1 ? "next" : "upcoming",
       };
     });
-  }, [route, poisById, language, currentIndex]);
+  }, [route, poisById, language, currentIndex, preference]);
 
   useEffect(() => {
     nodesRef.current = nodes;
@@ -265,6 +288,8 @@ export function RouteResultPage() {
         walkM: seg.walk_m,
         walkMin: seg.walk_min,
         busLines: seg.bus_lines ?? [],
+        busFromStop: seg.bus_from_stop ?? null,
+        busToStop: seg.bus_to_stop ?? null,
       }));
       if (legs.length === expectedLegs) setWalkLegs(legs);
     };
@@ -559,6 +584,26 @@ export function RouteResultPage() {
     }
   }
 
+  async function simulateArriveCurrentStop() {
+    if (!currentNode) return;
+    setError(null);
+    setStatusNote(t(language, "tripSimulateArriveBusy"));
+    try {
+      await simulateArrive(tripUserId, route.id, currentNode.poiId, nodePoiIds);
+      setStatusNote(t(language, "tripSimulateArriveDone"));
+    } catch (err) {
+      setStatusNote(null);
+      const raw = err instanceof Error ? err.message : "";
+      setError(
+        raw === "TRIP_BACKEND_STALE"
+          ? t(language, "tripBackendStale")
+          : raw === "TRIP_POI_MISMATCH" || /not part of trip/i.test(raw)
+            ? t(language, "tripPoiMismatch")
+            : raw || t(language, "tripSimulateArriveError"),
+      );
+    }
+  }
+
   function handleStartGuide() {
     setGuiding(true);
     setTriggerOpen(false);
@@ -615,6 +660,21 @@ export function RouteResultPage() {
       ? t(language, "triggerAskSimulated")
       : triggerPayload?.prompt || t(language, "triggerAsk");
 
+  const currentPoiChecked = Boolean(
+    currentNode?.poiId && trip?.checked_in_poi_ids.includes(currentNode.poiId),
+  );
+
+  const tripPanel = (
+    <div className="mt-6">
+      <TripControls
+        userId={tripUserId}
+        routeId={route.id}
+        currentPoiId={currentNode?.poiId}
+        stopPoiIds={nodePoiIds}
+      />
+    </div>
+  );
+
   return (
     <main className="relative flex flex-1 flex-col bg-paper text-ink">
       <div className="sticky top-14 z-30 grid shrink-0 grid-cols-[1fr_auto_1fr] items-center border-b border-line/60 bg-paper/90 px-5 py-2.5 backdrop-blur-md lg:px-8">
@@ -630,7 +690,7 @@ export function RouteResultPage() {
       </div>
 
       <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start">
-        <div className="relative min-h-[50dvh] overflow-hidden bg-paper-warm lg:sticky lg:top-[7.25rem] lg:h-[calc(100dvh-7.25rem)] lg:min-h-0">
+        <div className="relative z-0 min-h-[50dvh] isolate overflow-hidden bg-paper-warm lg:sticky lg:top-[7.25rem] lg:h-[calc(100dvh-7.25rem)] lg:min-h-0">
           <MapRouteView
             poiIds={nodePoiIds}
             currentPoiId={currentNode?.poiId}
@@ -697,7 +757,7 @@ export function RouteResultPage() {
           ) : null}
         </div>
 
-        <aside className="hidden border-l border-line/70 bg-paper lg:sticky lg:top-[7.25rem] lg:block lg:max-h-[calc(100dvh-7.25rem)] lg:overflow-y-auto lg:overscroll-contain">
+        <aside className="relative z-10 hidden border-l border-line/70 bg-paper lg:sticky lg:top-[7.25rem] lg:block lg:max-h-[calc(100dvh-7.25rem)] lg:overflow-y-auto lg:overscroll-contain">
           <RouteInfoPanel
             title={route.name}
             theme={route.theme}
@@ -705,6 +765,7 @@ export function RouteResultPage() {
             reasons={match.reasons}
             explanation={explanation}
             adjustmentPanel={adjustmentPanel}
+            tripPanel={tripPanel}
             nodes={nodes}
             legs={walkLegs}
             legsLoading={walkLegsLoading}
@@ -712,6 +773,9 @@ export function RouteResultPage() {
             chapterLabel={t(language, "chapterIII")}
             itineraryLabel={t(language, "itinerary")}
             simulateLabel={t(language, "simulateNear")}
+            simulateArriveLabel={t(language, "tripSimulateArrive")}
+            simulateArriveDone={currentPoiChecked}
+            simulateArriveDisabled={tripLoading || !currentNode}
             startGuideLabel={
               checking
                 ? t(language, "checkingNear")
@@ -721,12 +785,14 @@ export function RouteResultPage() {
             }
             startDisabled={checking || generating}
             onSimulate={() => void simulateNearCurrentStop()}
+            onSimulateArrive={() => void simulateArriveCurrentStop()}
             onStartGuide={() => (guiding ? handleNextStop() : handleStartGuide())}
             onSelectStop={handleSelectStop}
             curatorSuffix={t(language, "curatorSuffix")}
             stayLabel={t(language, "stayMinutes")}
             walkLegLabel={t(language, "walkLegLabel")}
             busLegLabel={t(language, "busLegLabel")}
+            busStopLegLabel={t(language, "busStopLegLabel")}
             legsLoadingLabel={t(language, "walkLegsLoading")}
             multiDay={
               isMultiDay
@@ -769,6 +835,7 @@ export function RouteResultPage() {
             reasons={match.reasons}
             explanation={explanation}
             adjustmentPanel={adjustmentPanel}
+            tripPanel={tripPanel}
             nodes={nodes}
             legs={walkLegs}
             legsLoading={walkLegsLoading}
@@ -777,6 +844,9 @@ export function RouteResultPage() {
             chapterLabel={t(language, "chapterIII")}
             itineraryLabel={t(language, "itinerary")}
             simulateLabel={t(language, "simulateNear")}
+            simulateArriveLabel={t(language, "tripSimulateArrive")}
+            simulateArriveDone={currentPoiChecked}
+            simulateArriveDisabled={tripLoading || !currentNode}
             startGuideLabel={
               checking
                 ? t(language, "checkingNear")
@@ -786,12 +856,14 @@ export function RouteResultPage() {
             }
             startDisabled={checking || generating}
             onSimulate={() => void simulateNearCurrentStop()}
+            onSimulateArrive={() => void simulateArriveCurrentStop()}
             onStartGuide={() => (guiding ? handleNextStop() : handleStartGuide())}
             onSelectStop={handleSelectStop}
             curatorSuffix={t(language, "curatorSuffix")}
             stayLabel={t(language, "stayMinutes")}
             walkLegLabel={t(language, "walkLegLabel")}
             busLegLabel={t(language, "busLegLabel")}
+            busStopLegLabel={t(language, "busStopLegLabel")}
             legsLoadingLabel={t(language, "walkLegsLoading")}
             multiDay={
               isMultiDay
@@ -924,6 +996,7 @@ function RouteInfoPanel({
   reasons,
   explanation,
   adjustmentPanel,
+  tripPanel,
   nodes,
   legs = [],
   legsLoading = false,
@@ -932,15 +1005,20 @@ function RouteInfoPanel({
   chapterLabel,
   itineraryLabel,
   simulateLabel,
+  simulateArriveLabel,
+  simulateArriveDone,
+  simulateArriveDisabled,
   startGuideLabel,
   startDisabled,
   onSimulate,
+  onSimulateArrive,
   onStartGuide,
   onSelectStop,
   curatorSuffix,
   stayLabel,
   walkLegLabel,
   busLegLabel,
+  busStopLegLabel,
   legsLoadingLabel,
   multiDay,
 }: {
@@ -950,6 +1028,7 @@ function RouteInfoPanel({
   reasons: string[];
   explanation: string;
   adjustmentPanel?: ReactNode;
+  tripPanel?: ReactNode;
   nodes: DisplayNode[];
   legs?: WalkLeg[];
   legsLoading?: boolean;
@@ -959,15 +1038,20 @@ function RouteInfoPanel({
   chapterLabel: string;
   itineraryLabel: string;
   simulateLabel: string;
+  simulateArriveLabel: string;
+  simulateArriveDone?: boolean;
+  simulateArriveDisabled?: boolean;
   startGuideLabel: string;
   startDisabled?: boolean;
   onSimulate: () => void;
+  onSimulateArrive: () => void;
   onStartGuide: () => void;
   onSelectStop?: (index: number) => void;
   curatorSuffix: string;
   stayLabel: string;
   walkLegLabel: string;
   busLegLabel: string;
+  busStopLegLabel?: string;
   legsLoadingLabel?: string;
   multiDay?: {
     label: string;
@@ -1034,6 +1118,7 @@ function RouteInfoPanel({
                 </p>
               ) : null}
               {adjustmentPanel}
+              {tripPanel}
             </>
           ) : null}
         </div>
@@ -1050,6 +1135,7 @@ function RouteInfoPanel({
               stayLabel={stayLabel}
               walkLegLabel={walkLegLabel}
               busLegLabel={busLegLabel}
+              busStopLegLabel={busStopLegLabel}
               legsLoadingLabel={legsLoadingLabel}
               onSelectIndex={onSelectStop}
             />
@@ -1064,20 +1150,31 @@ function RouteInfoPanel({
             : "sticky bottom-0 z-20 border-t border-line bg-paper/95 px-6 py-4 backdrop-blur-md lg:px-8 lg:py-5"
         }
       >
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            disabled={startDisabled}
-            onClick={onSimulate}
-            className="h-12 shrink-0 rounded-full border border-line bg-paper px-4 text-sm text-ink hover:bg-paper-warm disabled:pointer-events-none disabled:opacity-50 sm:px-5"
-          >
-            {simulateLabel}
-          </button>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              disabled={simulateArriveDisabled || simulateArriveDone}
+              onClick={onSimulateArrive}
+              className="h-11 min-w-0 flex-1 rounded-full border border-sage-deep bg-sage-deep/10 px-3 text-xs font-medium text-sage-deep hover:bg-sage-deep hover:text-paper disabled:pointer-events-none disabled:opacity-50 sm:h-12 sm:px-4 sm:text-sm"
+            >
+              {simulateArriveDone ? "✓ " : ""}
+              {simulateArriveLabel}
+            </button>
+            <button
+              type="button"
+              disabled={startDisabled}
+              onClick={onSimulate}
+              className="h-11 min-w-0 flex-1 rounded-full border border-line bg-paper px-3 text-xs text-ink hover:bg-paper-warm disabled:pointer-events-none disabled:opacity-50 sm:h-12 sm:px-4 sm:text-sm"
+            >
+              {simulateLabel}
+            </button>
+          </div>
           <button
             type="button"
             disabled={startDisabled}
             onClick={onStartGuide}
-            className="flex-1 rounded-full bg-sage-deep py-3.5 text-center font-medium text-paper shadow-[var(--shadow-soft)] hover:bg-moss disabled:pointer-events-none disabled:opacity-60"
+            className="h-12 w-full rounded-full bg-sage-deep text-center font-medium text-paper shadow-[var(--shadow-soft)] hover:bg-moss disabled:pointer-events-none disabled:opacity-60"
           >
             {startGuideLabel}
           </button>

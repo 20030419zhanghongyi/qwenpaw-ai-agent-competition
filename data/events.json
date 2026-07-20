@@ -1,0 +1,35 @@
+{
+  "_comment": "人工维护的澳门大型活动日程（可对照大麦等票务页抄录）。用于估计场馆周边与相关口岸拥堵；非实时排队数据。大麦无公开免费 API，勿接非官方抓包。",
+  "events": [
+    {
+      "id": "evt_demo_galaxy_2026_07_20",
+      "name": "银河综艺馆大型演唱会（演示）",
+      "date": "2026-07-20",
+      "venue_poi_id": "poi_0038",
+      "venue_name": "银河综艺馆Galaxy Arena",
+      "affected_port_ids": ["poi_port_hzmb", "poi_port_hengqin"],
+      "crowd_level": "high",
+      "note": "散场后路氹／港珠澳大桥口岸方向可能较挤（基于公开活动日程的估计，非实时口岸排队）"
+    },
+    {
+      "id": "evt_demo_venetian_2026_07_20",
+      "name": "威尼斯人综艺馆演出（演示）",
+      "date": "2026-07-20",
+      "venue_poi_id": "poi_0039",
+      "venue_name": "威尼斯人综艺馆",
+      "affected_port_ids": ["poi_port_hzmb", "poi_port_hengqin"],
+      "crowd_level": "medium",
+      "note": "路氹度假区人流可能偏高，进出港珠澳／横琴口岸宜预留机动时间"
+    },
+    {
+      "id": "evt_demo_macau_arena_weekend",
+      "name": "澳门综艺馆活动（演示）",
+      "date": "2026-07-19",
+      "venue_poi_id": "poi_0116",
+      "venue_name": "澳门综艺馆",
+      "affected_port_ids": ["poi_port_guanja", "poi_port_qingmao", "poi_port_outer_harbor"],
+      "crowd_level": "medium",
+      "note": "半岛东北侧活动日，关闸／青茂／外港方向或有短时拥堵估计"
+    }
+  ]
+}
