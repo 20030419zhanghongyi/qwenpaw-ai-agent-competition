@@ -46,6 +46,8 @@ export interface WalkSegment {
   walk_min: number;
   polyline: string;
   bus_lines?: string[];
+  bus_from_stop?: string | null;
+  bus_to_stop?: string | null;
   modes?: Array<{ kind: string; label: string }>;
 }
 
@@ -153,8 +155,15 @@ export interface GuideTriggerResponse {
   } | null;
 }
 
+export interface GuideNarrationSection {
+  id: string;
+  body: string;
+}
+
 export interface GuideGenerateResponse {
   text: string;
+  /** Structured on-site narration blocks (overview / history / architecture / story). */
+  sections?: GuideNarrationSection[];
   source_type?: string;
   confidence?: number;
   ai_generated?: boolean;
@@ -163,6 +172,8 @@ export interface GuideGenerateResponse {
   blocked?: boolean;
   error?: string | null;
   poi_name?: string;
+  poi_id?: string;
+  next_stop?: string | null;
 }
 
 export interface TTSResponse {

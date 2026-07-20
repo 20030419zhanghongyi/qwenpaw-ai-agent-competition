@@ -12,6 +12,8 @@ export interface WalkLeg {
   walkM: number;
   walkMin: number;
   busLines?: string[];
+  busFromStop?: string | null;
+  busToStop?: string | null;
 }
 
 export function RouteNodeList({
@@ -21,6 +23,7 @@ export function RouteNodeList({
   stayLabel = "min",
   walkLegLabel = "步行约 {min} 分钟 · {dist}",
   busLegLabel = "巴士 {lines}",
+  busStopLegLabel = "{from} → {to}",
   legsLoadingLabel = "正在查询步行与巴士…",
   onSelectIndex,
 }: {
@@ -31,6 +34,7 @@ export function RouteNodeList({
   stayLabel?: string;
   walkLegLabel?: string;
   busLegLabel?: string;
+  busStopLegLabel?: string;
   legsLoadingLabel?: string;
   onSelectIndex?: (index: number) => void;
 }) {
@@ -55,6 +59,9 @@ export function RouteNodeList({
         ].join(" ");
         const leg = legs[index];
         const busLines = (leg?.busLines ?? []).filter(Boolean);
+        const busFromStop = leg?.busFromStop?.trim() || "";
+        const busToStop = leg?.busToStop?.trim() || "";
+        const hasBusStops = Boolean(busFromStop && busToStop);
 
         return (
           <li key={p.poiId} className="relative">
@@ -87,7 +94,7 @@ export function RouteNodeList({
               </div>
             </div>
             {leg && index < nodes.length - 1 ? (
-              <div className="relative ml-[15px] flex flex-col items-start gap-1.5 py-3 pl-8">
+              <div className="relative ml-[15px] flex flex-wrap items-center gap-1.5 py-3 pl-8">
                 <span
                   className="absolute left-0 top-0 h-full w-px bg-sage/40"
                   aria-hidden
@@ -96,8 +103,12 @@ export function RouteNodeList({
                   {formatWalkLeg(walkLegLabel, leg)}
                 </span>
                 {busLines.length > 0 ? (
-                  <span className="rounded-full border border-ochre/35 bg-ochre/10 px-3 py-1 text-[11px] tracking-wide text-ink">
-                    {busLegLabel.replace("{lines}", busLines.join(" · "))}
+                  <span className="max-w-full rounded-full border border-ochre/35 bg-ochre/10 px-3 py-1 text-[11px] leading-snug tracking-wide text-ink">
+                    {formatBusLeg(busLegLabel, busStopLegLabel, busLines, {
+                      from: busFromStop,
+                      to: busToStop,
+                      hasStops: hasBusStops,
+                    })}
                   </span>
                 ) : null}
               </div>
@@ -117,6 +128,20 @@ function formatWalkLeg(template: string, leg: WalkLeg): string {
       ? `${(leg.walkM / 1000).toFixed(leg.walkM >= 10000 ? 0 : 1)} km`
       : `${leg.walkM} m`;
   return template.replace("{min}", String(leg.walkMin)).replace("{dist}", dist);
+}
+
+function formatBusLeg(
+  linesTemplate: string,
+  stopsTemplate: string,
+  lines: string[],
+  stops: { from: string; to: string; hasStops: boolean },
+): string {
+  const linesText = linesTemplate.replace("{lines}", lines.join(" · "));
+  if (!stops.hasStops) return linesText;
+  const stopsText = stopsTemplate
+    .replace("{from}", stops.from)
+    .replace("{to}", stops.to);
+  return `${linesText} · ${stopsText}`;
 }
 
 function NodeCopy({ node, stayLabel }: { node: DisplayNode; stayLabel: string }) {

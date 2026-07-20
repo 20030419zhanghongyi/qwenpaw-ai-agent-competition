@@ -10,8 +10,12 @@ import {
 } from "@/api/client";
 import heroImg from "@/assets/hero-ruins.jpg";
 import { AzulejoBand } from "@/components/brand/AzulejoBand";
+import {
+  GuideNarrationSections,
+  sectionsFromText,
+} from "@/components/guide/GuideNarrationSections";
 import { t } from "@/i18n";
-import { resolvePoiImage } from "@/lib/poiImage";
+import { resolvePoiImage, curatedPoiImage } from "@/lib/poiImage";
 import { useWalk } from "@/state/WalkContext";
 import type { POI } from "@/types";
 
@@ -352,6 +356,17 @@ export function GuidePage() {
   const title =
     narration?.poi_name || selected?.poi_name || deepName || t(language, "guidePageTitle");
   const showingDetail = Boolean(selected || deepPoi);
+  const narrationSections = useMemo(() => {
+    if (!narration?.text) return [];
+    if (narration.sections?.length) return narration.sections;
+    return sectionsFromText(narration.text);
+  }, [narration]);
+  const narrationImage =
+    (sceneUrl && sceneUrl !== heroImg ? sceneUrl : null) ||
+    curatedPoiImage(
+      selected?.poi_id || deepPoi || narration?.poi_id,
+      selected?.poi_name || deepName || narration?.poi_name,
+    );
 
   return (
     <main className="flex-1 bg-paper pb-20">
@@ -506,9 +521,14 @@ export function GuidePage() {
                 {genError ? <p className="mt-3 text-sm text-clay">{genError}</p> : null}
                 {narration?.text ? (
                   <>
-                    <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-ink">
-                      {narration.text}
-                    </p>
+                    <GuideNarrationSections
+                      key={`${title}-${narrationImage ?? "band"}`}
+                      language={language}
+                      sections={narrationSections}
+                      imageUrl={narrationImage}
+                      imageAlt={title}
+                      showImage={!photoPreview}
+                    />
                     {audioUrl ? (
                       <audio controls src={audioUrl} className="mt-4 w-full" />
                     ) : ttsFailed ? (
@@ -568,7 +588,7 @@ export function GuidePage() {
                     <div
                       key={`${turn.role}-${i}`}
                       className={[
-                        "max-w-[92%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
+                        "w-fit max-w-[92%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
                         turn.role === "user"
                           ? "ml-auto bg-sage-deep text-paper"
                           : "mr-auto bg-paper-warm text-ink",

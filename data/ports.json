@@ -1,0 +1,77 @@
+{
+  "ports": [
+    {
+      "poi_id": "poi_port_guanja",
+      "name_zh": "关闸口岸",
+      "name_en": "Portas do Cerco",
+      "alias": "关闸",
+      "district": "花地玛堂区",
+      "lat": 22.21655,
+      "lng": 113.54925,
+      "region_bias": "peninsula_north",
+      "address": "澳门关闸广场附近",
+      "amap_type": "交通设施服务;过境口岸;口岸"
+    },
+    {
+      "poi_id": "poi_port_qingmao",
+      "name_zh": "青茂口岸",
+      "name_en": "Qingmao Port",
+      "alias": "青茂",
+      "district": "花地玛堂区",
+      "lat": 22.2134,
+      "lng": 113.5439,
+      "region_bias": "peninsula_north",
+      "address": "澳门青茂口岸",
+      "amap_type": "交通设施服务;过境口岸;口岸"
+    },
+    {
+      "poi_id": "poi_port_hengqin",
+      "name_zh": "横琴口岸",
+      "name_en": "Hengqin Port",
+      "alias": "横琴",
+      "district": "路氹填海区",
+      "lat": 22.1398,
+      "lng": 113.5476,
+      "region_bias": "cotai",
+      "address": "澳门横琴口岸",
+      "amap_type": "交通设施服务;过境口岸;口岸"
+    },
+    {
+      "poi_id": "poi_port_hzmb",
+      "name_zh": "港珠澳大桥澳门口岸",
+      "name_en": "HZMB Macao Port",
+      "alias": "港珠澳大桥口岸",
+      "district": "路氹填海区",
+      "lat": 22.1409,
+      "lng": 113.5801,
+      "region_bias": "cotai",
+      "address": "港珠澳大桥澳门边检大楼",
+      "amap_type": "交通设施服务;过境口岸;口岸"
+    },
+    {
+      "poi_id": "poi_port_outer_harbor",
+      "name_zh": "外港客运码头",
+      "name_en": "Outer Harbour Ferry Terminal",
+      "alias": "外港码头",
+      "district": "大堂区",
+      "lat": 22.1966,
+      "lng": 113.5586,
+      "region_bias": "peninsula_east",
+      "address": "澳门外港客运码头",
+      "amap_type": "交通设施服务;港口码头;客运港"
+    },
+    {
+      "poi_id": "poi_0071",
+      "name_zh": "内港客运码头",
+      "name_en": "Inner Harbour Ferry Terminal",
+      "alias": "内港码头",
+      "district": "风顺堂区",
+      "lat": 22.191974,
+      "lng": 113.540401,
+      "region_bias": "peninsula_west",
+      "address": "澳门内港客运码头",
+      "amap_type": "交通设施服务;港口码头;客运港",
+      "existing": true
+    }
+  ]
+}

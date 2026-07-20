@@ -20,7 +20,7 @@ from app.agents import intent_agent
 from app.agents.qwenpaw_client import QwenPawClient, QwenPawError
 from app.core.config import settings
 from app.guardrails.runtime import rate_limit, sanitize_untrusted_text
-from app.models.user import SUPPORTED_LANGS, Preference
+from app.models.user import SUPPORTED_LANGS, Preference, clamp_trip_days
 from app.observability.trace import record_trace
 
 logger = logging.getLogger("macau_storywalk.intent")
@@ -135,6 +135,16 @@ _THEME_COTAI = (
 _THEME_HERITAGE = ("历史城区", "旧城", "世遗", "heritage", "historic")
 _THEME_FAMILY = ("亲子", "带小孩", "family theme")
 
+# (keywords, poi_id) — order matters for first match
+_PORT_ENTRIES: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("关闸", "拱北", "portas do cerco", "gongbei", "border gate"), "poi_port_guanja"),
+    (("青茂", "qingmao"), "poi_port_qingmao"),
+    (("横琴", "hengqin"), "poi_port_hengqin"),
+    (("港珠澳", "大桥口岸", "hzmb", "hong kong-zhuhai-macao"), "poi_port_hzmb"),
+    (("外港", "outer harbour", "outer harbor", "港澳码头"), "poi_port_outer_harbor"),
+    (("内港", "inner harbour", "inner harbor", "湾仔口岸"), "poi_0071"),
+)
+
 
 def _append_if_any(pref: Preference, text: str, keywords: tuple[str, ...], field: str, tag: str) -> None:
     lower = text.lower()
@@ -142,12 +152,89 @@ def _append_if_any(pref: Preference, text: str, keywords: tuple[str, ...], field
         getattr(pref, field).append(tag)
 
 
+def _infer_ports(pref: Preference, text: str) -> None:
+    """Map natural-language border mentions onto entry_port / exit_port."""
+    lower = text.lower()
+    found: list[str] = []
+    for keywords, poi_id in _PORT_ENTRIES:
+        if any(k.lower() in lower for k in keywords) and poi_id not in found:
+            found.append(poi_id)
+
+    if not found:
+        return
+
+    entry_cues = ("进", "入", "从", "入境", "arrive", "entry", "from ", "entrar")
+    exit_cues = ("出", "离", "回", "出境", "leave", "exit", "depart", "sair")
+    has_entry_cue = any(c in lower for c in entry_cues)
+    has_exit_cue = any(c in lower for c in exit_cues)
+
+    if len(found) == 1:
+        poi_id = found[0]
+        if has_exit_cue and not has_entry_cue:
+            pref.exit_port = poi_id
+        elif has_entry_cue and not has_exit_cue:
+            pref.entry_port = poi_id
+        else:
+            # Ambiguous single mention: treat as entry (chips can refine exit)
+            pref.entry_port = pref.entry_port or poi_id
+        return
+
+    # Multiple ports mentioned
+    if has_entry_cue or has_exit_cue:
+        # Prefer first as entry, last as exit when both present
+        pref.entry_port = pref.entry_port or found[0]
+        pref.exit_port = pref.exit_port or found[-1]
+    else:
+        pref.entry_port = pref.entry_port or found[0]
+        pref.exit_port = pref.exit_port or found[-1]
+
+
+def _infer_trip_days(text: str) -> int | None:
+    """从「玩三天 / 2 days / dois dias」等短语抽出多日天数。"""
+    t = (text or "").strip().lower()
+    digit = re.search(r"([2-5])\s*[-]?\s*(?:天|日|days?|dias?)", t)
+    if digit:
+        return clamp_trip_days(int(digit.group(1)))
+    word_map = {
+        "两天": 2,
+        "兩天": 2,
+        "两日": 2,
+        "兩日": 2,
+        "两晚": 2,
+        "兩晚": 2,
+        "三天": 3,
+        "三日": 3,
+        "三晚": 3,
+        "四天": 4,
+        "四日": 4,
+        "五天": 5,
+        "五日": 5,
+        "two days": 2,
+        "dois dias": 2,
+        "three days": 3,
+        "três dias": 3,
+        "tres dias": 3,
+        "four days": 4,
+        "quatro dias": 4,
+        "five days": 5,
+        "cinco dias": 5,
+    }
+    for phrase, days in word_map.items():
+        if phrase in t or phrase in (text or ""):
+            return clamp_trip_days(days)
+    return None
+
+
 def parse_intent_rules(text: str) -> Preference:
     """规则版 NL→Preference：关键词扫描（agent 不可用时的 fallback）。"""
     t = (text or "").strip()
     pref = Preference()  # 默认 duration=half-day, party_size=1, language=zh-CN
 
-    if any(k.lower() in t.lower() for k in _DUR_MULTI):
+    trip_days = _infer_trip_days(t)
+    if trip_days is not None:
+        pref.duration = "multi-day"
+        pref.trip_days = trip_days
+    elif any(k.lower() in t.lower() for k in _DUR_MULTI):
         pref.duration = "multi-day"
     elif any(k.lower() in t.lower() for k in _DUR_FULL):
         pref.duration = "full-day"
@@ -174,6 +261,7 @@ def parse_intent_rules(text: str) -> Preference:
     _append_if_any(pref, t, _THEME_HERITAGE, "themes", "heritage")
     _append_if_any(pref, t, _THEME_FAMILY, "themes", "family")
 
+    _infer_ports(pref, t)
     return pref
 
 
@@ -203,7 +291,9 @@ def _guide_bootstrap_prompt(language: str) -> str:
         f"Speak ONLY in language code `{language}` "
         "(zh-CN simplified Chinese, zh-TW traditional Chinese, en English, pt Portuguese).\n"
         "Goal: learn the traveler's preferences through a short multi-turn chat.\n"
-        "Ask about, one question at a time: duration, companions, interests, walking comfort.\n"
+        "Ask about, one question at a time: duration, entry/exit border ports "
+        "(Gongbei/关闸, Qingmao, Hengqin, HZMB, Outer Harbour ferry), "
+        "companions, interests, walking comfort.\n"
         "Rules:\n"
         "1) Ask exactly ONE short question per reply.\n"
         "2) Be warm and concise (1–3 sentences).\n"
@@ -212,11 +302,16 @@ def _guide_bootstrap_prompt(language: str) -> str:
         "5) When enough info is collected, first give a one-sentence confirmation, "
         "then on a NEW line output ONLY this JSON object "
         "(no markdown fence):\n"
-        '{"duration":"half-day|full-day|evening|multi-day|custom","party_size":1,'
+        '{"duration":"half-day|full-day|evening|multi-day|custom","trip_days":null,'
+        '"party_size":1,'
         '"travel_type":["solo|friends|family|relax"],'
         '"interests":["history|architecture|food|photo|culture"],'
         '"physical":["normal|less-walk|no-backtrack"],'
-        f'"language":"{language}"}}\n\n'
+        '"entry_port":"poi_port_guanja|poi_port_qingmao|poi_port_hengqin|poi_port_hzmb|poi_port_outer_harbor|poi_0071|null",'
+        '"exit_port":"poi_port_guanja|poi_port_qingmao|poi_port_hengqin|poi_port_hzmb|poi_port_outer_harbor|poi_0071|null",'
+        '"travel_date":"YYYY-MM-DD|null",'
+        f'"language":"{language}"}}\n'
+        "(For multi-day, set trip_days to an integer 2–5 when the traveler says how many days.)\n\n"
         "Now greet the traveler and ask your first question about duration."
     )
 
@@ -298,6 +393,10 @@ def _merge_preferences(base: Preference, overlay: Preference) -> Preference:
         themes=list(dict.fromkeys([*(base.themes or []), *(overlay.themes or [])])),
         physical=physical,
         language=overlay.language or base.language,
+        entry_port=overlay.entry_port or base.entry_port,
+        exit_port=overlay.exit_port or base.exit_port,
+        travel_date=overlay.travel_date or base.travel_date,
+        trip_days=overlay.trip_days if overlay.trip_days is not None else base.trip_days,
     )
 
 
@@ -308,7 +407,14 @@ def _soft_preference_from_transcript(transcript: str, language: str) -> Preferen
     soft = parse_intent_rules(transcript)
     soft.language = language
     # parse_intent_rules 默认 duration=half-day；用「是否命中关键词」判断有无信号
-    hit = bool(soft.interests or soft.physical or soft.travel_type or soft.themes)
+    hit = bool(
+        soft.interests
+        or soft.physical
+        or soft.travel_type
+        or soft.themes
+        or soft.entry_port
+        or soft.exit_port
+    )
     lower = transcript.lower()
     duration_hit = any(
         k.lower() in lower
@@ -339,25 +445,29 @@ def _guide_scripted_fallback(
 
     followups = {
         "zh-CN": {
-            "duration": "好的。那你是一个人，还是和朋友/家人一起？",
+            "duration": "好的。你打算从哪个口岸进入澳门、从哪个口岸离开？例如关闸、青茂、横琴、港珠澳大桥或外港码头。",
+            "ports": "记下了。那你是一个人，还是和朋友/家人一起？",
             "travel": "想多看哪一类？历史、建筑、美食、摄影，还是轻松逛逛？",
             "interest": "步行上有没有偏好？例如少走路、少爬坡、避免回头路。",
             "done": "明白了，我已记下你的偏好，可以点下方生成路线；也可继续补充。",
         },
         "zh-TW": {
-            "duration": "好的。那你是一個人，還是和朋友／家人一起？",
+            "duration": "好的。你打算從哪個口岸進入澳門、從哪個口岸離開？例如關閘、青茂、橫琴、港珠澳大橋或外港碼頭。",
+            "ports": "記下了。那你是一個人，還是和朋友／家人一起？",
             "travel": "想多看哪一類？歷史、建築、美食、攝影，還是輕鬆逛逛？",
             "interest": "步行上有沒有偏好？例如少走路、少爬坡、避免回頭路。",
             "done": "明白了，我已記下你的偏好，可以點下方生成路線；也可繼續補充。",
         },
         "en": {
-            "duration": "Got it. Are you solo, or with friends/family?",
+            "duration": "Got it. Which border will you enter Macau through, and which will you leave from — Gongbei, Qingmao, Hengqin, the HZMB port, or the Outer Harbour ferry?",
+            "ports": "Noted. Are you solo, or with friends/family?",
             "travel": "What draws you most — history, architecture, food, photo, or a relaxed wander?",
             "interest": "Any walking preferences — less walking, fewer hills, or no backtracking?",
             "done": "Perfect — I’ve noted your preferences. You can generate a route below, or keep refining.",
         },
         "pt": {
-            "duration": "Perfeito. Vai sozinho, ou com amigos/família?",
+            "duration": "Perfeito. Por que porto quer entrar em Macau e por qual sair — Portas do Cerco, Qingmao, Hengqin, ponte HKZM ou terminal do Porto Exterior?",
+            "ports": "Anotado. Vai sozinho, ou com amigos/família?",
             "travel": "O que mais lhe interessa — história, arquitetura, comida, foto, ou um passeio calmo?",
             "interest": "Alguma preferência de caminhada — menos andar, menos subidas, ou sem voltar atrás?",
             "done": "Ótimo — anotei as preferências. Pode gerar o percurso abaixo, ou continuar a afinar.",
@@ -366,10 +476,12 @@ def _guide_scripted_fallback(
     copy = followups.get(language, followups["en"])
 
     if turn_count <= 1:
-        return copy["duration"], None, "script"
+        return copy["duration"], pref if (pref.entry_port or pref.exit_port) else None, "script"
     if turn_count == 2:
-        return copy["travel"], None, "script"
+        return copy["ports"], pref if (pref.entry_port or pref.exit_port or pref.travel_type) else None, "script"
     if turn_count == 3:
+        return copy["travel"], None, "script"
+    if turn_count == 4:
         return copy["interest"], None, "script"
     return copy["done"], pref if _preference_ready(pref) else pref, "script"
 

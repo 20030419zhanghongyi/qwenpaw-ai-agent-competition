@@ -32,9 +32,17 @@ INTENT_AGENT_ID = "intent"
 # Preference 合法取值（与 models/user.py 对齐），用于校验/清洗 agent 输出
 _VALID_INTERESTS = {"history", "architecture", "food", "photo", "culture"}
 _VALID_PHYSICAL = {"normal", "less-walk", "no-backtrack"}
-_VALID_DURATION = {"half-day", "full-day", "evening", "custom"}
+_VALID_DURATION = {"half-day", "full-day", "evening", "multi-day", "custom"}
 _VALID_TRAVEL_TYPE = {"solo", "friends", "family", "relax"}
 _VALID_LANGS = set(SUPPORTED_LANGS)
+_VALID_PORTS = {
+    "poi_port_guanja",
+    "poi_port_qingmao",
+    "poi_port_hengqin",
+    "poi_port_hzmb",
+    "poi_port_outer_harbor",
+    "poi_0071",
+}
 
 
 def _build_prompt(text: str) -> str:
@@ -92,6 +100,21 @@ def _coerce(obj: dict[str, Any]) -> Preference:
     if not isinstance(party_size, int) or party_size < 1:
         party_size = 1
 
+    entry_port = obj.get("entry_port")
+    if not isinstance(entry_port, str) or entry_port not in _VALID_PORTS:
+        entry_port = None
+    exit_port = obj.get("exit_port")
+    if not isinstance(exit_port, str) or exit_port not in _VALID_PORTS:
+        exit_port = None
+    travel_date = obj.get("travel_date")
+    if not isinstance(travel_date, str) or len(travel_date) < 8:
+        travel_date = None
+
+    trip_days = obj.get("trip_days")
+    if not isinstance(trip_days, int):
+        trip_days = None
+    # Preference validator clamps / drops invalid values
+
     return Preference(
         duration=duration,
         party_size=party_size,
@@ -99,6 +122,10 @@ def _coerce(obj: dict[str, Any]) -> Preference:
         interests=_clean_list(obj.get("interests"), _VALID_INTERESTS),
         physical=_clean_list(obj.get("physical"), _VALID_PHYSICAL),
         language=language,
+        entry_port=entry_port,
+        exit_port=exit_port,
+        travel_date=travel_date,
+        trip_days=trip_days,
     )
 
 

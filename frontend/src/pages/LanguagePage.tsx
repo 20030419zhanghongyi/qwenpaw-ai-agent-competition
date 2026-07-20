@@ -124,6 +124,12 @@ export function LanguagePage() {
               >
                 {t(language, "navGuide")} →
               </Link>
+              <Link
+                to="/auth"
+                className="block w-full text-center text-sm text-ink-soft underline-offset-4 transition hover:text-ink hover:underline"
+              >
+                {t(language, "authLink")}
+              </Link>
               <p className="flex items-start gap-2 text-[11px] leading-relaxed text-ink-soft">
                 <span aria-hidden className="mt-0.5">
                   🛡

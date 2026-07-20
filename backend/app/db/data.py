@@ -44,6 +44,31 @@ def load_weights() -> dict:
         return {}
 
 
+@lru_cache
+def load_ports() -> list[dict]:
+    """返回口岸目录（进出澳门锚定用）。"""
+    try:
+        return list(_read_json("ports.json").get("ports") or [])
+    except FileNotFoundError:
+        return []
+
+
+@lru_cache
+def load_events() -> list[dict]:
+    """返回人工维护的活动日程（演唱会等拥堵估计）。"""
+    try:
+        return list(_read_json("events.json").get("events") or [])
+    except FileNotFoundError:
+        return []
+
+
+def get_port(poi_id: str) -> dict | None:
+    for port in load_ports():
+        if port.get("poi_id") == poi_id:
+            return port
+    return None
+
+
 def get_poi(poi_id: str) -> dict | None:
     for p in load_pois():
         if p["id"] == poi_id:

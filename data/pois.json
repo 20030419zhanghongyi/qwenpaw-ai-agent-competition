@@ -382,7 +382,7 @@
         "lng": 113.564998
       },
       "intro": "澳门八景之一，由多座薄荷绿色葡式住宅组成，是氹仔最具代表性的葡式建筑群与博物馆片区。",
-      "history": "建筑群于1921年落成，曾为高级官员官邸和土生葡人住宅，后转型为展示澳门生活与建筑记忆的重要文化场所。",
+      "history": "五幢别墅约于1921年建成，最初是澳葡高级官员与土生葡人的海滨住宅。二十世纪末起，建筑群逐步活化为『住宅式博物馆』，以室内陈设与生活物件讲述土生葡人社群记忆；如今亦列入澳门八景，成为氹仔旧城最易辨认的文化地标之一。",
       "architecture": "五座碧绿色小型建筑沿海边马路排布，色彩鲜明，与草地、湿地和嘉模片区形成十分完整的欧陆景观。",
       "story": "许多游客会把这里与嘉模圣母堂、官也街并列为氹仔最经典的一段慢游动线，既能拍照，也能读到旧岛生活脉络。",
       "observation_tips": "适合傍晚前后前往，建筑外立面色彩更柔和；若时间够，可顺着海边马路慢慢拍完整排屋。",
@@ -2638,10 +2638,12 @@
       "alias": "",
       "district": "风顺堂区",
       "theme": [
-        "文化"
+        "文化",
+        "口岸"
       ],
       "suitable_for": [
-        "culture"
+        "culture",
+        "border_crossing"
       ],
       "coordinates": {
         "lat": 22.191974,
@@ -4062,7 +4064,7 @@
       "history": "2020年6月在澳门威尼斯人金光会展正式开幕，是teamLab在澳门设立的首个常设沉浸式艺术空间，由逾5000平方米的展厅改造而成。",
       "architecture": "展馆为超高挑空无柱空间，以镜面、投影、传感装置构建沉浸式数字环境，作品随观众移动而实时变幻，模糊观看者与作品的边界。",
       "story": "代表作《无穷无尽的水晶宇宙》由数万盏LED构成光之瀑布，观众可通过手机App参与光色变化，实现人与作品共创。",
-      "observation_tips": "馆内光线较暗且多处镜面地面，建议穿深色简洁服装以便出片，不宜穿短裙或高跟鞋。",
+      "observation_tips": "收费室内展馆，须购票入场，票价与开放时间以官方或现场为准，勿当作免费商场打卡点。馆内光线较暗且多处镜面地面，建议穿深色简洁服装以便出片，不宜穿短裙或高跟鞋。",
       "source_type": "ai",
       "verify_status": "AI生成·待核验"
     },
@@ -11530,6 +11532,186 @@
       "observation_tips": "邻近塔石广场及望德堂文创区，可顺道游览。",
       "source_type": "ai",
       "verify_status": "AI生成·待核验"
+    },
+    {
+      "id": "poi_port_guanja",
+      "name_zh": "关闸口岸",
+      "name_en": "Portas do Cerco",
+      "name_pt": "",
+      "alias": "关闸",
+      "district": "花地玛堂区",
+      "theme": [
+        "口岸",
+        "交通"
+      ],
+      "suitable_for": [
+        "border_crossing",
+        "solo",
+        "family",
+        "friends"
+      ],
+      "coordinates": {
+        "lat": 22.21655,
+        "lng": 113.54925
+      },
+      "amap": {
+        "poi_id": "",
+        "address": "澳门关闸广场附近",
+        "type": "交通设施服务;过境口岸;口岸",
+        "typecode": ""
+      },
+      "intro": "关闸口岸是进出澳门的常用口岸／码头节点，可作为行程起终点锚定。",
+      "history": "",
+      "architecture": "",
+      "story": "",
+      "observation_tips": "过关排队因节假日与大型活动而波动，请以现场指引为准。",
+      "source_type": "manual",
+      "verify_status": "人工录入·口岸锚点",
+      "region_bias": "peninsula_north"
+    },
+    {
+      "id": "poi_port_qingmao",
+      "name_zh": "青茂口岸",
+      "name_en": "Qingmao Port",
+      "name_pt": "",
+      "alias": "青茂",
+      "district": "花地玛堂区",
+      "theme": [
+        "口岸",
+        "交通"
+      ],
+      "suitable_for": [
+        "border_crossing",
+        "solo",
+        "family",
+        "friends"
+      ],
+      "coordinates": {
+        "lat": 22.2134,
+        "lng": 113.5439
+      },
+      "amap": {
+        "poi_id": "",
+        "address": "澳门青茂口岸",
+        "type": "交通设施服务;过境口岸;口岸",
+        "typecode": ""
+      },
+      "intro": "青茂口岸是进出澳门的常用口岸／码头节点，可作为行程起终点锚定。",
+      "history": "",
+      "architecture": "",
+      "story": "",
+      "observation_tips": "过关排队因节假日与大型活动而波动，请以现场指引为准。",
+      "source_type": "manual",
+      "verify_status": "人工录入·口岸锚点",
+      "region_bias": "peninsula_north"
+    },
+    {
+      "id": "poi_port_hengqin",
+      "name_zh": "横琴口岸",
+      "name_en": "Hengqin Port",
+      "name_pt": "",
+      "alias": "横琴",
+      "district": "路氹填海区",
+      "theme": [
+        "口岸",
+        "交通"
+      ],
+      "suitable_for": [
+        "border_crossing",
+        "solo",
+        "family",
+        "friends"
+      ],
+      "coordinates": {
+        "lat": 22.1398,
+        "lng": 113.5476
+      },
+      "amap": {
+        "poi_id": "",
+        "address": "澳门横琴口岸",
+        "type": "交通设施服务;过境口岸;口岸",
+        "typecode": ""
+      },
+      "intro": "横琴口岸是进出澳门的常用口岸／码头节点，可作为行程起终点锚定。",
+      "history": "",
+      "architecture": "",
+      "story": "",
+      "observation_tips": "过关排队因节假日与大型活动而波动，请以现场指引为准。",
+      "source_type": "manual",
+      "verify_status": "人工录入·口岸锚点",
+      "region_bias": "cotai"
+    },
+    {
+      "id": "poi_port_hzmb",
+      "name_zh": "港珠澳大桥澳门口岸",
+      "name_en": "HZMB Macao Port",
+      "name_pt": "",
+      "alias": "港珠澳大桥口岸",
+      "district": "路氹填海区",
+      "theme": [
+        "口岸",
+        "交通"
+      ],
+      "suitable_for": [
+        "border_crossing",
+        "solo",
+        "family",
+        "friends"
+      ],
+      "coordinates": {
+        "lat": 22.1409,
+        "lng": 113.5801
+      },
+      "amap": {
+        "poi_id": "",
+        "address": "港珠澳大桥澳门边检大楼",
+        "type": "交通设施服务;过境口岸;口岸",
+        "typecode": ""
+      },
+      "intro": "港珠澳大桥澳门口岸是进出澳门的常用口岸／码头节点，可作为行程起终点锚定。",
+      "history": "",
+      "architecture": "",
+      "story": "",
+      "observation_tips": "过关排队因节假日与大型活动而波动，请以现场指引为准。",
+      "source_type": "manual",
+      "verify_status": "人工录入·口岸锚点",
+      "region_bias": "cotai"
+    },
+    {
+      "id": "poi_port_outer_harbor",
+      "name_zh": "外港客运码头",
+      "name_en": "Outer Harbour Ferry Terminal",
+      "name_pt": "",
+      "alias": "外港码头",
+      "district": "大堂区",
+      "theme": [
+        "口岸",
+        "交通"
+      ],
+      "suitable_for": [
+        "border_crossing",
+        "solo",
+        "family",
+        "friends"
+      ],
+      "coordinates": {
+        "lat": 22.1966,
+        "lng": 113.5586
+      },
+      "amap": {
+        "poi_id": "",
+        "address": "澳门外港客运码头",
+        "type": "交通设施服务;港口码头;客运港",
+        "typecode": ""
+      },
+      "intro": "外港客运码头是进出澳门的常用口岸／码头节点，可作为行程起终点锚定。",
+      "history": "",
+      "architecture": "",
+      "story": "",
+      "observation_tips": "过关排队因节假日与大型活动而波动，请以现场指引为准。",
+      "source_type": "manual",
+      "verify_status": "人工录入·口岸锚点",
+      "region_bias": "peninsula_east"
     }
   ]
 }

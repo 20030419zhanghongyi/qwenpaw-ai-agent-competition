@@ -55,6 +55,63 @@ def test_created_trip_is_persisted_in_database():
         assert record.route_id == ROUTE_ID
 
 
+def test_create_trip_with_custom_stop_poi_ids():
+    """Adjusted walk nodes can override the static template stop list."""
+    custom_stops = ["poi_0020", "poi_0001", "poi_0003"]
+    response = client.post(
+        "/api/v1/trips",
+        json={
+            "user_id": USER_ID,
+            "route_id": ROUTE_ID,
+            "stop_poi_ids": custom_stops,
+        },
+    )
+    assert response.status_code == 201
+    trip = response.json()["trip"]
+    assert trip["route_id"] == ROUTE_ID
+    assert trip["stop_poi_ids"] == custom_stops
+
+    checkin = client.post(
+        f"/api/v1/trips/{trip['trip_id']}/checkins",
+        json={"poi_id": "poi_0020"},
+    )
+    assert checkin.status_code == 200
+    assert checkin.json()["trip"]["checked_in_poi_ids"] == ["poi_0020"]
+
+
+def test_simulate_arrive_style_rebuild_then_checkin_poi_outside_template():
+    """Regression: create with walk stops that insert a POI absent from the template."""
+    # photo_halfday template does not start with poi_0020; custom list must win.
+    response = client.post(
+        "/api/v1/trips",
+        json={
+            "user_id": f"{USER_ID}-rebuild",
+            "route_id": ROUTE_ID,
+            "stop_poi_ids": ["poi_0020", "poi_0002", "poi_0001"],
+        },
+    )
+    assert response.status_code == 201
+    trip = response.json()["trip"]
+    assert "poi_0020" in trip["stop_poi_ids"]
+    assert trip["stop_poi_ids"][0] == "poi_0020"
+
+    checkin = client.post(
+        f"/api/v1/trips/{trip['trip_id']}/checkins",
+        json={"poi_id": "poi_0020"},
+    )
+    assert checkin.status_code == 200
+    assert checkin.json()["trip"]["checked_in_poi_ids"] == ["poi_0020"]
+
+
+def test_create_trip_rejects_empty_custom_stop_poi_ids():
+    response = client.post(
+        "/api/v1/trips",
+        json={"user_id": USER_ID, "route_id": ROUTE_ID, "stop_poi_ids": []},
+    )
+    assert response.status_code == 422
+    assert "stop_poi_ids" in response.json()["detail"]
+
+
 def test_create_trip_with_unknown_route_returns_404():
     response = client.post(
         "/api/v1/trips",
