@@ -109,12 +109,15 @@ def _dedupe_multi_day_pois(
     matches: list[dict],
 ) -> list[dict]:
     """Keep first-seen POIs across days so day 2+ don't repeat day 1 stops."""
+    from .route_constructor import refill_day_after_dedupe
+
     seen: set[str] = set()
     for match in matches:
         route = match.get("route") or {}
         nodes = sorted(route.get("nodes") or [], key=lambda item: item.get("order", 0))
         kept: list[dict] = []
         removed_hours = 0.0
+        changed = False
         for node in nodes:
             poi_id = str(node.get("poi_id") or "")
             if node.get("anchor") in {"entry", "exit"}:
@@ -122,11 +125,12 @@ def _dedupe_multi_day_pois(
                 continue
             if poi_id and poi_id in seen:
                 removed_hours += float(node.get("suggested_stay_min") or 30) / 60.0
+                changed = True
                 continue
             if poi_id:
                 seen.add(poi_id)
             kept.append(node)
-        if len(kept) != len(nodes):
+        if changed:
             for index, node in enumerate(kept, start=1):
                 node["order"] = index
             route["nodes"] = kept
@@ -134,11 +138,30 @@ def _dedupe_multi_day_pois(
                 2.0,
                 round(float(route.get("duration_hours") or 0) - removed_hours, 1),
             )
+            # Day 2+ may become sparse after dedupe — refill with unused short stops.
+            blocked = set(seen) - {
+                str(n.get("poi_id") or "")
+                for n in kept
+                if n.get("anchor") not in {"entry", "exit"}
+            }
+            route, refilled = refill_day_after_dedupe(
+                route,
+                blocked_poi_ids=blocked,
+            )
+            match["route"] = route
+            for node in route.get("nodes") or []:
+                if node.get("anchor") in {"entry", "exit"}:
+                    continue
+                poi_id = str(node.get("poi_id") or "")
+                if poi_id:
+                    seen.add(poi_id)
             constraints = list(match.get("applied_constraints") or [])
             constraints.append("多日行程已去掉与前几日重复的景点")
+            if refilled:
+                constraints.append("去重后已优先补点，避免靠拉长停留凑时长")
             match["applied_constraints"] = list(dict.fromkeys(constraints))
             reasons = list(match.get("reasons") or [])
-            reasons.append("多日行程已去掉与前几日重复的景点")
+            reasons.extend(constraints[-2:])
             match["reasons"] = list(dict.fromkeys(reasons))
     return matches
 
