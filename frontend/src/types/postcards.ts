@@ -13,8 +13,19 @@ export interface Postcard {
   language: string;
   review_decision: string;
   photo_scrubbed: boolean;
+  has_user_photo?: boolean;
+  scene_source?: "user" | "ai" | "library" | "placeholder" | string;
   image_url: string;
   created_at: string;
+  visited_at?: string | null;
+  timestamp_label?: string;
+  geo_label?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  district?: string | null;
+  route_id?: string | null;
+  route_name?: string | null;
+  task_label?: string;
 }
 
 export interface PostcardListResponse {

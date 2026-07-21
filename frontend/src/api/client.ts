@@ -48,6 +48,7 @@ export interface WalkSegment {
   bus_lines?: string[];
   bus_from_stop?: string | null;
   bus_to_stop?: string | null;
+  preferred_mode?: "walk" | "bus" | string;
   modes?: Array<{ kind: string; label: string }>;
 }
 
@@ -160,9 +161,39 @@ export interface GuideNarrationSection {
   body: string;
 }
 
+export interface GuideObservationItem {
+  observation: string;
+  explanation: string;
+}
+
+export interface GuideNextExploration {
+  location?: string;
+  distance?: string;
+  walk_time?: string;
+  reason?: string;
+}
+
+/** Location-aware cultural companion (new macau-guide structured payload). */
+export interface ImmersiveGuide {
+  title?: string;
+  subtitle?: string;
+  hook?: string;
+  why_it_matters?: string;
+  historical_story?: string;
+  things_to_observe?: GuideObservationItem[];
+  local_story?: string;
+  interactive_suggestion?: string;
+  next_exploration?: GuideNextExploration;
+  audio_script?: string;
+}
+
 export interface GuideGenerateResponse {
   text: string;
-  /** Structured on-site narration blocks (overview / history / architecture / story). */
+  /** TTS-oriented script; prefer over ``text`` when present. */
+  audio_script?: string;
+  /** Immersive cultural companion structure. */
+  immersive?: ImmersiveGuide;
+  /** Legacy on-site narration blocks (overview / history / architecture / story). */
   sections?: GuideNarrationSection[];
   source_type?: string;
   confidence?: number;
@@ -204,8 +235,11 @@ export function generateGuide(body: {
   poi: string;
   language: string;
   interests?: string[];
+  travel_type?: string[];
   /** 下一站名称；空字符串表示末站；省略则无行程收尾语 */
   next_stop?: string | null;
+  next_distance?: string | null;
+  next_walk_time?: string | null;
 }): Promise<GuideGenerateResponse> {
   return request("/api/v1/guide/generate", {
     method: "POST",

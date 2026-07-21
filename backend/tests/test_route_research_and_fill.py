@@ -70,6 +70,22 @@ def test_research_tips_include_local_without_web():
     queries = build_research_queries(pref)
     assert queries
     assert any("横琴" in q or "威尼斯人" in q for q in queries)
+    assert any("路氹" in q or "摄影" in q or "拍照" in q for q in queries)
+
+
+def test_research_queries_cover_themes_and_physical():
+    pref = Preference(
+        duration="half-day",
+        themes=["food", "heritage"],
+        interests=["history"],
+        physical=["less-walk"],
+        travel_type=["solo"],
+        language="zh-CN",
+    )
+    queries = build_research_queries(pref)
+    assert any("美食" in q for q in queries)
+    assert any("历史" in q or "历史城区" in q for q in queries)
+    assert any("少走路" in q or "轻松" in q for q in queries)
 
 
 def test_multi_day_expands_halfday_cotai_template():
@@ -105,6 +121,9 @@ def test_multi_day_expands_halfday_cotai_template():
     middle = [n for n in nodes if n.get("anchor") not in {"entry", "exit"}]
     seed_notes = [n for n in middle if "走廊种子" in str(n.get("note") or "")]
     assert len(seed_notes) <= 2
+    # Prefer denser stops over long dwell padding.
+    assert len(middle) >= 8
+    assert sum(1 for n in middle if int(n.get("suggested_stay_min") or 0) > 50) <= 2
     # teamLab (replaceable_with on Venetian) must not become a generic fill stop.
     assert "poi_0114" not in {n["poi_id"] for n in nodes}
 
@@ -129,6 +148,8 @@ def test_match_multi_day_cotai_days_are_fuller_and_deduped():
     assert "poi_0114" not in {n["poi_id"] for n in day1_nodes}
     day1_hours = float(matches[0]["route"].get("duration_hours") or 0)
     assert day1_hours >= 7.5
+    day1_middle = [n for n in day1_nodes if n.get("anchor") not in {"entry", "exit"}]
+    assert len(day1_middle) >= 8
     constraints = " ".join(matches[0].get("applied_constraints") or [])
     assert "横琴" in constraints or "巴士" in constraints or "穿梭" in constraints
 
@@ -136,9 +157,13 @@ def test_match_multi_day_cotai_days_are_fuller_and_deduped():
     for match in matches:
         hours = float(match["route"].get("duration_hours") or 0)
         assert hours >= 7.5, f"day duration too short: {hours}"
-        for node in match["route"].get("nodes") or []:
-            if node.get("anchor") in {"entry", "exit"}:
-                continue
+        middle = [
+            n
+            for n in (match["route"].get("nodes") or [])
+            if n.get("anchor") not in {"entry", "exit"}
+        ]
+        assert len(middle) >= 6, f"day too sparse: {len(middle)} stops"
+        for node in middle:
             poi_id = node["poi_id"]
             assert poi_id not in seen, f"duplicate POI across days: {poi_id}"
             seen.add(poi_id)

@@ -66,13 +66,17 @@ class RouteAdjustResponse(BaseModel):
 
 
 class WalkPathRequest(BaseModel):
-    poi_ids: list[str] = Field(min_length=2, max_length=12)
+    # Theme days can exceed the old 12-stop cap (ports + dense fills).
+    poi_ids: list[str] = Field(min_length=2, max_length=24)
 
     @field_validator("poi_ids")
     @classmethod
-    def poi_ids_must_be_unique(cls, value: list[str]) -> list[str]:
-        if len(value) != len(set(value)):
-            raise ValueError("poi_ids must not contain duplicates")
+    def poi_ids_must_not_repeat_adjacently(cls, value: list[str]) -> list[str]:
+        # Same entry/exit port is valid (e.g. 横琴 → … → 横琴). Only reject
+        # consecutive duplicates, which would create a zero-length hop.
+        for left, right in zip(value, value[1:]):
+            if left == right:
+                raise ValueError("poi_ids must not contain consecutive duplicates")
         return value
 
 
@@ -90,6 +94,7 @@ class WalkSegmentResponse(BaseModel):
     bus_lines: list[str] = Field(default_factory=list)
     bus_from_stop: str | None = None
     bus_to_stop: str | None = None
+    preferred_mode: str = "walk"
     modes: list[TransitModeResponse] = Field(default_factory=list)
 
 

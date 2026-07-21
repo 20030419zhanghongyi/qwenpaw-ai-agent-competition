@@ -16,6 +16,16 @@ __pycache__/
 # Runtime traces (local-only)
 harness/results/traces/traces.jsonl
 /logs
-/logs
-logs/2026-07-17_13-51-01.log
-logs/2026-07-17_13-51-01.log
+logs/
+
+# Postcard AI scene cache (generated locally)
+data/postcard_scene_cache/
+data/postcard_scenes/_checkpoint.json
+data/postcard_scenes/*/
+!data/postcard_scenes/README.md
+!data/postcard_scenes/*.xlsx
+!data/postcard_scenes/*.md
+
+# Bulk web reference photos for postcard scenes (phase 1)
+harness/datasets/photos/poi_refs/*
+!harness/datasets/photos/poi_refs/README.md

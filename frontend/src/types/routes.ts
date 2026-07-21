@@ -27,6 +27,7 @@ export interface WalkSegment {
   bus_lines?: string[];
   bus_from_stop?: string | null;
   bus_to_stop?: string | null;
+  preferred_mode?: "walk" | "bus" | string;
   modes?: TransitMode[];
 }
 

@@ -7,7 +7,8 @@ skills/
 ├── route-adjust/SKILL.md        # P1：路线微调 agent（NL 偏好 → 结构化意图 JSON）
 ├── requirement-understand/SKILL.md  # 需求理解 agent（NL → Preference JSON）
 ├── macau-guide/SKILL.md         # P2：文化讲解 agent（POI 资料 → 有据讲解 + 来源/置信）
-└── photo-recognize/SKILL.md     # P4：拍照识别 agent（图 → {描述,候选POI,置信} JSON）
+├── photo-recognize/SKILL.md     # P4：拍照识别 agent（图 → {描述,候选POI,置信} JSON）
+└── postcard-scene/SKILL.md      # 明信片场景插画（参考实景 → 四时段 SVG）
 ```
 
 ## 部署到 QwenPaw（开发期）
@@ -45,6 +46,7 @@ curl -X POST http://127.0.0.1:8088/api/skills/pool/refresh
 | `intent` | 需求理解 | `requirement-understand`、`fairness-gate` | 结构化 Preference |
 | `guide` | 文化讲解 | `macau-guide`、`source-attribution`、`anti-sycophancy` | RAG 取料 + 来源/置信度 |
 | `photo` | 拍照识别 | `photo-recognize`、`source-attribution` | 多模态 + 内置 `view_image` 工具 |
+| `scene` | 明信片场景插画 | `postcard-scene` | 多模态 + `view_image`；先看参考实景再画四时段 SVG |
 | `reviewer` | 独立审核 | `content-safety-review` | pass / revise / block 独立裁定 |
 
 > `source-attribution` 不承担独立审核；生成结果仍由 `reviewer` 做后置安全裁定。
@@ -138,12 +140,42 @@ CLI 默认不在 PATH 时，用 **Console** 建：
    `curl -X POST localhost:8000/api/v1/guide/generate -H 'Content-Type: application/json' -d '{"poi":"议事亭前地","interests":["history","architecture"]}'`
    → `source:"agent"`、`text` 非空讲解；`/guide/photo` 的 `explanation` 也随之有值
 
-> `macau-guide` 输出严格 JSON `{text, source_type, confidence, ai_generated, language}`：
+> `macau-guide` 输出严格 JSON（沉浸式伴侣字段 + `{text, audio_script, source_type, confidence, ai_generated, language}`）：
 > 易变信息（开放时间/活动）置信度 ≤0.5 且正文「以现场为准」，不编史料——
 > 与路线技能同一套「结构化输出 + 失败降级」纪律。
 >
 > **前置：pgvector 要在跑**。讲解取料走 `retrieve()`（向量），需 `macau-pg` 容器在线：
 > `docker start macau-pg`（首次起库 + ingest 见 `rag/README.md`）。库空时 `retrieve` 自动回落关键词，不挂。
+
+## 在 QwenPaw 里建明信片场景 agent（scene）—— 技能源已就位
+
+专用 agent：先 `view_image` 看后端下好的实景参考图，再输出四时段明信片 SVG。
+与 `photo`（识别 JSON）分工不同——`scene` **只画图**。
+
+```bash
+# 1. 技能进池 + reconcile
+cp -R skills/postcard-scene ~/.qwenpaw/skill_pool/
+curl -X POST http://127.0.0.1:8088/api/skills/pool/refresh
+
+# 2. 建 agent（多模态模型；与 photo 同 provider）
+curl -X POST http://127.0.0.1:8088/api/agents \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "id": "scene",
+    "name": "明信片场景",
+    "active_model": {"provider_id": "aliyun-tokenplan-intl", "model": "qwen3.6-plus"},
+    "skill_names": ["postcard-scene"],
+    "language": "zh"
+  }'
+
+# 3. 确认 view_image 已启用（内置工具，默认开）
+# 4. 批量：先研究断点，再生成
+cd backend
+python scripts/generate_postcard_scenes.py --only-routed --research-only
+python scripts/generate_postcard_scenes.py --only-routed --agent scene
+```
+
+> 断点文件：`data/postcard_scenes/_checkpoint.json`（研究阶段写完即可暂停，之后续跑生成）。
 
 ## 在 QwenPaw 里建拍照识别 agent（P4）—— ✅ 已建 + 端到端验证（2026-07-13，API 建档）
 

@@ -15,6 +15,7 @@ export function PostcardCreateForm({
   poiId,
   poiName,
   language,
+  replace = false,
   onCreated,
   onSkip,
 }: {
@@ -22,12 +23,15 @@ export function PostcardCreateForm({
   poiId: string;
   poiName?: string;
   language: LanguageCode;
+  /** Replace an existing postcard for this trip+POI. */
+  replace?: boolean;
   onCreated: (postcard: Postcard) => void;
   onSkip?: () => void;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [aiScene, setAiScene] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -64,8 +68,8 @@ export function PostcardCreateForm({
     setPhase("idle");
   }
 
-  async function handleCreate() {
-    if (!file) {
+  async function handleCreate(withPhoto: boolean) {
+    if (withPhoto && !file) {
       setError(t(language, "postcardNeedPhoto"));
       return;
     }
@@ -75,8 +79,10 @@ export function PostcardCreateForm({
       const postcard = await createPostcard({
         tripId,
         poiId,
-        photo: file,
+        photo: withPhoto ? file : null,
         language,
+        replace,
+        aiScene: withPhoto ? false : aiScene,
       });
       setPhase("done");
       onCreated(postcard);
@@ -99,7 +105,15 @@ export function PostcardCreateForm({
   }
 
   if (phase === "creating") {
-    return <LoadingState label={t(language, "postcardCreating")} />;
+    return (
+      <LoadingState
+        label={
+          aiScene && !file
+            ? t(language, "postcardCreatingAi")
+            : t(language, "postcardCreating")
+        }
+      />
+    );
   }
 
   return (
@@ -149,12 +163,16 @@ export function PostcardCreateForm({
         <ErrorState
           title={t(language, "errorTitle")}
           message={error}
-          onRetry={phase === "error" && file ? () => void handleCreate() : undefined}
+          onRetry={
+            phase === "error"
+              ? () => void handleCreate(Boolean(file))
+              : undefined
+          }
           retryLabel={t(language, "retry")}
         />
       ) : null}
 
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         {previewUrl ? (
           <button
             type="button"
@@ -167,10 +185,17 @@ export function PostcardCreateForm({
         <button
           type="button"
           disabled={!file}
-          onClick={() => void handleCreate()}
+          onClick={() => void handleCreate(true)}
           className="h-12 flex-1 rounded-full bg-sage-deep px-5 text-sm font-medium text-paper transition hover:bg-moss disabled:opacity-50"
         >
           {t(language, "postcardGenerate")}
+        </button>
+        <button
+          type="button"
+          onClick={() => void handleCreate(false)}
+          className="h-12 flex-1 rounded-full border border-sage-deep px-5 text-sm font-medium text-sage-deep transition hover:bg-sage-deep/10"
+        >
+          {t(language, "postcardGenerateNoPhoto")}
         </button>
         {onSkip ? (
           <button
@@ -182,6 +207,25 @@ export function PostcardCreateForm({
           </button>
         ) : null}
       </div>
+      {!previewUrl ? (
+        <label className="flex cursor-pointer items-start gap-3 text-sm text-ink-soft">
+          <input
+            type="checkbox"
+            checked={aiScene}
+            onChange={(e) => setAiScene(e.target.checked)}
+            className="mt-1 size-4 accent-[var(--sage-deep)]"
+          />
+          <span>
+            <span className="font-medium text-ink">{t(language, "postcardAiSceneOption")}</span>
+            <span className="mt-0.5 block text-xs leading-relaxed">
+              {t(language, "postcardAiSceneOptionHint")}
+            </span>
+          </span>
+        </label>
+      ) : null}
+      <p className="text-xs leading-relaxed text-ink-soft">
+        {t(language, "postcardNoPhotoHint")}
+      </p>
     </div>
   );
 }

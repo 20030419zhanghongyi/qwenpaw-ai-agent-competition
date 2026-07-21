@@ -206,8 +206,12 @@ class GuideRequest(BaseModel):
     poi: str = Field(min_length=1, max_length=255)  # POI 名字（中/英/葡）或 id
     language: str = "zh-CN"
     interests: list[str] | None = None   # history / architecture / food / photo / culture
+    travel_type: list[str] | None = None  # family / solo / …（偏好个性化）
     # 行程下一站名称；传空字符串表示末站；省略则无行程收尾语
     next_stop: str | None = None
+    # 可选：来自行程腿的下一站距离 / 步行时间文案（未知勿编造，由客户端传入）
+    next_distance: str | None = None
+    next_walk_time: str | None = None
 
     @field_validator("poi")
     @classmethod
@@ -223,6 +227,13 @@ class GuideRequest(BaseModel):
         if value is None:
             return None
         return sanitize_untrusted_text(value, max_length=255)
+
+    @field_validator("next_distance", "next_walk_time")
+    @classmethod
+    def sanitize_next_meta(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return sanitize_untrusted_text(value, max_length=64)
 
 
 class GuideAskRequest(BaseModel):
@@ -806,18 +817,40 @@ def generate(
         language=req.language,
         interests=req.interests,
         next_stop=req.next_stop,
+        travel_type=req.travel_type,
+        next_distance=req.next_distance,
+        next_walk_time=req.next_walk_time,
     )
     if preset is None:
         # 回退：旧 gather 路径仍找不到则 404
         poi_name, material = _gather_material(req.poi, req.poi)
         if not material:
             raise HTTPException(status_code=404, detail=f"找不到 POI 资料：{req.poi}")
+        snippet = material.split("\n")[0][:500]
         preset = {
-            "text": material.split("\n")[0][:500],
+            "text": snippet,
+            "audio_script": snippet,
+            "immersive": {
+                "title": poi_name or req.poi,
+                "subtitle": "",
+                "hook": snippet,
+                "why_it_matters": "",
+                "historical_story": "",
+                "things_to_observe": [],
+                "local_story": "",
+                "interactive_suggestion": "",
+                "next_exploration": {
+                    "location": (req.next_stop or "").strip() if req.next_stop else "",
+                    "distance": (req.next_distance or "").strip(),
+                    "walk_time": (req.next_walk_time or "").strip(),
+                    "reason": "",
+                },
+                "audio_script": snippet,
+            },
             "sections": [
                 {
                     "id": "overview",
-                    "body": material.split("\n")[0][:500],
+                    "body": snippet,
                 }
             ],
             "source_type": "ai",
@@ -845,13 +878,15 @@ def generate(
         )
         return preset
 
-    # 可选增强：guide agent 改写预设稿
+    # 可选增强：guide agent 改写预设稿（优先结构化 immersive）
     poi_name, material = _gather_material(req.poi, req.poi)
     expl = guide_agent.generate(
         poi_name or str(preset.get("poi_name") or req.poi),
         material=material or str(preset.get("text") or ""),
         language=req.language,
         interests=req.interests,
+        travel_type=req.travel_type,
+        next_stop=req.next_stop,
     )
     latency_ms = int((time.perf_counter() - t0) * 1000)
 
@@ -878,9 +913,40 @@ def generate(
 
     out_text, review = _apply_review(expl.text, path="generate")
     blocked = review.get("decision") == "block"
-    # Keep POI-field sections for pictorial UI; agent rewrite only replaces flat TTS text.
+
+    # Prefer agent immersive when it has real structure; else keep preset immersive.
+    immersive = preset.get("immersive") or {}
+    if expl.immersive is not None:
+        agent_imm = expl.immersive.to_public_dict()
+        rich = any(
+            [
+                agent_imm.get("why_it_matters"),
+                agent_imm.get("historical_story"),
+                agent_imm.get("things_to_observe"),
+                agent_imm.get("local_story"),
+            ]
+        )
+        if rich:
+            # Preserve next-stop meta from request/preset when agent left blanks
+            preset_next = (preset.get("immersive") or {}).get("next_exploration") or {}
+            agent_next = agent_imm.get("next_exploration") or {}
+            if not agent_next.get("location") and preset_next.get("location"):
+                agent_next = {**preset_next, **{k: v for k, v in agent_next.items() if v}}
+            for key in ("distance", "walk_time"):
+                if not agent_next.get(key) and preset_next.get(key):
+                    agent_next[key] = preset_next[key]
+            agent_imm["next_exploration"] = agent_next
+            if not agent_imm.get("title"):
+                agent_imm["title"] = preset.get("poi_name") or req.poi
+            if not agent_imm.get("audio_script"):
+                agent_imm["audio_script"] = out_text
+            immersive = agent_imm
+
     return {
         "text": out_text,
+        "audio_script": (immersive or {}).get("audio_script") or out_text,
+        "immersive": immersive,
+        # Keep POI-field sections for pictorial UI when agent only rewrote TTS text.
         "sections": preset.get("sections") or [],
         "source_type": expl.source_type,
         "confidence": expl.confidence,

@@ -14,6 +14,8 @@ export interface WalkLeg {
   busLines?: string[];
   busFromStop?: string | null;
   busToStop?: string | null;
+  /** When walk > ~15 min and bus exists, UI leads with bus. */
+  preferredMode?: "walk" | "bus" | string;
 }
 
 export function RouteNodeList({
@@ -99,18 +101,35 @@ export function RouteNodeList({
                   className="absolute left-0 top-0 h-full w-px bg-sage/40"
                   aria-hidden
                 />
-                <span className="rounded-full border border-sage/30 bg-sage-deep/[0.06] px-3 py-1 text-[11px] tracking-wide text-sage-deep">
-                  {formatWalkLeg(walkLegLabel, leg)}
-                </span>
-                {busLines.length > 0 ? (
-                  <span className="max-w-full rounded-full border border-ochre/35 bg-ochre/10 px-3 py-1 text-[11px] leading-snug tracking-wide text-ink">
-                    {formatBusLeg(busLegLabel, busStopLegLabel, busLines, {
-                      from: busFromStop,
-                      to: busToStop,
-                      hasStops: hasBusStops,
-                    })}
-                  </span>
-                ) : null}
+                {leg.preferredMode === "bus" && busLines.length > 0 ? (
+                  <>
+                    <span className="max-w-full rounded-full border border-ochre/40 bg-ochre/15 px-3 py-1 text-[11px] font-medium leading-snug tracking-wide text-ink">
+                      {formatBusLeg(busLegLabel, busStopLegLabel, busLines, {
+                        from: busFromStop,
+                        to: busToStop,
+                        hasStops: hasBusStops,
+                      })}
+                    </span>
+                    <span className="rounded-full border border-line/80 bg-paper px-3 py-1 text-[11px] tracking-wide text-ink-soft">
+                      {formatWalkLeg(walkLegLabel, leg)}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="rounded-full border border-sage/30 bg-sage-deep/[0.06] px-3 py-1 text-[11px] tracking-wide text-sage-deep">
+                      {formatWalkLeg(walkLegLabel, leg)}
+                    </span>
+                    {busLines.length > 0 ? (
+                      <span className="max-w-full rounded-full border border-ochre/35 bg-ochre/10 px-3 py-1 text-[11px] leading-snug tracking-wide text-ink">
+                        {formatBusLeg(busLegLabel, busStopLegLabel, busLines, {
+                          from: busFromStop,
+                          to: busToStop,
+                          hasStops: hasBusStops,
+                        })}
+                      </span>
+                    ) : null}
+                  </>
+                )}
               </div>
             ) : index < nodes.length - 1 ? (
               <div className="h-6" aria-hidden />
@@ -136,7 +155,8 @@ function formatBusLeg(
   lines: string[],
   stops: { from: string; to: string; hasStops: boolean },
 ): string {
-  const linesText = linesTemplate.replace("{lines}", lines.join(" · "));
+  // Prefer concrete AMap transfer chains (already use " → "); show up to 2 plan options.
+  const linesText = linesTemplate.replace("{lines}", lines.slice(0, 2).join(" · "));
   if (!stops.hasStops) return linesText;
   const stopsText = stopsTemplate
     .replace("{from}", stops.from)

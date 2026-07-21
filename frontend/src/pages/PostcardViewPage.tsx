@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { listTripPostcards, postcardImageSrc, PostcardApiError } from "@/api/postcards";
 import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
@@ -12,6 +12,7 @@ export function PostcardViewPage() {
   const { postcardId = "" } = useParams();
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const { language } = useWalk();
   const tripId = searchParams.get("trip");
   const fromState = (location.state as { postcard?: Postcard } | null)?.postcard;
@@ -59,6 +60,17 @@ export function PostcardViewPage() {
   const galleryHref = tripId
     ? `/postcards?trip=${encodeURIComponent(tripId)}`
     : "/postcards";
+
+  function goCreateForPoi(poiId: string) {
+    if (!tripId) {
+      navigate(galleryHref, { replace: true });
+      return;
+    }
+    navigate(
+      `/postcards/new?trip=${encodeURIComponent(tripId)}&poi=${encodeURIComponent(poiId)}&replace=1`,
+      { replace: true },
+    );
+  }
 
   return (
     <main className="relative flex-1 bg-paper pb-24">
@@ -110,17 +122,59 @@ export function PostcardViewPage() {
                   <span className="rounded-full bg-paper-warm px-2.5 py-0.5 text-[10px] text-ink-soft">
                     {t(language, "postcardScrubbed")}
                   </span>
+                ) : postcard.scene_source === "ai" || postcard.scene_source === "library" ? (
+                  <span className="rounded-full bg-sage-deep/10 px-2.5 py-0.5 text-[10px] font-semibold text-sage-deep">
+                    {t(language, "postcardAiSceneBadge")}
+                  </span>
+                ) : postcard.has_user_photo === false ? (
+                  <span className="rounded-full bg-paper-warm px-2.5 py-0.5 text-[10px] text-ink-soft">
+                    {t(language, "postcardNoPhotoBadge")}
+                  </span>
                 ) : null}
               </div>
+              {postcard.task_label ? (
+                <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-sage-deep">
+                  {postcard.task_label}
+                </p>
+              ) : null}
               <p className="mt-3 font-display text-xl leading-snug text-ink">
                 {postcard.caption}
               </p>
-              <p className="mt-3 text-xs text-ink-soft">
-                {new Date(postcard.created_at).toLocaleDateString(language)} · Macau
-              </p>
+              <dl className="mt-4 space-y-2 text-xs text-ink-soft">
+                <div className="flex gap-2">
+                  <dt className="shrink-0 font-medium text-ink/70">
+                    {t(language, "postcardStampTime")}
+                  </dt>
+                  <dd>
+                    {postcard.timestamp_label ||
+                      `${new Date(postcard.created_at).toLocaleString(language)} · Macau`}
+                  </dd>
+                </div>
+                {postcard.geo_label ? (
+                  <div className="flex gap-2">
+                    <dt className="shrink-0 font-medium text-ink/70">
+                      {t(language, "postcardStampGeo")}
+                    </dt>
+                    <dd>{postcard.geo_label}</dd>
+                  </div>
+                ) : null}
+                {postcard.route_name ? (
+                  <div className="flex gap-2">
+                    <dt className="shrink-0 font-medium text-ink/70">
+                      {t(language, "postcardStampRoute")}
+                    </dt>
+                    <dd>{postcard.route_name}</dd>
+                  </div>
+                ) : null}
+              </dl>
             </div>
 
-            <PostcardActions postcard={postcard} language={language} />
+            <PostcardActions
+              postcard={postcard}
+              language={language}
+              onDeleted={() => navigate(galleryHref, { replace: true })}
+              onRegenerate={() => goCreateForPoi(postcard.poi_id)}
+            />
           </div>
         ) : null}
       </div>

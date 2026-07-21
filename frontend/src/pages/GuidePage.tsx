@@ -139,16 +139,26 @@ export function GuidePage() {
         poi: displayName || poi.poi_name,
         language,
         interests: preference?.interests,
+        travel_type: preference?.travel_type,
         next_stop: resolvedNextName,
       });
-      if (!gen.text) {
+      if (!gen.text && !gen.audio_script && !gen.immersive) {
         setGenError(gen.error || t(language, "guideError"));
         return;
       }
       setNarration(gen);
       void (async () => {
         try {
-          const tts = await synthesizeTts({ text: gen.text, language });
+          const script =
+            gen.audio_script ||
+            gen.immersive?.audio_script ||
+            gen.text ||
+            "";
+          if (!script.trim()) {
+            setTtsFailed(true);
+            return;
+          }
+          const tts = await synthesizeTts({ text: script, language });
           setAudioUrl(tts.audio_url);
         } catch {
           setTtsFailed(true);
@@ -357,9 +367,14 @@ export function GuidePage() {
     narration?.poi_name || selected?.poi_name || deepName || t(language, "guidePageTitle");
   const showingDetail = Boolean(selected || deepPoi);
   const narrationSections = useMemo(() => {
-    if (!narration?.text) return [];
-    if (narration.sections?.length) return narration.sections;
-    return sectionsFromText(narration.text);
+    const script =
+      narration?.audio_script ||
+      narration?.immersive?.audio_script ||
+      narration?.text ||
+      "";
+    if (!script && !narration?.immersive) return [];
+    if (narration?.sections?.length) return narration.sections;
+    return script ? sectionsFromText(script) : [];
   }, [narration]);
   const narrationImage =
     (sceneUrl && sceneUrl !== heroImg ? sceneUrl : null) ||
@@ -519,12 +534,15 @@ export function GuidePage() {
                   <p className="mt-3 text-sm text-ink-soft">{t(language, "generatingGuide")}</p>
                 ) : null}
                 {genError ? <p className="mt-3 text-sm text-clay">{genError}</p> : null}
-                {narration?.text ? (
+                {narration?.text ||
+                narration?.audio_script ||
+                narration?.immersive ? (
                   <>
                     <GuideNarrationSections
                       key={`${title}-${narrationImage ?? "band"}`}
                       language={language}
                       sections={narrationSections}
+                      immersive={narration?.immersive}
                       imageUrl={narrationImage}
                       imageAlt={title}
                       showImage={!photoPreview}

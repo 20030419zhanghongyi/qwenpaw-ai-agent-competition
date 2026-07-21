@@ -24,6 +24,7 @@ import {
 import { TripControls } from "@/components/trip/TripControls";
 import { t } from "@/i18n";
 import { resolveTripUserId } from "@/lib/guestUser";
+import { routeHasGamblingVenue } from "@/lib/gamblingEthics";
 import { formatWalkMeta } from "@/lib/preference";
 import { ensurePreferencePortAnchors, portLabel } from "@/lib/ports";
 import { buildRouteAdjustmentDraft } from "@/lib/route-adjustment";
@@ -92,9 +93,17 @@ function estimateWalkLegs(poiIds: string[], poisById: Record<string, POI>): Walk
       haversineMeters(from.latitude, from.longitude, to.latitude, to.longitude),
     );
     // ~4.8 km/h walking pace
+    const walkMin = Math.max(1, Math.ceil(meters / 80));
+    const preferBus = walkMin >= 15;
     legs.push({
       walkM: meters,
-      walkMin: Math.max(1, Math.ceil(meters / 80)),
+      walkMin,
+      ...(preferBus
+        ? {
+            preferredMode: "bus" as const,
+            busLines: ["建议乘巴士（勿步行）"],
+          }
+        : {}),
     });
   }
   return legs;
@@ -146,6 +155,11 @@ export function RouteResultPage() {
   const [guiding, setGuiding] = useState(false);
   const [checking, setChecking] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [mapRecenterToken, setMapRecenterToken] = useState(0);
   const [statusNote, setStatusNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [adjustInstruction, setAdjustInstruction] = useState("");
@@ -290,6 +304,9 @@ export function RouteResultPage() {
         busLines: seg.bus_lines ?? [],
         busFromStop: seg.bus_from_stop ?? null,
         busToStop: seg.bus_to_stop ?? null,
+        preferredMode:
+          seg.preferred_mode ??
+          (seg.walk_min >= 15 && (seg.bus_lines?.length ?? 0) > 0 ? "bus" : "walk"),
       }));
       if (legs.length === expectedLegs) setWalkLegs(legs);
     };
@@ -340,12 +357,14 @@ export function RouteResultPage() {
 
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
+        const { longitude, latitude } = pos.coords;
+        setUserLocation({ latitude, longitude });
+
         if (triggerOpenRef.current || generatingRef.current || checkingRef.current) return;
         const now = Date.now();
         if (now - lastGpsCheckRef.current < 8000) return;
         lastGpsCheckRef.current = now;
 
-        const { longitude, latitude } = pos.coords;
         void (async () => {
           checkingRef.current = true;
           setChecking(true);
@@ -440,6 +459,9 @@ export function RouteResultPage() {
       high: t(language, "physicalHigh"),
     },
   });
+  if (routeHasGamblingVenue(nodePoiIds, poisById)) {
+    meta.push(t(language, "gamblingRiskReminder"));
+  }
 
   const explanation = cleanRouteBlurb(
     typeof match.explanation?.summary === "string"
@@ -694,6 +716,8 @@ export function RouteResultPage() {
           <MapRouteView
             poiIds={nodePoiIds}
             currentPoiId={currentNode?.poiId}
+            userLocation={userLocation}
+            recenterToken={mapRecenterToken}
             onSelectPoi={(poiId) => {
               const index = nodes.findIndex((node) => node.poiId === poiId);
               if (index >= 0) handleSelectStop(index);
@@ -708,6 +732,27 @@ export function RouteResultPage() {
               setGuiding(true);
               lastGpsCheckRef.current = 0;
               setStatusNote(t(language, "gpsWatching"));
+              if (!navigator.geolocation) {
+                setStatusNote(t(language, "gpsUnsupported"));
+                return;
+              }
+              navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                  setUserLocation({
+                    latitude: pos.coords.latitude,
+                    longitude: pos.coords.longitude,
+                  });
+                  setMapRecenterToken((token) => token + 1);
+                },
+                () => {
+                  setStatusNote(t(language, "locationDenied"));
+                },
+                {
+                  enableHighAccuracy: true,
+                  maximumAge: 5000,
+                  timeout: 15_000,
+                },
+              );
             }}
             className="absolute bottom-24 right-5 z-10 grid size-11 place-items-center rounded-full border border-line bg-paper text-sage-deep shadow-[var(--shadow-soft)] hover:bg-paper-warm disabled:opacity-50 lg:bottom-8 lg:right-8"
           >

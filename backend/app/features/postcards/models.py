@@ -18,8 +18,21 @@ class PostcardResponse(BaseModel):
     language: str
     review_decision: str
     photo_scrubbed: bool
+    has_user_photo: bool = True
+    # user | ai (live) | library (pre-generated slot) | placeholder
+    scene_source: str = "user"
     image_url: str
     created_at: datetime
+    # Design stamps: time / public POI geo / route task (not photo EXIF).
+    visited_at: datetime | None = None
+    timestamp_label: str = ""
+    geo_label: str = ""
+    latitude: float | None = None
+    longitude: float | None = None
+    district: str | None = None
+    route_id: str | None = None
+    route_name: str | None = None
+    task_label: str = ""
 
 
 class PostcardListResponse(BaseModel):

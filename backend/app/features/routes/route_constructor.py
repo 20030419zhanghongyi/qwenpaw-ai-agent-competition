@@ -16,7 +16,7 @@ from copy import deepcopy
 from app.models.user import Preference
 
 from .geo_order import reorder_nodes_geographically, route_is_cotai_heavy
-from .poi_metadata import get_poi_metadata
+from .poi_metadata import get_poi_metadata, list_poi_metadata
 from .route_research import local_port_transfer_note
 
 
@@ -30,9 +30,17 @@ DURATION_LIMITS = {
 
 # When multi-day picks a half-day template, expand until a full-day budget.
 _MULTI_DAY_MIN_HOURS = 8.0
+# Prefer denser stop lists over long dwell padding.
+_MULTI_DAY_MIN_STOPS = 8
+_MULTI_DAY_FILL_STAY_MIN = 25
+_MULTI_DAY_FILL_STAY_MAX = 35
+_MULTI_DAY_PAD_STAY_MAX = 50
 # Multi-day treats the chosen template as a corridor seed, not a full itinerary.
 _MULTI_DAY_SEED_MAX_NODES = 2
-_MULTI_DAY_SEED_STAY_CAP_MIN = 45
+_MULTI_DAY_SEED_STAY_CAP_MIN = 40
+# Cotai indoor / short hops: don't let synthetic walk km block denser fills.
+_MULTI_DAY_FILL_WALK_LIMIT = 9.0
+_MULTI_DAY_FILL_WALK_STEP_KM = 0.25
 
 WALK_LIMITS = {
     "less-walk": 2.8,
@@ -59,6 +67,8 @@ _TICKETED_ATTRACTION_NOTES: dict[str, str] = {
 }
 
 _COTAI_FILL_DISTRICTS = frozenset({"路氹填海区", "嘉模堂区"})
+# ~15 min walk at ~80 m/min — prefer next stops inside this hop when filling.
+_PREFER_WALK_HOP_M = 1200.0
 
 
 def construct_route(route: dict, pref: Preference, candidate_pois: list[dict] | None = None) -> tuple[dict, list[str]]:
@@ -71,9 +81,11 @@ def construct_route(route: dict, pref: Preference, candidate_pois: list[dict] | 
 
     duration_limit = DURATION_LIMITS.get(pref.duration)
     walk_limit = WALK_LIMITS["less-walk"] if "less-walk" in pref.physical else WALK_LIMITS["normal"]
+    is_theme_day = str(planned.get("id") or "").startswith("theme_day_")
 
-    # Multi-day: keep a short template seed corridor, then fill toward ~8h.
-    if pref.duration == "multi-day":
+    # Multi-day preset shells: keep a short template seed corridor, then fill.
+    # Theme-day shells already start with 2 seeds — skip trimming.
+    if pref.duration == "multi-day" and not is_theme_day:
         planned, seeded = _seed_template_corridor(planned)
         if seeded:
             applied_constraints.append(
@@ -85,23 +97,35 @@ def construct_route(route: dict, pref: Preference, candidate_pois: list[dict] | 
         if inserted:
             applied_constraints.append("在预算允许内按兴趣补充候选节点")
 
-    # Multi-day days should feel like a full day, not a leftover half-day template.
-    if pref.duration == "multi-day" and candidate_pois:
+    # Dense fill for multi/full day, and any theme-generated shell (incl. half-day themes).
+    should_dense_fill = candidate_pois is not None and (
+        is_theme_day or pref.duration in {"multi-day", "full-day"}
+    )
+    if should_dense_fill:
+        target_hours = float(duration_limit or _MULTI_DAY_MIN_HOURS)
+        min_stops = {
+            "evening": 3,
+            "half-day": 5,
+            "full-day": _MULTI_DAY_MIN_STOPS,
+            "multi-day": _MULTI_DAY_MIN_STOPS,
+        }.get(pref.duration or "full-day", _MULTI_DAY_MIN_STOPS)
         planned, filled = _fill_day_toward_target(
             planned,
-            candidate_pois,
-            target_hours=_MULTI_DAY_MIN_HOURS,
-            ceiling_hours=duration_limit or 8.0,
+            candidate_pois or [],
+            target_hours=target_hours,
+            ceiling_hours=target_hours,
             walk_limit=walk_limit,
             physical=pref.physical,
+            min_stops=min_stops,
         )
         if filled:
             applied_constraints.append(
-                f"多日游已将本日扩充至约 {planned.get('duration_hours')} 小时（半日模板补全日）"
+                f"已将本日扩充至约 {planned.get('duration_hours')} 小时（主题/密点生成）"
             )
-            if "半日" in str(planned.get("duration_label") or ""):
+            if pref.duration in {"multi-day", "full-day"} and "半日" in str(
+                planned.get("duration_label") or ""
+            ):
                 planned["duration_label"] = "一日"
-                planned["name"] = f"{planned.get('name', '行程')}（全日扩充）"
 
     if duration_limit is not None:
         before_nodes = len(planned.get("nodes", []))
@@ -430,6 +454,198 @@ def _is_cotai_corridor_poi(poi_id: str) -> bool:
     return str(poi.get("district") or "") in _COTAI_FILL_DISTRICTS
 
 
+def _fill_stay_minutes(poi: dict) -> int:
+    """Short dwell for denser multi-day fills (prefer more stops over long stays)."""
+    stay = _default_stay_min(poi)
+    return max(_MULTI_DAY_FILL_STAY_MIN, min(_MULTI_DAY_FILL_STAY_MAX, stay))
+
+
+def _middle_stop_count(route: dict) -> int:
+    return sum(1 for node in route.get("nodes", []) if not _is_port_anchor(node))
+
+
+def _needs_more_fill(
+    route: dict,
+    *,
+    target_hours: float,
+    min_stops: int = _MULTI_DAY_MIN_STOPS,
+) -> bool:
+    hours = float(route.get("duration_hours") or 0)
+    stops = _middle_stop_count(route)
+    return hours < target_hours or stops < min_stops
+
+
+def _cotai_expand_ids(current_ids: set[str]) -> tuple[str, ...]:
+    """Curated dense Cotai / Taipa corridor — prioritize landmarks over mall shops."""
+    europe = {"poi_0020", "poi_0021", "poi_0107"}
+    resort = {"poi_0109", "poi_0027", "poi_0230", "poi_0231", "poi_0110"}
+    has_europe = bool(current_ids & europe)
+    has_resort = bool(current_ids & resort)
+    if has_europe and not has_resort:
+        # West strip + 氹仔旧城 denser day; leave deep east strip for day 2.
+        return (
+            "poi_0012",  # 龙环葡韵
+            "poi_0008",  # 官也街
+            "poi_0098",  # 嘉模圣母堂
+            "poi_0099",  # 嘉模墟
+            "poi_0100",  # 北帝庙
+            "poi_0137",  # 关帝庙
+            "poi_0216",  # 告利雅施利华街
+            "poi_0214",  # 施督宪正街
+            "poi_0107",  # 伦敦人
+            "poi_0106",  # 威尼斯人购物中心（外立面/公共区）
+            "poi_0232",  # 大运河购物中心
+            "poi_0040",  # 伦敦人综艺馆周边
+        )
+    if has_resort and not has_europe:
+        return (
+            "poi_0112",
+            "poi_0113",
+            "poi_0045",
+            "poi_0109",
+            "poi_0027",
+            "poi_0230",
+            "poi_0231",
+            "poi_0110",
+            "poi_0111",  # 影汇之星
+            "poi_0164",
+            "poi_0261",
+        )
+    return (
+        "poi_0012",
+        "poi_0008",
+        "poi_0098",
+        "poi_0099",
+        "poi_0020",
+        "poi_0021",
+        "poi_0107",
+        "poi_0109",
+        "poi_0027",
+        "poi_0230",
+        "poi_0110",
+        "poi_0112",
+    )
+
+
+def _district_fill_ids(current_ids: set[str], *, cotai_heavy: bool) -> list[str]:
+    """Extra same-district landmarks when curated list is exhausted."""
+    wanted = {"photo", "architecture", "culture", "history", "food", "relax"}
+    scored: list[tuple[int, str]] = []
+    for poi in list_poi_metadata():
+        poi_id = str(poi.get("id") or "")
+        if not poi_id or poi_id in current_ids or _should_skip_fill_candidate(poi_id):
+            continue
+        district = str(poi.get("district") or "")
+        if cotai_heavy and district not in _COTAI_FILL_DISTRICTS:
+            continue
+        if not cotai_heavy and district in _COTAI_FILL_DISTRICTS:
+            continue
+        tags = set(poi.get("suitable_for") or [])
+        if not tags & wanted:
+            continue
+        # Prefer multi-tag cultural / photo stops over single food shops.
+        score = len(tags & wanted) * 2
+        if "photo" in tags or "architecture" in tags:
+            score += 2
+        if "food" in tags and not (tags & {"photo", "architecture", "culture", "history"}):
+            score -= 1
+        scored.append((score, poi_id))
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return [poi_id for _, poi_id in scored[:24]]
+
+
+def _append_fill_candidates(
+    flat: list[tuple[str, dict]],
+    *,
+    source_fallback: str,
+    poi_ids: list[str] | tuple[str, ...],
+    current_ids: set[str],
+) -> None:
+    for poi_id in poi_ids:
+        if poi_id in current_ids:
+            continue
+        flat.append((source_fallback, {"poi_id": poi_id}))
+
+
+def _poi_lat_lng(poi_id: str) -> tuple[float, float] | None:
+    poi = get_poi_metadata(poi_id) or {}
+    raw = poi.get("coordinates")
+    if isinstance(raw, dict):
+        lat, lng = raw.get("lat"), raw.get("lng")
+        if isinstance(lat, (int, float)) and isinstance(lng, (int, float)):
+            return float(lat), float(lng)
+    lat, lng = poi.get("latitude"), poi.get("longitude")
+    if isinstance(lat, (int, float)) and isinstance(lng, (int, float)):
+        return float(lat), float(lng)
+    return None
+
+
+def _approx_meters(a: tuple[float, float], b: tuple[float, float]) -> float:
+    import math
+
+    lat1, lng1 = a
+    lat2, lng2 = b
+    mean_lat = math.radians((lat1 + lat2) / 2.0)
+    dx = (lng2 - lng1) * 111_320 * math.cos(mean_lat)
+    dy = (lat2 - lat1) * 110_540
+    return math.hypot(dx, dy)
+
+
+def _sort_fill_candidates_by_proximity(
+    flat: list[tuple[str, dict]],
+    *,
+    anchor_poi_id: str,
+) -> list[tuple[str, dict]]:
+    """Stable-sort: inside ~15 min walk first, then farther (bus) hops."""
+    anchor = _poi_lat_lng(anchor_poi_id)
+
+    def key(item: tuple[str, dict]) -> tuple[int, float, str]:
+        _source, candidate = item
+        poi_id = str(candidate.get("poi_id") or "")
+        dest = _poi_lat_lng(poi_id)
+        if anchor is None or dest is None:
+            return (1, 9_999_999.0, poi_id)
+        meters = _approx_meters(anchor, dest)
+        band = 0 if meters <= _PREFER_WALK_HOP_M else 1
+        return (band, meters, poi_id)
+
+    return sorted(flat, key=key)
+
+
+def refill_day_after_dedupe(
+    route: dict,
+    *,
+    blocked_poi_ids: set[str] | None = None,
+    physical: list[str] | None = None,
+) -> tuple[dict, bool]:
+    """Re-densify a day after cross-day POI dedupe removed stops."""
+    return _fill_day_toward_target(
+        route,
+        [],
+        target_hours=_MULTI_DAY_MIN_HOURS,
+        ceiling_hours=DURATION_LIMITS["multi-day"],
+        walk_limit=WALK_LIMITS["normal"],
+        physical=physical or ["normal"],
+        blocked_poi_ids=blocked_poi_ids,
+        min_stops=_MULTI_DAY_MIN_STOPS,
+    )
+
+
+def _wants_cotai_fill(route: dict) -> bool:
+    """Theme-day base_theme wins over geographic heuristic (food@氹仔 ≠ Cotai day)."""
+    base = str(route.get("base_theme") or route.get("theme_key") or "")
+    if base.startswith("cotai"):
+        return True
+    # Mixed single-day shells already interleave Cotai + other themes in the pool.
+    if base == "mixed" or route.get("mix_themes"):
+        return False
+    if base in {"heritage", "food", "architecture", "photo"}:
+        return False
+    if base.startswith("heritage"):
+        return False
+    return route_is_cotai_heavy(route.get("nodes", []))
+
+
 def _fill_day_toward_target(
     route: dict,
     candidate_pois: list[dict],
@@ -438,51 +654,46 @@ def _fill_day_toward_target(
     ceiling_hours: float,
     walk_limit: float,
     physical: list[str],
+    blocked_poi_ids: set[str] | None = None,
+    min_stops: int = _MULTI_DAY_MIN_STOPS,
 ) -> tuple[dict, bool]:
-    """Expand a short (half-day) template toward a full day by inserting candidates."""
-    if float(route.get("duration_hours") or 0) >= target_hours:
+    """Expand toward a full day by inserting many short stops (pad stays last)."""
+    if not _needs_more_fill(route, target_hours=target_hours, min_stops=min_stops):
         return route, False
 
-    current_ids = {node["poi_id"] for node in route.get("nodes", [])}
+    blocked = set(blocked_poi_ids or ())
+    current_ids = {node["poi_id"] for node in route.get("nodes", [])} | blocked
     inserted_any = False
-    cotai_heavy = route_is_cotai_heavy(route.get("nodes", []))
+    cotai_fill = _wants_cotai_fill(route)
+    effective_walk_limit = (
+        _MULTI_DAY_FILL_WALK_LIMIT if "less-walk" not in physical else walk_limit
+    )
 
-    # Prefer curated Cotai corridor neighbors first; candidate-pool / replaceable_with
-    # often surfaces nested mall tickets (teamLab) or distant peninsula / Coloane stops.
+    nodes = sorted(route.get("nodes", []), key=lambda item: item["order"])
+    last_middle = next(
+        (n for n in reversed(nodes) if not _is_port_anchor(n)),
+        nodes[-1] if nodes else None,
+    )
+    source_fallback = last_middle["poi_id"] if last_middle else "poi_0020"
+
     flat: list[tuple[str, dict]] = []
-    if cotai_heavy:
-        europe = {"poi_0020", "poi_0021", "poi_0107"}
-        resort = {"poi_0109", "poi_0027", "poi_0230", "poi_0231", "poi_0110"}
-        has_europe = bool(current_ids & europe)
-        has_resort = bool(current_ids & resort)
-        if has_europe and not has_resort:
-            # Europe half-day → 龙环 + 氹仔旧城 (嘉模堂区); leave mid/east Cotai for day 2.
-            cotai_expand = ("poi_0012", "poi_0008", "poi_0098", "poi_0099")
-        elif has_resort and not has_europe:
-            # Resort half-day → nearby mid-strip resorts, not the Europe west casinos.
-            cotai_expand = ("poi_0112", "poi_0113", "poi_0045")
-        else:
-            cotai_expand = (
-                "poi_0012",
-                "poi_0008",
-                "poi_0098",
-                "poi_0020",
-                "poi_0021",
-                "poi_0107",
-                "poi_0109",
-                "poi_0027",
-                "poi_0112",
-            )
-        nodes = sorted(route.get("nodes", []), key=lambda item: item["order"])
-        last_middle = next(
-            (n for n in reversed(nodes) if not _is_port_anchor(n)),
-            nodes[-1] if nodes else None,
+    # Prefer theme shell's ranked pool when present.
+    pool_ids = [str(pid) for pid in (route.get("candidate_pool_ids") or []) if pid]
+    if pool_ids:
+        _append_fill_candidates(
+            flat,
+            source_fallback=source_fallback,
+            poi_ids=pool_ids,
+            current_ids=current_ids,
         )
-        source_fallback = last_middle["poi_id"] if last_middle else "poi_0020"
-        for poi_id in cotai_expand:
-            flat.append((source_fallback, {"poi_id": poi_id}))
+    if cotai_fill:
+        _append_fill_candidates(
+            flat,
+            source_fallback=source_fallback,
+            poi_ids=_cotai_expand_ids(current_ids),
+            current_ids=current_ids,
+        )
     else:
-        # Non-Cotai: use candidate-pool neighbors for expansion.
         for entry in candidate_pois:
             source = entry.get("source_poi_id")
             if not source:
@@ -490,9 +701,22 @@ def _fill_day_toward_target(
             for candidate in entry.get("candidates", []):
                 flat.append((source, candidate))
 
+    # Second pass: same-district landmarks so we can hit denser stop counts.
+    _append_fill_candidates(
+        flat,
+        source_fallback=source_fallback,
+        poi_ids=_district_fill_ids(current_ids, cotai_heavy=cotai_fill),
+        current_ids=current_ids,
+    )
+
+    # Prefer short walking hops (≤ ~15 min); longer gaps rely on bus in walk-path UI.
+    flat = _sort_fill_candidates_by_proximity(flat, anchor_poi_id=source_fallback)
+
     for source_id, candidate in flat:
-        if float(route.get("duration_hours") or 0) >= target_hours:
+        if not _needs_more_fill(route, target_hours=target_hours, min_stops=min_stops):
             break
+        # Once hours are full, still add until min stop count if under ceiling.
+        hours = float(route.get("duration_hours") or 0)
         poi_id = candidate.get("poi_id")
         if not poi_id or poi_id in current_ids:
             continue
@@ -501,27 +725,29 @@ def _fill_day_toward_target(
         poi = get_poi_metadata(poi_id)
         if not poi:
             continue
-        if cotai_heavy and not _is_cotai_corridor_poi(poi_id):
+        if cotai_fill and not _is_cotai_corridor_poi(poi_id):
             continue
         base_index = _find_node_index(route, source_id)
         if base_index is None:
-            # Append before any exit anchor if source vanished.
             nodes = sorted(route.get("nodes", []), key=lambda item: item["order"])
             insert_at = len(nodes)
             for i, node in enumerate(nodes):
                 if node.get("anchor") == "exit":
                     insert_at = i
                     break
-            base_index = insert_at - 1
-            if base_index < 0:
-                base_index = 0
+            base_index = max(insert_at - 1, 0)
 
-        stay_min = max(_default_stay_min(poi), 45)
-        next_duration = round(float(route.get("duration_hours") or 0) + stay_min / 60.0, 1)
-        next_walk = round(float(route.get("walk_distance_km") or 0) + 0.4, 1)
+        stay_min = _fill_stay_minutes(poi)
+        # If hours already meet target, keep adding short stops only while under ceiling
+        # and below the min-stop floor (denser itinerary).
+        next_duration = round(hours + stay_min / 60.0, 1)
+        next_walk = round(
+            float(route.get("walk_distance_km") or 0) + _MULTI_DAY_FILL_WALK_STEP_KM,
+            1,
+        )
         if next_duration > ceiling_hours:
             continue
-        if "less-walk" in physical and next_walk > walk_limit:
+        if next_walk > effective_walk_limit:
             continue
 
         nodes = sorted(route.get("nodes", []), key=lambda item: item["order"])
@@ -542,10 +768,13 @@ def _fill_day_toward_target(
         current_ids.add(poi_id)
         inserted_any = True
 
-    # If the day is still short (e.g. Europe line left mid/east strip for day 2),
-    # pad stays at existing corridor stops instead of stealing the next day's POIs.
+    # Last resort only: small stay pads if still under hours after exhausting POIs.
     if float(route.get("duration_hours") or 0) < target_hours:
-        padded = _pad_stays_toward_target(route, target_hours=target_hours, ceiling_hours=ceiling_hours)
+        padded = _pad_stays_toward_target(
+            route,
+            target_hours=target_hours,
+            ceiling_hours=ceiling_hours,
+        )
         inserted_any = inserted_any or padded
 
     return route, inserted_any
@@ -557,15 +786,14 @@ def _pad_stays_toward_target(
     target_hours: float,
     ceiling_hours: float,
 ) -> bool:
-    """Lengthen stays on non-port nodes until the day feels full (~8h)."""
+    """Light stay padding only after denser fills are exhausted."""
     nodes = sorted(route.get("nodes", []), key=lambda item: item["order"])
     middle = [node for node in nodes if not _is_port_anchor(node)]
     if not middle:
         return False
     changed = False
     guard = 0
-    max_stay = 120
-    while float(route.get("duration_hours") or 0) < target_hours and guard < 24:
+    while float(route.get("duration_hours") or 0) < target_hours and guard < 16:
         guard += 1
         progressed = False
         for node in middle:
@@ -573,13 +801,12 @@ def _pad_stays_toward_target(
             if current >= target_hours or current >= ceiling_hours:
                 break
             stay = int(node.get("suggested_stay_min") or 30)
-            if stay >= max_stay:
+            if stay >= _MULTI_DAY_PAD_STAY_MAX:
                 continue
-            # Approach the ceiling in 15-min steps without overshooting.
-            room = min(0.25, ceiling_hours - current, target_hours - current)
+            room = min(0.15, ceiling_hours - current, target_hours - current)
             if room <= 0:
                 break
-            node["suggested_stay_min"] = min(max_stay, stay + 15)
+            node["suggested_stay_min"] = min(_MULTI_DAY_PAD_STAY_MAX, stay + 10)
             route["duration_hours"] = round(current + room, 1)
             changed = True
             progressed = True

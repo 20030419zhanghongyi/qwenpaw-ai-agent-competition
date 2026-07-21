@@ -16,7 +16,13 @@ from .explain import build_explanation
 from .port_events import event_constraint_notes, score_template_for_entry_port
 from .route_constructor import construct_route
 from .route_research import research_route_tips
-from .repository import list_templates
+from .repository import list_templates, upsert_constructed_template
+from .theme_days import (
+    allocate_theme_days,
+    build_candidate_pool_for_shell,
+    build_theme_day_shell,
+    should_use_theme_days,
+)
 from app.db.data import load_weights
 
 
@@ -109,12 +115,15 @@ def _dedupe_multi_day_pois(
     matches: list[dict],
 ) -> list[dict]:
     """Keep first-seen POIs across days so day 2+ don't repeat day 1 stops."""
+    from .route_constructor import refill_day_after_dedupe
+
     seen: set[str] = set()
     for match in matches:
         route = match.get("route") or {}
         nodes = sorted(route.get("nodes") or [], key=lambda item: item.get("order", 0))
         kept: list[dict] = []
         removed_hours = 0.0
+        changed = False
         for node in nodes:
             poi_id = str(node.get("poi_id") or "")
             if node.get("anchor") in {"entry", "exit"}:
@@ -122,11 +131,12 @@ def _dedupe_multi_day_pois(
                 continue
             if poi_id and poi_id in seen:
                 removed_hours += float(node.get("suggested_stay_min") or 30) / 60.0
+                changed = True
                 continue
             if poi_id:
                 seen.add(poi_id)
             kept.append(node)
-        if len(kept) != len(nodes):
+        if changed:
             for index, node in enumerate(kept, start=1):
                 node["order"] = index
             route["nodes"] = kept
@@ -134,11 +144,30 @@ def _dedupe_multi_day_pois(
                 2.0,
                 round(float(route.get("duration_hours") or 0) - removed_hours, 1),
             )
+            # Day 2+ may become sparse after dedupe — refill with unused short stops.
+            blocked = set(seen) - {
+                str(n.get("poi_id") or "")
+                for n in kept
+                if n.get("anchor") not in {"entry", "exit"}
+            }
+            route, refilled = refill_day_after_dedupe(
+                route,
+                blocked_poi_ids=blocked,
+            )
+            match["route"] = route
+            for node in route.get("nodes") or []:
+                if node.get("anchor") in {"entry", "exit"}:
+                    continue
+                poi_id = str(node.get("poi_id") or "")
+                if poi_id:
+                    seen.add(poi_id)
             constraints = list(match.get("applied_constraints") or [])
             constraints.append("多日行程已去掉与前几日重复的景点")
+            if refilled:
+                constraints.append("去重后已优先补点，避免靠拉长停留凑时长")
             match["applied_constraints"] = list(dict.fromkeys(constraints))
             reasons = list(match.get("reasons") or [])
-            reasons.append("多日行程已去掉与前几日重复的景点")
+            reasons.extend(constraints[-2:])
             match["reasons"] = list(dict.fromkeys(reasons))
     return matches
 
@@ -250,17 +279,81 @@ def score_template_preference(
     return preset + extras, reasons
 
 
-def match_routes(pref: Preference, top_k: int | None = None) -> list[dict]:
-    """根据偏好返回 top_k 条最匹配的路线结果。
+def _finalize_match(
+    *,
+    route: dict,
+    score: int,
+    reasons: list[str],
+    applied_constraints: list[str],
+    selected_template: str,
+    candidate_pois: list[dict],
+    research_tips: list[str],
+    pref: Preference,
+) -> dict:
+    event_notes = event_constraint_notes(pref)
+    if event_notes:
+        applied_constraints = [*applied_constraints, *event_notes]
+    if research_tips:
+        applied_constraints = [*applied_constraints, *research_tips]
+    reasons = list(dict.fromkeys([*reasons, *applied_constraints]))
+    applied_constraints = list(dict.fromkeys(applied_constraints))
+    explanation = build_explanation(
+        template_id=selected_template,
+        reasons=reasons,
+        applied_constraints=applied_constraints,
+        candidate_pois=candidate_pois,
+    )
+    return {
+        "route": route,
+        "score": score,
+        "reasons": reasons,
+        "selected_template": selected_template,
+        "candidate_pois": candidate_pois,
+        "applied_constraints": applied_constraints,
+        "explanation": explanation,
+    }
 
-    处理链路：
-    1. 模板路线召回
-    2. 候选 POI 召回
-    3. 约束式排线
 
-    multi-day 时 top_k 默认取 Preference.trip_days（2–5，缺省 3）。
-    """
-    resolved_k = resolve_match_top_k(pref) if top_k is None else top_k
+def _match_theme_days(pref: Preference, research_tips: list[str]) -> list[dict]:
+    """Primary path: one generated day per allocated theme (no preset ranking)."""
+    specs = allocate_theme_days(pref)
+    matches: list[dict] = []
+    for index, spec in enumerate(specs):
+        shell = build_theme_day_shell(spec, pref)
+        candidate_pois = build_candidate_pool_for_shell(shell)
+        route, applied = construct_route(shell, pref, candidate_pois=candidate_pois)
+        if spec.mix_themes:
+            reasons = [
+                f"第 {index + 1} 天混合主题「{spec.label}」从景点池生成",
+                "未使用预设模板打分选线",
+            ]
+        else:
+            reasons = [
+                f"第 {index + 1} 天按主题「{spec.label}」从景点池生成",
+                "未使用预设模板打分选线",
+            ]
+        matches.append(
+            _finalize_match(
+                route=route,
+                score=100 - index,
+                reasons=reasons,
+                applied_constraints=applied,
+                selected_template=str(shell.get("id") or f"theme_day_{spec.theme_key}"),
+                candidate_pois=candidate_pois,
+                research_tips=research_tips,
+                pref=pref,
+            )
+        )
+    if pref.duration == "multi-day" and len(matches) > 1:
+        matches = _dedupe_multi_day_pois(matches)
+    # Persist so POST /trips and GET /routes/{id} can resolve theme_day_* ids.
+    for match in matches:
+        upsert_constructed_template(match["route"])
+    return matches
+
+
+def _match_preset_templates(pref: Preference, top_k: int, research_tips: list[str]) -> list[dict]:
+    """Fallback when themes/interests are empty: legacy template scoring."""
     weights = load_weights()
     poi_heat = {
         canonical_poi_id(poi_id): value
@@ -268,56 +361,51 @@ def match_routes(pref: Preference, top_k: int | None = None) -> list[dict]:
     }
     results: list[tuple[int, list[str], dict]] = []
     wants_cotai = "cotai" in (pref.themes or [])
-    # One web/research pass per match request (not per template) — fail-soft.
-    research_tips = research_route_tips(pref)
 
     for template in list_templates():
         score, reasons = score_template_preference(template, pref, poi_heat=poi_heat)
-
         candidate_pois = build_candidate_pool(template)
         route, applied_constraints = construct_route(
             template, pref, candidate_pois=candidate_pois
         )
-        event_notes = event_constraint_notes(pref)
-        if event_notes:
-            applied_constraints = [*applied_constraints, *event_notes]
-        if research_tips:
-            applied_constraints = [*applied_constraints, *research_tips]
-        if applied_constraints:
-            reasons.extend(applied_constraints)
-        # Dedupe reasons while preserving order
-        reasons = list(dict.fromkeys(reasons))
-        applied_constraints = list(dict.fromkeys(applied_constraints))
-        explanation = build_explanation(
-            template_id=template["id"],
+        payload = _finalize_match(
+            route=route,
+            score=score,
             reasons=reasons,
             applied_constraints=applied_constraints,
+            selected_template=template["id"],
             candidate_pois=candidate_pois,
+            research_tips=research_tips,
+            pref=pref,
         )
-
-        results.append(
-            (
-                score,
-                reasons,
-                {
-                    "route": route,
-                    "score": score,
-                    "reasons": reasons,
-                    "selected_template": template["id"],
-                    "candidate_pois": candidate_pois,
-                    "applied_constraints": applied_constraints,
-                    "explanation": explanation,
-                },
-            )
-        )
+        results.append((score, payload["reasons"], payload))
 
     results.sort(key=lambda x: x[0], reverse=True)
     if pref.duration == "multi-day":
-        top = _diversify_by_corridor(results, resolved_k)
+        top = _diversify_by_corridor(results, top_k)
         return _dedupe_multi_day_pois([result for _, _, result in top])
     if wants_cotai:
-        top = _prefer_cotai_variants(results, resolved_k)
+        top = _prefer_cotai_variants(results, top_k)
     else:
-        top = results[:resolved_k]
-
+        top = results[:top_k]
     return [result for _, _, result in top]
+
+
+def match_routes(pref: Preference, top_k: int | None = None) -> list[dict]:
+    """根据偏好返回路线结果。
+
+    主路径：按主题/兴趣从 POI 池生成 theme_day_*（不再依赖预设模板库）。
+    预设模板仅在 theme-day 路径异常失败时作为兜底。
+
+    multi-day 时天数取 Preference.trip_days（2–5，缺省 3）。
+    """
+    resolved_k = resolve_match_top_k(pref) if top_k is None else top_k
+    research_tips = research_route_tips(pref)
+
+    if should_use_theme_days(pref):
+        try:
+            return _match_theme_days(pref, research_tips)
+        except Exception:  # noqa: BLE001
+            # Fall through to legacy presets only if POI-pool matching blows up.
+            pass
+    return _match_preset_templates(pref, resolved_k, research_tips)

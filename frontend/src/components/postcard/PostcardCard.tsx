@@ -15,6 +15,11 @@ export function PostcardCard({
   compact?: boolean;
 }) {
   const src = postcardImageSrc(postcard.image_url);
+  const metaBits = [
+    postcard.task_label,
+    postcard.timestamp_label,
+    postcard.geo_label,
+  ].filter(Boolean);
 
   return (
     <article
@@ -54,8 +59,21 @@ export function PostcardCard({
               <span className="rounded-full bg-paper-warm px-2 py-0.5 text-[10px] text-ink-soft">
                 {t(language, "postcardScrubbed")}
               </span>
+            ) : postcard.scene_source === "ai" || postcard.scene_source === "library" ? (
+              <span className="rounded-full bg-sage-deep/10 px-2 py-0.5 text-[10px] font-semibold text-sage-deep">
+                {t(language, "postcardAiSceneBadge")}
+              </span>
+            ) : postcard.has_user_photo === false ? (
+              <span className="rounded-full bg-paper-warm px-2 py-0.5 text-[10px] text-ink-soft">
+                {t(language, "postcardNoPhotoBadge")}
+              </span>
             ) : null}
           </div>
+          {metaBits.length > 0 ? (
+            <p className="mt-1 text-[11px] leading-relaxed text-ink-soft">
+              {metaBits.join(" · ")}
+            </p>
+          ) : null}
           <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-ink-soft">
             {postcard.caption}
           </p>

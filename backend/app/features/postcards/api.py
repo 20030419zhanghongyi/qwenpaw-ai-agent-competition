@@ -33,11 +33,21 @@ def _http_error(exc: Exception) -> None:
 def create_postcard(
     trip_id: str,
     poi_id: str = Form(min_length=1),
-    photo: UploadFile = File(),
+    photo: UploadFile | None = File(default=None),
     language: str = Form(default="zh-CN"),
+    replace: bool = Form(default=False),
+    ai_scene: bool = Form(default=False),
 ) -> PostcardResponse:
     try:
-        return postcard_service.create(trip_id, poi_id, photo.file.read(), language)
+        photo_bytes = photo.file.read() if photo is not None else b""
+        return postcard_service.create(
+            trip_id,
+            poi_id,
+            photo_bytes or None,
+            language,
+            replace=replace,
+            ai_scene=ai_scene,
+        )
     except (PostcardNotFoundError, PostcardError) as exc:
         _http_error(exc)
 
@@ -51,6 +61,20 @@ def create_postcard(
 def list_postcards(trip_id: str) -> PostcardListResponse:
     try:
         return PostcardListResponse(postcards=postcard_service.list_by_trip(trip_id))
+    except PostcardNotFoundError as exc:
+        _http_error(exc)
+
+
+@router.delete(
+    "/api/v1/postcards/{postcard_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=NOT_FOUND_RESPONSE,
+    summary="Delete a generated postcard so it can be recreated",
+)
+def delete_postcard(postcard_id: str) -> Response:
+    try:
+        postcard_service.delete(postcard_id)
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
     except PostcardNotFoundError as exc:
         _http_error(exc)
 
