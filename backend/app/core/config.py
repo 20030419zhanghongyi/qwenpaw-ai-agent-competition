@@ -68,6 +68,8 @@ class Settings(BaseSettings):
     # 独立审核 agent 开关：默认 False（规则版 fallback，零意外 LLM 调用）；
     # 在 QwenPaw 建好 reviewer agent（挂 content-safety-review 技能）后置 true。
     reviewer_agent_enabled: bool = False
+    # 明信片场景插画 agent id（批量脚本默认调用；需多模态 + view_image + postcard-scene）。
+    scene_agent_id: str = "scene"
     qwen_vision_model: str = "qwen-vl-max"
     qwen_embedding_model: str = "text-embedding-v3"
     qwen_tts_model: str = "qwen3-tts-flash"
@@ -93,6 +95,14 @@ class Settings(BaseSettings):
     weather_api_key: str = ""
     crowd_api_key: str = ""
     tts_api_key: str = ""
+
+    postcard_ai_image_enabled: bool = True
+    qwen_image_model: str = "wanx2.1-t2i-turbo"
+    postcard_ai_image_size: str = "1024*1024"
+    # Hard cap for optional AI scene calls (then fall back to local scenic).
+    postcard_ai_scene_timeout: float = 25.0
+    # Optional AI caption via guide agent (off by default — keeps create snappy).
+    postcard_ai_caption_enabled: bool = False
 
     # 阿里云 OSS（TTS 私有音频对象）
     oss_endpoint: str = ""

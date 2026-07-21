@@ -1,22 +1,8 @@
 """无 API key 的候选 POI 召回。
 
-当前阶段依赖本地种子数据与离线权重表 `weights.json`：
-- theme
-- suitable_for
-- district
-- replaceable_with
-- poi_heat
-- crowd_risk / pain_point_tags
-- alt_poi_candidates
-- theme_bias
-
-目标不是求“语义最相似”，而是给路线微调与解释层提供
-更贴近真实路线规划的可替换 / 可补充候选点池：
-- 优先和源节点相似
-- 优先和整条路线主题一致
-- 优先同区或相邻区，减少跨区乱跳
-- 显式 replaceable_with 始终有最高优先级
-- 用离线调研信号避免把高风险热门点一股脑塞进轻松路线
+主信号：theme / suitable_for / district / replaceable_with（POI 结构化字段）。
+离线 weights.json（热度 / 人流 / 主题偏好）仅作极弱参考，不再主导排序。
+联网调研提示由 route_research 提供，不在此模块打分。
 """
 
 from __future__ import annotations
@@ -42,6 +28,9 @@ ADJACENT_DISTRICTS: dict[str, set[str]] = {
 LOW_BURDEN_TAGS = {"relax", "family", "less-walk"}
 CROWD_PAIN_POINTS = {"排队", "人多", "热门时段拥挤"}
 BURDEN_PAIN_POINTS = {"暴走", "上坡", "台阶多"}
+
+# Offline XHS weights are kept only as a tiny tie-breaker (max +1 / -1).
+_WEIGHT_SIGNAL_CAP = 1
 
 
 def select_candidates_for_node(
@@ -98,8 +87,8 @@ def select_candidates_for_node(
             score += 8
             reasons.append("模板内可替换点")
         elif other_id in curated_alternatives:
-            score += 3
-            reasons.append("离线调研替代候选")
+            score += 1
+            reasons.append("离线替代候选（弱参考）")
 
         theme_overlap = source_theme & other_theme
         if theme_overlap:
@@ -120,10 +109,11 @@ def select_candidates_for_node(
             score += 2
             reasons.append("符合路线主主题")
 
-        theme_boost = int(theme_bias.get(route_theme, {}).get(other_id, 0)) if route_theme else 0
+        raw_theme_boost = int(theme_bias.get(route_theme, {}).get(other_id, 0)) if route_theme else 0
+        theme_boost = min(raw_theme_boost, _WEIGHT_SIGNAL_CAP) if raw_theme_boost else 0
         if theme_boost:
             score += theme_boost
-            reasons.append(f"{route_theme}主题离线偏好更高")
+            reasons.append(f"{route_theme}离线主题偏好（弱）")
 
         if district_relation == "same":
             score += 4
@@ -135,17 +125,18 @@ def select_candidates_for_node(
             # 非同区、非相邻区、且和源节点主题都不接近时，直接过滤掉。
             continue
 
-        heat_score = int(heat.get(other_id, 0))
+        raw_heat = int(heat.get(other_id, 0) or 0)
+        heat_score = min(1, raw_heat) if raw_heat > 0 else 0
         if heat_score:
             score += heat_score
-            reasons.append("离线热度较高")
+            reasons.append("离线热度（弱参考）")
 
-        risk_score = int(crowd_risk.get(other_id, 0))
+        risk_score = min(int(crowd_risk.get(other_id, 0) or 0), _WEIGHT_SIGNAL_CAP)
         pain_points = pain_point_tags.get(other_id, [])
         penalty = _experience_penalty(route_suitable, risk_score, pain_points)
         if penalty:
-            score -= penalty
-            reasons.append("人流或体感风险偏高，已降权")
+            score -= min(penalty, _WEIGHT_SIGNAL_CAP)
+            reasons.append("人流/体感风险（弱降权）")
 
         # 如果只有“路线大标签”命中，但和源节点本身不相似，适当降权。
         if route_theme and route_theme in other_theme and not theme_overlap and not source_suitable_overlap:

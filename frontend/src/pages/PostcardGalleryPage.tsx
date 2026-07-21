@@ -178,9 +178,17 @@ export function PostcardGalleryPage() {
                     >
                       <span className="text-sm text-ink">{stop.name}</span>
                       {stop.hasPostcard ? (
-                        <span className="text-xs text-ink-soft">
-                          {t(language, "postcardAlreadyMade")}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-ink-soft">
+                            {t(language, "postcardAlreadyMade")}
+                          </span>
+                          <Link
+                            to={`${createHref(stop.poiId)}&replace=1`}
+                            className="rounded-full border border-sage-deep px-4 py-1.5 text-xs font-medium text-sage-deep transition hover:bg-sage-deep hover:text-paper"
+                          >
+                            {t(language, "postcardRemake")}
+                          </Link>
+                        </div>
                       ) : (
                         <Link
                           to={createHref(stop.poiId)}

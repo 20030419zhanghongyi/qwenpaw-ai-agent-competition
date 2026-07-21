@@ -16,6 +16,9 @@ class RouteService:
     def get_template(self, route_id: str) -> dict | None:
         return self._repository.get_template(route_id)
 
+    def upsert_constructed_template(self, route: dict) -> dict:
+        return self._repository.upsert_constructed_template(route)
+
     def match(self, preference: Preference) -> list[dict]:
         return match_routes(preference)
 

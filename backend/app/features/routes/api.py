@@ -44,7 +44,10 @@ def list_routes() -> list[dict]:
     "/match",
     response_model=RouteMatchResponse,
     summary="Match route templates",
-    description="Rank persisted route templates for the supplied travel preferences.",
+    description=(
+        "Match preferences to itineraries. Theme/interest matches generate "
+        "theme_day_* routes and persist them so trip APIs can resolve the ids."
+    ),
     responses=UNPROCESSABLE_RESPONSE,
 )
 def match(pref: Preference) -> dict:

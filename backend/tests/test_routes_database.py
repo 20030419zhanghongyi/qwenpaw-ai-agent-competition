@@ -28,14 +28,18 @@ def test_route_import_is_idempotent_and_writes_database():
     assert second.inserted == 0
     assert second.updated == EXPECTED_TEMPLATE_COUNT
     with SessionLocal() as session:
-        assert (
-            session.scalar(select(func.count()).select_from(RouteTemplate))
-            == EXPECTED_TEMPLATE_COUNT
+        preset_count = session.scalar(
+            select(func.count())
+            .select_from(RouteTemplate)
+            .where(~RouteTemplate.id.startswith("theme_day_"))
         )
-        assert (
-            session.scalar(select(func.count()).select_from(RouteTemplateStop))
-            == EXPECTED_STOP_COUNT
+        assert preset_count == EXPECTED_TEMPLATE_COUNT
+        preset_stop_count = session.scalar(
+            select(func.count())
+            .select_from(RouteTemplateStop)
+            .where(~RouteTemplateStop.route_template_id.startswith("theme_day_"))
         )
+        assert preset_stop_count == EXPECTED_STOP_COUNT
 
 
 def test_route_stops_preserve_order_and_reference_canonical_pois():

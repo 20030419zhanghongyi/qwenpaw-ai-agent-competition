@@ -1,1 +1,1 @@
-export { MapRouteView } from "./MapRouteView";
+export { MapRouteView, type MapUserLocation } from "./MapRouteView";

@@ -39,13 +39,25 @@ export function postcardImageSrc(imageUrlOrId: string): string {
 export async function createPostcard(args: {
   tripId: string;
   poiId: string;
-  photo: File;
+  photo?: File | null;
   language: LanguageCode | string;
+  /** When true, replace an existing postcard for the same trip+POI. */
+  replace?: boolean;
+  /** Opt-in QwenPaw scenic illustration (slow); default uses instant local art. */
+  aiScene?: boolean;
 }): Promise<Postcard> {
   const form = new FormData();
   form.append("poi_id", args.poiId);
   form.append("language", args.language);
-  form.append("photo", args.photo);
+  if (args.replace) {
+    form.append("replace", "true");
+  }
+  if (args.aiScene) {
+    form.append("ai_scene", "true");
+  }
+  if (args.photo) {
+    form.append("photo", args.photo);
+  }
 
   const response = await fetch(
     `${API_BASE}/api/v1/trips/${encodeURIComponent(args.tripId)}/postcards`,
@@ -55,6 +67,16 @@ export async function createPostcard(args: {
     throw new PostcardApiError(await parseError(response), response.status);
   }
   return response.json() as Promise<Postcard>;
+}
+
+export async function deletePostcard(postcardId: string): Promise<void> {
+  const response = await fetch(
+    `${API_BASE}/api/v1/postcards/${encodeURIComponent(postcardId)}`,
+    { method: "DELETE" },
+  );
+  if (!response.ok) {
+    throw new PostcardApiError(await parseError(response), response.status);
+  }
 }
 
 export async function listTripPostcards(tripId: string): Promise<Postcard[]> {

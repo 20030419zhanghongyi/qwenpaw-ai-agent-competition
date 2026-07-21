@@ -140,6 +140,7 @@ export function PostcardCreatePage() {
             poiId={poiId}
             poiName={poiName}
             language={language}
+            replace={searchParams.get("replace") === "1"}
             onCreated={(postcard) => {
               navigate(
                 `/postcards/${encodeURIComponent(postcard.postcard_id)}?trip=${encodeURIComponent(postcard.trip_id)}`,

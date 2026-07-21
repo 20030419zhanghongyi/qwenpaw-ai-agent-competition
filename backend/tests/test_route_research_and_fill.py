@@ -70,6 +70,22 @@ def test_research_tips_include_local_without_web():
     queries = build_research_queries(pref)
     assert queries
     assert any("横琴" in q or "威尼斯人" in q for q in queries)
+    assert any("路氹" in q or "摄影" in q or "拍照" in q for q in queries)
+
+
+def test_research_queries_cover_themes_and_physical():
+    pref = Preference(
+        duration="half-day",
+        themes=["food", "heritage"],
+        interests=["history"],
+        physical=["less-walk"],
+        travel_type=["solo"],
+        language="zh-CN",
+    )
+    queries = build_research_queries(pref)
+    assert any("美食" in q for q in queries)
+    assert any("历史" in q or "历史城区" in q for q in queries)
+    assert any("少走路" in q or "轻松" in q for q in queries)
 
 
 def test_multi_day_expands_halfday_cotai_template():

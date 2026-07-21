@@ -4,15 +4,27 @@ import { fetchRoutePois, fetchRouteWalkPath } from "@/api/routes";
 import { useWalk } from "@/state/WalkContext";
 import type { LanguageCode } from "@/types";
 
+export interface MapUserLocation {
+  latitude: number;
+  longitude: number;
+}
+
 interface MapRouteViewProps {
   poiIds: string[];
   currentPoiId?: string;
   onSelectPoi?: (poiId: string) => void;
+  /** Live user GPS; shown as a distinct blue-dot marker when present. */
+  userLocation?: MapUserLocation | null;
+  /** Increment to pan/center the map on the current userLocation. */
+  recenterToken?: number;
 }
 
 interface AMapInstance {
   add: (overlays: unknown | unknown[]) => void;
+  remove: (overlays: unknown | unknown[]) => void;
   destroy: () => void;
+  setCenter: (center: [number, number]) => void;
+  setZoom: (zoom: number) => void;
   setFitView: (
     overlays?: unknown[],
     immediately?: boolean,
@@ -24,6 +36,7 @@ interface AMapInstance {
 interface AMapMarker {
   on: (event: string, handler: () => void) => void;
   setContent: (content: string) => void;
+  setPosition: (position: [number, number]) => void;
 }
 
 interface AMapNamespace {
@@ -124,21 +137,39 @@ function markerContent(order: number, current: boolean): string {
   ].join("");
 }
 
+function userMarkerContent(): string {
+  return [
+    `<div style="position:relative;width:22px;height:22px;">`,
+    `<div style="position:absolute;inset:-8px;border-radius:999px;`,
+    `background:rgba(37,99,235,.22);animation:map-user-pulse 1.8s ease-out infinite"></div>`,
+    `<div style="position:relative;width:22px;height:22px;border-radius:999px;`,
+    `background:#2563eb;border:3px solid #fffaf0;`,
+    `box-shadow:0 0 0 2px rgba(37,99,235,.35),0 4px 12px rgba(47,49,40,.25)"></div>`,
+    `</div>`,
+  ].join("");
+}
+
 export function MapRouteView({
   poiIds,
   currentPoiId,
   onSelectPoi,
+  userLocation = null,
+  recenterToken = 0,
 }: MapRouteViewProps) {
   const { language } = useWalk();
   const copy = COPY[language];
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<AMapInstance | null>(null);
+  const amapRef = useRef<AMapNamespace | null>(null);
   const markersRef = useRef(new Map<string, { marker: AMapMarker; order: number }>());
+  const userMarkerRef = useRef<AMapMarker | null>(null);
   const onSelectRef = useRef(onSelectPoi);
   const currentPoiRef = useRef(currentPoiId);
+  const userLocationRef = useRef(userLocation);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
+  const [mapReadyTick, setMapReadyTick] = useState(0);
   const poiKey = poiIds.join("|");
   const stablePoiIds = poiKey ? poiKey.split("|") : [];
 
@@ -147,11 +178,64 @@ export function MapRouteView({
   }, [onSelectPoi]);
 
   useEffect(() => {
+    userLocationRef.current = userLocation;
+  }, [userLocation]);
+
+  useEffect(() => {
     currentPoiRef.current = currentPoiId;
     for (const [poiId, entry] of markersRef.current) {
       entry.marker.setContent(markerContent(entry.order, poiId === currentPoiId));
     }
   }, [currentPoiId]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const AMap = amapRef.current;
+    if (!map || !AMap || mapReadyTick === 0) return;
+
+    if (
+      !userLocation ||
+      !Number.isFinite(userLocation.latitude) ||
+      !Number.isFinite(userLocation.longitude)
+    ) {
+      if (userMarkerRef.current) {
+        map.remove(userMarkerRef.current);
+        userMarkerRef.current = null;
+      }
+      return;
+    }
+
+    const position: [number, number] = [userLocation.longitude, userLocation.latitude];
+    if (userMarkerRef.current) {
+      userMarkerRef.current.setPosition(position);
+      return;
+    }
+
+    const marker = new AMap.Marker({
+      position,
+      title: "You",
+      anchor: "center",
+      content: userMarkerContent(),
+      zIndex: 200,
+    });
+    map.add(marker);
+    userMarkerRef.current = marker;
+  }, [userLocation, mapReadyTick]);
+
+  useEffect(() => {
+    if (!recenterToken) return;
+    const map = mapRef.current;
+    if (
+      !map ||
+      !userLocation ||
+      !Number.isFinite(userLocation.latitude) ||
+      !Number.isFinite(userLocation.longitude)
+    ) {
+      return;
+    }
+    map.setCenter([userLocation.longitude, userLocation.latitude]);
+    map.setZoom(16);
+  }, [recenterToken, userLocation]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -167,6 +251,8 @@ export function MapRouteView({
     setError(null);
     setWarning(null);
     markersRef.current.clear();
+    userMarkerRef.current = null;
+    amapRef.current = null;
 
     if (!key) {
       setLoading(false);
@@ -196,8 +282,26 @@ export function MapRouteView({
           resizeEnable: true,
         });
         mapRef.current = createdMap;
+        amapRef.current = namespace;
+        setMapReadyTick((tick) => tick + 1);
 
         const overlays: unknown[] = [];
+        const liveUser = userLocationRef.current;
+        if (
+          liveUser &&
+          Number.isFinite(liveUser.latitude) &&
+          Number.isFinite(liveUser.longitude)
+        ) {
+          const userMarker = new namespace.Marker({
+            position: [liveUser.longitude, liveUser.latitude],
+            title: "You",
+            anchor: "center",
+            content: userMarkerContent(),
+            zIndex: 200,
+          });
+          userMarkerRef.current = userMarker;
+          overlays.push(userMarker);
+        }
         for (const [index, poi] of pois.entries()) {
           const marker = new namespace.Marker({
             position: [poi.longitude, poi.latitude],
@@ -256,6 +360,8 @@ export function MapRouteView({
       cancelled = true;
       controller.abort();
       markersRef.current.clear();
+      userMarkerRef.current = null;
+      amapRef.current = null;
       if (createdMap) createdMap.destroy();
       if (mapRef.current === createdMap) mapRef.current = null;
     };
@@ -263,6 +369,7 @@ export function MapRouteView({
 
   return (
     <div className="map-route-view absolute inset-0 z-0 overflow-hidden bg-paper-warm [contain:paint]">
+      <style>{`@keyframes map-user-pulse{0%{transform:scale(.7);opacity:.55}70%{transform:scale(1.35);opacity:0}100%{transform:scale(1.35);opacity:0}}`}</style>
       <div ref={containerRef} className="h-full w-full" aria-label="route map" />
       {loading ? (
         <div className="pointer-events-none absolute inset-0 grid place-items-center bg-paper-warm/90">

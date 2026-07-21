@@ -6,7 +6,7 @@
 ## POI
 
 ### poi_senado — 议事亭前地
-- 变更：修改（坐标、district、theme、intro、history、architecture、story、observation_tips、suitable_for）
+- 变更：修改（坐标、district、theme、intro、history、architecture、story、observation_tips、suitable_for）；2026-07-21 据同页证据摘要补强喷水池与1993年波浪铺地表述，观察提示改为软建议并注明以现场为准
 - 来源类型：official
 - 来源：
   - [议事亭前地](https://www.wh.mo/gb/site/detail/12)
@@ -16,7 +16,7 @@
     - 证据摘要：说明名称来源、长期城市中心功能、喷水池、两侧建筑年代及1993年起的波浪碎石铺地。
   - [OpenStreetMap 对象 way/192573684](https://www.openstreetmap.org/way/192573684)
     - 支持字段：coordinates, district, name_en, name_pt
-- 冲突或局限：原坐标偏离实际广场，已按地图对象中心点修正；未写入客流和最佳拍摄时间。
+- 冲突或局限：原坐标偏离实际广场，已按地图对象中心点修正；两侧建筑具体年代未写入（证据摘要未给明确年份）；客流与最佳拍摄时间仅作软建议。
 
 ### poi_paixao — 恋爱巷
 - 变更：修改（坐标、district、theme、全部说明文本、suitable_for）
