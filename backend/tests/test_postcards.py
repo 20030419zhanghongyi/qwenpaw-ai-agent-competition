@@ -145,6 +145,85 @@ def test_postcard_rejects_non_image_upload():
     assert "valid image" in response.json()["detail"]
 
 
+def test_postcard_styles_scrubbed_user_photo(monkeypatch):
+    monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
+    _filename, styled = _photo()
+
+    def _style(**kwargs):
+        assert kwargs["style"] == "watercolor"
+        assert kwargs["photo_jpeg"].startswith(b"\xff\xd8")
+        return styled
+
+    monkeypatch.setattr(
+        "app.features.postcards.service.stylize_photo_via_qwenpaw",
+        _style,
+    )
+    trip_id, poi_id = _trip_with_checkin()
+    filename, photo = _photo()
+
+    response = client.post(
+        f"/api/v1/trips/{trip_id}/postcards",
+        data={"poi_id": poi_id, "language": "zh-CN", "photo_style": "watercolor"},
+        files={"photo": (filename, photo, "image/png")},
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["scene_source"] == "ai_edit"
+    assert data["photo_style"] == "watercolor"
+    assert data["has_user_photo"] is True
+    assert data["photo_scrubbed"] is True
+    image = client.get(data["image_url"])
+    assert b'data-scene-source="ai_edit"' in image.content
+    assert b'data-photo-style="watercolor"' in image.content
+
+
+def test_postcard_photo_style_failure_keeps_scrubbed_original(monkeypatch):
+    monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
+    monkeypatch.setattr(
+        "app.features.postcards.service.stylize_photo_via_qwenpaw",
+        lambda **_: None,
+    )
+    trip_id, poi_id = _trip_with_checkin()
+    filename, photo = _photo()
+
+    response = client.post(
+        f"/api/v1/trips/{trip_id}/postcards",
+        data={"poi_id": poi_id, "photo_style": "souvenir"},
+        files={"photo": (filename, photo, "image/png")},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["scene_source"] == "user"
+    assert response.json()["photo_style"] is None
+
+
+def test_postcard_rejects_photo_style_without_photo():
+    trip_id, poi_id = _trip_with_checkin()
+
+    response = client.post(
+        f"/api/v1/trips/{trip_id}/postcards",
+        data={"poi_id": poi_id, "photo_style": "ink"},
+    )
+
+    assert response.status_code == 422
+    assert "requires an uploaded photo" in response.json()["detail"]
+
+
+def test_postcard_rejects_unknown_photo_style():
+    trip_id, poi_id = _trip_with_checkin()
+    filename, photo = _photo()
+
+    response = client.post(
+        f"/api/v1/trips/{trip_id}/postcards",
+        data={"poi_id": poi_id, "photo_style": "cyberpunk"},
+        files={"photo": (filename, photo, "image/png")},
+    )
+
+    assert response.status_code == 422
+    assert "unsupported photo style" in response.json()["detail"]
+
+
 def test_postcard_default_no_photo_is_instant_local_scene(monkeypatch):
     """Default create uses local scenic art; AI scene is opt-in."""
     seen = {"ai_scene": None}

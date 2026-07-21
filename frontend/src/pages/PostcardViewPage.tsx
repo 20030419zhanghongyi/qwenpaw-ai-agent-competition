@@ -4,6 +4,7 @@ import { listTripPostcards, postcardImageSrc, PostcardApiError } from "@/api/pos
 import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { PostcardActions } from "@/components/postcard/PostcardActions";
+import { photoStyleLabelKey } from "@/components/postcard/photoStyles";
 import { t } from "@/i18n";
 import { useWalk } from "@/state/WalkContext";
 import type { Postcard } from "@/types/postcards";
@@ -122,11 +123,17 @@ export function PostcardViewPage() {
                   <span className="rounded-full bg-paper-warm px-2.5 py-0.5 text-[10px] text-ink-soft">
                     {t(language, "postcardScrubbed")}
                   </span>
+                ) : null}
+                {postcard.scene_source === "ai_edit" ? (
+                  <span className="rounded-full bg-sage-deep/10 px-2.5 py-0.5 text-[10px] font-semibold text-sage-deep">
+                    {t(language, "postcardAiStyleBadge")} ·{" "}
+                    {t(language, photoStyleLabelKey(postcard.photo_style))}
+                  </span>
                 ) : postcard.scene_source === "ai" || postcard.scene_source === "library" ? (
                   <span className="rounded-full bg-sage-deep/10 px-2.5 py-0.5 text-[10px] font-semibold text-sage-deep">
                     {t(language, "postcardAiSceneBadge")}
                   </span>
-                ) : postcard.has_user_photo === false ? (
+                ) : !postcard.photo_scrubbed && postcard.has_user_photo === false ? (
                   <span className="rounded-full bg-paper-warm px-2.5 py-0.5 text-[10px] text-ink-soft">
                     {t(language, "postcardNoPhotoBadge")}
                   </span>

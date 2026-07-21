@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { createPostcard, PostcardApiError } from "@/api/postcards";
 import { ErrorState, LoadingState } from "@/components/common/States";
+import { PHOTO_STYLE_OPTIONS } from "@/components/postcard/photoStyles";
 import { t } from "@/i18n";
 import type { LanguageCode } from "@/types";
-import type { Postcard } from "@/types/postcards";
+import type { PhotoStyle, Postcard } from "@/types/postcards";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE = 8 * 1024 * 1024;
@@ -32,6 +33,8 @@ export function PostcardCreateForm({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [aiScene, setAiScene] = useState(false);
+  const [useAiStyle, setUseAiStyle] = useState(false);
+  const [photoStyle, setPhotoStyle] = useState<PhotoStyle>("souvenir");
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -83,6 +86,7 @@ export function PostcardCreateForm({
         language,
         replace,
         aiScene: withPhoto ? false : aiScene,
+        photoStyle: withPhoto && useAiStyle ? photoStyle : null,
       });
       setPhase("done");
       onCreated(postcard);
@@ -108,7 +112,9 @@ export function PostcardCreateForm({
     return (
       <LoadingState
         label={
-          aiScene && !file
+          useAiStyle && file
+            ? t(language, "postcardStylingPhoto")
+            : aiScene && !file
             ? t(language, "postcardCreatingAi")
             : t(language, "postcardCreating")
         }
@@ -170,6 +176,43 @@ export function PostcardCreateForm({
           }
           retryLabel={t(language, "retry")}
         />
+      ) : null}
+
+      {previewUrl ? (
+        <div className="rounded-2xl border border-line bg-paper-warm/60 p-4">
+          <label className="flex cursor-pointer items-start gap-3 text-sm text-ink-soft">
+            <input
+              type="checkbox"
+              checked={useAiStyle}
+              onChange={(event) => setUseAiStyle(event.target.checked)}
+              className="mt-1 size-4 accent-[var(--sage-deep)]"
+            />
+            <span>
+              <span className="font-medium text-ink">
+                {t(language, "postcardAiPhotoStyleOption")}
+              </span>
+              <span className="mt-0.5 block text-xs leading-relaxed">
+                {t(language, "postcardAiPhotoStyleHint")}
+              </span>
+            </span>
+          </label>
+          {useAiStyle ? (
+            <label className="mt-4 block text-xs font-medium text-ink-soft">
+              {t(language, "postcardPhotoStyleLabel")}
+              <select
+                value={photoStyle}
+                onChange={(event) => setPhotoStyle(event.target.value as PhotoStyle)}
+                className="mt-2 h-11 w-full rounded-xl border border-line bg-card px-3 text-sm text-ink outline-none focus:border-sage-deep"
+              >
+                {PHOTO_STYLE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {t(language, option.labelKey)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+        </div>
       ) : null}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">

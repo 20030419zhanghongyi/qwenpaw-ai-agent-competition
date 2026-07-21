@@ -1,5 +1,5 @@
 import type { LanguageCode } from "@/types";
-import type { Postcard, PostcardListResponse } from "@/types/postcards";
+import type { PhotoStyle, Postcard, PostcardListResponse } from "@/types/postcards";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
@@ -45,6 +45,8 @@ export async function createPostcard(args: {
   replace?: boolean;
   /** Opt-in QwenPaw scenic illustration (slow); default uses instant local art. */
   aiScene?: boolean;
+  /** Optional Qwen-Image style transfer for a user-uploaded photo. */
+  photoStyle?: PhotoStyle | null;
 }): Promise<Postcard> {
   const form = new FormData();
   form.append("poi_id", args.poiId);
@@ -57,6 +59,9 @@ export async function createPostcard(args: {
   }
   if (args.photo) {
     form.append("photo", args.photo);
+    if (args.photoStyle) {
+      form.append("photo_style", args.photoStyle);
+    }
   }
 
   const response = await fetch(

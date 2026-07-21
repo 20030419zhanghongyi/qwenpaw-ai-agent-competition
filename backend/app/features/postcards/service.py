@@ -25,7 +25,7 @@ from app.tools.scrub import scrub
 
 from .models import PostcardResponse
 from .repository import PostcardRepository, postcard_repository
-from .scene_image import generate_ai_scene
+from .scene_image import SUPPORTED_PHOTO_STYLES, generate_ai_scene, stylize_photo_via_qwenpaw
 
 logger = logging.getLogger("macau_storywalk.postcards")
 
@@ -236,6 +236,7 @@ def _render_svg(
     geo_label: str,
     task_label: str,
     scene_source: str,
+    photo_style: str | None = None,
 ) -> bytes:
     """Compose a postcard SVG. Geo comes from public POI data, not photo EXIF.
 
@@ -268,7 +269,10 @@ def _render_svg(
             f'href="data:image/jpeg;base64,{photo_base64}"/>'
         )
     source_attr = escape(scene_source or "placeholder", quote=True)
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-label="Postcard from {escape(poi_name)}" data-scene-source="{source_attr}">
+    style_attr = (
+        f' data-photo-style="{escape(photo_style, quote=True)}"' if photo_style else ""
+    )
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-label="Postcard from {escape(poi_name)}" data-scene-source="{source_attr}"{style_attr}>
   <rect width="1200" height="800" fill="#f4eadb"/>
   <rect x="44" y="44" width="1112" height="712" rx="24" fill="#fffaf2" stroke="#a5573f" stroke-width="6"/>
   {photo_layer}
@@ -284,14 +288,24 @@ def _render_svg(
 
 
 def _scene_source_from_record(record: PostcardRecord) -> str:
+    svg = record.image_svg or b""
+    if b'data-scene-source="ai_edit"' in svg:
+        return "ai_edit"
     if record.photo_scrubbed:
         return "user"
-    svg = record.image_svg or b""
     if b'data-scene-source="library"' in svg:
         return "library"
     if b'data-scene-source="ai"' in svg or b"AI scene" in svg:
         return "ai"
     return "placeholder"
+
+
+def _photo_style_from_record(record: PostcardRecord) -> str | None:
+    match = re.search(rb'data-photo-style="([a-z0-9_-]+)"', record.image_svg or b"")
+    if not match:
+        return None
+    style = match.group(1).decode("ascii", errors="ignore")
+    return style if style in SUPPORTED_PHOTO_STYLES else None
 
 
 class PostcardService:
@@ -388,6 +402,7 @@ class PostcardService:
             photo_scrubbed=record.photo_scrubbed,
             has_user_photo=has_user_photo,
             scene_source=scene_source,
+            photo_style=_photo_style_from_record(record),
             image_url=f"/api/v1/postcards/{record.id}/image",
             created_at=record.created_at,
             visited_at=stamps["visited_at"],
@@ -410,12 +425,18 @@ class PostcardService:
         *,
         replace: bool = False,
         ai_scene: bool = False,
+        photo_style: str | None = None,
     ) -> PostcardResponse:
         if language not in SUPPORTED_LANGUAGES:
             raise PostcardError("unsupported language")
         raw = photo_bytes or b""
         if len(raw) > MAX_UPLOAD_BYTES:
             raise PostcardError("photo exceeds 8 MiB limit")
+        requested_style = (photo_style or "").strip().lower() or None
+        if requested_style and requested_style not in SUPPORTED_PHOTO_STYLES:
+            raise PostcardError("unsupported photo style")
+        if requested_style and not raw:
+            raise PostcardError("photo style requires an uploaded photo")
 
         trip = trip_repository.get_trip(trip_id)
         if trip is None:
@@ -455,6 +476,18 @@ class PostcardService:
                 raise PostcardError("photo must be a valid image") from exc
             photo_scrubbed = True
             scene_source = "user"
+            applied_style: str | None = None
+            if requested_style:
+                styled_photo = stylize_photo_via_qwenpaw(
+                    photo_jpeg=cleaned_photo,
+                    style=requested_style,
+                    poi_name=stamps["poi_name"],
+                )
+                if styled_photo:
+                    # Strip model/output metadata and keep any detected faces blurred.
+                    cleaned_photo = scrub(styled_photo)
+                    scene_source = "ai_edit"
+                    applied_style = requested_style
         else:
             _src, ai_photo, ai_svg = generate_ai_scene(
                 poi_id=poi_id,
@@ -472,6 +505,7 @@ class PostcardService:
                 cleaned_photo = _placeholder_photo(stamps["poi_name"], language)
                 scene_source = "placeholder"
             photo_scrubbed = False
+            applied_style = None
 
         caption, caption_source, source_type, ai_generated, review_decision = _caption(
             stamps["poi_name"], language
@@ -496,6 +530,7 @@ class PostcardService:
                 geo_label=stamps["geo_label"],
                 task_label=stamps["task_label"],
                 scene_source=scene_source,
+                photo_style=applied_style,
             ),
             photo_scrubbed=photo_scrubbed,
             created_at=created_at,
@@ -514,6 +549,8 @@ class PostcardService:
                 "photo_scrubbed": photo_scrubbed,
                 "has_user_photo": has_user_photo,
                 "scene_source": scene_source,
+                "photo_style_requested": requested_style,
+                "photo_style_applied": applied_style,
                 "geo_from_poi": True,
                 "task_label": stamps["task_label"],
                 "replaced": replace,

@@ -37,6 +37,7 @@ def create_postcard(
     language: str = Form(default="zh-CN"),
     replace: bool = Form(default=False),
     ai_scene: bool = Form(default=False),
+    photo_style: str | None = Form(default=None),
 ) -> PostcardResponse:
     try:
         photo_bytes = photo.file.read() if photo is not None else b""
@@ -47,6 +48,7 @@ def create_postcard(
             language,
             replace=replace,
             ai_scene=ai_scene,
+            photo_style=photo_style,
         )
     except (PostcardNotFoundError, PostcardError) as exc:
         _http_error(exc)

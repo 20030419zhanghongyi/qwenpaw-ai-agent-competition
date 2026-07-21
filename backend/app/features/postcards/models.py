@@ -19,8 +19,9 @@ class PostcardResponse(BaseModel):
     review_decision: str
     photo_scrubbed: bool
     has_user_photo: bool = True
-    # user | ai (live) | library (pre-generated slot) | placeholder
+    # user | ai_edit | ai (live) | library (pre-generated slot) | placeholder
     scene_source: str = "user"
+    photo_style: str | None = None
     image_url: str
     created_at: datetime
     # Design stamps: time / public POI geo / route task (not photo EXIF).
