@@ -65,7 +65,12 @@ def test_trigger_returns_nearest_poi_prompt_and_guide_request():
     assert payload["poi"]["poi_id"] == TEST_POI_ID
     assert payload["distance_m"] < 0.01
     assert "Trigger Test POI" in payload["prompt"]
-    assert payload["guide_request"] == {"poi": "Trigger Test POI", "language": "en", "interests": None}
+    assert payload["guide_request"] == {
+        "poi": "Trigger Test POI",
+        "language": "en",
+        "interests": None,
+        "next_stop": None,
+    }
 
 
 def test_trigger_returns_no_nearby_poi_without_prompting():
@@ -102,8 +107,22 @@ def test_trigger_state_allows_prompt_after_cooldown_expiry():
     start = datetime(2026, 7, 16, tzinfo=timezone.utc)
 
     assert state.allow_prompt(session_id="session", poi_id="poi", now=start) is True
-    assert state.allow_prompt(session_id="session", poi_id="poi", now=start + timedelta(minutes=9)) is False
-    assert state.allow_prompt(session_id="session", poi_id="poi", now=start + timedelta(minutes=10)) is True
+    assert (
+        state.allow_prompt(
+            session_id="session",
+            poi_id="poi",
+            now=start + timedelta(minutes=9),
+        )
+        is False
+    )
+    assert (
+        state.allow_prompt(
+            session_id="session",
+            poi_id="poi",
+            now=start + timedelta(minutes=10),
+        )
+        is True
+    )
 
 
 @pytest.mark.parametrize(

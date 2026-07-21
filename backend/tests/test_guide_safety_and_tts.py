@@ -35,7 +35,11 @@ def _photo_response(monkeypatch, recognition: PhotoRecognition | None):
 
 
 def test_photo_low_confidence_returns_safe_manual_selection(monkeypatch):
-    monkeypatch.setattr(guide_api, "_explain", lambda *_args, **_kwargs: pytest.fail("must not explain"))
+    monkeypatch.setattr(
+        guide_api,
+        "_explain",
+        lambda *_args, **_kwargs: pytest.fail("must not explain"),
+    )
     response = _photo_response(
         monkeypatch,
         PhotoRecognition(description="模糊的街道建筑画面，无法确认具体地点。", candidate_poi="大三巴牌坊", confidence=0.59),
@@ -87,13 +91,26 @@ def test_tts_contract_uses_fixed_voice_and_no_object_key(monkeypatch):
 
 
 def test_tts_rejects_unsupported_language_and_reports_unavailable(monkeypatch):
-    assert client.post("/api/v1/guide/tts", json={"text": "hello", "language": "ja"}).status_code == 422
-    monkeypatch.setattr(guide_api, "synthesize_to_oss", lambda *_args: (_ for _ in ()).throw(guide_api.TTSUnavailableError("missing")))
+    unsupported = client.post(
+        "/api/v1/guide/tts",
+        json={"text": "hello", "language": "ja"},
+    )
+    assert unsupported.status_code == 422
+    monkeypatch.setattr(
+        guide_api,
+        "synthesize_to_oss",
+        lambda *_args: (_ for _ in ()).throw(
+            guide_api.TTSUnavailableError("missing")
+        ),
+    )
     response = client.post("/api/v1/guide/tts", json={"text": "hello", "language": "en"})
     assert response.status_code == 503
 
 
-def test_intent_rate_limit_returns_retry_after():
+def test_intent_rate_limit_returns_retry_after(monkeypatch):
+    # This test measures request admission timing, not Agent latency. Preserve
+    # the configured Agent branch while replacing only its external call.
+    monkeypatch.setattr(intent_api.intent_agent, "parse_intent", lambda _text: None)
     for _ in range(20):
         assert client.post("/api/v1/intent/parse", json={"text": "下午少走路"}).status_code == 200
     limited = client.post("/api/v1/intent/parse", json={"text": "下午少走路"})
@@ -104,7 +121,11 @@ def test_intent_rate_limit_returns_retry_after():
 def test_trace_redacts_raw_input_and_output(tmp_path, monkeypatch):
     target = tmp_path / "trace.jsonl"
     monkeypatch.setattr(trace, "_trace_path", lambda: target)
-    trace.record_trace(kind="test", input_summary="private route instruction", output_summary="private narration")
+    trace.record_trace(
+        kind="test",
+        input_summary="private route instruction",
+        output_summary="private narration",
+    )
     event = json.loads(target.read_text().strip())
     assert "private route instruction" not in target.read_text()
     assert "private narration" not in target.read_text()

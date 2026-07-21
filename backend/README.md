@@ -79,8 +79,8 @@ SQLAlchemy + PostgreSQL/PostGIS
 
 验证结果：
 
-- 6 条路线模板
-- 38 个有序路线节点
+- 8 条路线模板
+- 46 个有序路线节点
 - 路线节点使用 canonical `poi_id` 外键关联 `pois`
 - 导入脚本支持幂等执行，不修改原始路线 JSON
 
@@ -182,19 +182,16 @@ latitude:  22.194627
 
 ### Route Template 数据验证
 
-- `route_templates`：6 条记录
-- `route_template_stops`：38 条记录
+- `route_templates`：8 条记录
+- `route_template_stops`：46 条记录
 - 节点顺序约束验证通过
 - 所有节点均通过外键引用 `pois.poi_id`
 - Route Match API 保持原有响应结构兼容
 
 ### 自动化测试
 
-最终全量测试结果：
-
-```text
-97 passed
-```
+全量测试命令和环境准备见“运行测试”章节。通过数量以当前分支的实际
+Pytest 输出为准，不在文档中维护容易随新增用例失效的固定数字。
 
 测试覆盖：
 
@@ -330,19 +327,43 @@ Pop-Location
 
 ## 10. 运行测试
 
-测试前请确保本地 PostGIS 容器已启动，并已完成数据库迁移和基础数据导入：
+Pytest 不会覆盖任何 Agent 开关。后端按照正常配置优先级读取仓库根目录
+`.env`；`ROUTE_AGENT_ENABLED`、`INTENT_AGENT_ENABLED`、
+`PHOTO_AGENT_ENABLED`、`GUIDE_AGENT_ENABLED` 和
+`REVIEWER_AGENT_ENABLED` 的实际值决定测试是否调用真实 Agent。
+
+如果任一 Agent 开关为 `true`，运行测试前必须：
+
+1. 启动本地 QwenPaw，并确认 `http://127.0.0.1:8088` 可访问；
+2. 确认对应 Agent 已创建、启用并挂载所需技能；
+3. 预留真实模型调用时间，并确认本地密钥和模型配置可用。
+
+开关为 `false` 时，对应 API 使用现有规则降级路径。进程环境变量优先于
+`.env`，因此也可以在当前 PowerShell 会话中显式选择运行模式。测试中的
+stub/mock Agent 单元测试不访问 QwenPaw。
+
+测试前请确保本地 PostGIS 容器已启动，并已完成数据库迁移和基础数据导入。
+POI 必须先导入，路线模板应与当前 `data/routes.json` 同步：
 
 ```powershell
 $env:PYTHONDONTWRITEBYTECODE = "1"
 
 Push-Location backend
+..\.venv\Scripts\python.exe -m alembic upgrade head
+..\.venv\Scripts\python.exe scripts\import_routes.py ..\data\routes.json
 ..\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider
 Pop-Location
 
 Remove-Item Env:PYTHONDONTWRITEBYTECODE -ErrorAction SilentlyContinue
 ```
 
-测试完成后不要提交测试生成的 `harness/results/traces/traces.jsonl`、pytest cache 或虚拟环境文件。
+测试间会自动清空进程内限流状态，避免不同用例共享请求计数。单个测试内
+发出的多次请求仍会正常验证限流行为。限流器测试只局部替换外部 Agent
+调用，避免模型响应时间改变 60 秒滑动窗口；其他测试仍遵循 `.env`。
+
+`harness/results/traces/traces.jsonl` 是本地运行产物，已取消 Git 追踪并由
+`.gitignore` 忽略。测试可以继续写入该文件，无需在测试后删除，也不要用
+`git add -f` 强制提交。pytest cache、虚拟环境和真实 `.env` 同样不得提交。
 
 ## 11. 交付检查
 
@@ -354,7 +375,7 @@ Remove-Item Env:PYTHONDONTWRITEBYTECODE -ErrorAction SilentlyContinue
 4. `/api/v1/health` 返回 `database_status=ok`。
 5. Swagger UI 和 OpenAPI JSON 可正常访问。
 6. 全量 Pytest 测试通过。
-7. 工作区不包含 `.env`、`.venv`、trace 或 pytest cache 改动。
+7. 工作区不包含 `.env`、`.venv` 或 pytest cache 改动。
 
 ## 12. Docker 一键启动（统一库，推荐）
 
@@ -373,7 +394,9 @@ docker compose up -d --build
 open http://localhost:8000/docs        # Swagger UI
 ```
 
-`up` 会自动完成：建库并启用 `postgis`+`vector` 扩展 → alembic 迁移建表 → 导入 341 POI 与 6 路线模板 → 启动后端。后端会在数据就绪后才对外服务（依赖 `seed` 完成成功）。
+`up` 会自动完成：建库并启用 `postgis`+`vector` 扩展 → alembic 迁移建表
+→ 导入 341 POI 与 8 路线模板 → 启动后端。后端会在数据就绪后才对外服务
+（依赖 `seed` 完成成功）。
 
 常用命令：
 

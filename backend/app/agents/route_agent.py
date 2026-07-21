@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import uuid
 from typing import Any
 
 from pydantic import BaseModel, Field, ValidationError
@@ -40,6 +41,18 @@ class RouteAdjustment(BaseModel):
     remove_tail: bool = False
     reorder_by_district: bool = False
     notes: str = ""
+
+
+def is_actionable(adjustment: RouteAdjustment) -> bool:
+    """Return whether the parsed result contains an executable route change."""
+    return bool(
+        adjustment.preference_add_interests
+        or adjustment.preference_add_physical
+        or adjustment.preference_add_duration
+        or adjustment.add_nodes
+        or adjustment.remove_tail
+        or adjustment.reorder_by_district
+    )
 
 
 def _build_prompt(instruction: str, preference: Preference, route_id: str) -> str:
@@ -112,7 +125,12 @@ def parse_route_adjustment(
     """调 route agent 解析意图。任一环节失败返回 None（→ 调用方降级规则版）。"""
     client = client or QwenPawClient()
     try:
-        text = client.ask(ROUTE_AGENT_ID, _build_prompt(instruction, preference, route_id), session_name="harness-route")
+        text = client.ask(
+            ROUTE_AGENT_ID,
+            _build_prompt(instruction, preference, route_id),
+            session_id=f"harness-route-{uuid.uuid4().hex}",
+            session_name="harness-route",
+        )
     except QwenPawError as exc:
         logger.info("route agent 调用失败，降级规则版：%s", exc)
         return None
@@ -132,10 +150,19 @@ def parse_route_adjustment(
 def apply_adjustment_to_preference(pref: Preference, adjustment: RouteAdjustment) -> Preference:
     """把 agent 意图叠加到 Preference（新增项去重），供现有排线引擎消费。"""
     updated = pref.model_copy(deep=True)
-    for interest in adjustment.preference_add_interests:
+    interests = [
+        *adjustment.preference_add_interests,
+        *adjustment.add_nodes,
+    ]
+    for interest in interests:
         if interest not in updated.interests:
             updated.interests.append(interest)
-    for physical in adjustment.preference_add_physical:
+    physical_preferences = list(adjustment.preference_add_physical)
+    if adjustment.remove_tail:
+        physical_preferences.append("less-walk")
+    if adjustment.reorder_by_district:
+        physical_preferences.append("no-backtrack")
+    for physical in physical_preferences:
         if physical not in updated.physical:
             updated.physical.append(physical)
     if adjustment.preference_add_duration:
