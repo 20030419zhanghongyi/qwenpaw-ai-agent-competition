@@ -98,9 +98,9 @@ class Settings(BaseSettings):
 
     postcard_ai_image_enabled: bool = True
     qwen_image_model: str = "wanx2.1-t2i-turbo"
-    postcard_ai_image_size: str = "1024*1024"
-    # Hard cap for optional AI scene calls (then fall back to local scenic).
-    postcard_ai_scene_timeout: float = 25.0
+    postcard_ai_image_size: str = "2368*1728"
+    # Slightly above the Qwen-Image tool timeout; then fall back to local scenic.
+    postcard_ai_scene_timeout: float = 210.0
     # Optional AI caption via guide agent (off by default — keeps create snappy).
     postcard_ai_caption_enabled: bool = False
 

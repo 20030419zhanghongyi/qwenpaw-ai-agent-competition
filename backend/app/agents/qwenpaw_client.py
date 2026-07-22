@@ -19,8 +19,10 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 from typing import Any, Iterator
+from urllib.parse import quote
 
 import httpx
 
@@ -32,6 +34,14 @@ logger = logging.getLogger("macau_storywalk.qwenpaw")
 
 # 发消息端点（已确认；做成单一配置点，便于将来 QwenPaw 改路由时一处修改）
 SEND_PATH_DEFAULT = "/api/console/chat"
+_IMAGE_URI_RE = re.compile(
+    r"(?:file|https?)://[^\r\n\"\]}]+?\.(?:png|jpe?g|webp)(?:\?[^\s\"\]}]*)?",
+    re.IGNORECASE,
+)
+_SAVED_IMAGE_RE = re.compile(
+    r"Saved to:\s*(.+?\.(?:png|jpe?g|webp))(?=\s*(?:$|[,;]))",
+    re.IGNORECASE | re.MULTILINE,
+)
 
 
 class QwenPawError(RuntimeError):
@@ -158,6 +168,171 @@ class QwenPawClient:
         answer = _assemble_answer(events)
         return {"text": answer, "tokens": _extract_usage(events), "session_id": session_id}
 
+    def ask_for_image(
+        self,
+        agent_id: str,
+        text: str,
+        *,
+        session_id: str,
+    ) -> str:
+        """Run an agent until its tool emits an image and return that image reference.
+
+        Image tools may leave the agent composing a follow-up message after the
+        expensive generation has already completed. This method consumes the SSE
+        stream only until an image block appears, then stops that chat explicitly.
+        """
+        url = f"{self.base_url}{self.send_path}"
+        payload = {
+            "input": [{"role": "user", "content": [{"type": "text", "text": text}]}],
+            "session_id": session_id,
+            "user_id": "default",
+            "channel": "console",
+            "stream": True,
+        }
+        headers = self._headers(json_body=True)
+        headers["X-Agent-Id"] = agent_id
+        events: list[dict[str, Any]] = []
+        image_ref = ""
+        t0 = time.perf_counter()
+
+        try:
+            with httpx.stream(
+                "POST",
+                url,
+                headers=headers,
+                json=payload,
+                timeout=self.timeout,
+            ) as resp:
+                self._raise_for_status(resp, self.send_path)
+                for event in _iter_sse(resp):
+                    events.append(event)
+                    refs = _extract_image_refs(event.get("data_obj"))
+                    if refs:
+                        image_ref = refs[0]
+                        break
+        except httpx.HTTPError as exc:
+            raise QwenPawError(f"POST {self.send_path} 网络失败：{exc}") from exc
+
+        if image_ref:
+            self._stop_chat_for_session(session_id, agent_id)
+        else:
+            refs = _extract_image_refs(events)
+            image_ref = refs[0] if refs else ""
+        if not image_ref:
+            answer = _assemble_answer(events)
+            raise QwenPawError(f"scene agent 未返回图片：{answer[:200]}")
+
+        latency_ms = int((time.perf_counter() - t0) * 1000)
+        record_trace(
+            kind="qwenpaw.image",
+            agent_id=agent_id,
+            chat_id=session_id,
+            input_summary=text[:200],
+            output_summary=image_ref[:200],
+            latency_ms=latency_ms,
+            tokens=_extract_usage(events),
+        )
+        record_audit(
+            kind="qwenpaw.image",
+            status="ok",
+            subject=session_id,
+            agent_id=agent_id,
+            latency_ms=latency_ms,
+            input_chars=len(text),
+            output_chars=len(image_ref),
+        )
+        return image_ref
+
+    def download_media(self, reference: str, *, timeout: float = 45.0) -> bytes:
+        """Download an HTTP image or a QwenPaw-local ``file://`` image."""
+        if reference.lower().startswith("file://"):
+            local_path = reference[len("file://") :].replace("\\", "/")
+            encoded_path = quote(local_path, safe="/:")
+            url = f"{self.base_url}/api/files/preview/{encoded_path}"
+            headers = self._headers()
+        elif reference.lower().startswith(("http://", "https://")):
+            url = reference
+            headers = self._headers() if reference.startswith(self.base_url) else {}
+        else:
+            raise QwenPawError("scene agent 返回了不支持的图片引用")
+
+        try:
+            response = httpx.get(
+                url,
+                headers=headers,
+                timeout=timeout,
+                follow_redirects=True,
+            )
+            self._raise_for_status(response, "/api/files/preview")
+        except httpx.HTTPError as exc:
+            raise QwenPawError(f"下载 scene agent 图片失败：{exc}") from exc
+        if len(response.content) > 20 * 1024 * 1024:
+            raise QwenPawError("scene agent 图片超过 20 MiB 限制")
+        return response.content
+
+    def upload_media(
+        self,
+        content: bytes,
+        *,
+        filename: str,
+        agent_id: str,
+        content_type: str = "image/jpeg",
+    ) -> str:
+        """Upload scrubbed media to an agent workspace and return its local path."""
+        if not content or len(content) > 20 * 1024 * 1024:
+            raise QwenPawError("上传到 scene agent 的图片为空或超过 20 MiB")
+        headers = self._headers()
+        headers["X-Agent-Id"] = agent_id
+        try:
+            response = httpx.post(
+                f"{self.base_url}/api/console/upload",
+                headers=headers,
+                files={"file": (filename, content, content_type)},
+                timeout=min(self.timeout, 30.0),
+            )
+            self._raise_for_status(response, "/api/console/upload")
+            payload = response.json()
+        except (httpx.HTTPError, ValueError) as exc:
+            raise QwenPawError(f"上传 scene agent 参考图失败：{exc}") from exc
+        reference = payload.get("url") if isinstance(payload, dict) else None
+        if not isinstance(reference, str) or not reference.strip():
+            raise QwenPawError("scene agent 上传接口未返回文件路径")
+        return reference.strip()
+
+    def _stop_chat_for_session(self, session_id: str, agent_id: str) -> None:
+        """Best-effort stop after an image tool result has been captured."""
+        headers = self._headers()
+        headers["X-Agent-Id"] = agent_id
+        try:
+            chats = httpx.get(
+                f"{self.base_url}/api/chats",
+                headers=headers,
+                timeout=min(self.timeout, 10.0),
+            )
+            self._raise_for_status(chats, "/api/chats")
+            rows = chats.json()
+            if not isinstance(rows, list):
+                return
+            chat_id = next(
+                (
+                    str(row.get("id"))
+                    for row in rows
+                    if isinstance(row, dict) and row.get("session_id") == session_id
+                ),
+                "",
+            )
+            if not chat_id:
+                return
+            response = httpx.post(
+                f"{self.base_url}/api/console/chat/stop",
+                headers=headers,
+                params={"chat_id": chat_id},
+                timeout=min(self.timeout, 10.0),
+            )
+            self._raise_for_status(response, "/api/console/chat/stop")
+        except (httpx.HTTPError, QwenPawError, ValueError) as exc:
+            logger.info("QwenPaw image chat stop failed: %s", exc)
+
     def ask(
         self,
         agent_id: str,
@@ -250,6 +425,40 @@ def _extract_text(obj: Any) -> str:
             if isinstance(item, dict) and item.get("type") == "text" and item.get("text"):
                 parts.append(item["text"])
     return "".join(parts)
+
+
+def _extract_image_refs(obj: Any) -> list[str]:
+    """Find image references in nested SSE tool results, preserving order."""
+    found: list[str] = []
+
+    def add(value: str) -> None:
+        cleaned = value.strip().rstrip(".,;)")
+        if cleaned and cleaned not in found:
+            found.append(cleaned)
+
+    def visit(value: Any) -> None:
+        if isinstance(value, dict):
+            source = value.get("source")
+            if value.get("type") == "image" and isinstance(source, dict):
+                url = source.get("url")
+                if isinstance(url, str):
+                    add(url)
+            for child in value.values():
+                visit(child)
+            return
+        if isinstance(value, list):
+            for child in value:
+                visit(child)
+            return
+        if isinstance(value, str):
+            for match in _IMAGE_URI_RE.finditer(value):
+                add(match.group(0))
+            for match in _SAVED_IMAGE_RE.finditer(value):
+                add(f"file://{match.group(1).strip()}")
+
+    visit(obj)
+    found.sort(key=lambda ref: not ref.lower().startswith("file://"))
+    return found
 
 
 def _assemble_answer(events: list[dict[str, Any]]) -> str:
