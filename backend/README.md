@@ -325,6 +325,46 @@ Pop-Location
 
 字段级 422 错误的 `detail` 使用 FastAPI 标准错误数组。最终接口契约以 `/openapi.json` 为准。
 
+### 明信片 Qwen-Image 场景图与照片风格化
+
+用户不上传照片且提交 `ai_scene=true` 时，后端会调用 QwenPaw 的 `scene`
+Agent。用户上传照片并提交 `photo_style` 时，同一 Agent 会调用
+`edit_image_qwen` 做风格化。插件位于
+`backend/app/tools/qwen-image/`：
+
+```powershell
+# 在仓库根目录执行；运行中的 QwenPaw 会热加载插件
+.\.venv\Scripts\qwenpaw.exe plugin validate .\backend\app\tools\qwen-image
+.\.venv\Scripts\qwenpaw.exe plugin install .\backend\app\tools\qwen-image --force
+```
+
+然后在 QwenPaw Console 选择 `scene` Agent，打开“工具配置”：
+
+1. 为 `scene` Agent 启用 `generate_image_qwen` 和 `edit_image_qwen`；
+2. 分别为两个工具填写与区域匹配的 DashScope API Key 和 endpoint；
+3. 模型选择 `qwen-image-2.0-pro`，工具 timeout 建议设为 180 秒。
+
+工具密钥保存在 QwenPaw 的 Agent 配置中，与仓库 `.env` 相互独立，均不得
+提交。后端建议配置如下：
+
+```dotenv
+POSTCARD_AI_IMAGE_ENABLED=true
+POSTCARD_AI_IMAGE_SIZE=2368*1728
+POSTCARD_AI_SCENE_TIMEOUT=210
+```
+
+后端从 SSE 的图片工具结果中取得 `file://` 引用，通过 QwenPaw 的受控文件
+预览接口下载图片，裁切为 960×720 JPEG，并缓存到
+`data/postcard_scene_cache/`。生成失败时仍会依次回退到直接 DashScope 图像
+调用、预生成场景图库和本地占位图，不会使明信片创建接口失败。
+
+上传照片时，`photo_style` 可选值为 `souvenir`（默认 UI 选项）、
+`watercolor`、`azulejo`、`vintage` 或 `ink`；不提交该字段则不使用 AI。
+原图会先剥离元数据并模糊检测到的人脸，再上传至本机 QwenPaw；风格化结果
+下载后会再次执行相同脱敏。编辑失败时明信片继续使用第一次脱敏后的原图。
+QwenPaw 会在其本机 media 目录保留脱敏参考图与生成图，部署方应按其数据保留
+策略定期清理该目录。
+
 ## 10. 运行测试
 
 Pytest 不会覆盖任何 Agent 开关。后端按照正常配置优先级读取仓库根目录

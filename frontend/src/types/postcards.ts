@@ -1,5 +1,7 @@
 /** Frontend types aligned with backend postcard contracts. */
 
+export type PhotoStyle = "souvenir" | "watercolor" | "azulejo" | "vintage" | "ink";
+
 export interface Postcard {
   postcard_id: string;
   trip_id: string;
@@ -14,7 +16,8 @@ export interface Postcard {
   review_decision: string;
   photo_scrubbed: boolean;
   has_user_photo?: boolean;
-  scene_source?: "user" | "ai" | "library" | "placeholder" | string;
+  scene_source?: "user" | "ai_edit" | "ai" | "library" | "placeholder" | string;
+  photo_style?: PhotoStyle | null;
   image_url: string;
   created_at: string;
   visited_at?: string | null;

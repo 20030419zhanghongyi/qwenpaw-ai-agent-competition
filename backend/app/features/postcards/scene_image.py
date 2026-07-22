@@ -1,7 +1,7 @@
 """Scenic art for postcards when the user skips a personal photo.
 
-Default path is instant local illustration. Optional AI (QwenPaw SVG / wanx)
-is opt-in via ``ai_scene=True`` because a full agent draw often takes 1–2 minutes.
+Default path is instant local illustration. Optional QwenPaw/Qwen-Image art is
+opt-in via ``ai_scene=True`` because generation often takes 1–3 minutes.
 Successful AI scenes are cached per POI+language for later regenerations.
 """
 
@@ -9,10 +9,10 @@ from __future__ import annotations
 
 import hashlib
 import logging
-import re
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
+from uuid import uuid4
 
 import httpx
 
@@ -23,14 +23,15 @@ from .scene_library import load_pregenerated_svg
 
 logger = logging.getLogger("macau_storywalk.postcard_scene")
 
-_SVG_BLOCK = re.compile(r"<svg\b[^>]*>.*?</svg>", re.IGNORECASE | re.DOTALL)
-_FENCE = re.compile(r"```(?:svg|xml)?\s*([\s\S]*?)```", re.IGNORECASE)
-_DANGEROUS_TAGS = re.compile(
-    r"<\s*(script|foreignObject|iframe|object|embed)\b[^>]*>.*?<\s*/\s*\1\s*>",
-    re.IGNORECASE | re.DOTALL,
-)
-_DANGEROUS_ATTR = re.compile(r"\son[a-z]+\s*=\s*(['\"]).*?\1|javascript:", re.IGNORECASE)
-
+DEFAULT_PHOTO_STYLE = "souvenir"
+PHOTO_STYLE_PROMPTS = {
+    "souvenir": "雅致澳门旅行纪念品插画，柔和纸张纹理，暖色电影光线",
+    "watercolor": "轻盈透明水彩画，细腻纸纹，柔和晕染，保留主体轮廓",
+    "azulejo": "葡式蓝白花砖插画，青蓝与砖红点缀，精致平面装饰艺术",
+    "vintage": "复古旅行海报，低饱和暖色，胶片颗粒，二十世纪中叶印刷质感",
+    "ink": "现代水墨淡彩，留白克制，流畅线条，青绿与赭石点染",
+}
+SUPPORTED_PHOTO_STYLES = frozenset(PHOTO_STYLE_PROMPTS)
 
 def build_scene_prompt(
     *,
@@ -47,49 +48,38 @@ def build_scene_prompt(
     )
 
 
-def _qwenpaw_svg_prompt(*, poi_name: str, district: str | None, language: str) -> str:
-    place = district or ("Macau" if language.startswith("en") or language == "pt" else "澳门")
+def _qwenpaw_image_prompt(*, poi_name: str, district: str | None, language: str) -> str:
+    prompt = build_scene_prompt(poi_name=poi_name, district=district, language=language)
+    size = settings.postcard_ai_image_size or "2368*1728"
     return (
-        f"地点：{poi_name}（{place}，澳门）\n"
-        "请画一张旅行明信片插画，只输出完整 SVG 代码，不要 Markdown、不要解释。\n"
-        "硬性要求：\n"
-        "1) 根元素必须是 <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 960 720\">；\n"
-        "2) 画该地点可辨识的场景（口岸/建筑/水面/街巷等），午后暖光；\n"
-        "3) 可用青绿与砖红花砖色点缀，风格像纪念品插画而非写实照片；\n"
-        "4) 不要任何文字、人脸、logo、水印；不要 <script> / 事件属性 / foreignObject。\n"
-        "5) 尽量简短（元素少、路径简单），便于快速生成。\n"
+        "你是明信片场景生成 Agent。必须调用 generate_image_qwen 工具且只调用一次，"
+        "不要用 SVG、代码或文字描述代替图片。\n"
+        f"prompt：{prompt}\n"
+        f"size：{size}\n"
+        "n：1\n"
+        "negative_prompt：人物脸部、文字、logo、水印、低清晰度、变形建筑。\n"
+        "prompt_extend：true。生成成功后无需解释。"
     )
 
 
-def _sanitize_svg(raw: str) -> str | None:
-    text = (raw or "").strip()
-    if not text:
-        return None
-    fenced = _FENCE.search(text)
-    if fenced:
-        text = fenced.group(1).strip()
-    match = _SVG_BLOCK.search(text)
-    if match:
-        svg = match.group(0)
-    else:
-        # Model sometimes truncates before </svg>; keep a closable prefix if it looks like SVG.
-        start = re.search(r"<svg\b[^>]*>", text, flags=re.IGNORECASE)
-        if not start:
-            return None
-        svg = text[start.start() :].strip()
-        if "</svg>" not in svg.lower():
-            svg = svg.rstrip() + "\n</svg>"
-        if not _SVG_BLOCK.search(svg):
-            return None
-        svg = _SVG_BLOCK.search(svg).group(0)  # type: ignore[union-attr]
-    svg = _DANGEROUS_TAGS.sub("", svg)
-    svg = _DANGEROUS_ATTR.sub("", svg)
-    if "viewBox" not in svg:
-        svg = svg.replace("<svg", '<svg viewBox="0 0 960 720"', 1)
-    if len(svg) > 80_000:
-        logger.info("postcard AI scene SVG rejected: too large (%s)", len(svg))
-        return None
-    return svg
+def _qwenpaw_edit_prompt(
+    *,
+    reference_path: str,
+    style: str,
+    poi_name: str,
+) -> str:
+    style_prompt = PHOTO_STYLE_PROMPTS[style]
+    return (
+        "你是明信片照片风格化 Agent。必须调用 edit_image_qwen 工具且只调用一次，"
+        "不要用代码或文字描述代替图片。\n"
+        f"reference_images：仅使用 [{reference_path!r}]。\n"
+        f"prompt：把图一转换为{style_prompt}，适合作为 {poi_name} 的旅行明信片主图。"
+        "保持原始构图、人物姿态、建筑和物体关系；不得新增人物。"
+        "所有已模糊人脸必须继续保持模糊和不可识别，不得补全或重建人脸细节。\n"
+        "size：留空以沿用参考图比例。n：1。prompt_extend：true。\n"
+        "negative_prompt：清晰人脸、人脸重建、身份特征、文字、logo、水印、"
+        "额外人物、变形肢体、变形建筑。生成成功后无需解释。"
+    )
 
 
 def _cache_dir() -> Path:
@@ -103,27 +93,31 @@ def _cache_key(*, poi_name: str, district: str | None, language: str) -> str:
     return hashlib.sha1(raw).hexdigest()[:20]
 
 
-def _load_cached_svg(*, poi_name: str, district: str | None, language: str) -> str | None:
-    path = _cache_dir() / f"{_cache_key(poi_name=poi_name, district=district, language=language)}.svg"
+def _load_cached_jpeg(*, poi_name: str, district: str | None, language: str) -> bytes | None:
+    path = _cache_dir() / f"{_cache_key(poi_name=poi_name, district=district, language=language)}.jpg"
     if not path.is_file():
         return None
     try:
-        return _sanitize_svg(path.read_text(encoding="utf-8"))
+        raw = path.read_bytes()
+        from PIL import Image
+
+        Image.open(BytesIO(raw)).verify()
+        return raw
     except Exception as exc:  # noqa: BLE001
         logger.info("postcard AI scene cache read failed: %s", exc)
         return None
 
 
-def _store_cached_svg(
+def _store_cached_jpeg(
     *,
     poi_name: str,
     district: str | None,
     language: str,
-    svg: str,
+    jpeg: bytes,
 ) -> None:
-    path = _cache_dir() / f"{_cache_key(poi_name=poi_name, district=district, language=language)}.svg"
+    path = _cache_dir() / f"{_cache_key(poi_name=poi_name, district=district, language=language)}.jpg"
     try:
-        path.write_text(svg, encoding="utf-8")
+        path.write_bytes(jpeg)
     except Exception as exc:  # noqa: BLE001
         logger.info("postcard AI scene cache write failed: %s", exc)
 
@@ -148,37 +142,97 @@ def _svg_to_jpeg(svg: str) -> bytes | None:
         return None
 
 
+def _image_to_jpeg(raw: bytes) -> bytes | None:
+    """Validate generated image bytes and normalize them to a 4:3 JPEG."""
+    try:
+        from PIL import Image, ImageOps
+
+        image = Image.open(BytesIO(raw)).convert("RGB")
+        image = ImageOps.fit(image, (960, 720), method=Image.Resampling.LANCZOS)
+        buffer = BytesIO()
+        image.save(buffer, format="JPEG", quality=90, optimize=True)
+        return buffer.getvalue()
+    except Exception as exc:  # noqa: BLE001
+        logger.info("postcard AI scene image decode failed: %s", exc)
+        return None
+
+
 def generate_ai_scene_via_qwenpaw(
     *,
     poi_name: str,
     district: str | None = None,
     language: str = "zh-CN",
 ) -> tuple[bytes | None, str | None]:
-    """Return ``(jpeg, svg)`` from cache or QwenPaw."""
-    cached = _load_cached_svg(poi_name=poi_name, district=district, language=language)
+    """Return ``(jpeg, None)`` from cache or the scene Agent image tool."""
+    cached = _load_cached_jpeg(poi_name=poi_name, district=district, language=language)
     if cached:
-        return _svg_to_jpeg(cached), cached
+        return cached, None
 
-    prompt = _qwenpaw_svg_prompt(poi_name=poi_name, district=district, language=language)
-    timeout = max(8.0, float(settings.postcard_ai_scene_timeout or 25.0))
-    # One agent only — dual fallback nearly doubles latency.
-    agent_id = "default"
+    prompt = _qwenpaw_image_prompt(poi_name=poi_name, district=district, language=language)
+    timeout = max(30.0, float(settings.postcard_ai_scene_timeout or 210.0))
+    agent_id = settings.scene_agent_id or "scene"
+    key = _cache_key(poi_name=poi_name, district=district, language=language)
+    session_id = f"postcard-scene-{key}-{uuid4().hex[:8]}"
+    client = QwenPawClient(timeout=timeout)
     try:
-        raw = QwenPawClient(timeout=timeout).ask(
+        reference = client.ask_for_image(
             agent_id,
             prompt,
-            session_name="postcard-scene",
+            session_id=session_id,
         )
+        raw = client.download_media(reference)
     except QwenPawError as exc:
         logger.info("postcard AI scene QwenPaw unavailable: %s", exc)
         return None, None
 
-    svg = _sanitize_svg(raw)
-    if not svg:
-        logger.info("postcard AI scene QwenPaw(%s) returned no usable SVG", agent_id)
+    jpeg = _image_to_jpeg(raw)
+    if not jpeg:
+        logger.info("postcard AI scene QwenPaw(%s) returned no usable image", agent_id)
         return None, None
-    _store_cached_svg(poi_name=poi_name, district=district, language=language, svg=svg)
-    return _svg_to_jpeg(svg), svg
+    _store_cached_jpeg(
+        poi_name=poi_name,
+        district=district,
+        language=language,
+        jpeg=jpeg,
+    )
+    return jpeg, None
+
+
+def stylize_photo_via_qwenpaw(
+    *,
+    photo_jpeg: bytes,
+    style: str = DEFAULT_PHOTO_STYLE,
+    poi_name: str,
+) -> bytes | None:
+    """Style a scrubbed user photo with the scene Agent's edit-image tool."""
+    if style not in SUPPORTED_PHOTO_STYLES or not settings.postcard_ai_image_enabled:
+        return None
+
+    timeout = max(30.0, float(settings.postcard_ai_scene_timeout or 210.0))
+    agent_id = settings.scene_agent_id or "scene"
+    session_id = f"postcard-edit-{uuid4().hex}"
+    client = QwenPawClient(timeout=timeout)
+    try:
+        source_path = client.upload_media(
+            photo_jpeg,
+            filename=f"{session_id}.jpg",
+            agent_id=agent_id,
+        )
+        prompt = _qwenpaw_edit_prompt(
+            reference_path=source_path,
+            style=style,
+            poi_name=poi_name,
+        )
+        reference = client.ask_for_image(
+            agent_id,
+            prompt,
+            session_id=session_id,
+        )
+        raw = client.download_media(reference)
+    except QwenPawError as exc:
+        logger.info("postcard AI photo style unavailable: %s", exc)
+        return None
+    return _image_to_jpeg(raw)
 
 
 def _wanx_jpeg(
@@ -255,29 +309,27 @@ def generate_ai_scene(
     """Resolve scene art for a no-photo postcard.
 
     Order:
-    1. Pre-generated library by POI + visit time (instant)
-    2. Live QwenPaw / wanx when ``ai_scene=True``
+    1. Live QwenPaw Qwen-Image / wanx fallback when ``ai_scene=True``
+    2. Pre-generated library by POI + visit time (instant)
     3. Empty → caller uses local placeholder
     """
     visit = when or datetime.now()
+    if ai_scene and settings.postcard_ai_image_enabled:
+        jpeg, svg = generate_ai_scene_via_qwenpaw(
+            poi_name=poi_name, district=district, language=language
+        )
+        if jpeg or svg:
+            return "ai", jpeg, svg
+
+        wanx = _wanx_jpeg(poi_name=poi_name, district=district, language=language)
+        if wanx:
+            return "ai", wanx, None
+
     if poi_id:
         hit = load_pregenerated_svg(poi_id, when=visit)
         if hit:
             _slot, svg = hit
             return "library", _svg_to_jpeg(svg), svg
-
-    if not ai_scene or not settings.postcard_ai_image_enabled:
-        return "", None, None
-
-    jpeg, svg = generate_ai_scene_via_qwenpaw(
-        poi_name=poi_name, district=district, language=language
-    )
-    if jpeg or svg:
-        return "ai", jpeg, svg
-
-    wanx = _wanx_jpeg(poi_name=poi_name, district=district, language=language)
-    if wanx:
-        return "ai", wanx, None
 
     return "", None, None
 
