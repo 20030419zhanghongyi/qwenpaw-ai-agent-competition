@@ -24,6 +24,7 @@ from app.db.models import (
     Postcard,
     RouteTemplate,
     RouteTemplateStop,
+    StorySession,
     Trip,
     TripFeedback,
     TripStop,
@@ -46,6 +47,7 @@ EXPECTED_TABLES = {
     "pois",
     "route_templates",
     "route_template_stops",
+    "story_sessions",
 }
 client = TestClient(app)
 
@@ -115,6 +117,22 @@ def test_engine_and_session_factory_are_synchronous():
 
 def test_metadata_contains_core_tables():
     assert set(Base.metadata.tables) == EXPECTED_TABLES
+
+
+def test_story_sessions_table_columns():
+    expected = {
+        "id",
+        "user_id",
+        "story_id",
+        "trip_id",
+        "current_chapter_id",
+        "status",
+        "state",
+        "created_at",
+        "updated_at",
+        "completed_at",
+    }
+    assert expected == set(StorySession.__table__.columns.keys())
 
 
 def test_audit_event_table_columns():
