@@ -59,6 +59,9 @@ class Settings(BaseSettings):
     # 需求理解 agent 开关：默认 False（规则版 fallback，零意外 LLM 调用）；
     # 在 QwenPaw 建好 intent agent 后置 true。
     intent_agent_enabled: bool = False
+    # 偏好多轮引导 agent 开关：默认 False（脚本版 fallback，零意外 LLM 调用）；
+    # 在 QwenPaw 建好 pref-guide agent（挂 preference-guide 技能）后置 true。
+    preference_guide_agent_enabled: bool = False
     # Phase 4 拍照识别开关：默认 False（零意外 agent 调用）。
     # 需在 QwenPaw 建 photo agent（多模态模型 + view_image 工具 + photo-recognize 技能）后置 true。
     photo_agent_enabled: bool = False
@@ -123,13 +126,12 @@ class Settings(BaseSettings):
     model_version: str = "qwenpaw-managed"
     prompt_version: str = "ethics-v1"
 
+    # Seed / cache data root (override in tests via monkeypatch or DATA_DIR).
+    data_dir: Path = REPO_ROOT / "data"
+
     @property
     def repo_root(self) -> Path:
         return REPO_ROOT
-
-    @property
-    def data_dir(self) -> Path:
-        return REPO_ROOT / "data"
 
 
 @lru_cache

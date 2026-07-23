@@ -6,6 +6,7 @@
 skills/
 ├── route-adjust/SKILL.md        # P1：路线微调 agent（NL 偏好 → 结构化意图 JSON）
 ├── requirement-understand/SKILL.md  # 需求理解 agent（NL → Preference JSON）
+├── preference-guide/SKILL.md     # 偏好多轮引导 agent（多轮对话 → 逐步收集偏好 → Preference JSON）
 ├── macau-guide/SKILL.md         # P2：文化讲解 agent（POI 资料 → 有据讲解 + 来源/置信）
 ├── photo-recognize/SKILL.md     # P4：拍照识别 agent（图 → {描述,候选POI,置信} JSON）
 └── postcard-scene/SKILL.md      # 明信片场景插画（参考实景 → 四时段 SVG）
@@ -44,6 +45,7 @@ curl -X POST http://127.0.0.1:8088/api/skills/pool/refresh
 |---|---|---|---|
 | `route` | 路线微调 | `route-adjust` | 结构化 RouteAdjustment，失败回落规则版 |
 | `intent` | 需求理解 | `requirement-understand`、`fairness-gate` | 结构化 Preference |
+| `pref-guide` | 偏好多轮引导 | `preference-guide` | 多轮对话逐步收集偏好，够了输出 Preference JSON |
 | `guide` | 文化讲解 | `macau-guide`、`source-attribution`、`anti-sycophancy` | RAG 取料 + 来源/置信度 |
 | `photo` | 拍照识别 | `photo-recognize`、`source-attribution` | 多模态 + 内置 `view_image` 工具 |
 | `scene` | 明信片场景插画 | `postcard-scene` | 多模态 + `view_image`；先看参考实景再画四时段 SVG |
@@ -90,6 +92,26 @@ CLI 默认不在 PATH 时，用 **Console** 建：
 > `requirement-understand` 输出严格 Preference JSON
 > （`duration/party_size/travel_type/interests/physical/language`），字段对齐
 > `backend/app/models/user.py`——与 route-adjust 同一套「结构化输出 + 失败降级」纪律。
+
+## 在 QwenPaw 里建偏好多轮引导 agent（手动步骤）—— 🆕 技能源已就位（2026-07-23）
+
+偏好引导 agent（`pref-guide`）的技能源已就位（`skills/preference-guide/SKILL.md`），与 route/intent 平行。
+**与 intent agent 的关键区别**：intent 是一次性解析（给一段话 → 吐出 Preference JSON），
+pref-guide 是**多轮对话引导**（发现缺失 → 一次问一个问题 → 够了再输出 Preference JSON）。
+
+1. Console → Create New Agent：name `偏好多轮引导`，agent-id `pref-guide`，挑已配的 text 模型
+2. `cp -R skills/preference-guide ~/.qwenpaw/skill_pool/` →
+   `qwenpaw skills test ~/.qwenpaw/skill_pool/preference-guide` →
+   `curl -X POST http://127.0.0.1:8088/api/skills/pool/refresh`（同 route/intent，**技能不自动发现**）
+3. 给该 agent 启用 `preference-guide` 技能
+4. 仓库 `.env` 设 `PREFERENCE_GUIDE_AGENT_ENABLED=true` → `POST /api/v1/intent/guide` 走 agent 驱动（失败降级脚本版）
+
+> **验证目标**：`curl -X POST localhost:8000/api/v1/intent/guide -H 'Content-Type: application/json' -d '{"action":"start","language":"zh-CN"}'` →
+> `source:"agent"`、`reply` 为温暖开场白；续发 `{"action":"message","message":"半天，一个人看建筑"}` →
+> agent 继续追问缺失信息（如口岸）；多轮后 `ready:true`、`preference` 非空。
+
+> **两个坑（route/intent 已踩过，同样适用）**：技能不自动发现（必须 `pool/refresh`）；
+> 模型 provider 401（建 agent 时分到失效 key 会秒退空返回，换可用 provider）。
 
 ## 在 QwenPaw 里建独立审核 agent（手动步骤）—— ✅ 已完成 + 端到端验证（2026-07-13）
 

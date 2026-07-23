@@ -16,7 +16,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field, field_validator
 
-from app.agents import intent_agent
+from app.agents import intent_agent, preference_guide_agent
 from app.agents.qwenpaw_client import QwenPawClient, QwenPawError
 from app.core.config import settings
 from app.guardrails.runtime import rate_limit, sanitize_untrusted_text
@@ -27,8 +27,8 @@ logger = logging.getLogger("macau_storywalk.intent")
 
 router = APIRouter(prefix="/api/v1/intent", tags=["intent"])
 
-# 引导对话用 default agent：intent agent 技能强制「只输出 JSON」，不适合多轮提问。
-GUIDE_AGENT_ID = "default"
+# 偏好引导 agent id 来自 preference_guide_agent 模块（pref-guide）。
+# 与 intent agent 分工：intent 一次性解析已有文本，pref-guide 多轮对话逐步收集缺失信息。
 
 
 class IntentParseRequest(BaseModel):
@@ -285,59 +285,8 @@ _OPENERS: dict[str, str] = {
 }
 
 
-def _guide_bootstrap_prompt(language: str) -> str:
-    return (
-        "You are the Macau StoryWalk preference guide (澳迹同行).\n"
-        f"Speak ONLY in language code `{language}` "
-        "(zh-CN simplified Chinese, zh-TW traditional Chinese, en English, pt Portuguese).\n"
-        "Goal: learn the traveler's preferences through a short multi-turn chat.\n"
-        "Ask about, one question at a time: duration, entry/exit border ports "
-        "(Gongbei/关闸, Qingmao, Hengqin, HZMB, Outer Harbour ferry), "
-        "companions, interests, walking comfort.\n"
-        "Rules:\n"
-        "1) Ask exactly ONE short question per reply.\n"
-        "2) Be warm and concise (1–3 sentences).\n"
-        "3) Do NOT invent preferences the user did not say.\n"
-        "4) Until you have enough to plan, do NOT output JSON.\n"
-        "5) When enough info is collected, first give a one-sentence confirmation, "
-        "then on a NEW line output ONLY this JSON object "
-        "(no markdown fence):\n"
-        '{"duration":"half-day|full-day|evening|multi-day|custom","trip_days":null,'
-        '"party_size":1,'
-        '"travel_type":["solo|friends|family|relax"],'
-        '"interests":["history|architecture|food|photo|culture"],'
-        '"physical":["normal|less-walk|no-backtrack"],'
-        '"entry_port":"poi_port_guanja|poi_port_qingmao|poi_port_hengqin|poi_port_hzmb|poi_port_outer_harbor|poi_0071|null",'
-        '"exit_port":"poi_port_guanja|poi_port_qingmao|poi_port_hengqin|poi_port_hzmb|poi_port_outer_harbor|poi_0071|null",'
-        '"travel_date":"YYYY-MM-DD|null",'
-        f'"language":"{language}"}}\n'
-        "(For multi-day, set trip_days to an integer 2–5 when the traveler says how many days.)\n\n"
-        "Now greet the traveler and ask your first question about duration."
-    )
-
-
-def _extract_preference_json(text: str) -> Preference | None:
-    """从引导回复中抽出 Preference；失败返回 None。"""
-    if not text:
-        return None
-    obj = intent_agent._extract_json(text)  # noqa: SLF001 - 复用同一解析器
-    if obj is None:
-        return None
-    try:
-        return intent_agent._coerce(obj)  # noqa: SLF001
-    except Exception:  # noqa: BLE001
-        return None
-
-
-def _strip_json_for_display(text: str) -> str:
-    """聊天气泡里去掉尾部 JSON，只留自然语言。"""
-    if not text:
-        return text
-    match = re.search(r"\{[\s\S]*\}\s*$", text.strip())
-    if not match:
-        return text.strip()
-    cleaned = text[: match.start()].strip()
-    return cleaned or text.strip()
+# _guide_bootstrap_prompt / _extract_preference_json / _strip_json_for_display
+# 已迁移到 backend/app/agents/preference_guide_agent.py，本文件不再维护内联 prompt。
 
 
 def _preference_ready(pref: Preference) -> bool:
@@ -351,26 +300,26 @@ def _guide_with_qwenpaw(
     action: str,
     message: str | None,
     language: str,
+    transcript: str | None = None,
 ) -> tuple[str, Preference | None, str]:
-    """返回 (reply, preference|None, source)."""
-    client = QwenPawClient()
-    if action == "start":
-        prompt = _guide_bootstrap_prompt(language)
-    else:
-        user_text = (message or "").strip()
-        if not user_text:
-            raise ValueError("message required")
-        prompt = (
-            f"[Language lock: reply ONLY in `{language}`]\n"
-            f"Traveler said: {user_text}"
-        )
+    """返回 (reply, preference|None, source).
 
-    reply = client.ask(GUIDE_AGENT_ID, prompt, session_id=session_id, session_name="pref-guide")
-    pref = _extract_preference_json(reply)
-    if pref is not None:
-        pref.language = language
-        return _strip_json_for_display(reply), pref, "agent"
-    return reply.strip(), None, "agent"
+    优先使用 pref-guide agent（多轮对话引导），不可用时返回空 reply 触发降级。
+    """
+    if not settings.preference_guide_agent_enabled:
+        return ("", None, "script")
+
+    reply, pref = preference_guide_agent.guide_step(
+        session_id=session_id,
+        action=action,
+        message=message,
+        language=language,
+        transcript=transcript,
+    )
+    if not reply:
+        # agent 调用失败 → 降级脚本
+        return ("", None, "script")
+    return (reply, pref, "agent")
 
 
 def _merge_preferences(base: Preference, overlay: Preference) -> Preference:
@@ -534,6 +483,7 @@ def guide(request: IntentGuideRequest) -> dict[str, Any]:
             action=request.action,
             message=request.message,
             language=request.language,
+            transcript=request.transcript,
         )
     except (QwenPawError, ValueError, Exception) as exc:  # noqa: BLE001
         logger.info("preference guide 降级脚本：%s", exc)
@@ -564,7 +514,7 @@ def guide(request: IntentGuideRequest) -> dict[str, Any]:
     record_trace(
         kind="intent.guide",
         status=source,
-        agent_id=GUIDE_AGENT_ID if source == "agent" else None,
+        agent_id=preference_guide_agent.PREF_GUIDE_AGENT_ID if source == "agent" else None,
         input_summary=(request.message or request.action)[:200],
         output_summary=reply[:200],
     )
