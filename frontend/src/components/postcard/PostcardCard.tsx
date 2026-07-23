@@ -60,6 +60,14 @@ export function PostcardCard({
               <span className="rounded-full bg-paper-warm px-2 py-0.5 text-[10px] text-ink-soft">
                 {t(language, "postcardScrubbed")}
               </span>
+            ) : postcard.scene_source === "ai" || postcard.scene_source === "library" ? (
+              <span className="rounded-full bg-sage-deep/10 px-2 py-0.5 text-[10px] font-semibold text-sage-deep">
+                {t(language, "postcardAiSceneBadge")}
+              </span>
+            ) : postcard.has_user_photo === false ? (
+              <span className="rounded-full bg-paper-warm px-2 py-0.5 text-[10px] text-ink-soft">
+                {t(language, "postcardNoPhotoBadge")}
+              </span>
             ) : null}
             {postcard.scene_source === "ai_edit" ? (
               <span className="rounded-full bg-sage-deep/10 px-2 py-0.5 text-[10px] font-semibold text-sage-deep">
