@@ -22,7 +22,7 @@ import logging
 import re
 import time
 from typing import Any, Iterator
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 import httpx
 
@@ -246,7 +246,12 @@ class QwenPawClient:
     def download_media(self, reference: str, *, timeout: float = 45.0) -> bytes:
         """Download an HTTP image or a QwenPaw-local ``file://`` image."""
         if reference.lower().startswith("file://"):
-            local_path = reference[len("file://") :].replace("\\", "/")
+            local_path = unquote(reference[len("file://") :]).replace("\\", "/")
+            # Canonical Windows file URIs use ``file:///C:/...`` while the
+            # QwenPaw plugin also emits ``file://C:\\...``.  Normalize both
+            # without removing the leading slash from POSIX/macOS paths.
+            if re.match(r"^/[A-Za-z]:/", local_path):
+                local_path = local_path[1:]
             encoded_path = quote(local_path, safe="/:")
             url = f"{self.base_url}/api/files/preview/{encoded_path}"
             headers = self._headers()
@@ -428,13 +433,15 @@ def _extract_text(obj: Any) -> str:
 
 
 def _extract_image_refs(obj: Any) -> list[str]:
-    """Find image references in nested SSE tool results, preserving order."""
-    found: list[str] = []
+    """Find image references, preferring structured tool output over text."""
+    structured: list[str] = []
+    inline: list[str] = []
+    saved: list[str] = []
 
-    def add(value: str) -> None:
+    def add(bucket: list[str], value: str) -> None:
         cleaned = value.strip().rstrip(".,;)")
-        if cleaned and cleaned not in found:
-            found.append(cleaned)
+        if cleaned and cleaned not in bucket:
+            bucket.append(cleaned)
 
     def visit(value: Any) -> None:
         if isinstance(value, dict):
@@ -442,7 +449,7 @@ def _extract_image_refs(obj: Any) -> list[str]:
             if value.get("type") == "image" and isinstance(source, dict):
                 url = source.get("url")
                 if isinstance(url, str):
-                    add(url)
+                    add(structured, url)
             for child in value.values():
                 visit(child)
             return
@@ -452,12 +459,17 @@ def _extract_image_refs(obj: Any) -> list[str]:
             return
         if isinstance(value, str):
             for match in _IMAGE_URI_RE.finditer(value):
-                add(match.group(0))
+                add(inline, match.group(0))
             for match in _SAVED_IMAGE_RE.finditer(value):
-                add(f"file://{match.group(1).strip()}")
+                add(saved, f"file://{match.group(1).strip()}")
 
     visit(obj)
-    found.sort(key=lambda ref: not ref.lower().startswith("file://"))
+    found: list[str] = []
+    for bucket in (structured, inline, saved):
+        bucket.sort(key=lambda ref: not ref.lower().startswith("file://"))
+        for ref in bucket:
+            if ref not in found:
+                found.append(ref)
     return found
 
 
