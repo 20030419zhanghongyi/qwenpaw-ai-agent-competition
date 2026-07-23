@@ -73,9 +73,7 @@ class StoryService:
             raise StorySessionNotFoundError(f"Story session not found: {session_id}")
         return self._response(load_story(story_session.story_id), story_session)
 
-    def act(
-        self, session_id: str, request: StoryActionRequest
-    ) -> StoryActionResponse:
+    def act(self, session_id: str, request: StoryActionRequest) -> StoryActionResponse:
         story_session = self._repository.get(session_id)
         if story_session is None:
             raise StorySessionNotFoundError(f"Story session not found: {session_id}")
@@ -91,14 +89,8 @@ class StoryService:
         return self._action_response(story, story_session, result)
 
     @staticmethod
-    def _progress(
-        story: dict[str, Any], story_session: StorySession
-    ) -> StoryProgressResponse:
-        puzzle_ids = {
-            chapter["id"]
-            for chapter in story["chapters"]
-            if chapter["kind"] == "puzzle"
-        }
+    def _progress(story: dict[str, Any], story_session: StorySession) -> StoryProgressResponse:
+        puzzle_ids = {chapter["id"] for chapter in story["chapters"] if chapter["kind"] == "puzzle"}
         completed = set(story_session.state.completed_chapter_ids)
         skipped = set(story_session.state.skipped_chapter_ids)
         hinted = set(story_session.state.hinted_chapter_ids)
@@ -112,25 +104,28 @@ class StoryService:
         )
 
     @staticmethod
-    def _ending(
-        story: dict[str, Any], story_session: StorySession
-    ) -> dict[str, Any] | None:
+    def _ending(story: dict[str, Any], story_session: StorySession) -> dict[str, Any] | None:
         ending_id = story_session.state.ending_id
         if ending_id is None:
             return None
-        return next(
+        ending = next(
             (ending for ending in public_story(story)["endings"] if ending["id"] == ending_id),
             None,
         )
+        if ending is None:
+            return None
+        ending["unlocked_bonuses"] = [
+            side_quest["bonus_ending"]
+            for side_quest in public_story(story).get("side_quests", [])
+            if side_quest.get("bonus_ending", {}).get("id")
+            in story_session.state.unlocked_bonus_ids
+        ]
+        return ending
 
-    def _response(
-        self, story: dict[str, Any], story_session: StorySession
-    ) -> StorySessionResponse:
+    def _response(self, story: dict[str, Any], story_session: StorySession) -> StorySessionResponse:
         current = None
         if story_session.status != StorySessionStatus.COMPLETED:
-            current = public_chapter(
-                chapter_by_id(story, story_session.current_chapter_id)
-            )
+            current = public_chapter(chapter_by_id(story, story_session.current_chapter_id))
             if current["kind"] == "ending":
                 current["ending_options"] = story_overview(story)["endings"]
         return StorySessionResponse(

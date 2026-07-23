@@ -37,6 +37,21 @@ def load_story(story_id: str) -> dict[str, Any]:
         chapter_ids
     ):
         raise StoryContentError(f"Story has missing or duplicate chapter ids: {story_id}")
+    orders = [chapter.get("order") for chapter in chapters]
+    if any(not isinstance(order, int) for order in orders) or len(set(orders)) != len(orders):
+        raise StoryContentError(f"Story has missing or duplicate chapter orders: {story_id}")
+    supported_kinds = {"puzzle", "narrative", "ending"}
+    for chapter in chapters:
+        if chapter.get("kind") not in supported_kinds:
+            raise StoryContentError(f"Story has unsupported chapter kind: {chapter.get('kind')}")
+        if not chapter.get("poi_id"):
+            raise StoryContentError(f"Story chapter has no poi_id: {chapter.get('id')}")
+        if chapter["kind"] == "puzzle":
+            puzzle = chapter.get("puzzle")
+            if not isinstance(puzzle, dict) or "solution" not in puzzle:
+                raise StoryContentError(
+                    f"Puzzle chapter has no private solution: {chapter.get('id')}"
+                )
     return payload
 
 
@@ -55,9 +70,7 @@ def public_story(story: dict[str, Any]) -> dict[str, Any]:
 def story_overview(story: dict[str, Any]) -> dict[str, Any]:
     """Return spoiler-light metadata for the story landing page."""
     overview = {
-        key: deepcopy(value)
-        for key, value in story.items()
-        if key not in {"chapters", "endings"}
+        key: deepcopy(value) for key, value in story.items() if key not in {"chapters", "endings"}
     }
     overview["chapters"] = [
         {
@@ -67,10 +80,7 @@ def story_overview(story: dict[str, Any]) -> dict[str, Any]:
         for chapter in story["chapters"]
     ]
     overview["endings"] = [
-        {
-            key: deepcopy(ending[key])
-            for key in ("id", "title", "choice_text")
-        }
+        {key: deepcopy(ending[key]) for key in ("id", "title", "choice_text")}
         for ending in story.get("endings", [])
     ]
     return overview

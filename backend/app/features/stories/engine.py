@@ -88,20 +88,25 @@ def _already_processed(story_session: StorySession, chapter_id: str) -> bool:
     }
 
 
-def allowed_actions(
-    story: dict[str, Any], story_session: StorySession
-) -> list[StoryAction]:
+def allowed_actions(story: dict[str, Any], story_session: StorySession) -> list[StoryAction]:
     if story_session.status == StorySessionStatus.COMPLETED:
         return []
     chapter = chapter_by_id(story, story_session.current_chapter_id)
     if chapter["id"] not in story_session.state.arrived_chapter_ids:
         return [StoryAction.ARRIVE]
+    optional_actions = []
+    collectible = chapter.get("collectible")
+    if (
+        isinstance(collectible, dict)
+        and collectible.get("id") not in story_session.state.collectibles
+    ):
+        optional_actions.append(StoryAction.COLLECT)
     if chapter["kind"] == "puzzle":
-        return [StoryAction.ANSWER, StoryAction.HINT, StoryAction.SKIP]
+        return [StoryAction.ANSWER, StoryAction.HINT, StoryAction.SKIP, *optional_actions]
     if chapter["kind"] == "narrative":
-        return [StoryAction.CONTINUE]
+        return [StoryAction.CONTINUE, *optional_actions]
     if chapter["kind"] == "ending":
-        return [StoryAction.CHOOSE_ENDING]
+        return [StoryAction.CHOOSE_ENDING, *optional_actions]
     raise InvalidStoryActionError(f"Unsupported chapter kind: {chapter['kind']}")
 
 
@@ -132,6 +137,11 @@ def apply_action(
         and request.chapter_id in story_session.state.arrived_chapter_ids
     ):
         return TransitionResult(True, "已经确认到达当前地点", changed=False)
+    if (
+        request.action == StoryAction.COLLECT
+        and request.collectible_id in story_session.state.collectibles
+    ):
+        return TransitionResult(True, "该支线标记已经收集", changed=False)
     permitted = allowed_actions(story, story_session)
     if request.action not in permitted:
         raise InvalidStoryActionError(
@@ -143,6 +153,16 @@ def apply_action(
         return TransitionResult(True, "已到达当前剧情地点")
 
     _require_arrival(story_session, request.chapter_id)
+
+    if request.action == StoryAction.COLLECT:
+        collectible = chapter.get("collectible")
+        if not isinstance(collectible, dict):
+            raise InvalidStoryActionError("当前章节没有可收集的支线标记")
+        collectible_id = collectible.get("id")
+        if request.collectible_id != collectible_id:
+            raise InvalidStoryActionError("collectible_id 与当前章节的支线标记不匹配")
+        story_session.state.collectibles.append(collectible_id)
+        return TransitionResult(True, collectible.get("collect_text", "已收集支线标记"))
 
     if request.action == StoryAction.HINT:
         puzzle = chapter["puzzle"]
@@ -188,6 +208,12 @@ def apply_action(
             raise InvalidStoryActionError(f"未知结局选项: {request.choice_id}")
         story_session.state.choices[request.chapter_id] = request.choice_id
         story_session.state.ending_id = request.choice_id
+        for side_quest in story.get("side_quests", []):
+            required = set(side_quest.get("required_collectible_ids", []))
+            if required and required.issubset(story_session.state.collectibles):
+                bonus_id = side_quest.get("bonus_ending", {}).get("id")
+                if bonus_id:
+                    _append_unique(story_session.state.unlocked_bonus_ids, bonus_id)
         _append_unique(story_session.state.completed_chapter_ids, request.chapter_id)
         story_session.status = StorySessionStatus.COMPLETED
         story_session.completed_at = datetime.now(timezone.utc)

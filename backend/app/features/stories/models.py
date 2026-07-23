@@ -16,6 +16,7 @@ class StorySessionStatus(str, Enum):
 
 class StoryAction(str, Enum):
     ARRIVE = "arrive"
+    COLLECT = "collect"
     ANSWER = "answer"
     HINT = "hint"
     SKIP = "skip"
@@ -29,6 +30,8 @@ class StorySessionState(BaseModel):
     hinted_chapter_ids: list[str] = Field(default_factory=list)
     skipped_chapter_ids: list[str] = Field(default_factory=list)
     clues: list[str] = Field(default_factory=list)
+    collectibles: list[str] = Field(default_factory=list)
+    unlocked_bonus_ids: list[str] = Field(default_factory=list)
     choices: dict[str, str] = Field(default_factory=dict)
     attempts: dict[str, int] = Field(default_factory=dict)
     hint_counts: dict[str, int] = Field(default_factory=dict)
@@ -57,6 +60,7 @@ class StoryActionRequest(BaseModel):
     chapter_id: str = Field(min_length=1, max_length=128)
     answer: Any | None = None
     choice_id: str | None = Field(default=None, max_length=128)
+    collectible_id: str | None = Field(default=None, max_length=128)
 
 
 class StoryProgressResponse(BaseModel):

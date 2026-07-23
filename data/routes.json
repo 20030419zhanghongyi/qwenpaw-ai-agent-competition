@@ -513,7 +513,7 @@
       "theme": "历史剧情",
       "duration_label": "一日",
       "duration_hours": 7.0,
-      "walk_distance_km": 3.5,
+      "walk_distance_km": 4.8,
       "physical_level": "medium",
       "suitable_for": [
         "history",
@@ -524,56 +524,63 @@
       ],
       "nodes": [
         {
-          "poi_id": "poi_0011",
+          "poi_id": "poi_ama",
           "order": 1,
           "suggested_stay_min": 35,
-          "note": "故事第一章『潮声初印』；阅读妈阁与航海信俗的史实背景",
+          "note": "第一章『数帆』；从现场可核验的航海痕迹取得潮印",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_lilau",
+          "order": 2,
+          "suggested_stay_min": 35,
+          "note": "第二章『井有两个名字』；保留不同语言的地名及来源，取得文印",
           "replaceable_with": []
         },
         {
           "poi_id": "poi_0015",
-          "order": 2,
-          "suggested_stay_min": 45,
-          "note": "故事第二章『藏风之门』；观察入口、外墙和空间转折",
+          "order": 3,
+          "suggested_stay_min": 50,
+          "note": "第三章『给七十二户的电报』；通过译码补回宅院中的人，取得人印",
           "replaceable_with": []
         },
         {
-          "poi_id": "poi_0004",
-          "order": 3,
-          "suggested_stay_min": 35,
-          "note": "故事第三章『两种名字』；理解中葡地名和公共城市空间",
+          "poi_id": "poi_0180",
+          "order": 4,
+          "suggested_stay_min": 40,
+          "note": "间章『测绘者的制高点』；练习把地图方向与真实地标重合，可按体力跳过",
           "replaceable_with": []
         },
         {
           "poi_id": "poi_0136",
-          "order": 4,
-          "suggested_stay_min": 30,
-          "note": "故事第四章『三街账簿』；了解华人商人议事和商业网络",
+          "order": 5,
+          "suggested_stay_min": 35,
+          "note": "第五章『季风的账』；平衡货物、航线、季风和信用关系，取得市印",
           "replaceable_with": []
         },
         {
           "poi_id": "poi_0057",
-          "order": 5,
+          "order": 6,
           "suggested_stay_min": 35,
-          "note": "故事第五章『青砖暗格』；从宅院理解建筑与居住者的关系",
+          "note": "第六章『谁走哪扇门』；从人物行动理解宅院空间，取得门印",
           "replaceable_with": []
         },
         {
-          "poi_id": "poi_0049",
-          "order": 6,
-          "suggested_stay_min": 35,
-          "note": "故事第六章『墙边的红绫』；串联大三巴、旧城墙和哪吒信俗",
+          "poi_id": "poi_0001",
+          "order": 7,
+          "suggested_stay_min": 45,
+          "note": "第七章『立面上的第三层世界』；串联大三巴与旧城墙，辨认两张图共同遗漏的人",
           "replaceable_with": []
         },
         {
           "poi_id": "poi_0003",
-          "order": 7,
+          "order": 8,
           "suggested_stay_min": 40,
-          "note": "故事终章『炮台上的两张图』；完成最终选择并查看结局",
+          "note": "终章『消失的界线』；让双图与真实天际线重合，完成最终选择",
           "replaceable_with": []
         }
       ],
-      "description": "《莲城双图：消失的界线》专用固定剧情路线。由妈阁单向前往郑家大屋、议事亭前地、三街会馆、卢家大屋、哪吒庙与大炮台，结合十九世纪末殖民历史、华人社区和民间信俗。路线不自动替换剧情地点；开放时间、宗教活动和现场通行情况以官方及现场信息为准。"
+      "description": "《莲城双图：消失的界线》修订版固定剧情路线。由妈阁经亚婆井、郑家大屋、主教山、三街会馆、卢家大屋、大三巴与旧城墙，最终抵达大炮台。路线通过五枚图记与两个无图记观察章节，呈现两张地图共同遗漏的多元城市生活。主教山可因体力或天气跳过；场馆开放、宗教活动和现场通行情况以官方及现场信息为准。"
     }
   ]
 }

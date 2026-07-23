@@ -1,6 +1,8 @@
 """Story content and deterministic transition coverage."""
 
+import json
 from datetime import datetime, timezone
+from pathlib import Path
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -22,6 +24,7 @@ from app.main import app
 
 
 STORY_ID = "lotus_city_double_map"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _session() -> StorySession:
@@ -45,25 +48,28 @@ def _action(
     *,
     answer=None,
     choice_id: str | None = None,
+    collectible_id: str | None = None,
 ) -> StoryActionRequest:
     return StoryActionRequest(
         action=action,
         chapter_id=chapter_id,
         answer=answer,
         choice_id=choice_id,
+        collectible_id=collectible_id,
     )
 
 
-def test_public_story_contains_seven_chapters_without_solutions():
+def test_public_story_contains_v2_chapters_without_solutions():
     story = load_story(STORY_ID)
     public = public_story(story)
 
-    assert len(public["chapters"]) == 7
-    assert sum(chapter["kind"] == "puzzle" for chapter in public["chapters"]) == 5
+    assert public["version"] == 2
+    assert len(public["chapters"]) == 8
+    assert sum(chapter["kind"] == "puzzle" for chapter in public["chapters"]) == 7
+    assert public["prologue"]["id"] == "prologue_ama_station"
+    assert len(public["side_quests"]) == 1
     assert len(public["endings"]) == 3
-    assert all(
-        "solution" not in chapter.get("puzzle", {}) for chapter in public["chapters"]
-    )
+    assert all("solution" not in chapter.get("puzzle", {}) for chapter in public["chapters"])
     assert all("condition" not in ending for ending in public["endings"])
 
 
@@ -73,6 +79,28 @@ def test_story_content_endpoint_never_exposes_puzzle_solutions():
     assert response.status_code == 200
     assert "solution" not in response.text
     assert response.json()["title"] == "莲城双图：消失的界线"
+
+
+def test_story_chapters_match_the_v2_route_and_known_pois():
+    story = load_story(STORY_ID)
+    routes = json.loads((PROJECT_ROOT / "data" / "routes.json").read_text(encoding="utf-8"))[
+        "routes"
+    ]
+    route = next(item for item in routes if item["id"] == story["route_id"])
+    known_pois = {
+        item["id"]
+        for item in json.loads((PROJECT_ROOT / "data" / "pois.json").read_text(encoding="utf-8"))[
+            "pois"
+        ]
+    }
+
+    chapter_pois = [
+        chapter["poi_id"] for chapter in sorted(story["chapters"], key=lambda item: item["order"])
+    ]
+    route_pois = [node["poi_id"] for node in sorted(route["nodes"], key=lambda item: item["order"])]
+
+    assert chapter_pois == route_pois
+    assert set(route_pois).issubset(known_pois)
 
 
 def test_wrong_answer_hint_and_skip_keep_story_playable():
@@ -112,7 +140,56 @@ def test_wrong_answer_hint_and_skip_keep_story_playable():
     assert hinted.hint
     assert skipped.new_clues == ["clue_tide"]
     assert story_session.state.skipped_chapter_ids == ["chapter_ama"]
-    assert story_session.current_chapter_id == "chapter_mandarin_house"
+    assert story_session.current_chapter_id == "chapter_lilau"
+
+
+def test_optional_collectibles_unlock_the_wellside_bonus():
+    story = load_story(STORY_ID)
+    story_session = _session()
+
+    for chapter in sorted(story["chapters"], key=lambda item: item["order"]):
+        apply_action(story, story_session, _action(StoryAction.ARRIVE, chapter["id"]))
+        collectible = chapter.get("collectible")
+        if collectible:
+            collected = apply_action(
+                story,
+                story_session,
+                _action(
+                    StoryAction.COLLECT,
+                    chapter["id"],
+                    collectible_id=collectible["id"],
+                ),
+            )
+            assert collected.accepted is True
+        if chapter["kind"] == "puzzle":
+            apply_action(
+                story,
+                story_session,
+                _action(
+                    StoryAction.ANSWER,
+                    chapter["id"],
+                    answer=chapter["puzzle"]["solution"],
+                ),
+            )
+        else:
+            apply_action(
+                story,
+                story_session,
+                _action(
+                    StoryAction.CHOOSE_ENDING,
+                    chapter["id"],
+                    choice_id="open_archive",
+                ),
+            )
+
+    assert story_session.state.collectibles == [
+        "well_mark_lilau",
+        "well_mark_mandarin",
+        "well_mark_sam_kai",
+        "well_mark_st_paul",
+        "well_mark_fortress",
+    ]
+    assert story_session.state.unlocked_bonus_ids == ["wellside_reunion"]
 
 
 def test_all_story_chapters_can_reach_an_ending_with_one_skipped_puzzle():
@@ -159,10 +236,10 @@ def test_all_story_chapters_can_reach_an_ending_with_one_skipped_puzzle():
     assert story_session.state.skipped_chapter_ids == ["chapter_sam_kai"]
     assert story_session.state.clues == [
         "clue_tide",
-        "clue_gate",
         "clue_words",
-        "clue_market",
         "clue_people",
+        "clue_market",
+        "clue_gate",
     ]
 
 
@@ -223,25 +300,23 @@ def test_story_api_runs_full_trip_and_restores_the_same_active_session():
         assert restored.json()["status"] == "completed"
         assert restored.json()["ending"]["id"] == "open_archive"
         assert restored.json()["progress"] == {
-            "total_chapters": 7,
-            "completed_chapters": 7,
-            "total_puzzles": 5,
-            "solved_puzzles": 4,
+            "total_chapters": 8,
+            "completed_chapters": 8,
+            "total_puzzles": 7,
+            "solved_puzzles": 6,
             "hinted_puzzles": 0,
             "skipped_puzzles": 1,
         }
 
         trip_progress = client.get(f"/api/v1/trips/{trip_id}/progress")
         assert trip_progress.status_code == 200
-        assert trip_progress.json()["completed_stops"] == 7
+        assert trip_progress.json()["completed_stops"] == 8
         assert trip_progress.json()["completion_ratio"] == 1.0
     finally:
         if trip_id:
             with SessionLocal() as database:
                 database.execute(
-                    delete(StorySessionRecord).where(
-                        StorySessionRecord.id == session_id
-                    )
+                    delete(StorySessionRecord).where(StorySessionRecord.id == session_id)
                 )
                 database.execute(delete(Checkin).where(Checkin.trip_id == trip_id))
                 database.execute(delete(TripStop).where(TripStop.trip_id == trip_id))
