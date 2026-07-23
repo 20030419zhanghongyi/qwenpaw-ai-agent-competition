@@ -26,6 +26,10 @@ from .theme_days import (
 from app.db.data import load_weights
 
 
+# Fixed story routes have authored chapter order and must only be started explicitly.
+NON_RECOMMENDABLE_TEMPLATE_IDS = {"lotus_city_double_map"}
+
+
 def resolve_match_top_k(pref: Preference, default: int = 3) -> int:
     """Multi-day plans return one complementary route per day (trip_days)."""
     if pref.duration == "multi-day":
@@ -363,6 +367,8 @@ def _match_preset_templates(pref: Preference, top_k: int, research_tips: list[st
     wants_cotai = "cotai" in (pref.themes or [])
 
     for template in list_templates():
+        if template["id"] in NON_RECOMMENDABLE_TEMPLATE_IDS:
+            continue
         score, reasons = score_template_preference(template, pref, poi_heat=poi_heat)
         candidate_pois = build_candidate_pool(template)
         route, applied_constraints = construct_route(

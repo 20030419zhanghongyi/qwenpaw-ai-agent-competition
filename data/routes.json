@@ -506,6 +506,74 @@
         }
       ],
       "description": "路氹综合度假区景观半日模板：新濠天地（摩珀斯）→永利皇宫（缆车/表演湖）→新濠影汇（影汇之星）。沿金光大道中→东走廊再落南段，减少西向折返；侧重建筑外观、公共景观与灯光，不引导博彩消费。节点间以室内连廊或度假区免费穿梭巴士衔接；步行约2.2公里，体力要求低。演出、缆车与开放时间以现场为准。"
+    },
+    {
+      "id": "lotus_city_double_map",
+      "name": "莲城双图剧情一日线",
+      "theme": "历史剧情",
+      "duration_label": "一日",
+      "duration_hours": 7.0,
+      "walk_distance_km": 3.5,
+      "physical_level": "medium",
+      "suitable_for": [
+        "history",
+        "culture",
+        "architecture",
+        "solo",
+        "friends"
+      ],
+      "nodes": [
+        {
+          "poi_id": "poi_0011",
+          "order": 1,
+          "suggested_stay_min": 35,
+          "note": "故事第一章『潮声初印』；阅读妈阁与航海信俗的史实背景",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0015",
+          "order": 2,
+          "suggested_stay_min": 45,
+          "note": "故事第二章『藏风之门』；观察入口、外墙和空间转折",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0004",
+          "order": 3,
+          "suggested_stay_min": 35,
+          "note": "故事第三章『两种名字』；理解中葡地名和公共城市空间",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0136",
+          "order": 4,
+          "suggested_stay_min": 30,
+          "note": "故事第四章『三街账簿』；了解华人商人议事和商业网络",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0057",
+          "order": 5,
+          "suggested_stay_min": 35,
+          "note": "故事第五章『青砖暗格』；从宅院理解建筑与居住者的关系",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0049",
+          "order": 6,
+          "suggested_stay_min": 35,
+          "note": "故事第六章『墙边的红绫』；串联大三巴、旧城墙和哪吒信俗",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0003",
+          "order": 7,
+          "suggested_stay_min": 40,
+          "note": "故事终章『炮台上的两张图』；完成最终选择并查看结局",
+          "replaceable_with": []
+        }
+      ],
+      "description": "《莲城双图：消失的界线》专用固定剧情路线。由妈阁单向前往郑家大屋、议事亭前地、三街会馆、卢家大屋、哪吒庙与大炮台，结合十九世纪末殖民历史、华人社区和民间信俗。路线不自动替换剧情地点；开放时间、宗教活动和现场通行情况以官方及现场信息为准。"
     }
   ]
 }

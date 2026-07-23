@@ -1,0 +1,196 @@
+"""Deterministic, AI-free story session transitions."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from typing import Any
+
+from .content import chapter_by_id
+from .models import StoryAction, StoryActionRequest, StorySession, StorySessionStatus
+
+
+class InvalidStoryActionError(ValueError):
+    pass
+
+
+class StoryChapterConflictError(RuntimeError):
+    pass
+
+
+@dataclass
+class TransitionResult:
+    accepted: bool
+    message: str
+    hint: str | None = None
+    new_clues: list[str] = field(default_factory=list)
+    changed: bool = True
+
+
+def _append_unique(values: list[str], value: str) -> None:
+    if value not in values:
+        values.append(value)
+
+
+def _normalized_answer(value: Any) -> Any:
+    if isinstance(value, str):
+        return value.strip().lower()
+    if isinstance(value, list):
+        return [_normalized_answer(item) for item in value]
+    return value
+
+
+def _require_arrival(story_session: StorySession, chapter_id: str) -> None:
+    if chapter_id not in story_session.state.arrived_chapter_ids:
+        raise StoryChapterConflictError("请先确认到达当前地点")
+
+
+def _advance(story: dict[str, Any], story_session: StorySession) -> None:
+    chapters = sorted(story["chapters"], key=lambda item: item["order"])
+    current_index = next(
+        index
+        for index, chapter in enumerate(chapters)
+        if chapter["id"] == story_session.current_chapter_id
+    )
+    if current_index + 1 < len(chapters):
+        story_session.current_chapter_id = chapters[current_index + 1]["id"]
+
+
+def _complete_puzzle(
+    story: dict[str, Any],
+    story_session: StorySession,
+    chapter: dict[str, Any],
+    *,
+    skipped: bool,
+) -> list[str]:
+    chapter_id = chapter["id"]
+    target = (
+        story_session.state.skipped_chapter_ids
+        if skipped
+        else story_session.state.completed_chapter_ids
+    )
+    _append_unique(target, chapter_id)
+    reward = chapter["puzzle"].get("reward_clue")
+    new_clues: list[str] = []
+    if reward:
+        clue_id = reward["id"]
+        if clue_id not in story_session.state.clues:
+            story_session.state.clues.append(clue_id)
+            new_clues.append(clue_id)
+    _advance(story, story_session)
+    return new_clues
+
+
+def _already_processed(story_session: StorySession, chapter_id: str) -> bool:
+    return chapter_id in {
+        *story_session.state.completed_chapter_ids,
+        *story_session.state.skipped_chapter_ids,
+    }
+
+
+def allowed_actions(
+    story: dict[str, Any], story_session: StorySession
+) -> list[StoryAction]:
+    if story_session.status == StorySessionStatus.COMPLETED:
+        return []
+    chapter = chapter_by_id(story, story_session.current_chapter_id)
+    if chapter["id"] not in story_session.state.arrived_chapter_ids:
+        return [StoryAction.ARRIVE]
+    if chapter["kind"] == "puzzle":
+        return [StoryAction.ANSWER, StoryAction.HINT, StoryAction.SKIP]
+    if chapter["kind"] == "narrative":
+        return [StoryAction.CONTINUE]
+    if chapter["kind"] == "ending":
+        return [StoryAction.CHOOSE_ENDING]
+    raise InvalidStoryActionError(f"Unsupported chapter kind: {chapter['kind']}")
+
+
+def apply_action(
+    story: dict[str, Any],
+    story_session: StorySession,
+    request: StoryActionRequest,
+) -> TransitionResult:
+    """Apply one idempotent action to a detached session domain object."""
+    if story_session.status == StorySessionStatus.COMPLETED:
+        if (
+            request.action == StoryAction.CHOOSE_ENDING
+            and request.choice_id == story_session.state.ending_id
+        ):
+            return TransitionResult(True, "该结局已经保存", changed=False)
+        raise StoryChapterConflictError("故事已经完成，不能再修改进度")
+
+    if request.chapter_id != story_session.current_chapter_id:
+        if _already_processed(story_session, request.chapter_id):
+            return TransitionResult(True, "该章节已经处理", changed=False)
+        raise StoryChapterConflictError(
+            f"当前章节是 {story_session.current_chapter_id}，不能操作 {request.chapter_id}"
+        )
+
+    chapter = chapter_by_id(story, request.chapter_id)
+    if (
+        request.action == StoryAction.ARRIVE
+        and request.chapter_id in story_session.state.arrived_chapter_ids
+    ):
+        return TransitionResult(True, "已经确认到达当前地点", changed=False)
+    permitted = allowed_actions(story, story_session)
+    if request.action not in permitted:
+        raise InvalidStoryActionError(
+            f"章节 {request.chapter_id} 当前不允许操作 {request.action.value}"
+        )
+
+    if request.action == StoryAction.ARRIVE:
+        _append_unique(story_session.state.arrived_chapter_ids, request.chapter_id)
+        return TransitionResult(True, "已到达当前剧情地点")
+
+    _require_arrival(story_session, request.chapter_id)
+
+    if request.action == StoryAction.HINT:
+        puzzle = chapter["puzzle"]
+        hints = puzzle.get("hints") or []
+        if not hints:
+            raise InvalidStoryActionError("当前谜题没有可用提示")
+        count = story_session.state.hint_counts.get(request.chapter_id, 0)
+        hint = hints[min(count, len(hints) - 1)]
+        story_session.state.hint_counts[request.chapter_id] = count + 1
+        _append_unique(story_session.state.hinted_chapter_ids, request.chapter_id)
+        return TransitionResult(True, "已提供提示", hint=hint)
+
+    if request.action == StoryAction.ANSWER:
+        if request.answer is None:
+            raise InvalidStoryActionError("提交答案时 answer 不能为空")
+        puzzle = chapter["puzzle"]
+        if _normalized_answer(request.answer) != _normalized_answer(puzzle["solution"]):
+            attempts = story_session.state.attempts.get(request.chapter_id, 0) + 1
+            story_session.state.attempts[request.chapter_id] = attempts
+            return TransitionResult(False, "答案不正确，可以重试、查看提示或跳过")
+        new_clues = _complete_puzzle(story, story_session, chapter, skipped=False)
+        return TransitionResult(
+            True,
+            puzzle["explanation"],
+            new_clues=new_clues,
+        )
+
+    if request.action == StoryAction.SKIP:
+        puzzle = chapter["puzzle"]
+        new_clues = _complete_puzzle(story, story_session, chapter, skipped=True)
+        return TransitionResult(True, puzzle["skip_text"], new_clues=new_clues)
+
+    if request.action == StoryAction.CONTINUE:
+        _append_unique(story_session.state.completed_chapter_ids, request.chapter_id)
+        _advance(story, story_session)
+        return TransitionResult(True, "剧情已继续")
+
+    if request.action == StoryAction.CHOOSE_ENDING:
+        if not request.choice_id:
+            raise InvalidStoryActionError("选择结局时 choice_id 不能为空")
+        ending_ids = {ending["id"] for ending in story.get("endings", [])}
+        if request.choice_id not in ending_ids:
+            raise InvalidStoryActionError(f"未知结局选项: {request.choice_id}")
+        story_session.state.choices[request.chapter_id] = request.choice_id
+        story_session.state.ending_id = request.choice_id
+        _append_unique(story_session.state.completed_chapter_ids, request.chapter_id)
+        story_session.status = StorySessionStatus.COMPLETED
+        story_session.completed_at = datetime.now(timezone.utc)
+        return TransitionResult(True, "最终选择已保存，故事完成")
+
+    raise InvalidStoryActionError(f"Unsupported action: {request.action.value}")
