@@ -23,16 +23,27 @@ class StoryAction(str, Enum):
     CHOOSE_ENDING = "choose_ending"
 
 
+class StoryReward(BaseModel):
+    """A durable story reward. ``clues`` remains for legacy clients."""
+
+    id: str
+    kind: str
+    name: str | None = None
+    text: str | None = None
+
+
 class StorySessionState(BaseModel):
     arrived_chapter_ids: list[str] = Field(default_factory=list)
     completed_chapter_ids: list[str] = Field(default_factory=list)
     hinted_chapter_ids: list[str] = Field(default_factory=list)
     skipped_chapter_ids: list[str] = Field(default_factory=list)
     clues: list[str] = Field(default_factory=list)
+    rewards: list[StoryReward] = Field(default_factory=list)
     choices: dict[str, str] = Field(default_factory=dict)
     attempts: dict[str, int] = Field(default_factory=dict)
     hint_counts: dict[str, int] = Field(default_factory=dict)
     ending_id: str | None = None
+    ending_reflection: str | None = None
 
 
 class StorySession(BaseModel):
@@ -48,15 +59,12 @@ class StorySession(BaseModel):
     completed_at: datetime | None = None
 
 
-class StoryStartRequest(BaseModel):
-    user_id: str = Field(min_length=1, max_length=64)
-
-
 class StoryActionRequest(BaseModel):
     action: StoryAction
     chapter_id: str = Field(min_length=1, max_length=128)
     answer: Any | None = None
     choice_id: str | None = Field(default=None, max_length=128)
+    reflection: str | None = Field(default=None, max_length=2000)
 
 
 class StoryProgressResponse(BaseModel):
@@ -90,4 +98,5 @@ class StoryActionResponse(BaseModel):
     message: str
     hint: str | None = None
     new_clues: list[str] = Field(default_factory=list)
+    new_rewards: list[StoryReward] = Field(default_factory=list)
     session: StorySessionResponse
