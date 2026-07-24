@@ -527,53 +527,53 @@
           "poi_id": "poi_0011",
           "order": 1,
           "suggested_stay_min": 35,
-          "note": "故事第一章『潮声初印』；阅读妈阁与航海信俗的史实背景",
+          "note": "v3 第一站『妈阁庙：潮印』；阅读海陆边界与航海信俗",
           "replaceable_with": []
         },
         {
-          "poi_id": "poi_0015",
+          "poi_id": "poi_0017",
           "order": 2,
-          "suggested_stay_min": 45,
-          "note": "故事第二章『藏风之门』；观察入口、外墙和空间转折",
+          "suggested_stay_min": 30,
+          "note": "v3 第二站『亚婆井：文印』；理解名称、语言与社区记忆",
           "replaceable_with": []
         },
         {
-          "poi_id": "poi_0004",
+          "poi_id": "poi_0180",
           "order": 3,
           "suggested_stay_min": 35,
-          "note": "故事第三章『两种名字』；理解中葡地名和公共城市空间",
+          "note": "v3 第三站『主教山：叠图规』；比较不同观察视角",
           "replaceable_with": []
         },
         {
           "poi_id": "poi_0136",
           "order": 4,
           "suggested_stay_min": 30,
-          "note": "故事第四章『三街账簿』；了解华人商人议事和商业网络",
+          "note": "v3 第四站『三街会馆：市印』；了解商人议事与商业网络",
           "replaceable_with": []
         },
         {
           "poi_id": "poi_0057",
           "order": 5,
           "suggested_stay_min": 35,
-          "note": "故事第五章『青砖暗格』；从宅院理解建筑与居住者的关系",
+          "note": "v3 第五站『卢家大屋：门印』；理解建筑、行动与社会空间",
           "replaceable_with": []
         },
         {
-          "poi_id": "poi_0049",
+          "poi_id": "poi_0015",
           "order": 6,
-          "suggested_stay_min": 35,
-          "note": "故事第六章『墙边的红绫』；串联大三巴、旧城墙和哪吒信俗",
+          "suggested_stay_min": 45,
+          "note": "v3 第六站『郑家大屋：三时间层与人印』",
           "replaceable_with": []
         },
         {
-          "poi_id": "poi_0003",
+          "poi_id": "poi_0001",
           "order": 7,
           "suggested_stay_min": 40,
-          "note": "故事终章『炮台上的两张图』；完成最终选择并查看结局",
+          "note": "v3 第七站『大三巴与旧城墙：界线坐标』",
           "replaceable_with": []
         }
       ],
-      "description": "《莲城双图：消失的界线》专用固定剧情路线。由妈阁单向前往郑家大屋、议事亭前地、三街会馆、卢家大屋、哪吒庙与大炮台，结合十九世纪末殖民历史、华人社区和民间信俗。路线不自动替换剧情地点；开放时间、宗教活动和现场通行情况以官方及现场信息为准。"
+      "description": "《莲城双图：消失的界线》v3 专用固定剧情路线。由妈阁、亚婆井、主教山、三街会馆、卢家大屋、郑家大屋前往大三巴与旧城墙，探索约五百年的澳门时间层。议事亭前地是可选休憩点，不进入必经 workflow。终章大炮台因当前数据没有独立规范 POI，不在固定路线中伪造为澳门博物馆；开放时间、宗教活动和现场通行情况以官方及现场信息为准。"
     }
   ]
 }

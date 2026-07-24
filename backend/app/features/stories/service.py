@@ -14,6 +14,7 @@ from .content import (
     public_chapter,
     public_story,
     story_overview,
+    story_nodes,
 )
 from .engine import TransitionResult, allowed_actions, apply_action
 from .models import (
@@ -29,6 +30,10 @@ from .repository import StorySessionRepository, story_session_repository
 
 
 class StorySessionNotFoundError(LookupError):
+    pass
+
+
+class StorySessionOwnershipError(PermissionError):
     pass
 
 
@@ -53,7 +58,7 @@ class StoryService:
 
         trip = self._trips.create_trip(user_id, story["route_id"])
         now = datetime.now(timezone.utc)
-        first_chapter = min(story["chapters"], key=lambda item: item["order"])
+        first_chapter = min(story_nodes(story), key=lambda item: item["order"])
         story_session = StorySession(
             session_id=str(uuid4()),
             user_id=user_id,
@@ -67,24 +72,28 @@ class StoryService:
         )
         return self._response(story, self._repository.create(story_session))
 
-    def get_session(self, session_id: str) -> StorySessionResponse:
+    def get_session(self, session_id: str, user_id: str) -> StorySessionResponse:
         story_session = self._repository.get(session_id)
         if story_session is None:
             raise StorySessionNotFoundError(f"Story session not found: {session_id}")
+        self._require_owner(story_session, user_id)
         return self._response(load_story(story_session.story_id), story_session)
 
     def act(
-        self, session_id: str, request: StoryActionRequest
+        self, session_id: str, user_id: str, request: StoryActionRequest
     ) -> StoryActionResponse:
         story_session = self._repository.get(session_id)
         if story_session is None:
             raise StorySessionNotFoundError(f"Story session not found: {session_id}")
+        self._require_owner(story_session, user_id)
         story = load_story(story_session.story_id)
         result = apply_action(story, story_session, request)
 
         if result.changed and request.action.value == "arrive":
             chapter = chapter_by_id(story, request.chapter_id)
-            self._trips.check_in(story_session.trip_id, chapter["poi_id"])
+            poi_id = chapter.get("poi_id")
+            if poi_id:
+                self._trips.check_in(story_session.trip_id, poi_id)
 
         if result.changed:
             story_session = self._repository.save(story_session)
@@ -96,14 +105,14 @@ class StoryService:
     ) -> StoryProgressResponse:
         puzzle_ids = {
             chapter["id"]
-            for chapter in story["chapters"]
+            for chapter in story_nodes(story)
             if chapter["kind"] == "puzzle"
         }
         completed = set(story_session.state.completed_chapter_ids)
         skipped = set(story_session.state.skipped_chapter_ids)
         hinted = set(story_session.state.hinted_chapter_ids)
         return StoryProgressResponse(
-            total_chapters=len(story["chapters"]),
+            total_chapters=len(story_nodes(story)),
             completed_chapters=len(completed | skipped),
             total_puzzles=len(puzzle_ids),
             solved_puzzles=len(completed & puzzle_ids),
@@ -150,6 +159,11 @@ class StoryService:
             completed_at=story_session.completed_at,
         )
 
+    @staticmethod
+    def _require_owner(story_session: StorySession, user_id: str) -> None:
+        if story_session.user_id != user_id:
+            raise StorySessionOwnershipError("无权访问该故事会话")
+
     def _action_response(
         self,
         story: dict[str, Any],
@@ -161,6 +175,7 @@ class StoryService:
             message=result.message,
             hint=result.hint,
             new_clues=result.new_clues,
+            new_rewards=result.new_rewards,
             session=self._response(story, story_session),
         )
 

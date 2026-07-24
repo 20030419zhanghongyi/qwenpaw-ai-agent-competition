@@ -2,30 +2,30 @@
 
 ## 1. 项目简介
 
-本后端为 QwenPaw 澳门 AI 旅游助手提供稳定的数据和 REST API 服务，面向项目队友、指导老师、比赛评委，以及后续接入 Qwen Agent 和微信小程序的开发者。
+本后端为 QwenPaw 澳门 AI 旅游助手（Macau StoryWalk）提供 REST API、业务编排与 Agent 调用封装，面向队友、指导老师与比赛评委。当前主客户端为 Web MVP（`frontend/`）；小程序若后续接入，复用同一套 API。
 
 后端主要负责：
 
-- 澳门地点（POI）数据管理与空间查询
-- 路线模板及路线节点管理
-- 用户旅行状态、行程与打卡管理
-- 收藏、行程反馈和历史行程管理
-- 为 Agent 和小程序提供稳定、可验证的 REST API
+- 澳门地点（POI）数据管理与空间查询（PostGIS）
+- 路线模板匹配、规则排线、自然语言微调（经 QwenPaw `route` agent）
+- 文化讲解 / 拍照识别 / TTS（经 QwenPaw `guide`/`photo` + DashScope）
+- 用户、行程、打卡、收藏、反馈、明信片
+- 护栏（限流、脱敏、审计）与对本地 QwenPaw（默认 `:8088`）的 `QwenPawClient` 封装
 
-本目录聚焦后端基础设施与数据接口，不包含 Qwen Agent、Prompt、AI 推理逻辑或前端小程序实现。
+Skill / Prompt 源码在仓库 `skills/`、`ethics/qwenpaw-skills/`；运行时技能挂在 QwenPaw Console。整体产品阶段见根目录 [`README.md`](../README.md)。
 
 ### 总体架构
 
 ```text
-小程序 / Qwen Agent
+Web MVP / 评测 harness
         ↓ HTTP / JSON
      FastAPI API
         ↓
-    Service 业务层
+  Service / Agents 封装 ──→ QwenPaw (:8088) + Skills
         ↓
-  Repository 数据层
+  Repository / RAG / 外部 API（高德、TTS、OSS…）
         ↓
-SQLAlchemy + PostgreSQL/PostGIS
+SQLAlchemy + PostgreSQL/PostGIS (+ 可选 pgvector)
 ```
 
 ## 2. 技术栈
