@@ -1,4 +1,4 @@
-"""Tests for user persistence + minimal JWT login (F1)."""
+"""Tests for email-based user registration + JWT login (F1 v2)."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -16,53 +16,63 @@ def clear_users():
     user_repository.clear()
 
 
-def _register(user_id: str | None = None, name: str | None = None, language: str = "zh-CN") -> dict:
-    payload: dict = {"language": language}
-    if user_id is not None:
-        payload["user_id"] = user_id
-    if name is not None:
-        payload["name"] = name
+def _register(email: str = "test@example.com", name: str = "Tester", language: str = "zh-CN", country: str | None = None) -> dict:
+    payload: dict = {"email": email, "name": name, "language": language}
+    if country is not None:
+        payload["country"] = country
     response = client.post("/api/v1/users/register", json=payload)
     assert response.status_code == 201, response.text
     return response.json()
 
 
-def test_register_generates_user_id_and_issues_token():
-    body = _register(name="Grace", language="en")
-    assert body["user_id"].startswith("u_")
+def test_register_generates_numeric_user_id_and_issues_token():
+    body = _register(email="grace@test.com", name="Grace", language="en", country="CN")
+    # user_id should be numeric (like QQ number)
+    assert body["user_id"].isdigit()
+    assert body["email"] == "grace@test.com"
     assert body["token"]
     assert body["user"]["name"] == "Grace"
     assert body["user"]["language"] == "en"
+    assert body["user"]["country"] == "CN"
+    assert body["user"]["email"] == "grace@test.com"
     assert body["user"]["preference"] is None
 
 
-def test_register_with_explicit_user_id():
-    body = _register(user_id="demo-auth-001", name="Tester")
-    assert body["user_id"] == "demo-auth-001"
-    assert body["user"]["user_id"] == "demo-auth-001"
+def test_register_name_is_required():
+    """name is required now — missing should return 422."""
+    response = client.post("/api/v1/users/register", json={"email": "x@test.com", "language": "zh-CN"})
+    assert response.status_code == 422
 
 
-def test_register_duplicate_returns_409():
-    _register(user_id="dup-001")
-    response = client.post("/api/v1/users/register", json={"user_id": "dup-001", "language": "zh-CN"})
+def test_register_email_is_required():
+    response = client.post("/api/v1/users/register", json={"name": "X", "language": "zh-CN"})
+    assert response.status_code == 422
+
+
+def test_register_duplicate_email_returns_409():
+    _register(email="dup@test.com")
+    response = client.post("/api/v1/users/register", json={"email": "dup@test.com", "name": "Dup", "language": "zh-CN"})
     assert response.status_code == 409
 
 
 def test_register_invalid_language_returns_422():
-    response = client.post("/api/v1/users/register", json={"language": "fr"})
+    response = client.post("/api/v1/users/register", json={"email": "x@test.com", "name": "X", "language": "fr"})
     assert response.status_code == 422
 
 
-def test_login_unknown_user_returns_404():
-    response = client.post("/api/v1/users/login", json={"user_id": "no-such-user"})
+def test_login_unknown_email_returns_404():
+    response = client.post("/api/v1/users/login", json={"email": "no-such@test.com"})
     assert response.status_code == 404
 
 
 def test_login_issues_token():
-    _register(user_id="login-001")
-    response = client.post("/api/v1/users/login", json={"user_id": "login-001"})
+    body = _register(email="login@test.com")
+    response = client.post("/api/v1/users/login", json={"email": "login@test.com"})
     assert response.status_code == 200
-    assert response.json()["token"]
+    data = response.json()
+    assert data["token"]
+    assert data["email"] == "login@test.com"
+    assert data["user_id"] == body["user_id"]
 
 
 def test_me_without_token_returns_401():
@@ -76,11 +86,12 @@ def test_me_with_invalid_token_returns_401():
 
 
 def test_me_with_valid_token_returns_user():
-    body = _register(user_id="me-001", name="Me")
+    body = _register(email="me@test.com", name="Me")
     response = client.get("/api/v1/users/me", headers={"Authorization": f"Bearer {body['token']}"})
     assert response.status_code == 200
-    assert response.json()["user"]["user_id"] == "me-001"
+    assert response.json()["user"]["user_id"] == body["user_id"]
     assert response.json()["user"]["name"] == "Me"
+    assert response.json()["user"]["email"] == "me@test.com"
 
 
 def test_get_user_unknown_returns_404():
@@ -89,16 +100,20 @@ def test_get_user_unknown_returns_404():
 
 
 def test_get_user_returns_registered_user():
-    _register(user_id="get-001", name="Getter", language="zh-TW")
-    response = client.get("/api/v1/users/get-001")
+    body = _register(email="get@test.com", name="Getter", language="zh-TW", country="MO")
+    uid = body["user_id"]
+    response = client.get(f"/api/v1/users/{uid}")
     assert response.status_code == 200
     user = response.json()["user"]
     assert user["name"] == "Getter"
     assert user["language"] == "zh-TW"
+    assert user["country"] == "MO"
+    assert user["email"] == "get@test.com"
 
 
 def test_update_preferences_persists_and_round_trips():
-    _register(user_id="pref-001", language="zh-CN")
+    body = _register(email="pref@test.com", language="zh-CN")
+    uid = body["user_id"]
     pref = {
         "duration": "half-day",
         "party_size": 2,
@@ -107,22 +122,19 @@ def test_update_preferences_persists_and_round_trips():
         "physical": ["less-walk"],
         "language": "zh-TW",
     }
-    response = client.put("/api/v1/users/pref-001/preferences", json=pref)
+    response = client.put(f"/api/v1/users/{uid}/preferences", json=pref)
     assert response.status_code == 200, response.text
     assert response.json()["preference"]["interests"] == ["history", "photo"]
 
-    # 偏好落库：重新查询能拿回完整 preference
-    got = client.get("/api/v1/users/pref-001").json()["user"]
+    got = client.get(f"/api/v1/users/{uid}").json()["user"]
     assert got["preference"] is not None
     assert got["preference"]["duration"] == "half-day"
     assert got["preference"]["party_size"] == 2
     assert got["preference"]["physical"] == ["less-walk"]
-    # 顶层 language 与 preference.language 同步
     assert got["language"] == "zh-TW"
 
 
 def test_update_preferences_for_unknown_user_upserts():
-    """保留旧行为：偏好写入时用户不存在则顺带创建。"""
     pref = {"duration": "full-day", "language": "en"}
     response = client.put("/api/v1/users/auto-create-001/preferences", json=pref)
     assert response.status_code == 200
@@ -130,13 +142,13 @@ def test_update_preferences_for_unknown_user_upserts():
 
 
 def test_preference_survives_new_login_session():
-    """DB 持久化铁证：写偏好后重新 login，me 仍带偏好。"""
-    _register(user_id="persist-001")
+    body = _register(email="persist@test.com")
+    uid = body["user_id"]
     client.put(
-        "/api/v1/users/persist-001/preferences",
+        f"/api/v1/users/{uid}/preferences",
         json={"duration": "evening", "interests": ["food"], "language": "zh-CN"},
     )
-    login = client.post("/api/v1/users/login", json={"user_id": "persist-001"}).json()
+    login = client.post("/api/v1/users/login", json={"email": "persist@test.com"}).json()
     me = client.get("/api/v1/users/me", headers={"Authorization": f"Bearer {login['token']}"}).json()
     assert me["user"]["preference"]["interests"] == ["food"]
     assert me["user"]["preference"]["duration"] == "evening"

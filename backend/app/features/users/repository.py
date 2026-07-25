@@ -33,8 +33,12 @@ class SqlAlchemyUserRepository:
                 preference = None
         return UserProfile(
             user_id=record.id,
+            email=record.email,
+            phone=record.phone,
             name=record.name,
             language=record.language or "zh-CN",
+            country=record.country,
+            verification_status=record.verification_status or "unverified",
             preference=preference,
         )
 
@@ -43,16 +47,42 @@ class SqlAlchemyUserRepository:
             record = session.get(UserRecord, user_id)
             return self._to_domain(record) if record is not None else None
 
+    def _get_raw(self, user_id: str) -> UserRecord | None:
+        """Return raw ORM record (needed for password_hash access)."""
+        with self._session_factory() as session:
+            return session.get(UserRecord, user_id)
+
+    def find_by_email(self, email: str) -> UserProfile | None:
+        with self._session_factory() as session:
+            record = session.scalar(
+                select(UserRecord).where(UserRecord.email == email)
+            )
+            return self._to_domain(record) if record is not None else None
+
+    def find_by_phone(self, phone: str) -> UserProfile | None:
+        with self._session_factory() as session:
+            record = session.scalar(
+                select(UserRecord).where(UserRecord.phone == phone)
+            )
+            return self._to_domain(record) if record is not None else None
+
+    def exists_by_email(self, email: str) -> bool:
+        return self.find_by_email(email) is not None
+
     def exists(self, user_id: str) -> bool:
         with self._session_factory() as session:
             return session.get(UserRecord, user_id) is not None
 
-    def create(self, user_id: str, name: str | None, language: str) -> UserProfile:
+    def create(self, user_id: str, name: str, language: str, email: str | None = None, phone: str | None = None, country: str | None = None, password_hash: str | None = None) -> UserProfile:
         with self._session_factory() as session:
             record = UserRecord(
                 id=user_id,
+                email=email,
+                phone=phone,
                 name=name,
                 language=language,
+                country=country,
+                password_hash=password_hash,
                 interests=[],
             )
             session.add(record)
@@ -69,7 +99,12 @@ class SqlAlchemyUserRepository:
             record = session.get(UserRecord, user_id)
             created = record is None
             if record is None:
-                record = UserRecord(id=user_id, interests=[])
+                record = UserRecord(
+                    id=user_id,
+                    email=f"auto_{user_id}@placeholder.local",
+                    name="未命名用户",
+                    interests=[],
+                )
                 session.add(record)
             record.preference = pref_dict
             record.language = preference.language  # 顶层语言与偏好同步
