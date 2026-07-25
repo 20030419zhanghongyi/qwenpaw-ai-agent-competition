@@ -19,6 +19,18 @@ import {
 import { PORT_OPTIONS, portLabel } from "@/lib/ports";
 import { useWalk } from "@/state/WalkContext";
 import type { Preference } from "@/types";
+import { useAuth } from "@/state/AuthContext";
+import { matchStory } from "@/story-discovery/storyMatcher";
+import {
+  clearInvitationState,
+  hasActiveInvitationSuppression,
+  markInvitationAccepted,
+  markInvitationDeclined,
+} from "@/story-discovery/invitationState";
+import type { StoryDiscoveryPreference, StoryMatchResult } from "@/story-discovery/types";
+import { StoryInvitationExperience } from "@/components/story-invitation/StoryInvitationExperience";
+import { LOTUS_TELEGRAM_SCENES } from "@/components/story-invitation/scenes/lotusTelegram";
+import { startStorySession } from "@/api/stories";
 
 const THEME_OPTIONS: Array<{
   id: ThemeTag;
@@ -68,6 +80,7 @@ const WALK_OPTIONS: Array<{
 export function PreferencePage() {
   const navigate = useNavigate();
   const { language, saveMatch } = useWalk();
+  const { token } = useAuth();
   const [duration, setDuration] = useState<PreferenceFormState["duration"]>("half");
   const [tripDays, setTripDays] = useState(TRIP_DAYS_DEFAULT);
   const [interests, setInterests] = useState<string[]>([]);
@@ -79,6 +92,7 @@ export function PreferencePage() {
   const [customNote, setCustomNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [storyInvitation, setStoryInvitation] = useState<StoryMatchResult | null>(null);
   const [flash, setFlash] = useState<Set<string>>(new Set());
   const [showAdjusters, setShowAdjusters] = useState(false);
   const adjustersRef = useRef<HTMLDivElement>(null);
@@ -217,10 +231,38 @@ export function PreferencePage() {
     });
 
   const generate = async () => {
+    console.log("[StoryDiscovery] generate() called");
     setError(null);
     setLoading(true);
     try {
-      const preference = toPreference(formSnapshot());
+      const snapshot = formSnapshot();
+      console.log("[StoryDiscovery] snapshot:", snapshot.duration, snapshot.interests, snapshot.themes);
+      const preference = toPreference(snapshot);
+
+      // ── Story Discovery (before parseIntent — uses form state only) ──
+      const discoveryPref: StoryDiscoveryPreference = {
+        duration: snapshot.duration,
+        interests: snapshot.interests,
+        themes: snapshot.themes,
+        walkTags: snapshot.walkTags,
+      };
+      const storyMatch = matchStory(discoveryPref);
+      const suppressed = hasActiveInvitationSuppression(storyMatch.storyId);
+      console.log("[StoryDiscovery] pref:", discoveryPref, "match:", storyMatch, "suppressed:", suppressed);
+
+      if (storyMatch.matched) {
+        // Auto-clear previous decline state so cutscene always triggers during testing.
+        // In production, we'd respect the cooldown, but for dev/demo this removes friction.
+        if (suppressed) {
+          console.log("[StoryDiscovery] Auto-clearing suppression for", storyMatch.storyId);
+          clearInvitationState(storyMatch.storyId);
+        }
+        console.log("[StoryDiscovery] Showing cutscene for", storyMatch.storyId);
+        setStoryInvitation(storyMatch);
+        return;
+      }
+      console.log("[StoryDiscovery] No story matched — proceeding to route generation");
+
       if (customNote.trim()) {
         try {
           const parsed = await parseIntent(customNote.trim());
@@ -258,6 +300,22 @@ export function PreferencePage() {
         }
       }
 
+      await executeRouteMatch(preference);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "request failed";
+      setError(
+        message.includes("Failed to fetch") ? t(language, "backendDown") : message,
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Extracted route-matching (also called by decline / accept-fallback) ──
+
+  const executeRouteMatch = async (preference: Preference) => {
+    setLoading(true);
+    try {
       const [matchRes, pois] = await Promise.all([
         matchRoutes(preference),
         listPois({ limit: 500 }),
@@ -284,7 +342,42 @@ export function PreferencePage() {
     }
   };
 
+  // ── Story invitation handlers ───────────────────────────────────────────
+
+  const handleStoryAccept = async () => {
+    if (!storyInvitation) return;
+
+    if (!token) {
+      navigate("/auth?redirect=story-invite");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      markInvitationAccepted(storyInvitation.storyId);
+      const sess = await startStorySession(storyInvitation.storyId, token);
+      navigate(
+        `/story-sessions/${sess.session_id}/nodes/${sess.current_chapter_id}`,
+      );
+    } catch {
+      setError("故事初始化失败，已切换到普通路线");
+      markInvitationDeclined(storyInvitation.storyId);
+      executeRouteMatch(toPreference(formSnapshot()));
+    } finally {
+      setLoading(false);
+      setStoryInvitation(null);
+    }
+  };
+
+  const handleStoryDecline = () => {
+    if (!storyInvitation) return;
+    markInvitationDeclined(storyInvitation.storyId);
+    setStoryInvitation(null);
+    executeRouteMatch(toPreference(formSnapshot()));
+  };
+
   return (
+    <>
     <main className="min-h-screen bg-paper pb-32">
       <header className="sticky top-14 z-20 flex items-center justify-between border-b border-line/70 bg-paper/95 px-5 py-4 backdrop-blur lg:px-12">
         <Link to="/guide" className="text-sm text-ink-soft hover:text-ink">
@@ -607,6 +700,16 @@ export function PreferencePage() {
         </div>
       ) : null}
     </main>
+
+    {/* ── Story Invitation Cutscene ── */}
+    {storyInvitation && (
+      <StoryInvitationExperience
+        scenes={LOTUS_TELEGRAM_SCENES}
+        onAccept={handleStoryAccept}
+        onDecline={handleStoryDecline}
+      />
+    )}
+    </>
   );
 }
 
