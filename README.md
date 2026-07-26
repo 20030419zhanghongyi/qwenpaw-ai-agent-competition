@@ -4,7 +4,8 @@ Team project repository for the "千模百炼 AI 开发者学生竞赛".
 
 “澳迹同行 · Macau StoryWalk”是一套面向澳门旅行者的全栈 AI 导览应用：React
 前端负责路线、地图、讲解和明信片交互，FastAPI 后端负责编排业务与安全降级，
-QwenPaw 负责需求理解、路线调整、文化讲解、拍照识别、内容审核和图片生成。
+QwenPaw 负责多轮偏好引导、需求理解、路线调整、文化讲解、拍照识别、内容审核
+和图片生成。
 
 ## Quick Start（新手快速开始）
 
@@ -135,6 +136,7 @@ Agent 开关默认关闭，完成相应 Agent 配置后再改为 `true`：
 ```dotenv
 ROUTE_AGENT_ENABLED=true
 INTENT_AGENT_ENABLED=true
+PREFERENCE_GUIDE_AGENT_ENABLED=true
 REVIEWER_AGENT_ENABLED=true
 GUIDE_AGENT_ENABLED=true
 PHOTO_AGENT_ENABLED=true
@@ -205,12 +207,13 @@ Invoke-RestMethod "$qwenpawBaseUrl/api/version"
 
 ### 1. 导入全部本地 Skills
 
-本项目包含 5 个业务 Skill 和 4 个伦理 Skill：
+本项目包含 6 个业务 Skill 和 4 个伦理 Skill：
 
 | Skill | 用途 | 挂载到 |
 |---|---|---|
 | `route-adjust` | 自然语言路线微调 | `route` |
 | `requirement-understand` | 游览需求结构化 | `intent` |
+| `preference-guide` | 多轮补充路线偏好 | `pref-guide` |
 | `macau-guide` | 有据文化讲解 | `guide` |
 | `photo-recognize` | 图片描述与 POI 判断 | `photo` |
 | `postcard-scene` | 明信片场景约束 | `scene` |
@@ -238,6 +241,7 @@ $ethicsSkillNames = @(
 $skillSources = @(
   "skills\route-adjust",
   "skills\requirement-understand",
+  "skills\preference-guide",
   "skills\macau-guide",
   "skills\photo-recognize",
   "skills\postcard-scene",
@@ -273,7 +277,7 @@ QwenPaw 不会仅因文件出现在 `skill_pool` 就自动登记；最后的 `po
 读取活动 Provider ID 和 Model ID，避免复制文档中的过期模型名。`photo` 和 `scene`
 必须使用支持视觉的多模态模型；若默认模型不支持图片，请先在 QwenPaw 中换成
 支持图片的模型。`qwenpaw init` 创建的 `default` Agent 请保留；下面另外创建的
-6 个专用 Agent ID 是后端契约的一部分，不能随意改名。
+7 个专用 Agent ID 是后端契约的一部分，不能随意改名。
 
 ```powershell
 function Invoke-QwenPawChecked {
@@ -294,6 +298,8 @@ Invoke-QwenPawChecked agents create --agent-id route --name "路线微调" --lan
 Invoke-QwenPawChecked agents create --agent-id intent --name "需求理解" --language zh `
   --provider-id $provider --model-id $model --skill requirement-understand `
   --skill fairness-gate
+Invoke-QwenPawChecked agents create --agent-id pref-guide --name "偏好多轮引导" `
+  --language zh --provider-id $provider --model-id $model --skill preference-guide
 Invoke-QwenPawChecked agents create --agent-id guide --name "文化讲解" --language zh `
   --provider-id $provider --model-id $model --skill macau-guide `
   --skill source-attribution --skill anti-sycophancy
@@ -312,15 +318,20 @@ Invoke-QwenPawChecked agents list
 `qwenpaw skills config --agent-id <agent-id>` 交互式修正技能。`photo` 还必须保留
 内置 `view_image` 工具为启用状态。
 
+`intent` 用于把一段较完整的需求一次性解析为 Preference；`pref-guide` 用于信息
+不足时进行多轮引导，每轮只追问一个缺失项，信息足够后再输出 Preference。后端
+固定调用 `pref-guide`，因此不要把 Agent ID 改成下划线形式或其他名称。该 Agent
+使用普通文本模型即可，不需要 `view_image`、多模态模型或 Qwen-Image Plugin。
+
 ### 3. 向所有项目 Agents 注入统一伦理基线
 
 所有项目 Agent（包括 `qwenpaw init` 创建的 `default`）必须共享同一伦理提示词。
 统一内容严格取自 [`ethics/prompts/_ethics_base.md`](ethics/prompts/_ethics_base.md)
-第 9–42 行，并在首次执行时覆盖这 7 个项目工作区默认 `AGENTS.md` 的第 14–44 行。
+第 9–42 行，并在首次执行时覆盖这 8 个项目工作区默认 `AGENTS.md` 的第 14–44 行。
 
 下面的脚本会加入注释标记，因此可以安全重跑：首次按上述行号替换，以后只更新
 标记区。它通过 QwenPaw API 取得工作区实际路径，只处理本项目的 `default` 和
-6 个专用 Agent，不会修改 QwenPaw 内置 QA Agent 或用户的其他 Agent。请在所有
+7 个专用 Agent，不会修改 QwenPaw 内置 QA Agent 或用户的其他 Agent。请在所有
 专用 Agent 创建完成后执行。内置 QA Agent 不属于本项目运行契约，并有自己的
 专用问答指令，因此不覆盖它的 `AGENTS.md`。
 
@@ -332,7 +343,9 @@ if ($ethicsLines.Count -lt 42) { throw "_ethics_base.md 少于 42 行" }
 $startMarker = "<!-- MACAU_ETHICS_BASE_START -->"
 $endMarker = "<!-- MACAU_ETHICS_BASE_END -->"
 $ethicsBlock = @($startMarker) + @($ethicsLines[8..41]) + @($endMarker)
-$projectAgentIds = @("default", "route", "intent", "guide", "photo", "scene", "reviewer")
+$projectAgentIds = @(
+  "default", "route", "intent", "pref-guide", "guide", "photo", "scene", "reviewer"
+)
 $agentResponse = Invoke-RestMethod "$qwenpawBaseUrl/api/agents"
 $projectAgents = @($agentResponse.agents | Where-Object { $_.id -in $projectAgentIds })
 $missingAgentIds = @($projectAgentIds | Where-Object { $_ -notin $projectAgents.id })
@@ -449,10 +462,13 @@ foreach ($toolName in $toolNames) {
 
 ```powershell
 $qwenpawBaseUrl = "http://127.0.0.1:8088"
-$projectAgentIds = @("default", "route", "intent", "guide", "photo", "scene", "reviewer")
+$projectAgentIds = @(
+  "default", "route", "intent", "pref-guide", "guide", "photo", "scene", "reviewer"
+)
 $expectedSkills = [ordered]@{
   route = @("route-adjust")
   intent = @("requirement-understand", "fairness-gate")
+  "pref-guide" = @("preference-guide")
   guide = @("macau-guide", "source-attribution", "anti-sycophancy")
   photo = @("photo-recognize", "source-attribution")
   scene = @("postcard-scene")
@@ -552,7 +568,7 @@ $version = Invoke-RestMethod "$qwenpawBaseUrl/api/version"
 Write-Host "QwenPaw 配置验证通过：$($version.version)"
 ```
 
-确认无误后，把 `.env` 中五个 Agent 开关改为 `true`，并保持
+确认无误后，把 `.env` 中六个 Agent 开关改为 `true`，并保持
 `POSTCARD_AI_IMAGE_ENABLED=true`，再执行：
 
 ```powershell
@@ -602,10 +618,10 @@ An AI-powered travel companion for exploring Macau's historic districts. Deliver
 
 ## Current Stage
 
-前后端核心闭环已可用：用户/偏好、路线匹配与 Agent 微调、RAG 讲解、拍照识别、
-高德地图和步行路径、位置触发、四语 TTS、明信片与 Qwen-Image 生成/风格化均已
-接入。当前重点是验证全新环境的可复现部署，使用真实高德、DashScope、OSS 与
-QwenPaw 完成端到端 smoke test，并持续补充评测证据。
+前后端核心闭环已可用：用户偏好多轮引导、路线匹配与 Agent 微调、RAG 讲解、
+拍照识别、高德地图和步行路径、位置触发、四语 TTS、明信片与 Qwen-Image
+生成/风格化均已接入。当前重点是验证全新环境的可复现部署，使用真实高德、
+DashScope、OSS 与 QwenPaw 完成端到端 smoke test，并持续补充评测证据。
 
 ## Project Goal
 
