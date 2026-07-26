@@ -33,6 +33,7 @@ class StoryReward(BaseModel):
 
 
 class StorySessionState(BaseModel):
+    content_version: int = Field(default=1, ge=1)
     arrived_chapter_ids: list[str] = Field(default_factory=list)
     completed_chapter_ids: list[str] = Field(default_factory=list)
     hinted_chapter_ids: list[str] = Field(default_factory=list)

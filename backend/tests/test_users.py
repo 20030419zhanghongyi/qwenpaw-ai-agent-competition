@@ -7,6 +7,7 @@ from app.features.users.repository import user_repository
 from app.main import app
 
 client = TestClient(app)
+TEST_PASSWORD = "TestPassword123!"
 
 
 @pytest.fixture(autouse=True)
@@ -16,8 +17,18 @@ def clear_users():
     user_repository.clear()
 
 
-def _register(email: str = "test@example.com", name: str = "Tester", language: str = "zh-CN", country: str | None = None) -> dict:
-    payload: dict = {"email": email, "name": name, "language": language}
+def _register(
+    email: str = "test@example.com",
+    name: str = "Tester",
+    language: str = "zh-CN",
+    country: str | None = None,
+) -> dict:
+    payload: dict = {
+        "email": email,
+        "password": TEST_PASSWORD,
+        "name": name,
+        "language": language,
+    }
     if country is not None:
         payload["country"] = country
     response = client.post("/api/v1/users/register", json=payload)
@@ -40,39 +51,107 @@ def test_register_generates_numeric_user_id_and_issues_token():
 
 def test_register_name_is_required():
     """name is required now — missing should return 422."""
-    response = client.post("/api/v1/users/register", json={"email": "x@test.com", "language": "zh-CN"})
+    response = client.post(
+        "/api/v1/users/register",
+        json={"email": "x@test.com", "password": TEST_PASSWORD, "language": "zh-CN"},
+    )
     assert response.status_code == 422
 
 
 def test_register_email_is_required():
-    response = client.post("/api/v1/users/register", json={"name": "X", "language": "zh-CN"})
+    response = client.post(
+        "/api/v1/users/register",
+        json={"password": TEST_PASSWORD, "name": "X", "language": "zh-CN"},
+    )
+    assert response.status_code == 422
+
+
+def test_register_password_is_required():
+    response = client.post(
+        "/api/v1/users/register",
+        json={"email": "x@test.com", "name": "X", "language": "zh-CN"},
+    )
     assert response.status_code == 422
 
 
 def test_register_duplicate_email_returns_409():
     _register(email="dup@test.com")
-    response = client.post("/api/v1/users/register", json={"email": "dup@test.com", "name": "Dup", "language": "zh-CN"})
+    response = client.post(
+        "/api/v1/users/register",
+        json={
+            "email": "dup@test.com",
+            "password": TEST_PASSWORD,
+            "name": "Dup",
+            "language": "zh-CN",
+        },
+    )
     assert response.status_code == 409
 
 
 def test_register_invalid_language_returns_422():
-    response = client.post("/api/v1/users/register", json={"email": "x@test.com", "name": "X", "language": "fr"})
+    response = client.post(
+        "/api/v1/users/register",
+        json={
+            "email": "x@test.com",
+            "password": TEST_PASSWORD,
+            "name": "X",
+            "language": "fr",
+        },
+    )
     assert response.status_code == 422
 
 
 def test_login_unknown_email_returns_404():
-    response = client.post("/api/v1/users/login", json={"email": "no-such@test.com"})
+    response = client.post(
+        "/api/v1/users/login",
+        json={"email": "no-such@test.com", "password": TEST_PASSWORD},
+    )
     assert response.status_code == 404
 
 
 def test_login_issues_token():
     body = _register(email="login@test.com")
-    response = client.post("/api/v1/users/login", json={"email": "login@test.com"})
+    response = client.post(
+        "/api/v1/users/login",
+        json={"email": "login@test.com", "password": TEST_PASSWORD},
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["token"]
     assert data["email"] == "login@test.com"
     assert data["user_id"] == body["user_id"]
+
+
+def test_login_with_wrong_password_returns_404():
+    _register(email="wrong-password@test.com")
+    response = client.post(
+        "/api/v1/users/login",
+        json={"email": "wrong-password@test.com", "password": "WrongPassword123!"},
+    )
+    assert response.status_code == 404
+
+
+def test_phone_registration_and_login():
+    registered = client.post(
+        "/api/v1/users/register",
+        json={
+            "phone": "+85360000001",
+            "password": TEST_PASSWORD,
+            "name": "Phone User",
+            "language": "zh-CN",
+            "country": "MO",
+        },
+    )
+    assert registered.status_code == 201, registered.text
+    assert registered.json()["phone"] == "+85360000001"
+    assert registered.json()["email"] is None
+
+    login = client.post(
+        "/api/v1/users/login",
+        json={"phone": "+85360000001", "password": TEST_PASSWORD},
+    )
+    assert login.status_code == 200, login.text
+    assert login.json()["user_id"] == registered.json()["user_id"]
 
 
 def test_me_without_token_returns_401():
@@ -148,7 +227,10 @@ def test_preference_survives_new_login_session():
         f"/api/v1/users/{uid}/preferences",
         json={"duration": "evening", "interests": ["food"], "language": "zh-CN"},
     )
-    login = client.post("/api/v1/users/login", json={"email": "persist@test.com"}).json()
+    login = client.post(
+        "/api/v1/users/login",
+        json={"email": "persist@test.com", "password": TEST_PASSWORD},
+    ).json()
     me = client.get("/api/v1/users/me", headers={"Authorization": f"Bearer {login['token']}"}).json()
     assert me["user"]["preference"]["interests"] == ["food"]
     assert me["user"]["preference"]["duration"] == "evening"

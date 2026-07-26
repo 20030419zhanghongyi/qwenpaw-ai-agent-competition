@@ -15,7 +15,12 @@ from .models import (
     StoryActionResponse,
     StorySessionResponse,
 )
-from .service import StorySessionNotFoundError, StorySessionOwnershipError, story_service
+from .service import (
+    StoryContentVersionError,
+    StorySessionNotFoundError,
+    StorySessionOwnershipError,
+    story_service,
+)
 
 story_router = APIRouter(prefix="/api/v1/stories", tags=["stories"])
 session_router = APIRouter(prefix="/api/v1/story-sessions", tags=["stories"])
@@ -24,7 +29,7 @@ session_router = APIRouter(prefix="/api/v1/story-sessions", tags=["stories"])
 def _raise_http_error(exc: Exception) -> None:
     if isinstance(exc, (StoryNotFoundError, StorySessionNotFoundError, RouteNotFoundError)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    if isinstance(exc, StoryChapterConflictError):
+    if isinstance(exc, (StoryChapterConflictError, StoryContentVersionError)):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     if isinstance(exc, StorySessionOwnershipError):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
@@ -81,6 +86,7 @@ def get_session(
         StorySessionOwnershipError,
         StoryNotFoundError,
         StoryContentError,
+        StoryContentVersionError,
     ) as exc:
         _raise_http_error(exc)
 
@@ -104,6 +110,7 @@ def act(
         StoryContentError,
         InvalidStoryActionError,
         StoryChapterConflictError,
+        StoryContentVersionError,
         StorySessionOwnershipError,
     ) as exc:
         _raise_http_error(exc)
