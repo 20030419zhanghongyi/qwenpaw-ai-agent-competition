@@ -18,7 +18,16 @@ USER_ID = "postcard-user"
 
 
 @pytest.fixture(autouse=True)
-def clear_trip_store():
+def isolate_postcard_test_state(monkeypatch):
+    monkeypatch.setattr(
+        "app.features.postcards.service.review_text",
+        lambda *_args, **_kwargs: {
+            "decision": "pass",
+            "issues": [],
+            "reviewer_notes": "test stub",
+            "source": "rules",
+        },
+    )
     trip_store.clear()
     yield
     trip_store.clear()

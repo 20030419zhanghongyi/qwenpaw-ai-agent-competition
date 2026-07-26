@@ -29,36 +29,30 @@ def load_story(story_id: str) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if payload.get("id") != story_id:
         raise StoryContentError(f"Story id does not match file name: {story_id}")
-    chapters = payload.get("chapters")
-    if not isinstance(chapters, list) or not chapters:
-        raise StoryContentError(f"Story has no chapters: {story_id}")
-    chapter_ids = [chapter.get("id") for chapter in chapters]
+    nodes = story_nodes(payload)
+    if not nodes:
+        raise StoryContentError(f"Story has no nodes or chapters: {story_id}")
+    chapter_ids = [chapter.get("id") for chapter in nodes]
     if any(not chapter_id for chapter_id in chapter_ids) or len(set(chapter_ids)) != len(
         chapter_ids
     ):
         raise StoryContentError(f"Story has missing or duplicate chapter ids: {story_id}")
-    orders = [chapter.get("order") for chapter in chapters]
-    if any(not isinstance(order, int) for order in orders) or len(set(orders)) != len(orders):
-        raise StoryContentError(f"Story has missing or duplicate chapter orders: {story_id}")
-    supported_kinds = {"puzzle", "narrative", "ending"}
-    for chapter in chapters:
-        if chapter.get("kind") not in supported_kinds:
-            raise StoryContentError(f"Story has unsupported chapter kind: {chapter.get('kind')}")
-        if not chapter.get("poi_id"):
-            raise StoryContentError(f"Story chapter has no poi_id: {chapter.get('id')}")
-        if chapter["kind"] == "puzzle":
-            puzzle = chapter.get("puzzle")
-            if not isinstance(puzzle, dict) or "solution" not in puzzle:
-                raise StoryContentError(
-                    f"Puzzle chapter has no private solution: {chapter.get('id')}"
-                )
     return payload
+
+
+def story_nodes(story: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return v3 nodes, or legacy chapters for packages not yet migrated."""
+    nodes = story.get("nodes")
+    if isinstance(nodes, list):
+        return nodes
+    chapters = story.get("chapters")
+    return chapters if isinstance(chapters, list) else []
 
 
 def public_story(story: dict[str, Any]) -> dict[str, Any]:
     """Return client-safe content without solutions or private ending rules."""
     public = deepcopy(story)
-    for chapter in public.get("chapters", []):
+    for chapter in story_nodes(public):
         puzzle = chapter.get("puzzle")
         if isinstance(puzzle, dict):
             puzzle.pop("solution", None)
@@ -70,24 +64,30 @@ def public_story(story: dict[str, Any]) -> dict[str, Any]:
 def story_overview(story: dict[str, Any]) -> dict[str, Any]:
     """Return spoiler-light metadata for the story landing page."""
     overview = {
-        key: deepcopy(value) for key, value in story.items() if key not in {"chapters", "endings"}
+        key: deepcopy(value)
+        for key, value in story.items()
+        if key not in {"nodes", "chapters", "endings"}
     }
-    overview["chapters"] = [
+    overview["nodes"] = [
         {
             key: deepcopy(chapter[key])
             for key in ("id", "order", "kind", "title", "story_time", "poi_id")
+            if key in chapter
         }
-        for chapter in story["chapters"]
+        for chapter in story_nodes(story)
     ]
     overview["endings"] = [
-        {key: deepcopy(ending[key]) for key in ("id", "title", "choice_text")}
+        {
+            key: deepcopy(ending[key])
+            for key in ("id", "title", "choice_text")
+        }
         for ending in story.get("endings", [])
     ]
     return overview
 
 
 def chapter_by_id(story: dict[str, Any], chapter_id: str) -> dict[str, Any]:
-    for chapter in story["chapters"]:
+    for chapter in story_nodes(story):
         if chapter["id"] == chapter_id:
             return chapter
     raise StoryContentError(f"Chapter not found in story: {chapter_id}")

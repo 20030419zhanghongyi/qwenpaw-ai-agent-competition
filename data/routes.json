@@ -513,7 +513,7 @@
       "theme": "历史剧情",
       "duration_label": "一日",
       "duration_hours": 7.0,
-      "walk_distance_km": 4.8,
+      "walk_distance_km": 3.5,
       "physical_level": "medium",
       "suitable_for": [
         "history",
@@ -524,63 +524,56 @@
       ],
       "nodes": [
         {
-          "poi_id": "poi_ama",
+          "poi_id": "poi_0011",
           "order": 1,
           "suggested_stay_min": 35,
-          "note": "第一章『数帆』；从现场可核验的航海痕迹取得潮印",
+          "note": "v3 第一站『妈阁庙：潮印』；阅读海陆边界与航海信俗",
           "replaceable_with": []
         },
         {
-          "poi_id": "poi_lilau",
+          "poi_id": "poi_0017",
           "order": 2,
-          "suggested_stay_min": 35,
-          "note": "第二章『井有两个名字』；保留不同语言的地名及来源，取得文印",
-          "replaceable_with": []
-        },
-        {
-          "poi_id": "poi_0015",
-          "order": 3,
-          "suggested_stay_min": 50,
-          "note": "第三章『给七十二户的电报』；通过译码补回宅院中的人，取得人印",
+          "suggested_stay_min": 30,
+          "note": "v3 第二站『亚婆井：文印』；理解名称、语言与社区记忆",
           "replaceable_with": []
         },
         {
           "poi_id": "poi_0180",
-          "order": 4,
-          "suggested_stay_min": 40,
-          "note": "间章『测绘者的制高点』；练习把地图方向与真实地标重合，可按体力跳过",
+          "order": 3,
+          "suggested_stay_min": 35,
+          "note": "v3 第三站『主教山：叠图规』；比较不同观察视角",
           "replaceable_with": []
         },
         {
           "poi_id": "poi_0136",
-          "order": 5,
-          "suggested_stay_min": 35,
-          "note": "第五章『季风的账』；平衡货物、航线、季风和信用关系，取得市印",
+          "order": 4,
+          "suggested_stay_min": 30,
+          "note": "v3 第四站『三街会馆：市印』；了解商人议事与商业网络",
           "replaceable_with": []
         },
         {
           "poi_id": "poi_0057",
-          "order": 6,
+          "order": 5,
           "suggested_stay_min": 35,
-          "note": "第六章『谁走哪扇门』；从人物行动理解宅院空间，取得门印",
+          "note": "v3 第五站『卢家大屋：门印』；理解建筑、行动与社会空间",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0015",
+          "order": 6,
+          "suggested_stay_min": 45,
+          "note": "v3 第六站『郑家大屋：三时间层与人印』",
           "replaceable_with": []
         },
         {
           "poi_id": "poi_0001",
           "order": 7,
-          "suggested_stay_min": 45,
-          "note": "第七章『立面上的第三层世界』；串联大三巴与旧城墙，辨认两张图共同遗漏的人",
-          "replaceable_with": []
-        },
-        {
-          "poi_id": "poi_0003",
-          "order": 8,
           "suggested_stay_min": 40,
-          "note": "终章『消失的界线』；让双图与真实天际线重合，完成最终选择",
+          "note": "v3 第七站『大三巴与旧城墙：界线坐标』",
           "replaceable_with": []
         }
       ],
-      "description": "《莲城双图：消失的界线》修订版固定剧情路线。由妈阁经亚婆井、郑家大屋、主教山、三街会馆、卢家大屋、大三巴与旧城墙，最终抵达大炮台。路线通过五枚图记与两个无图记观察章节，呈现两张地图共同遗漏的多元城市生活。主教山可因体力或天气跳过；场馆开放、宗教活动和现场通行情况以官方及现场信息为准。"
+      "description": "《莲城双图：消失的界线》v3 专用固定剧情路线。由妈阁、亚婆井、主教山、三街会馆、卢家大屋、郑家大屋前往大三巴与旧城墙，探索约五百年的澳门时间层。议事亭前地是可选休憩点，不进入必经 workflow。终章大炮台因当前数据没有独立规范 POI，不在固定路线中伪造为澳门博物馆；开放时间、宗教活动和现场通行情况以官方及现场信息为准。"
     }
   ]
 }

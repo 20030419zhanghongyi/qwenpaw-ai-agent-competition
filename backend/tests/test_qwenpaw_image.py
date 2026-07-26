@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 from io import BytesIO
+from pathlib import PurePosixPath, PureWindowsPath
 
+import pytest
 from PIL import Image
 
 from app.agents import qwenpaw_client
@@ -13,10 +15,10 @@ from app.features.postcards import scene_image
 
 
 def test_extract_image_refs_prefers_local_tool_output():
-    local = "file://C:\\Users\\c'd'photo\\.qwenpaw\\media\\qwen_image\\scene.png"
+    local = PurePosixPath("/qwenpaw-test/media/qwen_image/scene.png").as_uri()
     event = {
         "content": [
-            {"type": "text", "text": "Saved to: C:\\tmp\\fallback.png"},
+            {"type": "text", "text": "Saved to: /tmp/qwenpaw-fallback.png"},
             {"type": "image", "source": {"type": "url", "url": local}},
         ]
     }
@@ -24,11 +26,11 @@ def test_extract_image_refs_prefers_local_tool_output():
     refs = _extract_image_refs(event)
 
     assert refs[0] == local
-    assert "file://C:\\tmp\\fallback.png" in refs
+    assert PurePosixPath("/tmp/qwenpaw-fallback.png").as_uri() in refs
 
 
 def test_ask_for_image_stops_after_plugin_image(monkeypatch):
-    reference = "file://C:\\Users\\tester\\.qwenpaw\\media\\qwen_image\\scene.png"
+    reference = PurePosixPath("/qwenpaw-test/media/qwen_image/scene.png").as_uri()
     event = {
         "object": "message",
         "type": "plugin_call_output",
@@ -74,7 +76,26 @@ def test_ask_for_image_stops_after_plugin_image(monkeypatch):
     assert stopped == [("postcard-scene-test", "scene")]
 
 
-def test_download_media_uses_qwenpaw_preview_for_local_file(monkeypatch):
+@pytest.mark.parametrize(
+    ("reference", "preview_path"),
+    [
+        (
+            "file://C:\\QwenPaw Test\\media\\scene.png",
+            "C:/QwenPaw%20Test/media/scene.png",
+        ),
+        (
+            PureWindowsPath("C:/QwenPaw Test/media/scene.png").as_uri(),
+            "C:/QwenPaw%20Test/media/scene.png",
+        ),
+        (
+            PurePosixPath("/Users/qwenpaw tester/.qwenpaw/media/scene.png").as_uri(),
+            "/Users/qwenpaw%20tester/.qwenpaw/media/scene.png",
+        ),
+    ],
+)
+def test_download_media_uses_qwenpaw_preview_for_local_file(
+    monkeypatch, reference, preview_path
+):
     seen: dict[str, str] = {}
 
     class FakeResponse:
@@ -88,15 +109,10 @@ def test_download_media_uses_qwenpaw_preview_for_local_file(monkeypatch):
 
     monkeypatch.setattr(qwenpaw_client.httpx, "get", fake_get)
 
-    result = QwenPawClient(base_url="http://qwenpaw").download_media(
-        "file://C:\\Users\\c'd photo\\.qwenpaw\\media\\scene.png"
-    )
+    result = QwenPawClient(base_url="http://qwenpaw").download_media(reference)
 
     assert result == b"image"
-    assert seen["url"] == (
-        "http://qwenpaw/api/files/preview/"
-        "C:/Users/c%27d%20photo/.qwenpaw/media/scene.png"
-    )
+    assert seen["url"] == f"http://qwenpaw/api/files/preview/{preview_path}"
 
 
 def test_upload_media_targets_scene_agent(monkeypatch):
@@ -108,7 +124,7 @@ def test_upload_media_targets_scene_agent(monkeypatch):
 
         @staticmethod
         def json():
-            return {"url": "C:/qwenpaw/media/postcard.jpg"}
+            return {"url": "/qwenpaw-test/media/postcard.jpg"}
 
     def fake_post(url, **kwargs):
         seen["url"] = url
@@ -124,7 +140,7 @@ def test_upload_media_targets_scene_agent(monkeypatch):
         agent_id="scene",
     )
 
-    assert result == "C:/qwenpaw/media/postcard.jpg"
+    assert result == "/qwenpaw-test/media/postcard.jpg"
     assert seen["url"] == "http://qwenpaw/api/console/upload"
     assert seen["headers"]["X-Agent-Id"] == "scene"
     assert seen["files"] == {"file": ("postcard.jpg", b"jpeg", "image/jpeg")}
@@ -134,6 +150,7 @@ def test_qwenpaw_scene_is_normalized_and_cached(monkeypatch, tmp_path):
     source = BytesIO()
     Image.new("RGB", (1200, 600), (80, 140, 160)).save(source, format="PNG")
     calls = {"ask": 0, "download": 0}
+    reference = PurePosixPath("/qwenpaw-test/media/scene.png").as_uri()
 
     class FakeClient:
         def __init__(self, *, timeout):
@@ -144,14 +161,16 @@ def test_qwenpaw_scene_is_normalized_and_cached(monkeypatch, tmp_path):
             assert agent_id == "scene"
             assert "generate_image_qwen" in prompt
             assert session_id.startswith("postcard-scene-")
-            return "file://C:/scene.png"
+            return reference
 
         def download_media(self, reference):
             calls["download"] += 1
-            assert reference == "file://C:/scene.png"
+            assert reference == PurePosixPath("/qwenpaw-test/media/scene.png").as_uri()
             return source.getvalue()
 
-    monkeypatch.setattr(scene_image.settings, "data_dir", tmp_path)
+    cache_dir = tmp_path / "postcard_scene_cache"
+    cache_dir.mkdir()
+    monkeypatch.setattr(scene_image, "_cache_dir", lambda: cache_dir)
     monkeypatch.setattr(scene_image.settings, "scene_agent_id", "scene")
     monkeypatch.setattr(scene_image, "QwenPawClient", FakeClient)
 
@@ -179,6 +198,8 @@ def test_qwenpaw_scene_is_normalized_and_cached(monkeypatch, tmp_path):
 def test_qwenpaw_photo_style_uploads_scrubbed_reference(monkeypatch):
     output = BytesIO()
     Image.new("RGB", (800, 600), (120, 90, 70)).save(output, format="PNG")
+    uploaded = "/qwenpaw-test/media/scrubbed.jpg"
+    styled = PurePosixPath("/qwenpaw-test/media/styled.png").as_uri()
 
     class FakeClient:
         def __init__(self, *, timeout):
@@ -189,18 +210,18 @@ def test_qwenpaw_photo_style_uploads_scrubbed_reference(monkeypatch):
             assert filename.startswith("postcard-edit-")
             assert filename.endswith(".jpg")
             assert agent_id == "scene"
-            return "C:/qwenpaw/media/scrubbed.jpg"
+            return uploaded
 
         def ask_for_image(self, agent_id, prompt, *, session_id):
             assert agent_id == "scene"
             assert "edit_image_qwen" in prompt
-            assert "C:/qwenpaw/media/scrubbed.jpg" in prompt
+            assert uploaded in prompt
             assert "已模糊人脸必须继续保持模糊" in prompt
             assert session_id.startswith("postcard-edit-")
-            return "file://C:/qwenpaw/media/styled.png"
+            return styled
 
         def download_media(self, reference):
-            assert reference == "file://C:/qwenpaw/media/styled.png"
+            assert reference == styled
             return output.getvalue()
 
     monkeypatch.setattr(scene_image.settings, "postcard_ai_image_enabled", True)

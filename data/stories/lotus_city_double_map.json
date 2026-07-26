@@ -1,428 +1,178 @@
 {
   "id": "lotus_city_double_map",
-  "version": 2,
+  "version": 3,
   "title": "莲城双图：消失的界线",
-  "subtitle": "两张都是真的，两张都不完整",
-  "summary": "十九世纪末，华人风水师梁循绘制了记录山水、庙宇与街坊关系的《莲城脉图》，葡萄牙测绘员米格尔绘制了记录道路、产权与治理边界的城市图。翻译兼书记员阿澜发现，两张图都遗漏了真正生活在澳门的人及其跨语言、跨族群网络，于是把关键记录拆成五枚图记。现代游客成为临时寻图人，在一天内沿历史城区收集潮、文、人、市、门五印，并亲自补上只有行走者才能看见的第三层。",
+  "subtitle": "一场跨越约五百年的澳门时间层探索",
+  "summary": "2026 年的寻图人从妈阁出发，将两张残缺旧图与当代海岸线叠合，在城市的时间层中重新理解界线、命名、社群与记忆。",
   "route_id": "lotus_city_double_map",
   "estimated_hours": 7,
-  "estimated_hours_with_meal": 9,
   "identity": {
-    "id": "temporary_map_keeper",
-    "name": "临时寻图人",
-    "description": "你不是旁观者，而是阿澜等待了一百多年的收件人。两张地图最终如何保存，由你的观察、判断和选择决定。"
+    "id": "time_map_finder",
+    "name": "2026 年寻图人",
+    "description": "你不是裁定历史唯一答案的人；你要辨认每段叙事的来源、边界与仍然未知的部分。"
   },
-  "prologue": {
-    "id": "prologue_ama_station",
-    "title": "迟到一个世纪的电报",
-    "location": "妈阁轻轨站出口往妈阁庙方向",
-    "location_status": "待验证",
-    "text": "寻图人：见字如面。我把一座城拆成五处，藏在它最旧的骨头里。不要问哪张图是真的。两张都真，两张都缺。今日日落前，到大炮台来。——澜 止",
-    "attachment": "半张《莲城脉图》残页；海岸线像莲瓣，妈阁位置标有“潮起之处，先数归帆”。",
-    "note": "序章用于进入故事和说明身份，不建立独立 Trip 站点。"
-  },
-  "world_layers": [
-    {
-      "id": "liang_map",
-      "name": "梁循的莲城脉图",
-      "description": "重视山水、信俗、庙宇和街坊关系，但仍可能把复杂的人群压缩成抽象脉络。"
-    },
-    {
-      "id": "miguel_map",
-      "name": "米格尔的治理测绘图",
-      "description": "重视尺度、道路、产权和行政边界，却容易把城市写成没有生活者的几何图形。"
-    },
-    {
-      "id": "walker_layer",
-      "name": "行走者看见的第三层",
-      "description": "果阿及印度商人、非洲士兵与工匠、日本流散者、东南亚水手等多元人群及其关系。具体族群比例与个案须继续考证；故事只陈述两张图均不完整。"
-    }
-  ],
-  "content_notice": "地点和历史背景应以官方或可核验资料为准；信俗只作为民间说法呈现；阿澜、梁循、米格尔、莲城双图、五枚图记和超自然现象均为虚构。标记为“待验证”或“待考证”的内容不得在正式讲解中写成确定事实。请尊重宗教场所、居民与文物，不触碰祭品或进入限制区域。",
+  "content_notice": "本 Story Package 明确区分史实、民间说法、语境化重建、虚构故事与动态营运信息。阿澜、梁循、米格尔、时图权限及其谜案均为虚构；请尊重宗教场所、文物与现场管理要求。",
   "content_labels": {
-    "history": "史实",
-    "folklore": "信俗",
-    "fiction": "虚构",
-    "pending_field_check": "待验证",
-    "pending_research": "待考证"
+    "historical_fact": "史实",
+    "folklore": "民间说法",
+    "contextual_reconstruction": "语境化重建",
+    "fictional_story": "虚构剧情",
+    "dynamic_operational_info": "动态营运信息"
   },
   "characters": [
+    {"id": "alan", "name": "阿澜", "role": "虚构的中葡翻译兼书记员", "fictional": true},
+    {"id": "liang_xun", "name": "梁循", "role": "虚构的华人风水师", "fictional": true},
+    {"id": "miguel", "name": "米格尔", "role": "虚构的葡萄牙测绘员", "fictional": true}
+  ],
+  "rest_points": [
     {
-      "id": "alan",
-      "name": "阿澜",
-      "role": "十九世纪末的中葡翻译兼书记员",
-      "fictional": true,
-      "voice": "冷静、克制，不替玩家宣布唯一真相。"
-    },
-    {
-      "id": "liang_xun",
-      "name": "梁循",
-      "role": "绘制《莲城脉图》的华人风水师",
-      "fictional": true,
-      "voice": "从山水、街坊与信俗理解城市，也承认自己的图有遗漏。"
-    },
-    {
-      "id": "miguel",
-      "name": "米格尔",
-      "role": "绘制治理地图的葡萄牙测绘员",
-      "fictional": true,
-      "voice": "相信尺度与档案，随后意识到准确的线条也会遗漏真实的人。"
+      "poi_id": "poi_0004",
+      "title": "议事亭前地",
+      "kind": "optional_rest",
+      "note": "可在主线三街会馆与卢家大屋之间停留；不是 v3 主 workflow 的必经节点。"
     }
   ],
-  "fieldwork_notice": {
-    "closures": "郑家大屋与卢家大屋的休馆日仍须核实；休馆时应启用门外远观版，不阻断主线。",
-    "mobility": "主教山上坡路线、台阶和雨天替代交通须实地验证；玩家可以跳过该间章，主线仍可继续。",
-    "religious_sites": "妈阁庙和三街会馆的谜题不得要求触摸、移动宗教物品或大声互动。"
-  },
-  "chapters": [
+  "nodes": [
+    {
+      "id": "prologue_time_map",
+      "order": 0,
+      "kind": "prologue",
+      "title": "时图权限",
+      "story_time": "08:00",
+      "scene": "你从妈阁轻轨一带接近妈阁庙，手机收到一封没有寄件人的旧电报。屏幕叠出两张旧图与 2026 年海岸线：第三张图不是纸，而是时间。",
+      "dialogue": [{"speaker": "阿澜", "text": "不要急着找唯一正确的界线。先分清：什么是史实，什么是传说，什么只是我们为理解现场作的重建。"}],
+      "knowledge_cards": [
+        {"kind": "fictional_story", "title": "时图权限", "text": "旧电报与时图权限为本故事的虚构设定。"},
+        {"kind": "dynamic_operational_info", "title": "出发提示", "text": "开放、交通和现场通行会变化；以官方与现场信息为准。"}
+      ],
+      "fallback": {"type": "manual_continue", "text": "无法在起点叠图时，仍可继续阅读并从妈阁庙开始。"}
+    },
     {
       "id": "chapter_ama",
       "order": 1,
       "kind": "puzzle",
-      "title": "数帆",
-      "story_time": "09:00",
-      "poi_id": "poi_ama",
-      "seal": "潮印",
-      "scene": "从妈阁开始，阿澜要求你先观察海洋、航行和归航的痕迹，而不是急着寻找神秘答案。",
-      "dialogue": [
-        {"speaker": "阿澜", "text": "先看现场。哪些痕迹说明，这座城曾经从海上抵达？"},
-        {"speaker": "梁循", "text": "潮水不会替人作证，留下来的船、石刻与祈愿才会。"},
-        {"speaker": "玩家", "text": "所以我要数的不是传说，而是现场能够确认的归帆线索。"}
+      "title": "妈阁庙：潮印",
+      "story_time": "08:30",
+      "poi_id": "poi_0011",
+      "scene": "海与庙阶在晨光中相接。阿澜请你先看城市如何从近海生活开始，而不是把今天的海岸线误认为从来如此。",
+      "time_layers": [{"period": "早期近海聚居", "focus": "海陆边界与航海信俗"}, {"period": "2026", "focus": "当代岸线与到达方式"}],
+      "knowledge_cards": [
+        {"kind": "historical_fact", "title": "妈阁与近海生活", "text": "妈阁庙依山而建，与澳门早期近海社区和航海信俗密切相关。"},
+        {"kind": "folklore", "title": "妈祖信俗", "text": "民间对妈祖护佑航海的理解属于信俗叙事，不等同于科学因果。"},
+        {"kind": "fictional_story", "title": "潮印", "text": "潮印是本故事虚构的地图奖励。"}
       ],
-      "content_cards": [
-        {"label": "history", "text": "妈阁庙与澳门沿海航行生活关系密切，庙内外保留摩崖石刻等历史痕迹。"},
-        {"label": "folklore", "text": "“Macao”得名于“妈阁”是常见说法，应以通行说法而非唯一词源呈现。"},
-        {"label": "pending_field_check", "text": "洋船石可用于计数的真实细节、最终题目数字和安全观察位置须踩点后定版。"},
-        {"label": "fiction", "text": "潮印和阿澜的电报为虚构。"}
-      ],
-      "puzzle": {
-        "id": "puzzle_count_sails",
-        "type": "single_choice",
-        "mechanic": "现场观察与计数密码",
-        "prompt": "正式数字仍待踩点确认。当前体验版先判断：第一枚图记记录的核心是什么？",
-        "options": [
-          {"id": "returning_sails", "text": "海洋、航行与归航"},
-          {"id": "administrative_line", "text": "行政边界与门牌"},
-          {"id": "artillery_range", "text": "炮台射界"}
-        ],
-        "solution": "returning_sails",
-        "hints": ["从妈祖信俗与航海生活的关系入手。", "潮印不证明超自然力量，它记录人如何从海上来去。"],
-        "explanation": "你确认了第一层：澳门的城市记忆从海边、航行和归航开始。",
-        "skip_text": "阿澜替你保留现场记录：潮印指向海洋、航行与归航。",
-        "reward_clue": {"id": "clue_tide", "name": "潮印", "text": "城市从海边开始。"}
-      }
+      "fallback": {"type": "content_only", "text": "雨天或人流限制时可阅读图文，不要求进入限制区域。"},
+      "puzzle": {"id": "puzzle_tide_mark", "type": "single_choice", "prompt": "本章记录的共同依赖方向是什么？", "options": [{"id": "sea", "text": "海与归航"}, {"id": "fort", "text": "炮台射界"}, {"id": "office", "text": "行政办公室"}], "solution": "sea", "hints": ["注意航海生活。", "选择与归航有关的答案。"], "explanation": "这一题对应近海生活与航海信俗的关系。", "skip_text": "阿澜标出第一层：海与归航。", "reward": {"id": "stamp_tide", "kind": "stamp", "name": "潮印", "text": "第一层从海边开始。"}}
     },
     {
       "id": "chapter_lilau",
       "order": 2,
       "kind": "puzzle",
-      "title": "井有两个名字",
-      "story_time": "10:00",
-      "poi_id": "poi_lilau",
-      "seal": "文印",
-      "scene": "同一口井在不同语言和记忆中拥有不同名字。地图若只留下其中一个，另一群人的城市就会变得模糊。",
-      "dialogue": [
-        {"speaker": "米格尔", "text": "地图需要一个统一名称，否则档案无法索引。"},
-        {"speaker": "阿澜", "text": "索引可以统一，记忆不能因此被删除。"},
-        {"speaker": "玩家", "text": "我会保留每个名字，也记录它来自哪种语言和哪段生活。"}
+      "title": "亚婆井：文印",
+      "story_time": "09:30",
+      "poi_id": "poi_0017",
+      "scene": "亚婆井前地的地名、井水记忆与街坊口述在不同语言中流转。地图的空白处浮出一行提示：名字不是标签，也是被谁记住的问题。",
+      "time_layers": [{"period": "历史街坊", "focus": "井与社区生活"}, {"period": "口述记忆", "focus": "地名与离乡感"}],
+      "knowledge_cards": [
+        {"kind": "historical_fact", "title": "亚婆井前地", "text": "亚婆井前地是风顺堂区历史街坊的一部分。"},
+        {"kind": "folklore", "title": "井水民谣", "text": "“喝过亚婆井水，忘不掉澳门”是广为流传的民间说法。"},
+        {"kind": "contextual_reconstruction", "title": "命名与记忆", "text": "本章用并列命名来帮助理解语言、地点与社区记忆的关系。"}
       ],
-      "content_cards": [
-        {"label": "history", "text": "亚婆井一带与澳门早期葡人聚居及水源历史相关。"},
-        {"label": "folklore", "text": "饮过亚婆井水终会重回澳门，是流传至今的民间说法。"},
-        {"label": "pending_research", "text": "亚婆井、Lilau 等名称的来源、先后和可用旧名清单须查证，正式版不得虚构排序。"},
-        {"label": "fiction", "text": "旧名牌排序装置与文印为虚构。"}
-      ],
-      "collectible": {
-        "id": "well_mark_lilau",
-        "name": "井纹·初见",
-        "prompt": "井边石纹中藏着一半信物，要收下吗？",
-        "collect_text": "你收下第一枚井纹。玛蒂娜曾在这里等待阿汐归航。"
-      },
-      "puzzle": {
-        "id": "puzzle_two_names",
-        "type": "single_choice",
-        "mechanic": "语言、名称与来源匹配",
-        "prompt": "当不同名称指向同一个地方，最合适的记录方式是什么？",
-        "options": [
-          {"id": "keep_names_and_sources", "text": "同时保留不同名称，并注明语言和来源"},
-          {"id": "keep_official_only", "text": "只保留行政档案名称"},
-          {"id": "keep_spoken_only", "text": "只保留街坊最熟悉的叫法"}
-        ],
-        "solution": "keep_names_and_sources",
-        "hints": ["两张图的问题不是谁真谁假，而是各自只留下了一部分。", "名字与来源应该一起保存。"],
-        "explanation": "你没有让一个名字覆盖另一个名字，文印因此显现。",
-        "skip_text": "阿澜把两个名字并列写下，并保留各自来源。",
-        "reward_clue": {"id": "clue_words", "name": "文印", "text": "同一地点可以同时拥有不同语言、名称和历史来源。"}
-      }
+      "fallback": {"type": "content_only", "text": "无需接触井口或进入私人空间。"},
+      "puzzle": {"id": "puzzle_lilau_words", "type": "single_choice", "prompt": "面对同一地点的不同名称，最稳妥的记录方式是什么？", "options": [{"id": "keep_both", "text": "保留名称及其来源"}, {"id": "one_name", "text": "只留一个名称"}], "solution": "keep_both", "hints": ["本故事不要求一张图取代另一张图。"], "explanation": "保留名称与来源，才能让差异可被检视。", "skip_text": "阿澜把不同名称并列抄录。", "reward": {"id": "stamp_words", "kind": "stamp", "name": "文印", "text": "名字的差异也有历史。"}}
     },
     {
-      "id": "chapter_mandarin_house",
+      "id": "chapter_penha",
       "order": 3,
-      "kind": "puzzle",
-      "title": "给七十二户的电报",
-      "story_time": "11:00",
-      "poi_id": "poi_0015",
-      "seal": "人印",
-      "scene": "郑家大屋不再只是建筑轮廓。阿澜留下的电报码要求你把摩尔斯信号、中文电报码与住在屋中的人重新连接起来。",
-      "dialogue": [
-        {"speaker": "米格尔", "text": "我已经画下房间、墙和门，为什么还说地图不完整？"},
-        {"speaker": "梁循", "text": "你画了屋，没有画七十二户如何在屋里生活。"},
-        {"speaker": "玩家", "text": "我要译出的不是建筑名称，而是一封写给屋中人的电报。"}
-      ],
-      "content_cards": [
-        {"label": "history", "text": "郑家大屋体现岭南大宅格局与中西建筑影响；郑观应与近代通信、社会改革思想的关系可作为讲解背景。"},
-        {"label": "pending_research", "text": "“七十二户”、郑观应与电报的具体表述、现场互动设备楼层与可用性须依据调研资料和现场复核。"},
-        {"label": "fiction", "text": "阿澜留下的电报内容、人印和跨时代通信均为虚构。"}
-      ],
-      "collectible": {
-        "id": "well_mark_mandarin",
-        "name": "井纹·家书",
-        "prompt": "电报码边缘有一枚井纹，要收下吗？",
-        "collect_text": "第二枚井纹被收入档案袋，像一封始终没有寄达的家书。"
-      },
-      "puzzle": {
-        "id": "puzzle_telegraph",
-        "type": "single_choice",
-        "mechanic": "摩尔斯码→中文电报码→句子",
-        "prompt": "体验版译文需要表达本章的哪一层缺失？",
-        "options": [
-          {"id": "people_inside", "text": "记录房屋，不等于记录生活在其中的人"},
-          {"id": "wall_length", "text": "只需重新测量所有墙体长度"},
-          {"id": "single_owner", "text": "只需保留宅院主人的姓名"}
-        ],
-        "solution": "people_inside",
-        "hints": ["电报写给“户”，而不是写给一面墙。", "建筑数据不能替代人的生活记录。"],
-        "explanation": "电报译文补回了屋中的人，人印显现。",
-        "skip_text": "备用虚拟电报机完成译码：房屋之中还有人的生活。",
-        "reward_clue": {"id": "clue_people", "name": "人印", "text": "记录房屋不等于记录生活在房屋中的人。"}
-      },
-      "fallback": "现场设备不可用或休馆时，手机端启用虚拟电报机与门外远观版。"
-    },
-    {
-      "id": "chapter_bishop_hill",
-      "order": 4,
-      "kind": "puzzle",
-      "title": "测绘者的制高点",
-      "story_time": "12:15",
+      "kind": "narrative",
+      "title": "主教山：叠图规",
+      "story_time": "10:30",
       "poi_id": "poi_0180",
-      "scene": "在主教山平台，米格尔让你把地图上的三角标记对准真实城市。这里不给图记，而是教会玩家终章所需的“地图与现场重合”方法。",
-      "dialogue": [
-        {"speaker": "米格尔", "text": "坐标不是冷冰冰的。站到正确位置，它会告诉你两条线在哪里相遇。"},
-        {"speaker": "梁循", "text": "但别忘了抬头。图上的交点，未必等于人走得到的地方。"},
-        {"speaker": "玩家", "text": "我先用地图定位，再用真实视线验证。"}
+      "scene": "站在主教山眺望台，两位制图者的观察方法第一次重叠：一人读尺度与视线，一人读山海和街坊。你获得的不是答案，而是一把能将不同时间层并置阅读的叠图规。",
+      "time_layers": [{"period": "十七世纪以来", "focus": "山顶小堂与城市眺望"}, {"period": "2026", "focus": "当代城市视野"}],
+      "knowledge_cards": [
+        {"kind": "historical_fact", "title": "主教山眺望台", "text": "主教山（西望洋山）是澳门半岛的重要高点，邻近主教山小堂。"},
+        {"kind": "contextual_reconstruction", "title": "两种观察", "text": "“尺度”和“山海”是为帮助比较观察视角而作的叙事重建。"},
+        {"kind": "dynamic_operational_info", "title": "能见度", "text": "天气与现场开放会影响视野；看不清时不影响剧情继续。"}
       ],
-      "content_cards": [
-        {"label": "history", "text": "主教山小堂及山前平台体现澳门的欧洲宗教建筑与航海信俗背景。"},
-        {"label": "pending_field_check", "text": "平台可见地标、指南针误差、上坡时长和雨天替代路线均须实测。"},
-        {"label": "pending_research", "text": "始建年代、重建年代与水手祈愿说法须按权威资料定稿。"}
-      ],
-      "puzzle": {
-        "id": "puzzle_viewpoint_alignment",
-        "type": "single_choice",
-        "mechanic": "方向判断与实景对准",
-        "prompt": "把测绘图用于现场时，哪种方法最可靠？",
-        "options": [
-          {"id": "map_and_sight", "text": "先按地图定位，再用真实视线逐一验证地标"},
-          {"id": "map_only", "text": "只看地图，不观察现场"},
-          {"id": "guess_only", "text": "不看方向，凭感觉选择"}
-        ],
-        "solution": "map_and_sight",
-        "hints": ["终章需要把残图对准真实天际线。", "地图与现场必须互相校验。"],
-        "explanation": "你掌握了终章方法：不是相信一张图，而是让地图接受现场检验。",
-        "skip_text": "系统发放重合方法提示；本间章可因体力或天气跳过，不影响五印收集。"
-      },
-      "optional": true,
-      "skip_impact": "剧情完整度约减少 15%，不阻断主线。"
+      "fallback": {"type": "manual_continue", "text": "阴雨、低能见度或封闭时，直接使用预置的视野说明继续。"},
+      "reward": {"id": "capability_overlay_rule", "kind": "capability", "name": "叠图规", "text": "获得并置不同时间层的阅读能力。"}
     },
     {
       "id": "chapter_sam_kai",
-      "order": 5,
+      "order": 4,
       "kind": "puzzle",
-      "title": "季风的账",
-      "story_time": "14:15",
+      "title": "三街会馆：市印",
+      "story_time": "12:00",
       "poi_id": "poi_0136",
-      "seal": "市印",
-      "scene": "三街会馆附近的账簿记录了货物，却只有把航线、季风、装载和信用关系放在一起，账目才真正成立。",
-      "dialogue": [
-        {"speaker": "梁循", "text": "商路不是纸上的直线。风向、船期和人与人的信用都会让它改变。"},
-        {"speaker": "米格尔", "text": "我能画出港口，却没画出一笔生意为何能够抵达。"},
-        {"speaker": "玩家", "text": "我要平衡的不只是货物数量，还有季风与航线条件。"}
-      ],
-      "content_cards": [
-        {"label": "history", "text": "三街会馆与华商议事、商业网络和关帝信俗有关。"},
-        {"label": "pending_research", "text": "具体贸易货物、季风月份与澳门—马尼拉等航线材料须有可靠史料支撑。"},
-        {"label": "fiction", "text": "谜题账簿、货物组合和市印为虚构。"}
-      ],
-      "collectible": {
-        "id": "well_mark_sam_kai",
-        "name": "井纹·航线",
-        "prompt": "账簿夹页藏着一枚井纹，要收下吗？",
-        "collect_text": "第三枚井纹旁画着一条通往马尼拉的虚线航路。"
-      },
-      "puzzle": {
-        "id": "puzzle_monsoon_ledger",
-        "type": "single_choice",
-        "mechanic": "贸易路线、季风与货物配平",
-        "prompt": "哪一种记录最接近一条真实商路？",
-        "options": [
-          {"id": "network_record", "text": "同时记录货物、航线、季风与信用关系"},
-          {"id": "building_only", "text": "只记录会馆建筑轮廓"},
-          {"id": "quantity_only", "text": "只记录货物总数"}
-        ],
-        "solution": "network_record",
-        "hints": ["季风会改变出航时间。", "商业活动由货物和人际网络共同维持。"],
-        "explanation": "账目终于能解释货物为何在此时沿这条路抵达，市印显现。",
-        "skip_text": "阿澜补齐季风与航线条件，账簿重新平衡。",
-        "reward_clue": {"id": "clue_market", "name": "市印", "text": "建筑内部还有商业往来、信任、争议和社会关系。"}
-      }
+      "scene": "华商议事的场所提醒你：一栋建筑之外，还有商情、纠纷、互助与社群网络。",
+      "knowledge_cards": [{"kind": "historical_fact", "title": "三街会馆", "text": "三街会馆曾是华商沟通商情、调节商业事务的场所，后因供奉关帝而广为人知。"}, {"kind": "fictional_story", "title": "账簿谜题", "text": "本章账簿与图记为虚构。"}],
+      "fallback": {"type": "content_only", "text": "场所关闭或拥挤时在外阅读即可。"},
+      "puzzle": {"id": "puzzle_ledger", "type": "single_choice", "prompt": "12、8、10 三箱货合计 30 件；写成 28 件的是哪份记录？", "options": [{"id": "office", "text": "行政抄本"}, {"id": "merchant", "text": "华商账簿"}], "solution": "office", "hints": ["先计算总数。"], "explanation": "30 不等于 28，错误出在行政抄本。", "skip_text": "阿澜重新核算出 30 件。", "reward": {"id": "stamp_market", "kind": "stamp", "name": "市印", "text": "城市还由看不见的社会网络组成。"}}
     },
     {
       "id": "chapter_lou_kau",
-      "order": 6,
+      "order": 5,
       "kind": "puzzle",
-      "title": "谁走哪扇门",
-      "story_time": "15:15",
+      "title": "卢家大屋：门印",
+      "story_time": "13:00",
       "poi_id": "poi_0057",
-      "seal": "门印",
-      "scene": "卢家大屋的门、天井与内外空间不只构成平面，它们也安排不同人的行动路线和身份位置。",
-      "dialogue": [
-        {"speaker": "米格尔", "text": "图上每扇门都只是一个开口。"},
-        {"speaker": "阿澜", "text": "可同一扇门，对主人、访客与佣工并不意味着同一件事。"},
-        {"speaker": "玩家", "text": "我要根据空间关系判断每个人会走哪条路，而不是只数门。"}
-      ],
-      "content_cards": [
-        {"label": "history", "text": "卢家大屋是晚清澳门华商宅院，可用于观察中式大宅空间与中西装饰影响。"},
-        {"label": "pending_field_check", "text": "馆内开放路线、构件现状和休馆日须核实；不要把郑家大屋的细节误写到卢家大屋。"},
-        {"label": "fiction", "text": "人物身份推理、隐藏路线和门印为虚构。"}
-      ],
-      "puzzle": {
-        "id": "puzzle_who_uses_which_door",
-        "type": "single_choice",
-        "mechanic": "空间路径逻辑推理",
-        "prompt": "为什么同一张建筑平面图仍不足以解释屋内生活？",
-        "options": [
-          {"id": "movement_and_identity", "text": "门和路线会改变人的行动与身份关系"},
-          {"id": "missing_color", "text": "图纸没有给墙面上色"},
-          {"id": "missing_weather", "text": "图纸没有记录当天温度"}
-        ],
-        "solution": "movement_and_identity",
-        "hints": ["考虑谁能走正门、侧门与内院路线。", "空间也在组织社会关系。"],
-        "explanation": "你从静止平面中恢复了人的行动，门印显现。",
-        "skip_text": "阿澜展示了人物路线叠图：门不仅有尺寸，也会改变行动与身份。",
-        "reward_clue": {"id": "clue_gate", "name": "门印", "text": "建筑不仅有尺寸，也会改变人的行动和身份。"}
-      },
-      "fallback": "休馆时启用门外观察与简化平面推理。"
+      "scene": "天井引入光线，门、厅与街道组织出一座家宅的进出秩序；界线不只是一条画在纸上的线。",
+      "knowledge_cards": [{"kind": "historical_fact", "title": "卢家大屋", "text": "卢家大屋约建于晚清，是澳门历史城区组成部分，呈现中西建筑影响。"}, {"kind": "contextual_reconstruction", "title": "空间与行动", "text": "本章以门、厅、天井的连续体验说明社会空间，不把它当作单一历史结论。"}],
+      "fallback": {"type": "content_only", "text": "以现场管理与开放区域为准。"},
+      "puzzle": {"id": "puzzle_door", "type": "single_choice", "prompt": "家宅空间除了建筑轮廓，还组织了什么？", "options": [{"id": "movement", "text": "人的进出与停留"}, {"id": "paper", "text": "纸张颜色"}], "solution": "movement", "hints": ["观察门、厅与天井之间的关系。"], "explanation": "建筑也组织人的行动与社交。", "skip_text": "门印记录了进出与停留。", "reward": {"id": "stamp_gate", "kind": "stamp", "name": "门印", "text": "界线也可以是一种空间体验。"}}
     },
     {
-      "id": "chapter_st_paul_wall",
-      "order": 7,
+      "id": "chapter_mandarin_house",
+      "order": 6,
       "kind": "puzzle",
-      "title": "立面上的第三层世界",
-      "story_time": "16:30",
+      "title": "郑家大屋：三时间层与人印",
+      "story_time": "14:00",
+      "poi_id": "poi_0015",
+      "scene": "同一座大屋在晚清、二十世纪中叶分租居住与当代遗产保护中不断改变用途。三张时间层并置后，你才看见建筑并非停在落成那一年。",
+      "time_layers": [{"period": "晚清", "focus": "郑观应故居与岭南大宅"}, {"period": "二十世纪中叶", "focus": "分租居住与多户日常"}, {"period": "当代", "focus": "遗产保护与公众参观"}],
+      "knowledge_cards": [{"kind": "historical_fact", "title": "郑家大屋", "text": "郑家大屋为郑观应故居，是澳门历史城区组成部分。"}, {"kind": "contextual_reconstruction", "title": "分租时间层", "text": "本章以多户居住的时间层说明建筑使用变化；具体个体经历不作未经证实的断言。"}, {"kind": "fictional_story", "title": "人印", "text": "人印与两位制图者的对话为虚构。"}],
+      "fallback": {"type": "content_only", "text": "闭馆或限流时使用预置三层内容继续。"},
+      "puzzle": {"id": "puzzle_people", "type": "single_choice", "prompt": "让三张时间层成为同一故事的共同要素是什么？", "options": [{"id": "people", "text": "在其中生活、使用和保护它的人"}, {"id": "one_year", "text": "唯一的落成年份"}], "solution": "people", "hints": ["建筑的使用者会随年代变化。"], "explanation": "人让建筑的时间层彼此相连。", "skip_text": "阿澜留下人印：建筑之中仍有人的生活。", "reward": {"id": "stamp_people", "kind": "stamp", "name": "人印", "text": "建筑史也应容纳居住者。"}}
+    },
+    {
+      "id": "transition_isolated_island",
+      "order": 7,
+      "kind": "transition",
+      "title": "1937–1945：孤岛年代",
+      "story_time": "15:00",
+      "scene": "时间层忽然变暗。1937 至 1945 年的澳门处在战争年代的复杂处境中；这里不设置打卡谜题，也不将苦难娱乐化。阿澜只请你承认：有些边界在地图上很轻，在人的生活里却极重。",
+      "knowledge_cards": [{"kind": "historical_fact", "title": "战争年代", "text": "本节点仅提供克制的历史过渡；正式展示应以经核验史料和来源为准。"}, {"kind": "contextual_reconstruction", "title": "沉默与空白", "text": "“地图上的轻、生活里的重”是叙事性理解，不替代具体史料。"}],
+      "fallback": {"type": "continue", "text": "此节点不要求到达、答题或奖励。"}
+    },
+    {
+      "id": "chapter_st_paul_walls",
+      "order": 8,
+      "kind": "puzzle",
+      "title": "大三巴与旧城墙：界线坐标",
+      "story_time": "15:30",
       "poi_id": "poi_0001",
-      "scene": "大三巴立面与旧城墙把宗教图像、建造者、流散者和人为边界叠在同一地点。这里没有第六枚图记；玩家要看见五印之外仍被两张图遗漏的人。",
-      "dialogue": [
-        {"speaker": "阿澜", "text": "五枚图记只能让两张图重合，不能让它们自动完整。"},
-        {"speaker": "米格尔", "text": "立面上有我认识的宗教符号，也有我从未记录的工匠与语言。"},
-        {"speaker": "玩家", "text": "第三层不是另一张权威地图，而是两张图都没有画下的人。"},
-        {"speaker": "阿澜", "text": "界在这里。墙会倒，界未必消失。去大炮台。"}
-      ],
-      "content_cards": [
-        {"label": "history", "text": "大三巴为圣保禄学院天主之母教堂前壁，1835 年大火后主要保留立面；旧城墙遗址体现早期城市防御边界。"},
-        {"label": "pending_research", "text": "日本工匠、菊花、汉字、墓室圣髑及多族群参与的表述必须以官方导览和可靠研究为准。"},
-        {"label": "fiction", "text": "手机扫描显层、五印共鸣与阿澜电报为虚构。"}
-      ],
-      "collectible": {
-        "id": "well_mark_st_paul",
-        "name": "井纹·未归",
-        "prompt": "立面纹样旁藏着第四枚井纹，要收下吗？",
-        "collect_text": "第四枚井纹记录了一个没有归航日期的名字。"
-      },
-      "puzzle": {
-        "id": "puzzle_third_layer",
-        "type": "single_choice",
-        "mechanic": "符号分层扫描与边界观察",
-        "prompt": "两张地图重合后仍缺少的“第三层”是什么？",
-        "options": [
-          {"id": "unmapped_people", "text": "被两张图共同遗漏的多元人群与关系"},
-          {"id": "another_ruler", "text": "一把能决定唯一答案的比例尺"},
-          {"id": "sixth_seal", "text": "能够消除所有差异的第六枚图记"}
-        ],
-        "solution": "unmapped_people",
-        "hints": ["这里不会发放第六枚图记。", "看立面的建造、语言与旧城墙两侧的人。"],
-        "explanation": "你看见了第三层：它不能被一张新权威地图取代，只能通过持续行走、查证和倾听被补充。",
-        "skip_text": "阿澜直接指出：两张图共同遗漏的是界线两侧真实生活过的人。"
-      }
+      "secondary_poi_ids": ["poi_0133"],
+      "scene": "大三巴牌坊与旧城墙遗址相邻。它们让你同时看见全球连接的痕迹，以及物理与社会边界如何被建立、穿越和重新解释。",
+      "knowledge_cards": [{"kind": "historical_fact", "title": "大三巴与旧城墙", "text": "大三巴牌坊和旧城墙遗址均为澳门历史城区的重要遗存。"}, {"kind": "contextual_reconstruction", "title": "界线坐标", "text": "本章将两个相邻遗存并置，帮助讨论边界；不把单一建筑等同于完整历史。"}],
+      "fallback": {"type": "primary_poi_only", "text": "P0 以大三巴牌坊为主到达点；旧城墙作为并置内容，不要求独立 check-in。"},
+      "puzzle": {"id": "puzzle_boundary", "type": "single_choice", "prompt": "在这一站，最需要并置阅读的是什么？", "options": [{"id": "connections_and_boundaries", "text": "全球连接与物理、社会边界"}, {"id": "one_view", "text": "唯一正确的城市叙事"}], "solution": "connections_and_boundaries", "hints": ["看看牌坊、城墙及它们相邻的关系。"], "explanation": "连接与边界可以同时存在，不能只保留单一视角。", "skip_text": "界线坐标已记录为并置阅读。", "reward": {"id": "coordinate_boundary", "kind": "coordinate", "name": "界线坐标", "text": "在连接与边界之间保留可检视的坐标。"}}
     },
     {
       "id": "chapter_mount_fortress",
-      "order": 8,
+      "order": 9,
       "kind": "ending",
-      "title": "消失的界线",
-      "story_time": "17:30",
-      "poi_id": "poi_0003",
-      "scene": "你在大炮台把两张残图对准妈阁—主教山—内港方向。五印使图纸重合，但缺口仍在：它是旧城墙构成的人为之界，也是界线两侧没有被画下的人。",
-      "dialogue": [
-        {"speaker": "米格尔", "text": "准确的线条不能替我决定，谁值得被记住。"},
-        {"speaker": "梁循", "text": "风水也只是理解土地的一种语言，不是占有城市的凭证。"},
-        {"speaker": "阿澜", "text": "你已经走过两张图，也看见它们共同的空白。现在决定它们的去向。"},
-        {"speaker": "玩家", "text": "我会作出选择，但不会把它说成唯一正确的历史。"}
-      ],
-      "content_cards": [
-        {"label": "history", "text": "大炮台是澳门早期防御体系的重要组成，可从高处观察历史城区与现代城市的叠合。"},
-        {"label": "pending_field_check", "text": "终章真实可见轴线、站位、安全范围与日落时段须实测。"},
-        {"label": "fiction", "text": "残图显形、五印重合和最终通信均为虚构。"}
-      ],
-      "collectible": {
-        "id": "well_mark_fortress",
-        "name": "井纹·归来",
-        "prompt": "最后一枚井纹出现在残图空白处，要收下吗？",
-        "collect_text": "五枚井纹完整重合，井边之约的结局已解锁。"
-      }
+      "title": "大炮台：Timeline Reconstruction",
+      "story_time": "16:30",
+      "poi_status": "missing_canonical_poi",
+      "scene": "你抵达终章时，地图按照已经收集的时间层重新排列。大炮台的独立规范 POI 尚未进入本仓库，因此 P0 不伪造到达记录，也不把澳门博物馆替作大炮台。",
+      "knowledge_cards": [{"kind": "historical_fact", "title": "大炮台待接入", "text": "本仓库现有 poi_0003 是澳门博物馆，不是独立的大炮台 POI。"}, {"kind": "fictional_story", "title": "Timeline Reconstruction", "text": "终章重建与阿澜的留言为虚构。"}],
+      "fallback": {"type": "no_poi_required", "text": "在补齐规范大炮台 POI 前，终章不产生 trip check-in。"}
     }
   ],
   "endings": [
-    {
-      "id": "reseal",
-      "title": "重新封存",
-      "choice_text": "将两张地图重新分开保存",
-      "text": "你把两张图重新分开，让任何单一机构都无法独占完整的城市记忆。阿澜留下最后一句：愿后来的人仍愿意亲自走完两条路。",
-      "condition": "player_choice"
-    },
-    {
-      "id": "open_archive",
-      "title": "公开档案",
-      "choice_text": "公开地图、来源、争议与阿澜的记录",
-      "text": "你公开两张图，也公开每条材料的来源、分歧和不确定性。阿澜不再只是无名翻译，被遗漏的人也获得继续补写的位置。",
-      "condition": "player_choice"
-    },
-    {
-      "id": "leave_blank",
-      "title": "留下空白",
-      "choice_text": "保存资料，但不恢复一张唯一完整的地图",
-      "text": "你保留必要的空白，让未来的人继续解释这座城市。地图完整的时刻，也可能是它停止倾听的时刻。",
-      "condition": "player_choice"
-    }
-  ],
-  "side_quests": [
-    {
-      "id": "wellside_promise",
-      "title": "井边之约",
-      "optional": true,
-      "fictional": true,
-      "summary": "土生葡人少女玛蒂娜与往来澳门—马尼拉航线的闽南船工阿汐在亚婆井边相识。阿汐出海未归，玛蒂娜把信物拆成五枚井纹，托阿澜藏在沿途地点。",
-      "required_collectible_ids": [
-        "well_mark_lilau",
-        "well_mark_mandarin",
-        "well_mark_sam_kai",
-        "well_mark_st_paul",
-        "well_mark_fortress"
-      ],
-      "bonus_ending": {
-        "id": "wellside_reunion",
-        "title": "井边重逢",
-        "text": "五枚井纹拼合后，你没有看到神迹，只读到两封跨越海路的信。故事没有替阿汐安排确定归宿，却让玛蒂娜的等待和水手们的航线不再从地图上消失。"
-      }
-    }
+    {"id": "reseal", "title": "重新封存", "choice_text": "将两张图分开保存", "text": "你拒绝让任何单一机构独占完整记忆。", "condition": "player_choice"},
+    {"id": "open_archive", "title": "公开档案", "choice_text": "公开地图、来源与记录", "text": "你公开材料，也公开其史实、传说与虚构的边界。", "condition": "player_choice"},
+    {"id": "leave_blank", "title": "留下空白", "choice_text": "保存资料，但不恢复唯一完整图", "text": "你留下可被未来继续追问的空白。", "condition": "player_choice"}
   ]
 }
