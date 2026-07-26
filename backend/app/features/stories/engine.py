@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+import json
 from typing import Any
 
 from .content import chapter_by_id, story_nodes
@@ -37,7 +38,18 @@ def _normalized_answer(value: Any) -> Any:
     if isinstance(value, str):
         return value.strip().lower()
     if isinstance(value, list):
-        return [_normalized_answer(item) for item in value]
+        normalized = [_normalized_answer(item) for item in value]
+        return sorted(
+            normalized,
+            key=lambda item: json.dumps(
+                item, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+            ),
+        )
+    if isinstance(value, dict):
+        return {
+            key: _normalized_answer(value[key])
+            for key in sorted(value)
+        }
     return value
 
 
@@ -214,6 +226,22 @@ def apply_action(
         _append_unique(story_session.state.completed_chapter_ids, request.chapter_id)
         story_session.status = StorySessionStatus.COMPLETED
         story_session.completed_at = datetime.now(timezone.utc)
-        return TransitionResult(True, "最终选择已保存，故事完成")
+        selected_ending = next(
+            ending
+            for ending in story.get("endings", [])
+            if ending["id"] == request.choice_id
+        )
+        new_clues: list[str] = []
+        new_rewards: list[StoryReward] = []
+        for reward in selected_ending.get("rewards", []):
+            clues, rewards = _award_reward(story_session, reward)
+            new_clues.extend(clues)
+            new_rewards.extend(rewards)
+        return TransitionResult(
+            True,
+            "今日补记已保存，故事完成",
+            new_clues=new_clues,
+            new_rewards=new_rewards,
+        )
 
     raise InvalidStoryActionError(f"Unsupported action: {request.action.value}")

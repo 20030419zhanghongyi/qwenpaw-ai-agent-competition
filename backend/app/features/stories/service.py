@@ -37,6 +37,10 @@ class StorySessionOwnershipError(PermissionError):
     pass
 
 
+class StoryContentVersionError(RuntimeError):
+    pass
+
+
 class StoryService:
     def __init__(
         self,
@@ -53,10 +57,22 @@ class StoryService:
     def start(self, story_id: str, user_id: str) -> StorySessionResponse:
         story = load_story(story_id)
         existing = self._repository.get_active(user_id, story_id)
-        if existing is not None:
+        if (
+            existing is not None
+            and existing.state.content_version == story["version"]
+        ):
             return self._response(story, existing)
 
-        trip = self._trips.create_trip(user_id, story["route_id"])
+        story_stop_poi_ids = [
+            str(node["poi_id"])
+            for node in sorted(story_nodes(story), key=lambda item: item["order"])
+            if node.get("poi_id")
+        ]
+        trip = self._trips.create_trip(
+            user_id,
+            story["route_id"],
+            stop_poi_ids=story_stop_poi_ids,
+        )
         now = datetime.now(timezone.utc)
         first_chapter = min(story_nodes(story), key=lambda item: item["order"])
         story_session = StorySession(
@@ -66,7 +82,7 @@ class StoryService:
             trip_id=trip.trip.trip_id,
             current_chapter_id=first_chapter["id"],
             status=StorySessionStatus.ACTIVE,
-            state=StorySessionState(),
+            state=StorySessionState(content_version=story["version"]),
             created_at=now,
             updated_at=now,
         )
@@ -77,7 +93,9 @@ class StoryService:
         if story_session is None:
             raise StorySessionNotFoundError(f"Story session not found: {session_id}")
         self._require_owner(story_session, user_id)
-        return self._response(load_story(story_session.story_id), story_session)
+        story = load_story(story_session.story_id)
+        self._require_current_version(story, story_session)
+        return self._response(story, story_session)
 
     def act(
         self, session_id: str, user_id: str, request: StoryActionRequest
@@ -87,6 +105,7 @@ class StoryService:
             raise StorySessionNotFoundError(f"Story session not found: {session_id}")
         self._require_owner(story_session, user_id)
         story = load_story(story_session.story_id)
+        self._require_current_version(story, story_session)
         result = apply_action(story, story_session, request)
 
         if result.changed and request.action.value == "arrive":
@@ -163,6 +182,15 @@ class StoryService:
     def _require_owner(story_session: StorySession, user_id: str) -> None:
         if story_session.user_id != user_id:
             raise StorySessionOwnershipError("无权访问该故事会话")
+
+    @staticmethod
+    def _require_current_version(
+        story: dict[str, Any], story_session: StorySession
+    ) -> None:
+        if story_session.state.content_version != story["version"]:
+            raise StoryContentVersionError(
+                "该会话属于旧版故事内容，请从故事封面开始 V4 新会话"
+            )
 
     def _action_response(
         self,
