@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 import pytest
 from sqlalchemy import delete, select
 
-from app.core.security import create_access_token
 from app.db.models import Checkin, StorySession as StorySessionRecord
 from app.db.models import Trip, TripStop, User
 from app.db.session import SessionLocal
@@ -76,8 +75,19 @@ def _action(
     )
 
 
-def _headers(user_id: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {create_access_token(user_id)}"}
+def _register_headers(client: TestClient, label: str) -> tuple[str, dict[str, str]]:
+    response = client.post(
+        "/api/v1/users/register",
+        json={
+            "email": f"{label}-{uuid4().hex[:12]}@test.local",
+            "password": "StoryPassword123!",
+            "name": label,
+            "language": "zh-CN",
+        },
+    )
+    assert response.status_code == 201, response.text
+    body = response.json()
+    return body["user_id"], {"Authorization": f"Bearer {body['token']}"}
 
 
 def _complete_workflow(story: dict, story_session: StorySession) -> None:
@@ -261,10 +271,8 @@ def test_old_content_session_is_rejected_instead_of_using_v4_nodes():
 def test_story_api_requires_owner_and_runs_complete_v4_workflow():
     client = TestClient(app)
     story = load_story(STORY_ID)
-    owner_id = f"story-owner-{uuid4().hex[:12]}"
-    other_id = f"story-other-{uuid4().hex[:12]}"
-    owner_headers = _headers(owner_id)
-    other_headers = _headers(other_id)
+    owner_id, owner_headers = _register_headers(client, "story-owner")
+    other_id, other_headers = _register_headers(client, "story-other")
     session_id = ""
     trip_id = ""
     try:
