@@ -1,6 +1,6 @@
-"""极简 JWT 鉴权：签发 / 校验访问令牌。
+"""极简 JWT 鉴权 + bcrypt 密码：签发 / 校验访问令牌 + 密码哈希。
 
-仅做 token 编解码（不碰数据库），DB 侧「当前用户」解析放 features/users，
+仅做 token 编解码和密码哈希（不碰数据库），DB 侧「当前用户」解析放 features/users，
 避免 core 反向依赖业务模块。密钥/算法/有效期来自 settings（.env）。
 """
 
@@ -11,8 +11,11 @@ from datetime import datetime, timedelta, timezone
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from passlib.context import CryptContext
 
 from app.core.config import settings
+
+_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Bearer 方案：auto_error=False 让依赖自行决定 401 时机与文案。
 _bearer_scheme = HTTPBearer(auto_error=False)
@@ -45,3 +48,13 @@ def require_user_id(
     if user_id is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid or expired token")
     return user_id
+
+
+def hash_password(password: str) -> str:
+    """Hash a plaintext password with bcrypt."""
+    return _pwd_context.hash(password)
+
+
+def verify_password(plain: str, hashed: str) -> bool:
+    """Verify a plaintext password against a bcrypt hash."""
+    return _pwd_context.verify(plain, hashed)

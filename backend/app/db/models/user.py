@@ -19,11 +19,29 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    # email：登录凭据之一（与 phone 二选一，迁移 20260725_03）
+    email: Mapped[str | None] = mapped_column(String(256), unique=True, nullable=True)
+    # phone：登录凭据之一（与 email 二选一，迁移 20260725_03）
+    phone: Mapped[str | None] = mapped_column(String(32), unique=True, nullable=True)
+    # password_hash：bcrypt 哈希（迁移 20260725_04）
+    password_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
     language: Mapped[str | None] = mapped_column(String(16), nullable=True)
     # name + preference：用户落库 + 极简登录新增（迁移 20260714_01）。
     # preference 存完整 Preference（JSON），避免逐字段映射；旧列保留向后兼容。
-    name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    # name 改为必填（迁移 20260725_01）。
+    name: Mapped[str] = mapped_column(String(128), nullable=False)
     preference: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # country：ISO 3166-1 alpha-2 国家码，用于个性化讲解（迁移 20260725_01）
+    country: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    # verification：邮箱/手机验证状态（迁移 20260725_02）
+    #   unverified / pending / verified — 默认 unverified
+    verification_status: Mapped[str] = mapped_column(
+        String(16), default="unverified", server_default="unverified", nullable=False
+    )
+    verification_code: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    verification_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     travel_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
     duration_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     interests: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)

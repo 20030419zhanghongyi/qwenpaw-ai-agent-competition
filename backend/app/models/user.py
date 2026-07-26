@@ -1,6 +1,6 @@
 """用户与偏好数据模型。
 
-遵循「最小必要」原则（见 AI 伦理文档）：注册只采集登录标识 + 语言，
+遵循「最小必要」原则（见 AI 伦理文档）：注册采集 email + 昵称 + 国家 + 语言，
 其余均为可选偏好，用于路线配对。
 """
 
@@ -55,6 +55,10 @@ class Preference(BaseModel):
 
 class UserProfile(BaseModel):
     user_id: str
-    name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    name: str
     language: str = "zh-CN"
+    country: str | None = None
+    verification_status: str = "unverified"  # unverified | pending | verified
     preference: Preference | None = None

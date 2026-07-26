@@ -2,29 +2,42 @@ import type { LanguageCode, Preference } from "@/types";
 
 export interface UserProfile {
   user_id: string;
-  name: string | null;
+  email: string | null;
+  phone: string | null;
+  name: string;
   language: LanguageCode;
+  country: string | null;
+  verification_status: "unverified" | "pending" | "verified";
   preference: Preference | null;
 }
 
 export interface RegisterInput {
-  user_id?: string;
-  name?: string;
+  email?: string | null;
+  phone?: string | null;
+  password: string;
+  name: string;
   language: LanguageCode;
+  country?: string | null;
 }
 
 export interface LoginInput {
-  user_id: string;
+  email?: string | null;
+  phone?: string | null;
+  password: string;
 }
 
 export interface AuthResponse {
   user_id: string;
+  email: string | null;
+  phone: string | null;
   token: string;
   user: UserProfile;
 }
 
 export interface LoginResponse {
   user_id: string;
+  email: string | null;
+  phone: string | null;
   token: string;
 }
 
