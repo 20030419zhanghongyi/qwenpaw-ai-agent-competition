@@ -51,6 +51,11 @@ export function CompleteFlowerReveal() {
           />
         </div>
       </div>
+      {import.meta.env.DEV ? (
+        <p className="mt-2 break-words font-mono text-[10px] leading-4 text-ink-soft/75">
+          花瓣素材：{PETAL_ASSET_IDS.join(" · ")}
+        </p>
+      ) : null}
       <p className="mt-2 text-sm leading-6 text-sage-deep">
         五瓣已经集齐，五张密笺迎光组成完整市花。
       </p>

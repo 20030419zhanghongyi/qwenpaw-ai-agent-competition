@@ -45,12 +45,17 @@ const EXPECTED_NODES = [
   { id: "chapter_mount_fortress", name: "大炮台" },
 ];
 const SESSION_STORAGE_KEY = "macau-storywalk-story-session-id";
+const AUTH_TOKEN_KEY = "macau-storywalk-auth-token";
+const INVITATION_STORAGE_PREFIX = "macau-storywalk-invitation-";
 const DEFAULT_BASE_URL = "http://localhost:5173";
 const DEFAULT_TIMEOUT_MS = 20_000;
 const POLL_INTERVAL_MS = 150;
 
 const email = requiredEnv("STORY_TEST_EMAIL");
 const password = requiredEnv("STORY_TEST_PASSWORD");
+const [emailLocalPart, emailDomain = "example.test"] = email.split("@");
+const switchedAccountEmail =
+  `${emailLocalPart}.switch.${Date.now()}@${emailDomain}`;
 const screenshotDir = path.resolve(requiredEnv("STORY_SCREENSHOT_DIR"));
 const baseUrl = normalizeBaseUrl(
   process.env.STORY_BASE_URL?.trim() || DEFAULT_BASE_URL,
@@ -1220,6 +1225,26 @@ async function runStoryFlow() {
     await navigate(`${baseUrl}${coverPath}`);
   } else {
     await navigate(`${baseUrl}/preferences`);
+    await evaluate(`(() => {
+      const record = JSON.stringify({
+        storyId: ${JSON.stringify(STORY_ID)},
+        status: "accepted",
+        timestamp: Date.now(),
+      });
+      sessionStorage.setItem(
+        ${JSON.stringify(`${INVITATION_STORAGE_PREFIX}${STORY_ID}`)},
+        record
+      );
+      sessionStorage.setItem(
+        ${JSON.stringify(`${INVITATION_STORAGE_PREFIX}user-previous-account-${STORY_ID}`)},
+        JSON.stringify({
+          scope: "user-previous-account",
+          storyId: ${JSON.stringify(STORY_ID)},
+          status: "accepted",
+          timestamp: Date.now(),
+        })
+      );
+    })()`);
     await waitAndClick(
       ["跳过对话，直接微调偏好 →", "直接微调偏好", "跳过"],
       "偏好微调入口",
@@ -1300,13 +1325,37 @@ async function runStoryFlow() {
   if (!sessionId || sessionId === STORY_ID) {
     throw new Error(`故事 URL 未使用真实 session_id：${sessionUrl.pathname}`);
   }
-  const storedSessionId = await evaluate(
-    `localStorage.getItem(${JSON.stringify(SESSION_STORAGE_KEY)})`,
-  );
-  if (storedSessionId !== sessionId) {
+  const persistedSession = await evaluate(`(() => {
+    const token = localStorage.getItem(${JSON.stringify(AUTH_TOKEN_KEY)});
+    if (!token) return { userId: null, storedSessionId: null, legacy: null };
+    try {
+      const encoded = token.split(".")[1]
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+      const padded = encoded.padEnd(
+        encoded.length + ((4 - encoded.length % 4) % 4),
+        "="
+      );
+      const userId = JSON.parse(atob(padded)).sub;
+      const key = ${JSON.stringify(SESSION_STORAGE_KEY)} + ":" +
+        encodeURIComponent(userId);
+      return {
+        userId,
+        storedSessionId: localStorage.getItem(key),
+        legacy: localStorage.getItem(${JSON.stringify(SESSION_STORAGE_KEY)}),
+      };
+    } catch {
+      return { userId: null, storedSessionId: null, legacy: null };
+    }
+  })()`);
+  if (persistedSession?.storedSessionId !== sessionId) {
     throw new Error(
-      `URL session_id（${sessionId}）与前端持久化值（${storedSessionId}）不一致`,
+      `URL session_id（${sessionId}）与账号级持久化值` +
+        `（${persistedSession?.storedSessionId ?? "null"}）不一致`,
     );
+  }
+  if (persistedSession.legacy !== null) {
+    throw new Error("仍写入了未区分账号的旧故事 session_id");
   }
   log(`真实会话已创建或恢复：${sessionId}`);
 
@@ -1695,6 +1744,77 @@ async function runStoryFlow() {
     await screenshot(`13-completed-${width}px`);
   }
 
+  await setMobileViewport(390, 844);
+  await navigate(`${baseUrl}/profile`);
+  await waitAndClick(["退出登录", "登出"], "退出当前测试账号");
+  await waitFor(
+    "退出后清理认证与邀请会话",
+    async () =>
+      evaluate(`(() => {
+        const invitationKeys = Object.keys(sessionStorage).filter((key) =>
+          key.startsWith(${JSON.stringify(INVITATION_STORAGE_PREFIX)})
+        );
+        return (
+          localStorage.getItem(${JSON.stringify(AUTH_TOKEN_KEY)}) === null &&
+          invitationKeys.length === 0 &&
+          Boolean(document.querySelector('a[href^="/auth"]'))
+        );
+      })()`),
+  );
+
+  await navigate(
+    `${baseUrl}/auth?mode=register&returnTo=${encodeURIComponent("/preferences")}`,
+  );
+  await waitFor(
+    "切换账号注册表单",
+    () => evaluate("Boolean(document.querySelector(\"input[type='email']\"))"),
+  );
+  await fillInput(
+    "input[type='email']",
+    switchedAccountEmail,
+    "切换账号注册邮箱",
+  );
+  await fillInput(
+    "input[type='password']",
+    password,
+    "切换账号注册密码",
+  );
+  await fillInput(
+    "input[autocomplete='name']",
+    "Story Account Switch",
+    "切换账号昵称",
+  );
+  await submitFirstForm();
+  await waitForPath(
+    (url) => url.pathname === "/preferences",
+    "新账号注册后返回偏好页",
+  );
+  await waitAndClick(
+    ["跳过对话，直接微调偏好 →", "直接微调偏好", "跳过"],
+    "新账号偏好微调入口",
+  );
+  await waitAndClick(["历史"], "新账号历史兴趣标签");
+  await waitFor(
+    "新账号收到独立故事邀请",
+    async () =>
+      normalizeText(await bodyText()).includes(
+        "跟着两张旧地图，重新认识澳门",
+      ),
+  );
+  await screenshot("14-invitation-after-account-switch");
+  await waitAndClick(["进入《莲城双图》"], "新账号故事邀请入口");
+  await waitForPath(
+    (url) => url.pathname === coverPath,
+    "新账号进入故事封面",
+  );
+  await waitFor("新账号不继承旧故事进度", async () => {
+    const text = normalizeText(await bodyText());
+    if (text.includes("继续上次进度") || text.includes("查看完成记录")) {
+      throw new Error("新账号继承了旧账号的故事进度");
+    }
+    return text.includes("开始故事") || text.includes("开始探索");
+  });
+
   if (browserErrors.length > 0) {
     throw new Error(
       `浏览器记录到 ${browserErrors.length} 个错误：\n${browserErrors.join("\n")}`,
@@ -1704,7 +1824,7 @@ async function runStoryFlow() {
     `PASS：${
       skipPreferenceEntry ? "已按配置跳过偏好邀请，" : "偏好邀请、"
     }登录回跳、真实会话、序章 Agent、单气泡对话、图片放大、` +
-      "第五瓣动画、地图图层、六站跳关、今日补记及刷新恢复全部通过",
+      "第五瓣动画、地图图层、六站跳关、今日补记、刷新恢复及账号隔离全部通过",
   );
 }
 

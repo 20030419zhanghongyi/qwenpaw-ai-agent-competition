@@ -10,9 +10,6 @@ const PETAL_ASSET_IDS = new Set([
 ]);
 
 function placeholderImage(assetId: string): string {
-  if (assetId.startsWith("V4-CHAR-")) {
-    return "/story/v4/_placeholder-portrait.svg";
-  }
   if (PETAL_ASSET_IDS.has(assetId)) {
     return "/story/v4/_placeholder-petal.svg";
   }
@@ -42,12 +39,9 @@ export function StoryImage({
   const item = resolveStoryAsset(assetId);
   const ratio = item?.aspectRatio ?? "4/5";
   const label = alt ?? item?.fallbackLabel ?? "故事图片";
+  const fallbackLabel = item?.fallbackLabel ?? "图片素材";
   const isInteractive = Boolean(onOpen && item);
-  const showFallbackLabel =
-    failed &&
-    item &&
-    !assetId.startsWith("V4-CHAR-") &&
-    !PETAL_ASSET_IDS.has(assetId);
+  const showFallbackLabel = failed && item;
   const Wrapper = isInteractive ? "button" : "div";
 
   return (
@@ -75,24 +69,32 @@ export function StoryImage({
           style={{ objectPosition: item.objectPosition }}
         />
       ) : (
-        <span className="flex size-full flex-col items-center justify-center gap-2 bg-[radial-gradient(circle_at_center,var(--color-line)_1px,transparent_1px)] bg-[length:14px_14px] px-5 text-center text-sm text-ink-soft">
-          <span aria-hidden className="text-2xl opacity-60">◇</span>
-          <span>{label}</span>
-          {import.meta.env.DEV && (
-            <span className="font-mono text-[11px] text-ink-soft/70">
+        <span className="flex size-full flex-col items-center justify-center bg-[url('/story/v4/_placeholder.svg')] bg-cover px-5 text-center text-sm text-ink-soft">
+          <span>
+            {import.meta.env.DEV ? "未登记的图片素材" : "图片素材暂未提供"}
+          </span>
+          {import.meta.env.DEV ? (
+            <span className="mt-1 font-mono text-[11px] text-ink-soft/70">
               {assetId}
             </span>
-          )}
+          ) : null}
         </span>
       )}
       {showFallbackLabel && (
-        <span className="pointer-events-none absolute inset-x-3 bottom-3 rounded-xl border border-paper/70 bg-ink/70 px-3 py-2 text-center text-[13px] leading-5 text-paper">
-          {label}
-          {import.meta.env.DEV && (
-            <span className="ml-1 font-mono text-[11px] text-paper/70">
-              · {assetId}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-2 bottom-2 rounded-lg border border-paper/70 bg-ink/75 px-2 py-1.5 text-center text-[11px] leading-4 text-paper"
+        >
+          <span className="block">
+            {import.meta.env.DEV
+              ? fallbackLabel
+              : `${fallbackLabel}暂未提供`}
+          </span>
+          {import.meta.env.DEV ? (
+            <span className="block font-mono text-[10px] text-paper/75">
+              {assetId}
             </span>
-          )}
+          ) : null}
         </span>
       )}
       {isInteractive && (

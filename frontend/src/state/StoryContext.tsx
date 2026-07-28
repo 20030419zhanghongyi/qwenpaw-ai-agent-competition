@@ -28,18 +28,27 @@ import type {
 
 export const STORY_SESSION_STORAGE_KEY = "macau-storywalk-story-session-id";
 
-function readSessionId(): string | null {
+function storySessionStorageKey(userId: string): string {
+  return `${STORY_SESSION_STORAGE_KEY}:${encodeURIComponent(userId)}`;
+}
+
+function readSessionId(userId: string | null): string | null {
+  if (!userId) return null;
   try {
-    return localStorage.getItem(STORY_SESSION_STORAGE_KEY);
+    return localStorage.getItem(storySessionStorageKey(userId));
   } catch {
     return null;
   }
 }
 
-function writeSessionId(id: string | null): void {
+function writeSessionId(userId: string | null, id: string | null): void {
+  if (!userId) return;
   try {
-    if (id) localStorage.setItem(STORY_SESSION_STORAGE_KEY, id);
-    else localStorage.removeItem(STORY_SESSION_STORAGE_KEY);
+    const key = storySessionStorageKey(userId);
+    if (id) localStorage.setItem(key, id);
+    else localStorage.removeItem(key);
+    // Never reuse the legacy account-agnostic session key.
+    localStorage.removeItem(STORY_SESSION_STORAGE_KEY);
   } catch {
     // The active in-memory session remains usable when storage is unavailable.
   }
@@ -98,7 +107,33 @@ export interface StoryContextValue {
 const StoryContext = createContext<StoryContextValue | null>(null);
 
 export function StoryProvider({ children }: { children: ReactNode }) {
-  const { token } = useAuth();
+  const { token, userId } = useAuth();
+  const identityKey = userId
+    ? `user:${userId}`
+    : token
+      ? "restoring-user"
+      : "guest";
+
+  return (
+    <StoryStateProvider
+      key={identityKey}
+      token={token}
+      userId={userId}
+    >
+      {children}
+    </StoryStateProvider>
+  );
+}
+
+function StoryStateProvider({
+  children,
+  token,
+  userId,
+}: {
+  children: ReactNode;
+  token: string | null;
+  userId: string | null;
+}) {
   const [story, setStory] = useState<StoryOverview | null>(null);
   const [session, setSessionState] = useState<StorySessionResponse | null>(null);
   const [latestRewards, setLatestRewards] = useState<StoryReward[]>([]);
@@ -158,10 +193,12 @@ export function StoryProvider({ children }: { children: ReactNode }) {
 
   const discardPersistedSessionIfMatching = useCallback(
     (sessionId: string) => {
-      if (readSessionId() === sessionId) writeSessionId(null);
+      if (readSessionId(userId) === sessionId) {
+        writeSessionId(userId, null);
+      }
       if (sessionRef.current?.session_id === sessionId) setCurrentSession(null);
     },
-    [setCurrentSession],
+    [setCurrentSession, userId],
   );
 
   const loadStory = useCallback(
@@ -193,7 +230,7 @@ export function StoryProvider({ children }: { children: ReactNode }) {
           const authToken = requireToken();
           const startedSession = await startStorySession(storyId, authToken);
           setCurrentSession(startedSession);
-          writeSessionId(startedSession.session_id);
+          writeSessionId(userId, startedSession.session_id);
           setLatestRewards([]);
           setSubmittedChapterSnapshot(null);
           setLastActionResult(null);
@@ -224,6 +261,7 @@ export function StoryProvider({ children }: { children: ReactNode }) {
       recordError,
       requireToken,
       setCurrentSession,
+      userId,
     ],
   );
 
@@ -253,7 +291,7 @@ export function StoryProvider({ children }: { children: ReactNode }) {
           const isDifferentSession =
             sessionRef.current?.session_id !== restoredSession.session_id;
           setCurrentSession(restoredSession);
-          writeSessionId(restoredSession.session_id);
+          writeSessionId(userId, restoredSession.session_id);
           if (isDifferentSession) {
             setLatestRewards([]);
             setSubmittedChapterSnapshot(null);
@@ -289,6 +327,7 @@ export function StoryProvider({ children }: { children: ReactNode }) {
       recordError,
       requireToken,
       setCurrentSession,
+      userId,
     ],
   );
 
@@ -358,7 +397,7 @@ export function StoryProvider({ children }: { children: ReactNode }) {
           authToken,
         );
         setCurrentSession(response.session);
-        writeSessionId(response.session.session_id);
+        writeSessionId(userId, response.session.session_id);
         setLastActionResult(response);
         setLatestRewards(response.new_rewards);
         return response;
@@ -387,6 +426,7 @@ export function StoryProvider({ children }: { children: ReactNode }) {
       recordError,
       requireToken,
       setCurrentSession,
+      userId,
     ],
   );
 
@@ -399,8 +439,8 @@ export function StoryProvider({ children }: { children: ReactNode }) {
     setLastActionResult(null);
     setError(null);
     setApiError(null);
-    writeSessionId(null);
-  }, [setCurrentSession]);
+    writeSessionId(userId, null);
+  }, [setCurrentSession, userId]);
 
   const clearLatestRewards = useCallback(() => setLatestRewards([]), []);
 
@@ -465,13 +505,15 @@ export function useStory(): StoryContextValue {
 /** URL session IDs always win over a previously persisted fallback ID. */
 export function resolveStorySessionId(
   urlSessionId?: string | null,
+  userId: string | null = null,
 ): string | null {
   const normalizedUrlId = urlSessionId?.trim();
-  return normalizedUrlId || readSessionId();
+  return normalizedUrlId || readSessionId(userId);
 }
 
 export function useStoryRestore(urlSessionId?: string | null) {
+  const { userId } = useAuth();
   return {
-    sessionId: resolveStorySessionId(urlSessionId),
+    sessionId: resolveStorySessionId(urlSessionId, userId),
   };
 }

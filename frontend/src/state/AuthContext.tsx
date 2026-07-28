@@ -14,6 +14,10 @@ import {
   registerUser,
   saveUserPreference,
 } from "@/api/auth";
+import {
+  adoptGuestInvitationState,
+  clearInvitationSession,
+} from "@/story-discovery/invitationState";
 import type { Preference } from "@/types";
 import type { LoginInput, RegisterInput, UserProfile } from "@/types/auth";
 
@@ -65,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   const logout = useCallback(() => {
+    clearInvitationSession();
     setToken(null);
     setUser(null);
     setError(null);
@@ -111,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const response = await registerUser(input);
+      adoptGuestInvitationState(response.user.user_id);
       writeToken(response.token);
       setToken(response.token);
       setUser(response.user);
@@ -127,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await loginUser(input);
       const { user: currentUser } = await getCurrentUser(response.token);
       if (!currentUser) throw new Error("用户资料不存在");
+      adoptGuestInvitationState(currentUser.user_id);
       writeToken(response.token);
       setToken(response.token);
       setUser(currentUser);

@@ -18,6 +18,7 @@ import {
   type WalkTag,
 } from "@/lib/preference";
 import { PORT_OPTIONS, portLabel } from "@/lib/ports";
+import { useAuth } from "@/state/AuthContext";
 import { useWalk } from "@/state/WalkContext";
 import type { Preference } from "@/types";
 import { matchStory } from "@/story-discovery/storyMatcher";
@@ -75,6 +76,7 @@ const WALK_OPTIONS: Array<{
 
 export function PreferencePage() {
   const navigate = useNavigate();
+  const { userId, isRestoring: authRestoring } = useAuth();
   const { language, saveMatch } = useWalk();
   const [duration, setDuration] = useState<PreferenceFormState["duration"]>("half");
   const [tripDays, setTripDays] = useState(TRIP_DAYS_DEFAULT);
@@ -140,19 +142,23 @@ export function PreferencePage() {
   }, [flash]);
 
   useEffect(() => {
+    if (authRestoring) {
+      setStoryInvitation(null);
+      return;
+    }
     const match = matchStory({
       duration,
       interests,
       themes,
       walkTags,
     });
-    setStoryInvitation((current) => {
-      if (match.matched) {
-        return hasActiveInvitationSuppression(match.storyId) ? null : match;
-      }
-      return current;
-    });
-  }, [duration, interests, themes, walkTags]);
+    setStoryInvitation(
+      match.matched &&
+        !hasActiveInvitationSuppression(match.storyId, userId)
+        ? match
+        : null,
+    );
+  }, [authRestoring, duration, interests, themes, userId, walkTags]);
 
   useEffect(() => {
     if (!showAdjusters) return;
@@ -256,7 +262,9 @@ export function PreferencePage() {
         walkTags: snapshot.walkTags,
       };
       const storyMatch = matchStory(discoveryPref);
-      const suppressed = hasActiveInvitationSuppression(storyMatch.storyId);
+      const suppressed =
+        storyMatch.matched &&
+        hasActiveInvitationSuppression(storyMatch.storyId, userId);
 
       if (storyMatch.matched && !suppressed) {
         setStoryInvitation(storyMatch);
@@ -354,14 +362,14 @@ export function PreferencePage() {
     if (!storyInvitation) return;
 
     const coverPath = `/stories/${storyInvitation.storyId}`;
-    markInvitationAccepted(storyInvitation.storyId);
+    markInvitationAccepted(storyInvitation.storyId, userId);
     setStoryInvitation(null);
     navigate(coverPath);
   };
 
   const handleStoryDecline = () => {
     if (!storyInvitation) return;
-    markInvitationDeclined(storyInvitation.storyId);
+    markInvitationDeclined(storyInvitation.storyId, userId);
     setStoryInvitation(null);
   };
 
