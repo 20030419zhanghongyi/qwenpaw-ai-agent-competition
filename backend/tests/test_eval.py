@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from app.agents.photo_agent import PhotoRecognition
 from app.eval import scoring
 from app.eval.runner import run_photo_case
@@ -52,14 +50,12 @@ def test_score_photo_negative_penalizes_hard_guess():
     }
 
 
-def test_run_photo_case_hides_ground_truth_filename(monkeypatch):
-    seen_path: Path | None = None
+def test_run_photo_case_passes_image_bytes_to_agent(monkeypatch):
+    seen_bytes: bytes | None = None
 
-    def fake_recognize(image_path: str, *, language: str):
-        nonlocal seen_path
-        seen_path = Path(image_path)
-        assert seen_path.is_file()
-        assert seen_path.name != "style_reference_gantt.jpg"
+    def fake_recognize(image_bytes: bytes, *, language: str):
+        nonlocal seen_bytes
+        seen_bytes = image_bytes
         assert language == "zh-CN"
         return PhotoRecognition(description="项目甘特图", candidate_poi=None, confidence=0.0)
 
@@ -70,7 +66,8 @@ def test_run_photo_case_hides_ground_truth_filename(monkeypatch):
 
     assert result["source"] == "agent"
     assert result["candidate_poi"] is None
-    assert seen_path is not None and not seen_path.exists()
+    # 图片以原始字节传入 photo_agent；样本文件名不进入 QwenPaw（上传时由 photo_agent 用随机名）
+    assert seen_bytes is not None and len(seen_bytes) > 0
 
 
 def test_aggregate_includes_photo_category():

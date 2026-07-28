@@ -13,9 +13,16 @@ from app.core.config import settings
 
 logger = logging.getLogger("macau_storywalk.tts")
 
-# Qwen3 TTS system voices: Cherry covers Mandarin/English/Portuguese;
-# Rocky is the configured Cantonese voice.
-VOICE_BY_LANGUAGE = {"zh-CN": "Cherry", "yue": "Rocky", "en": "Cherry", "pt": "Cherry"}
+# Qwen3 TTS system voices: Cherry covers Mandarin/English/Portuguese.
+# The product's Traditional Chinese mode is the Macau-facing Cantonese narration
+# mode, so it must be accepted by the public UI contract as well as ``yue``.
+VOICE_BY_LANGUAGE = {
+    "zh-CN": "Cherry",
+    "zh-TW": "Rocky",
+    "yue": "Rocky",
+    "en": "Cherry",
+    "pt": "Cherry",
+}
 
 
 class TTSUnavailableError(RuntimeError):

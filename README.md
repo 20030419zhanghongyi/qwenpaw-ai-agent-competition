@@ -22,10 +22,10 @@ content review, and image generation.
 
 ## Quick Start
 
-This section and the runtime-asset automation scripts below use Windows
-PowerShell. macOS/Linux users can install QwenPaw with the Bash commands in
-"Download and Initialize QwenPaw." To run the PowerShell scripts unchanged,
-install PowerShell 7 and run them in `pwsh`; do not mix Bash syntax into them.
+Windows PowerShell instructions remain below, alongside native macOS/zsh
+commands. After installing and initializing QwenPaw, macOS users can run
+`bash scripts/configure_qwenpaw_macos.sh` to configure the project's Skills,
+Agents, ethics baseline, and Qwen-Image Plugin without installing PowerShell 7.
 
 ### 1. Install the Prerequisites
 
@@ -45,6 +45,16 @@ npm --version
 py --version
 ```
 
+macOS/zsh:
+
+```zsh
+git --version
+docker compose version
+node --version
+npm --version
+python3 --version
+```
+
 ### 2. Clone the Repository and Prepare Environment Variables
 
 ```powershell
@@ -52,6 +62,15 @@ git clone https://github.com/20030419zhanghongyi/qwenpaw-ai-agent-competition.gi
 cd qwenpaw-ai-agent-competition
 Copy-Item .env.example .env
 notepad .env
+```
+
+macOS/zsh:
+
+```zsh
+git clone https://github.com/20030419zhanghongyi/qwenpaw-ai-agent-competition.git
+cd qwenpaw-ai-agent-competition
+cp .env.example .env
+open -e .env
 ```
 
 At minimum, set `DASHSCOPE_API_KEY`, `AMAP_WEB_SERVICE_KEY`,
@@ -64,6 +83,17 @@ field.
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip qwenpaw
+qwenpaw --version
+qwenpaw init
+qwenpaw models config
+```
+
+macOS/zsh:
+
+```zsh
+python3 -m venv .venv
+source .venv/bin/activate
 python -m pip install --upgrade pip qwenpaw
 qwenpaw --version
 qwenpaw init
@@ -109,6 +139,32 @@ Open:
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8000/api/v1/health
 Invoke-RestMethod http://127.0.0.1:8088/api/version
+```
+
+Use three macOS/zsh terminals:
+
+```zsh
+# Terminal A: QwenPaw
+source .venv/bin/activate
+qwenpaw app
+```
+
+```zsh
+# Terminal B: backend and database
+docker compose up -d --build
+docker compose ps
+```
+
+```zsh
+# Terminal C: frontend
+cd frontend
+npm install
+npm run dev
+```
+
+```zsh
+curl -fsS http://127.0.0.1:8000/api/v1/health
+curl -fsS http://127.0.0.1:8088/api/version
 ```
 
 If the Agents have not been configured yet, route and related endpoints still
@@ -215,8 +271,8 @@ official pages:
 ## Configure QwenPaw Runtime Assets
 
 The following is a one-time setup on a new machine. Keep `qwenpaw app` running
-in terminal A, open another PowerShell terminal, `cd` to the repository root,
-and run `.\.venv\Scripts\Activate.ps1` again. Complete `qwenpaw init` and
+in terminal A, open another terminal at the repository root, and activate the
+same QwenPaw virtual environment. Complete `qwenpaw init` and
 `qwenpaw models config` before running this section.
 
 All PowerShell snippets use one base-URL variable. A default installation uses
@@ -231,6 +287,24 @@ Invoke-RestMethod "$qwenpawBaseUrl/api/version"
 The following blocks are intended to run sequentially in the same PowerShell
 session. If you open a new terminal, set `$qwenpawBaseUrl` again first.
 
+#### macOS/zsh one-command setup
+
+macOS users do not need to translate each PowerShell block below. With
+`qwenpaw app` still running, execute:
+
+```zsh
+cd /path/to/qwenpaw-ai-agent-competition
+source .venv/bin/activate
+bash scripts/configure_qwenpaw_macos.sh
+```
+
+The script validates and imports local Skills, creates only missing project
+Agents, injects the shared ethics baseline, installs the Qwen-Image Plugin, and
+configures/enables its two image tools for `scene` when the root `.env`
+contains `DASHSCOPE_API_KEY`. It never prints the key. Without a key, it leaves
+the plugin installed while keeping the image tools unconfigured and disabled.
+Set `QWENPAW_BASE_URL` before the command to override the default endpoint.
+
 ### 1. Import All Local Skills
 
 The project contains six business Skills and four ethics Skills:
@@ -242,7 +316,8 @@ The project contains six business Skills and four ethics Skills:
 | `preference-guide` | Multi-turn route-preference completion | `pref-guide` |
 | `macau-guide` | Evidence-grounded cultural commentary | `guide` |
 | `photo-recognize` | Image descriptions and POI identification | `photo` |
-| `postcard-scene` | Postcard-scene constraints | `scene` |
+| `postcard-scene` | SVG postcard-scene constraints | `scene` |
+| `qwen-image-postcard` | Real travel-memory images through Qwen-Image | `scene` |
 | `fairness-gate` | Preference fairness checks | `intent` |
 | `source-attribution` | Source and confidence attribution | `guide`, `photo` |
 | `anti-sycophancy` | Avoid agreement-seeking and unsupported assertions | `guide` |
@@ -271,6 +346,7 @@ $skillSources = @(
   "skills\macau-guide",
   "skills\photo-recognize",
   "skills\postcard-scene",
+  "skills\qwen-image-postcard",
   "ethics\qwenpaw-skills\fairness-gate",
   "ethics\qwenpaw-skills\source-attribution",
   "ethics\qwenpaw-skills\anti-sycophancy",
@@ -336,7 +412,8 @@ Invoke-QwenPawChecked agents create --agent-id photo --name "拍照识别" --lan
   --provider-id $provider --model-id $model --skill photo-recognize `
   --skill source-attribution
 Invoke-QwenPawChecked agents create --agent-id scene --name "明信片场景" --language zh `
-  --provider-id $provider --model-id $model --skill postcard-scene
+  --provider-id $provider --model-id $model --skill postcard-scene `
+  --skill qwen-image-postcard
 Invoke-QwenPawChecked agents create --agent-id reviewer --name "独立审核" --language zh `
   --provider-id $provider --model-id $model --skill content-safety-review
 
@@ -518,7 +595,7 @@ $expectedSkills = [ordered]@{
   "pref-guide" = @("preference-guide")
   guide = @("macau-guide", "source-attribution", "anti-sycophancy")
   photo = @("photo-recognize", "source-attribution")
-  scene = @("postcard-scene")
+  scene = @("postcard-scene", "qwen-image-postcard")
   reviewer = @("content-safety-review")
 }
 

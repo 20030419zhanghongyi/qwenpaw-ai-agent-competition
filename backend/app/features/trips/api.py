@@ -6,6 +6,7 @@ from app.api.contracts import NOT_FOUND_RESPONSE, UNPROCESSABLE_RESPONSE
 
 from .models import (
     CheckinRequest,
+    LocationCheckinRequest,
     TripCreateRequest,
     TripProgressResponse,
     TripWithProgressResponse,
@@ -13,6 +14,7 @@ from .models import (
 from .service import (
     InvalidRouteError,
     PoiNotInTripError,
+    PoiTooFarError,
     RouteNotFoundError,
     TripNotFoundError,
     trip_service,
@@ -25,7 +27,7 @@ user_router = APIRouter(prefix="/api/v1/users", tags=["trips"])
 def _raise_http_error(exc: Exception) -> None:
     if isinstance(exc, (TripNotFoundError, RouteNotFoundError)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    if isinstance(exc, (InvalidRouteError, PoiNotInTripError)):
+    if isinstance(exc, (InvalidRouteError, PoiNotInTripError, PoiTooFarError)):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(exc),
@@ -89,6 +91,28 @@ def check_in(trip_id: str, request: CheckinRequest) -> TripWithProgressResponse:
     try:
         return trip_service.check_in(trip_id, request.poi_id)
     except (TripNotFoundError, PoiNotInTripError) as exc:
+        _raise_http_error(exc)
+
+
+@router.post(
+    "/{trip_id}/location-checkins",
+    response_model=TripWithProgressResponse,
+    summary="Check in after a current GPS proximity check",
+    responses={**NOT_FOUND_RESPONSE, **UNPROCESSABLE_RESPONSE},
+)
+def check_in_at_location(
+    trip_id: str, request: LocationCheckinRequest
+) -> TripWithProgressResponse:
+    try:
+        return trip_service.check_in_at_location(
+            trip_id,
+            request.poi_id,
+            longitude=request.longitude,
+            latitude=request.latitude,
+            radius_m=request.radius_m,
+            accuracy_m=request.accuracy_m,
+        )
+    except (TripNotFoundError, PoiNotInTripError, PoiTooFarError) as exc:
         _raise_http_error(exc)
 
 
