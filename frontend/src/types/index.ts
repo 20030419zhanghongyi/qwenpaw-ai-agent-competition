@@ -57,6 +57,13 @@ export interface MatchResult {
   candidate_pois: Array<Record<string, unknown>>;
   applied_constraints: string[];
   explanation: MatchExplanation;
+  live_context?: {
+    travel_date?: string;
+    notes?: string[];
+    weather?: Record<string, unknown>;
+    events?: Record<string, unknown>;
+    crowd_signal?: string;
+  };
 }
 
 export interface RouteMatchResponse {

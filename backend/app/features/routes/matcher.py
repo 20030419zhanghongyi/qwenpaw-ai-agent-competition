@@ -13,6 +13,7 @@ from app.features.pois.repository import canonical_poi_id
 
 from .candidate_selector import build_candidate_pool
 from .explain import build_explanation
+from .live_context import get_live_route_context
 from .port_events import event_constraint_notes, score_template_for_entry_port
 from .route_constructor import construct_route
 from .route_research import research_route_tips
@@ -293,12 +294,15 @@ def _finalize_match(
     candidate_pois: list[dict],
     research_tips: list[str],
     pref: Preference,
+    live_context: dict | None = None,
 ) -> dict:
     event_notes = event_constraint_notes(pref)
     if event_notes:
         applied_constraints = [*applied_constraints, *event_notes]
     if research_tips:
         applied_constraints = [*applied_constraints, *research_tips]
+    resolved_live_context = live_context or get_live_route_context(pref.travel_date)
+    applied_constraints = [*applied_constraints, *resolved_live_context.get("notes", [])]
     reasons = list(dict.fromkeys([*reasons, *applied_constraints]))
     applied_constraints = list(dict.fromkeys(applied_constraints))
     explanation = build_explanation(
@@ -315,10 +319,11 @@ def _finalize_match(
         "candidate_pois": candidate_pois,
         "applied_constraints": applied_constraints,
         "explanation": explanation,
+        "live_context": resolved_live_context,
     }
 
 
-def _match_theme_days(pref: Preference, research_tips: list[str]) -> list[dict]:
+def _match_theme_days(pref: Preference, research_tips: list[str], live_context: dict) -> list[dict]:
     """Primary path: one generated day per allocated theme (no preset ranking)."""
     specs = allocate_theme_days(pref)
     matches: list[dict] = []
@@ -346,6 +351,7 @@ def _match_theme_days(pref: Preference, research_tips: list[str]) -> list[dict]:
                 candidate_pois=candidate_pois,
                 research_tips=research_tips,
                 pref=pref,
+                live_context=live_context,
             )
         )
     if pref.duration == "multi-day" and len(matches) > 1:
@@ -356,7 +362,9 @@ def _match_theme_days(pref: Preference, research_tips: list[str]) -> list[dict]:
     return matches
 
 
-def _match_preset_templates(pref: Preference, top_k: int, research_tips: list[str]) -> list[dict]:
+def _match_preset_templates(
+    pref: Preference, top_k: int, research_tips: list[str], live_context: dict
+) -> list[dict]:
     """Fallback when themes/interests are empty: legacy template scoring."""
     weights = load_weights()
     poi_heat = {
@@ -383,6 +391,7 @@ def _match_preset_templates(pref: Preference, top_k: int, research_tips: list[st
             candidate_pois=candidate_pois,
             research_tips=research_tips,
             pref=pref,
+            live_context=live_context,
         )
         results.append((score, payload["reasons"], payload))
 
@@ -407,11 +416,12 @@ def match_routes(pref: Preference, top_k: int | None = None) -> list[dict]:
     """
     resolved_k = resolve_match_top_k(pref) if top_k is None else top_k
     research_tips = research_route_tips(pref)
+    live_context = get_live_route_context(pref.travel_date)
 
     if should_use_theme_days(pref):
         try:
-            return _match_theme_days(pref, research_tips)
+            return _match_theme_days(pref, research_tips, live_context)
         except Exception:  # noqa: BLE001
             # Fall through to legacy presets only if POI-pool matching blows up.
             pass
-    return _match_preset_templates(pref, resolved_k, research_tips)
+    return _match_preset_templates(pref, resolved_k, research_tips, live_context)
