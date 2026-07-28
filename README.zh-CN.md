@@ -20,9 +20,10 @@ QwenPaw 负责多轮偏好引导、需求理解、路线调整、文化讲解、
 
 ## Quick Start（新手快速开始）
 
-本节以及后文的运行资产自动化脚本以 Windows PowerShell 为准。macOS/Linux
-用户可使用“QwenPaw 下载与初始化”中的 Bash 命令完成安装；若要原样执行后文的
-PowerShell 脚本，请先安装 PowerShell 7 并在 `pwsh` 中运行，不要混用 Bash 语法。
+本节保留 Windows PowerShell 指引，同时提供原生 macOS/zsh 命令。macOS 用户可在
+完成“安装并初始化 QwenPaw”后运行
+`bash scripts/configure_qwenpaw_macos.sh`，一次完成项目 Skills、Agents、伦理基线
+和 Qwen-Image Plugin 的配置；不需要安装 PowerShell 7。
 
 ### 1. 安装基础工具
 
@@ -41,6 +42,16 @@ npm --version
 py --version
 ```
 
+macOS/zsh：
+
+```zsh
+git --version
+docker compose version
+node --version
+npm --version
+python3 --version
+```
+
 ### 2. 克隆项目并准备环境变量
 
 ```powershell
@@ -48,6 +59,15 @@ git clone https://github.com/20030419zhanghongyi/qwenpaw-ai-agent-competition.gi
 cd qwenpaw-ai-agent-competition
 Copy-Item .env.example .env
 notepad .env
+```
+
+macOS/zsh：
+
+```zsh
+git clone https://github.com/20030419zhanghongyi/qwenpaw-ai-agent-competition.git
+cd qwenpaw-ai-agent-competition
+cp .env.example .env
+open -e .env
 ```
 
 至少填写 `DASHSCOPE_API_KEY`、`AMAP_WEB_SERVICE_KEY`、
@@ -59,6 +79,17 @@ Git 忽略。完整字段说明见下方“配置要求”。
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip qwenpaw
+qwenpaw --version
+qwenpaw init
+qwenpaw models config
+```
+
+macOS/zsh：
+
+```zsh
+python3 -m venv .venv
+source .venv/bin/activate
 python -m pip install --upgrade pip qwenpaw
 qwenpaw --version
 qwenpaw init
@@ -103,6 +134,32 @@ npm run dev
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8000/api/v1/health
 Invoke-RestMethod http://127.0.0.1:8088/api/version
+```
+
+macOS/zsh 的三个终端分别运行：
+
+```zsh
+# 终端 A：QwenPaw
+source .venv/bin/activate
+qwenpaw app
+```
+
+```zsh
+# 终端 B：后端与数据库
+docker compose up -d --build
+docker compose ps
+```
+
+```zsh
+# 终端 C：前端
+cd frontend
+npm install
+npm run dev
+```
+
+```zsh
+curl -fsS http://127.0.0.1:8000/api/v1/health
+curl -fsS http://127.0.0.1:8088/api/version
 ```
 
 如果暂时没有配置 Agent，路线等接口仍会使用规则版或本地资源降级；完整 AI
@@ -201,9 +258,8 @@ qwenpaw app
 ## 配置 QwenPaw 运行资产
 
 以下是新机器上的一次性配置。保持终端 A 中的 `qwenpaw app` 运行，另开一个
-PowerShell 终端，`cd` 到仓库根目录并重新执行
-`.\.venv\Scripts\Activate.ps1`。先完成 `qwenpaw init` 和
-`qwenpaw models config`，再执行本节命令。
+终端，`cd` 到仓库根目录并激活同一个 QwenPaw 虚拟环境。先完成 `qwenpaw init`
+和 `qwenpaw models config`，再执行本节命令。
 以下 PowerShell 片段统一使用一个地址变量；默认安装使用 `8088`。若自行修改
 端口，请同步修改这里、项目 `.env`，以及 `compose.yml` 中的
 `host.docker.internal:8088`：
@@ -216,6 +272,24 @@ Invoke-RestMethod "$qwenpawBaseUrl/api/version"
 以下代码块默认在同一个 PowerShell 会话中依次执行；若打开新终端，请先重新设置
 `$qwenpawBaseUrl`。
 
+#### macOS/zsh 一次性配置
+
+macOS 用户不需要逐段转换下面的 PowerShell。保持 `qwenpaw app` 运行后，在新的
+zsh 终端执行：
+
+```zsh
+cd /path/to/qwenpaw-ai-agent-competition
+source .venv/bin/activate
+bash scripts/configure_qwenpaw_macos.sh
+```
+
+脚本会校验并导入本地 Skills，创建缺失的项目 Agents（已有 Agent 不会被删除），
+注入统一伦理基线，安装 Qwen-Image Plugin，并在根目录 `.env` 已配置
+`DASHSCOPE_API_KEY` 时为 `scene` 配置和启用两项图片工具。它不会在终端显示
+密钥；无 Key 时会保留插件已安装、工具未启用的状态。可用
+`QWENPAW_BASE_URL=http://127.0.0.1:8088 bash scripts/configure_qwenpaw_macos.sh`
+覆盖默认地址。
+
 ### 1. 导入全部本地 Skills
 
 本项目包含 6 个业务 Skill 和 4 个伦理 Skill：
@@ -227,7 +301,8 @@ Invoke-RestMethod "$qwenpawBaseUrl/api/version"
 | `preference-guide` | 多轮补充路线偏好 | `pref-guide` |
 | `macau-guide` | 有据文化讲解 | `guide` |
 | `photo-recognize` | 图片描述与 POI 判断 | `photo` |
-| `postcard-scene` | 明信片场景约束 | `scene` |
+| `postcard-scene` | SVG 明信片场景约束 | `scene` |
+| `qwen-image-postcard` | 调用 Qwen-Image 的真实旅行回忆图 | `scene` |
 | `fairness-gate` | 偏好公平性检查 | `intent` |
 | `source-attribution` | 来源和置信度标注 | `guide`、`photo` |
 | `anti-sycophancy` | 避免迎合与无依据断言 | `guide` |
@@ -256,6 +331,7 @@ $skillSources = @(
   "skills\macau-guide",
   "skills\photo-recognize",
   "skills\postcard-scene",
+  "skills\qwen-image-postcard",
   "ethics\qwenpaw-skills\fairness-gate",
   "ethics\qwenpaw-skills\source-attribution",
   "ethics\qwenpaw-skills\anti-sycophancy",
@@ -318,7 +394,8 @@ Invoke-QwenPawChecked agents create --agent-id photo --name "拍照识别" --lan
   --provider-id $provider --model-id $model --skill photo-recognize `
   --skill source-attribution
 Invoke-QwenPawChecked agents create --agent-id scene --name "明信片场景" --language zh `
-  --provider-id $provider --model-id $model --skill postcard-scene
+  --provider-id $provider --model-id $model --skill postcard-scene `
+  --skill qwen-image-postcard
 Invoke-QwenPawChecked agents create --agent-id reviewer --name "独立审核" --language zh `
   --provider-id $provider --model-id $model --skill content-safety-review
 
@@ -482,7 +559,7 @@ $expectedSkills = [ordered]@{
   "pref-guide" = @("preference-guide")
   guide = @("macau-guide", "source-attribution", "anti-sycophancy")
   photo = @("photo-recognize", "source-attribution")
-  scene = @("postcard-scene")
+  scene = @("postcard-scene", "qwen-image-postcard")
   reviewer = @("content-safety-review")
 }
 

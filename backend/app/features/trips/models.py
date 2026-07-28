@@ -46,6 +46,15 @@ class CheckinRequest(BaseModel):
     poi_id: str = Field(min_length=1)
 
 
+class LocationCheckinRequest(CheckinRequest):
+    """Coordinates are used once for verification and are never persisted."""
+
+    longitude: float = Field(ge=113.4, le=113.7)
+    latitude: float = Field(ge=22.0, le=22.3)
+    accuracy_m: float | None = Field(default=None, ge=0, le=500)
+    radius_m: float = Field(default=120, ge=30, le=250)
+
+
 class TripResponse(Trip):
     pass
 

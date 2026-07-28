@@ -19,8 +19,6 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import os
-import tempfile
 import time
 from pathlib import Path
 
@@ -79,7 +77,7 @@ def run_review_case(case: dict, client: TestClient) -> dict:
 
 
 def run_photo_case(case: dict) -> dict:
-    """调真实 photo agent，并用随机临时文件名避免从样本文件名泄漏答案。"""
+    """调真实 photo agent。原图读成字节传入；样本文件名不外泄（上传时由 photo_agent 用随机名）。"""
     repo_root = settings.repo_root.resolve()
     image_path = (repo_root / case["context"]["image_path"]).resolve()
     if not image_path.is_relative_to(repo_root):
@@ -87,17 +85,7 @@ def run_photo_case(case: dict) -> dict:
     if not image_path.is_file():
         raise FileNotFoundError(f"photo case 图片不存在：{image_path}")
 
-    temp_path = ""
-    with tempfile.NamedTemporaryFile(suffix=image_path.suffix.lower() or ".jpg", delete=False) as tmp:
-        tmp.write(image_path.read_bytes())
-        temp_path = tmp.name
-    try:
-        result = photo_agent.recognize(temp_path, language=case.get("language", "zh-CN"))
-    finally:
-        try:
-            os.unlink(temp_path)
-        except OSError:
-            pass
+    result = photo_agent.recognize(image_path.read_bytes(), language=case.get("language", "zh-CN"))
 
     if result is None:
         return {"description": "", "candidate_poi": None, "confidence": 0.0, "source": "error"}

@@ -1,6 +1,7 @@
 """Business rules for creating trips, checking in, and calculating progress."""
 
 from datetime import datetime, timezone
+from math import asin, cos, radians, sin, sqrt
 from uuid import uuid4
 
 from app.db.session import SessionLocal
@@ -32,6 +33,22 @@ class InvalidRouteError(ValueError):
 
 class PoiNotInTripError(ValueError):
     pass
+
+
+class PoiTooFarError(ValueError):
+    pass
+
+
+def distance_meters(
+    latitude_a: float, longitude_a: float, latitude_b: float, longitude_b: float
+) -> float:
+    """Great-circle distance; coordinates are not retained after this check."""
+    lat_delta = radians(latitude_b - latitude_a)
+    lon_delta = radians(longitude_b - longitude_a)
+    area = sin(lat_delta / 2) ** 2 + cos(radians(latitude_a)) * cos(radians(latitude_b)) * sin(
+        lon_delta / 2
+    ) ** 2
+    return 2 * 6_371_000 * asin(sqrt(area))
 
 
 class TripService:
@@ -152,6 +169,34 @@ class TripService:
             if trip is None:
                 raise TripNotFoundError(f"Trip not found: {trip_id}")
         return self._with_progress(trip)
+
+    def check_in_at_location(
+        self,
+        trip_id: str,
+        poi_id: str,
+        *,
+        longitude: float,
+        latitude: float,
+        radius_m: float,
+        accuracy_m: float | None = None,
+    ) -> TripWithProgressResponse:
+        trip = self._repository.get_trip(trip_id)
+        if trip is None:
+            raise TripNotFoundError(f"Trip not found: {trip_id}")
+        if poi_id not in trip.stop_poi_ids:
+            raise PoiNotInTripError(f"POI is not part of trip {trip_id}: {poi_id}")
+        with SessionLocal() as session:
+            poi = PoiRepository(session).get_by_id(poi_id)
+        if poi is None:
+            raise PoiNotInTripError(f"POI not found: {poi_id}")
+        distance = distance_meters(latitude, longitude, poi.latitude, poi.longitude)
+        tolerance = radius_m + min(accuracy_m or 0, 80)
+        if distance > tolerance:
+            raise PoiTooFarError(
+                "You are "
+                f"{round(distance)}m from this stop; move within {round(tolerance)}m to check in"
+            )
+        return self.check_in(trip_id, poi_id)
 
     def get_progress(self, trip_id: str) -> TripProgress:
         progress = self._repository.get_progress(trip_id)

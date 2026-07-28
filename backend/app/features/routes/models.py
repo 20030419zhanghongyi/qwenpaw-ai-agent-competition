@@ -40,6 +40,7 @@ class RouteMatchItemResponse(BaseModel):
     candidate_pois: list[dict[str, Any]]
     applied_constraints: list[str]
     explanation: dict[str, Any]
+    live_context: dict[str, Any] = Field(default_factory=dict)
 
 
 class RouteMatchResponse(BaseModel):

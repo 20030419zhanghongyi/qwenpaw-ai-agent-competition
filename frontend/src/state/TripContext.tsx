@@ -8,6 +8,7 @@ import {
 } from "react";
 import {
   checkInTrip,
+  checkInTripAtLocation,
   createTrip,
   getCurrentTrip,
   getTrip,
@@ -36,6 +37,13 @@ interface TripContextValue {
     userId: string,
     routeId: string,
     poiId: string,
+    stopPoiIds?: string[],
+  ) => Promise<void>;
+  checkInAtLocation: (
+    userId: string,
+    routeId: string,
+    poiId: string,
+    location: { longitude: number; latitude: number; accuracy?: number },
     stopPoiIds?: string[],
   ) => Promise<void>;
   clearTrip: () => void;
@@ -252,6 +260,52 @@ export function TripProvider({ children }: { children: ReactNode }) {
     [applyResponse, trip],
   );
 
+  const checkInAtLocation = useCallback(
+    async (
+      userId: string,
+      routeId: string,
+      poiId: string,
+      location: { longitude: number; latitude: number; accuracy?: number },
+      stopPoiIds?: string[],
+    ) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const desiredStops = ensureStopListIncludes(stopPoiIds, poiId);
+        let active = trip;
+        if (!tripCoversArrive(active, routeId, desiredStops, poiId)) {
+          const created = await createTrip({
+            user_id: userId,
+            route_id: routeId,
+            stop_poi_ids: desiredStops,
+          });
+          applyResponse(created);
+          active = created.trip;
+        }
+        if (!active || !active.stop_poi_ids.includes(poiId)) {
+          throw new Error("TRIP_POI_MISMATCH");
+        }
+        if (!active.checked_in_poi_ids.includes(poiId)) {
+          applyResponse(
+            await checkInTripAtLocation(active.trip_id, {
+              poi_id: poiId,
+              longitude: location.longitude,
+              latitude: location.latitude,
+              accuracy_m: location.accuracy,
+              radius_m: 120,
+            }),
+          );
+        }
+      } catch (requestError) {
+        setError(errorMessage(requestError));
+        throw requestError;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [applyResponse, trip],
+  );
+
   const clearTrip = useCallback(() => {
     setTrip(null);
     setProgress(null);
@@ -270,6 +324,7 @@ export function TripProvider({ children }: { children: ReactNode }) {
       loadTrip,
       checkIn,
       simulateArrive,
+      checkInAtLocation,
       clearTrip,
       clearError,
     }),
@@ -283,6 +338,7 @@ export function TripProvider({ children }: { children: ReactNode }) {
       loadTrip,
       checkIn,
       simulateArrive,
+      checkInAtLocation,
       clearTrip,
       clearError,
     ],

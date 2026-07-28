@@ -5,6 +5,7 @@ import { getCurrentTrip, TripApiError } from "@/api/trips";
 import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { PostcardCard } from "@/components/postcard/PostcardCard";
+import { TravelMemory } from "@/components/postcard/TravelMemory";
 import { t } from "@/i18n";
 import { resolveTripUserId } from "@/lib/guestUser";
 import { useAuth } from "@/state/AuthContext";
@@ -141,6 +142,7 @@ export function PostcardGalleryPage() {
 
         {!loading && !error && hasTrip ? (
           <>
+            <TravelMemory postcards={postcards} language={language} />
             {postcards.length === 0 ? (
               <div className="mb-8 rounded-2xl border border-line bg-card px-5 py-8 text-center shadow-[var(--shadow-soft)]">
                 <p className="font-display text-xl text-ink">

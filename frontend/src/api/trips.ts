@@ -1,6 +1,7 @@
 import type {
   CheckInInput,
   CreateTripInput,
+  LocationCheckInInput,
   TripProgress,
   TripWithProgress,
 } from "@/types/trips";
@@ -60,6 +61,16 @@ export function checkInTrip(
   input: CheckInInput,
 ): Promise<TripWithProgress> {
   return request(`/api/v1/trips/${encodeURIComponent(tripId)}/checkins`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function checkInTripAtLocation(
+  tripId: string,
+  input: LocationCheckInInput,
+): Promise<TripWithProgress> {
+  return request(`/api/v1/trips/${encodeURIComponent(tripId)}/location-checkins`, {
     method: "POST",
     body: JSON.stringify(input),
   });

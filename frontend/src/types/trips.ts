@@ -33,3 +33,10 @@ export interface CreateTripInput {
 export interface CheckInInput {
   poi_id: string;
 }
+
+export interface LocationCheckInInput extends CheckInInput {
+  longitude: number;
+  latitude: number;
+  accuracy_m?: number;
+  radius_m?: number;
+}
