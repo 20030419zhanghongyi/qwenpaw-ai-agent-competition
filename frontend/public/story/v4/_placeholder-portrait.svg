@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" role="img" aria-labelledby="title description">
+  <title id="title">角色立绘占位图</title>
+  <desc id="description">用于测试对话布局的阿莲角色立绘轮廓</desc>
+  <defs>
+    <linearGradient id="coat" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#789486"/>
+      <stop offset="1" stop-color="#365d54"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6efe0"/>
+      <stop offset="1" stop-color="#dfd1b5"/>
+    </linearGradient>
+  </defs>
+  <path d="M183 1157c9-243 55-424 142-544 27-38 122-38 150 0 87 120 133 301 142 544z" fill="url(#coat)"/>
+  <path d="M281 470c0-105 49-188 119-188s119 83 119 188c0 112-54 198-119 198s-119-86-119-198z" fill="#e5c7a5"/>
+  <path d="M246 483c-4-157 59-268 160-268 97 0 161 111 150 268-37-18-65-59-82-123-60 71-123 112-228 123z" fill="#313c38"/>
+  <path d="M320 491c24 11 48 11 72 0M423 491c20 10 39 10 58 0" fill="none" stroke="#6b584d" stroke-width="11" stroke-linecap="round"/>
+  <path d="M373 567c20 15 40 15 60 0" fill="none" stroke="#a26355" stroke-width="9" stroke-linecap="round"/>
+  <path d="M224 1121c65-112 126-174 183-186 58 12 119 74 183 186" fill="none" stroke="#f5efe2" stroke-opacity=".55" stroke-width="18"/>
+  <g transform="translate(400 835)">
+    <path d="M0-65c42 0 72 37 72 78 0 53-32 89-72 120-40-31-72-67-72-120 0-41 30-78 72-78z" fill="url(#paper)" stroke="#a76344" stroke-width="10"/>
+    <circle cy="21" r="18" fill="#d6b36a"/>
+  </g>
+</svg>

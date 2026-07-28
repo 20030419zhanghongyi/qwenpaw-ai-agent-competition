@@ -188,7 +188,7 @@ export function matchStory(pref: StoryDiscoveryPreference): StoryMatchResult {
     }
 
     // 4. Keep the highest-scoring result
-    if (scoring.score > best.score) {
+    if (!best.matched || scoring.score > best.score) {
       best = {
         matched: true,
         storyId: entry.storyId,
@@ -207,29 +207,29 @@ export function matchStory(pref: StoryDiscoveryPreference): StoryMatchResult {
 // These are NOT run by a test runner.  They serve as documentation and can be
 // pasted into a REPL (browser console / Node) once the types are compiled away.
 //
-// --- Scenario 1: 历史迷 (一日游 + history + culture + heritage) ---
-//   matchStory({ duration: "full", interests: ["history", "culture"], themes: ["heritage"], walkTags: [] })
-//   → { matched: true, storyId: "lotus_city_double_map", score: 4, ... }
+// --- Scenario 1: 历史兴趣（无需先填完整偏好）---
+//   matchStory({ duration: "half", interests: ["history"], themes: [], walkTags: [] })
+//   → { matched: true, storyId: "lotus_city_double_map", score: 1, ... }
 //
-// --- Scenario 2: 建筑爱好者 (多日游 + arch + architecture) ---
+// --- Scenario 2: 建筑爱好者 ---
 //   matchStory({ duration: "multi", interests: ["arch"], themes: ["architecture"], walkTags: [] })
-//   → { matched: true, storyId: "lotus_city_double_map", score: 3, ... }
+//   → { matched: true, storyId: "lotus_city_double_map", score: 2, ... }
 //
-// --- Scenario 3: 文化+摄影 (一日游 + culture + photo + heritage) ---
+// --- Scenario 3: 文化+摄影 ---
 //   matchStory({ duration: "full", interests: ["culture", "photo"], themes: ["heritage"], walkTags: [] })
-//   → { matched: true, storyId: "lotus_city_double_map", score: 3, ... }
+//   → { matched: true, storyId: "lotus_city_double_map", score: 2, ... }
 //
 // --- Scenario 4: 纯美食半日游 (half + food, no themes) ---
 //   matchStory({ duration: "half", interests: ["food"], themes: [], walkTags: [] })
-//   → { matched: false, ... }  (duration gate fails)
+//   → { matched: false, ... }  (没有故事相关文化信号)
 //
 // --- Scenario 5: 夜间漫步 (night + heritage, no interests) ---
 //   matchStory({ duration: "night", interests: [], themes: ["heritage"], walkTags: [] })
-//   → { matched: false, ... }  (duration gate fails)
+//   → { matched: true, storyId: "lotus_city_double_map", score: 1, ... }
 //
-// --- Scenario 6: 历史但少走路 (full + history + heritage + less-walk) — borderline ---
+// --- Scenario 6: 历史且少走路 ---
 //   matchStory({ duration: "full", interests: ["history"], themes: ["heritage"], walkTags: ["less-walk"] })
-//   → { matched: true, storyId: "lotus_city_double_map", score: 2, ... }
+//   → { matched: true, storyId: "lotus_city_double_map", score: 1, ... }
 //
 // --- Scenario 7: 路氹一日游 (full + cotai theme, no matching interests) ---
 //   matchStory({ duration: "full", interests: [], themes: ["cotai"], walkTags: [] })
@@ -237,17 +237,12 @@ export function matchStory(pref: StoryDiscoveryPreference): StoryMatchResult {
 //
 // --- Scenario 8: 空偏好 (all defaults) ---
 //   matchStory({ duration: "half", interests: [], themes: [], walkTags: [] })
-//   → { matched: false, ... }  (both gates fail)
+//   → { matched: false, ... }  (文化信号门槛未通过)
 //
-// --- Scenario 9: 少走路但文化匹配 (full + culture + less-walk + accessible) ---
+// --- Scenario 9: 单一文化兴趣与少走路 ---
 //   matchStory({ duration: "full", interests: ["culture"], themes: [], walkTags: ["less-walk", "accessible"] })
-//   → { matched: true, storyId: "lotus_city_double_map", score: 1, ... }  ← fails minScore=2!
-//   Wait — duration(+1) + culture(+1) + walkPenalty(-1) = 1 < 2.
-//   This is intentional: a single cultural hit paired with walk-aversion
-//   is below threshold.  If the user also picks e.g. "heritage" theme the
-//   score becomes 2 and passes.
+//   → { matched: true, storyId: "lotus_city_double_map", score: 0, ... }
 //
 // --- Scenario 10: 双主题无兴趣 (full + heritage + architecture, no interests) ---
 //   matchStory({ duration: "full", interests: [], themes: ["heritage", "architecture"], walkTags: [] })
-//   → { matched: true, storyId: "lotus_city_double_map", score: 3, ... }
-//   (duration +1, themes +2 = 3)
+//   → { matched: true, storyId: "lotus_city_double_map", score: 2, ... }

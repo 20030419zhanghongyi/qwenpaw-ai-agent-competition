@@ -1,427 +1,646 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { LoadingState, ErrorState } from "@/components/common/States";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { ErrorState, LoadingState } from "@/components/common/States";
 import { PuzzlePanel } from "@/components/story/PuzzlePanel";
 import { RewardReveal } from "@/components/story/RewardReveal";
+import { StoryImage } from "@/features/story/assets";
+import { DialoguePlayer } from "@/features/story/components/DialoguePlayer";
+import { KnowledgeCard } from "@/features/story/components/KnowledgeCard";
+import { StoryAgentDrawer } from "@/features/story/components/StoryAgentDrawer";
+import { StoryBottomAction } from "@/features/story/components/StoryBottomAction";
+import { StoryComicReader } from "@/features/story/components/StoryComicReader";
+import { StoryImageViewer } from "@/features/story/components/StoryImageViewer";
+import { StoryTopBar } from "@/features/story/components/StoryTopBar";
 import { useAuth } from "@/state/AuthContext";
 import { useStory, useStoryRestore } from "@/state/StoryContext";
-import type { StoryAction, StoryChapter } from "@/types/stories";
+import type {
+  StoryActionResponse,
+  StoryAgentContext,
+  StoryAssetRef,
+  StoryChapter,
+} from "@/types/stories";
 
-const CONTENT_LABELS: Record<string, string> = {
-  historical_fact: "史实",
-  folklore: "民间说法",
-  contextual_reconstruction: "语境化重建",
-  fictional_story: "虚构剧情",
-  dynamic_operational_info: "动态营运信息",
+interface ViewerState {
+  assetId: string;
+  alt?: string;
+  caption?: string;
+}
+
+function isRewardAsset(assetId: string): boolean {
+  return new Set([
+    "V4-AMA-05",
+    "V4-MAN-06",
+    "V4-SEN-05",
+    "V4-SAM-06",
+    "V4-LOU-05",
+    "V4-LOU-06",
+    "V4-FOR-08",
+  ]).has(assetId);
+}
+
+const ENDING_PAGE_ONLY_ASSETS = new Set(["V4-FOR-07", "V4-FOR-09"]);
+
+const PROLOGUE_AGENT_CONTEXT: StoryAgentContext = {
+  persona: "阿莲",
+  poi_name: "旧书与城市双图",
+  chapter_goal: "帮助玩家理解旧书、双图和第一张密笺的用途",
+  known_facts: [
+    "1923年《香山县志续编》是真实存在的地方志",
+    "故事中的家藏版本、信封、双图、纸条、阿澜与M先生均为剧情虚构",
+    "双图记录的侧重点不同，后续需要结合现场逐站核对",
+  ],
+  fiction_boundaries: [
+    "不得把剧情中的夹藏材料、人物和地图描述成真实文物或史实",
+  ],
+  suggested_questions: [
+    "这本古书是什么？",
+    "两张地图应该怎样一起使用？",
+    "为什么第一站要去妈阁庙？",
+  ],
+  do_not_reveal: [
+    "不得提前说明后续谜题答案",
+    "不得提前透露未到达章节的剧情发现",
+  ],
 };
 
+function chapterPetalCount(rewards: Array<{ kind: string }>): number {
+  return rewards.filter((reward) => reward.kind === "note_petal").length;
+}
+
 export function StoryScenePage() {
-  const { sessionId, nodeId } = useParams<{ sessionId: string; nodeId: string }>();
+  const { sessionId, nodeId } = useParams<{
+    sessionId: string;
+    nodeId: string;
+  }>();
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const location = useLocation();
+  const { token, isRestoring } = useAuth();
   const {
     session,
     latestRewards,
+    submittedChapterSnapshot,
+    lastActionResult,
     loading,
+    actionPending,
     error,
+    errorStatus,
     restoreSession,
     refreshSession,
     submitAction,
     clearLatestRewards,
+    clearLastAction,
+    clearError,
   } = useStory();
-  const { sessionId: persistedId } = useStoryRestore();
+  const { sessionId: effectiveId } = useStoryRestore(sessionId);
 
-  const [actionState, setActionState] = useState<{
-    busy: boolean;
-    lastMessage: string | null;
-    lastHint: string | null;
-    hintCount: number;
-    solved: boolean;
-    skipped: boolean;
-  }>({ busy: false, lastMessage: null, lastHint: null, hintCount: 0, solved: false, skipped: false });
+  const [comicIndex, setComicIndex] = useState(0);
+  const [comicDone, setComicDone] = useState(false);
+  const [dialogueDone, setDialogueDone] = useState(false);
+  const [viewer, setViewer] = useState<ViewerState | null>(null);
+  const [agentOpen, setAgentOpen] = useState(false);
+  const [overlayOpacity, setOverlayOpacity] = useState(55);
+  const [arrivalMessage, setArrivalMessage] = useState<string | null>(null);
 
-  // Restore session on mount
-  const effectiveId = sessionId ?? persistedId;
+  const advancedSnapshot =
+    submittedChapterSnapshot &&
+    lastActionResult &&
+    submittedChapterSnapshot.id !== session?.current_chapter_id
+      ? submittedChapterSnapshot
+      : null;
+  const displayChapter: StoryChapter | null =
+    advancedSnapshot ?? session?.current_chapter ?? null;
+
   useEffect(() => {
-    if (effectiveId && token) {
-      restoreSession(effectiveId);
+    if (!isRestoring && !token) {
+      const returnTo = `${location.pathname}${location.search}`;
+      navigate(`/auth?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
     }
-  }, [effectiveId, token, restoreSession]);
+  }, [isRestoring, location.pathname, location.search, navigate, token]);
 
-  // Refresh when nodeId param changes
   useEffect(() => {
-    refreshSession();
-  }, [nodeId, refreshSession]);
-
-  if (loading && !session) return <LoadingState label="加载章节…" />;
-  if (error && !session) {
-    return (
-      <div className="flex min-h-dvh flex-col bg-paper px-4 py-8">
-        <ErrorState
-          message={error}
-          onRetry={() => effectiveId && restoreSession(effectiveId)}
-        />
-      </div>
-    );
-  }
-  if (!session) {
-    return (
-      <div className="flex min-h-dvh flex-col bg-paper px-4 py-8">
-        <ErrorState message="未找到故事会话" />
-      </div>
-    );
-  }
-
-  const chapter = session.current_chapter;
-  const allowedActions = session.allowed_actions;
-  const isCompleted = session.status === "completed";
-
-  // Determine chapter display
-  const displayChapter: StoryChapter | null = chapter ?? null;
-  if (!displayChapter) {
-    return (
-      <div className="flex min-h-dvh flex-col bg-paper px-4 py-8">
-        <ErrorState
-          message="无法加载当前章节"
-          onRetry={refreshSession}
-        />
-      </div>
-    );
-  }
-
-  const chapterComplete =
-    session.state.completed_chapter_ids.includes(displayChapter.id) ||
-    session.state.skipped_chapter_ids.includes(displayChapter.id);
-  const attempts = session.state.attempts[displayChapter.id] ?? 0;
-
-  // Node kinds that require arrival
-  const needsArrive =
-    displayChapter.poi_id &&
-    !session.state.arrived_chapter_ids.includes(displayChapter.id) &&
-    !chapterComplete;
-
-  // Determine if puzzle is solved for this chapter
-  const puzzleSolved =
-    actionState.solved || chapterComplete;
-  const puzzleSkipped =
-    actionState.skipped ||
-    session.state.skipped_chapter_ids.includes(displayChapter.id);
-
-  /* ── Actions ── */
-
-  const doAction = async (
-    action: StoryAction,
-    extra?: { answer?: unknown; choice_id?: string; reflection?: string },
-  ) => {
-    setActionState((s) => ({ ...s, busy: true, lastMessage: null, lastHint: null }));
-    try {
-      const res = await submitAction({
-        action,
-        chapter_id: displayChapter.id,
-        ...extra,
-      });
-      setActionState((s) => ({
-        ...s,
-        busy: false,
-        lastMessage: res.message,
-        lastHint: res.hint ?? null,
-        hintCount: s.hintCount + (action === "hint" ? 1 : 0),
-        solved: action === "answer" && res.accepted ? true : s.solved,
-        skipped: action === "skip" ? true : s.skipped,
-      }));
-      return res;
-    } catch {
-      setActionState((s) => ({ ...s, busy: false }));
-      throw new Error("操作失败");
+    if (effectiveId && token && session?.session_id !== effectiveId) {
+      void restoreSession(effectiveId);
     }
-  };
+  }, [effectiveId, restoreSession, session?.session_id, token]);
 
-  const handleArrive = () => doAction("arrive");
-  const handleContinue = () => {
-    doAction("continue").then(() => {
-      navigate(`/story-sessions/${effectiveId}/map`);
+  useEffect(() => {
+    if (!session || !nodeId) return;
+    if (session.status === "completed") {
+      navigate(`/story-sessions/${session.session_id}/ending`, { replace: true });
+      return;
+    }
+    if (advancedSnapshot?.id === nodeId) return;
+    if (session.current_chapter_id !== nodeId) {
+      navigate(`/story-sessions/${session.session_id}/map`, { replace: true });
+    }
+  }, [advancedSnapshot?.id, navigate, nodeId, session]);
+
+  useEffect(() => {
+    setComicIndex(0);
+    setComicDone(false);
+    setDialogueDone(false);
+    setOverlayOpacity(55);
+    setArrivalMessage(null);
+  }, [displayChapter?.id]);
+
+  const comics = displayChapter?.arrival_comic ?? [];
+  const currentComic = comics[comicIndex];
+  const comicAssetIds = useMemo(
+    () => new Set(comics.map((comic) => comic.asset_id)),
+    [comics],
+  );
+  const clueAssets = useMemo(
+    () =>
+      (displayChapter?.presentation?.assets ?? []).filter(
+        (assetId) =>
+          !comicAssetIds.has(assetId) &&
+          !assetId.startsWith("V4-CHAR") &&
+          !isRewardAsset(assetId) &&
+          !ENDING_PAGE_ONLY_ASSETS.has(assetId),
+      ),
+    [comicAssetIds, displayChapter?.presentation?.assets],
+  );
+
+  const openComic = (comic: StoryAssetRef) => {
+    setViewer({
+      assetId: comic.asset_id,
+      alt: comic.alt,
+      caption: comic.caption,
     });
   };
-  const handleAnswer = (answer: unknown) => doAction("answer", { answer });
-  const handleHint = () => doAction("hint");
-  const handleSkip = () => doAction("skip");
 
-  const handleBackToMap = () => {
-    navigate(`/story-sessions/${effectiveId}/map`);
+  const runAction = async (
+    request: Parameters<typeof submitAction>[0],
+  ): Promise<StoryActionResponse | null> => {
+    clearError();
+    try {
+      return await submitAction(request);
+    } catch {
+      return null;
+    }
   };
 
-  // Determine if node was advanced (after solve/skip/continue)
-  const wasAdvanced = chapterComplete || puzzleSolved || puzzleSkipped;
+  const handleArrive = async () => {
+    if (!displayChapter) return;
+    const response = await runAction({
+      action: "arrive",
+      chapter_id: displayChapter.id,
+    });
+    if (response) {
+      setArrivalMessage(response.message);
+      clearLastAction();
+    }
+  };
 
-  /* ── Render: Time layer tabs state ── */
-  const [activeTimeLayer, setActiveTimeLayer] = useState(0);
+  const handleContinue = async () => {
+    if (!displayChapter) return;
+    await runAction({
+      action: "continue",
+      chapter_id: displayChapter.id,
+    });
+  };
 
-  return (
-    <main className="flex min-h-dvh flex-col bg-paper text-ink">
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 border-b border-line/80 bg-paper/95 px-4 py-3 backdrop-blur-md">
-        <div className="flex items-center justify-between">
+  const handleAnswer = async (answer: unknown) => {
+    if (!displayChapter) return;
+    await runAction({
+      action: "answer",
+      chapter_id: displayChapter.id,
+      answer,
+    });
+  };
+
+  const handleHint = async () => {
+    if (!displayChapter) return;
+    await runAction({
+      action: "hint",
+      chapter_id: displayChapter.id,
+    });
+  };
+
+  const handleSkip = async () => {
+    if (!displayChapter) return;
+    await runAction({
+      action: "skip",
+      chapter_id: displayChapter.id,
+    });
+  };
+
+  const handleNextStop = () => {
+    if (!session) return;
+    clearLatestRewards();
+    clearLastAction();
+    navigate(`/story-sessions/${session.session_id}/map`);
+  };
+
+  if ((loading || isRestoring) && !session) {
+    return <LoadingState label="正在恢复当前章节…" />;
+  }
+
+  if (!session || !displayChapter) {
+    const invalidSession = errorStatus === 403 || errorStatus === 404;
+    return (
+      <main className="grid min-h-dvh place-items-center bg-paper px-4">
+        <div className="w-full max-w-[480px]">
+          <ErrorState
+            message={
+              invalidSession
+                ? "这段旅程已经失效或不属于当前账号。你可以返回故事封面重新载入自己的进度。"
+                : error ?? "无法加载当前章节"
+            }
+            onRetry={
+              effectiveId && !invalidSession
+                ? () => void restoreSession(effectiveId)
+                : undefined
+            }
+          />
           <button
             type="button"
-            onClick={handleBackToMap}
-            className="text-sm text-ink-soft transition hover:text-ink"
+            onClick={() => navigate("/stories/lotus_city_double_map")}
+            className="mt-4 min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper"
           >
-            ← 故事地图
+            返回故事封面
           </button>
-          <div className="text-center">
-            <p className="text-xs text-ink-soft">
-              {session.progress.completed_chapters}/{session.progress.total_chapters}
-            </p>
-          </div>
-          <div className="w-12" aria-hidden />
         </div>
-      </header>
+      </main>
+    );
+  }
 
-      <div className="flex-1 overflow-auto px-4 py-4 pb-8 sm:mx-auto sm:max-w-lg sm:px-6">
-        {/* Node title */}
-        <div className="mb-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-ochre">
-            {displayChapter.kind === "prologue"
-              ? "序章"
-              : displayChapter.kind === "transition"
-                ? "过渡"
-                : displayChapter.kind === "ending"
-                  ? "终章"
-                  : displayChapter.kind === "narrative"
-                    ? "叙述"
-                    : displayChapter.kind === "puzzle"
-                      ? `章节 ${displayChapter.order}`
-                      : "章节"}
+  const hasArrived = session.state.arrived_chapter_ids.includes(displayChapter.id);
+  const needsArrival =
+    Boolean(displayChapter.poi_id) &&
+    !hasArrived &&
+    !advancedSnapshot;
+  const hasDialogue = Boolean(displayChapter.dialogue?.length);
+  const isEndingChapter = displayChapter.kind === "ending";
+  const narrativeReady =
+    (comics.length === 0 || comicDone) &&
+    (!hasDialogue || dialogueDone || isEndingChapter);
+  const isPuzzleChapter =
+    displayChapter.kind === "puzzle" && Boolean(displayChapter.puzzle);
+  const petalCount = chapterPetalCount(session.state.rewards);
+  const chapterNumber =
+    displayChapter.order === 0
+      ? "序章"
+      : displayChapter.order <= 6
+        ? `第 ${displayChapter.order} 站 / 6`
+        : "故事章节";
+  const lastResultForChapter =
+    lastActionResult && submittedChapterSnapshot?.id === displayChapter.id
+      ? lastActionResult
+      : null;
+  const sourceAgentContext =
+    displayChapter.agent_context ??
+    (displayChapter.kind === "prologue" ? PROLOGUE_AGENT_CONTEXT : undefined);
+  const agentContext = sourceAgentContext
+    ? {
+        ...sourceAgentContext,
+        chapter_title: displayChapter.title,
+      }
+    : undefined;
+
+  return (
+    <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-paper text-ink shadow-[var(--shadow-soft)]">
+      <StoryTopBar
+        title={displayChapter.location_name ?? displayChapter.title}
+        eyebrow={chapterNumber}
+        petals={petalCount}
+        onBack={() => navigate(`/story-sessions/${session.session_id}/map`)}
+        onAskAgent={agentContext ? () => setAgentOpen(true) : undefined}
+      />
+
+      <div className="flex-1 px-4 pb-32 pt-4">
+        <div className="landscape-story-hint mb-4 hidden rounded-xl border border-ochre/30 bg-ochre/5 p-3 text-center text-sm text-ink-soft">
+          建议旋转回竖屏，获得更完整的故事体验。
+        </div>
+
+        <header className="mb-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ochre">
+            {displayChapter.story_time ?? "莲城双图"}
           </p>
-          <h2 className="mt-1 font-display text-xl leading-tight text-ink">
+          <h1 className="mt-1 font-display text-2xl leading-tight">
             {displayChapter.title}
-          </h2>
-          {displayChapter.story_time && (
-            <p className="mt-1 text-sm text-ink-soft">{displayChapter.story_time}</p>
-          )}
-          {displayChapter.poi_id && (
-            <p className="mt-1 text-xs text-sage-deep">
-              📍 {displayChapter.poi_id}
+          </h1>
+          {displayChapter.location_name && (
+            <p className="mt-2 text-base text-sage-deep">
+              地点：{displayChapter.location_name}
             </p>
           )}
-        </div>
+        </header>
 
-        {/* Completed badge */}
-        {chapterComplete && (
-          <div className="mb-4 rounded-xl border border-sage-deep/30 bg-sage-deep/5 px-4 py-2.5 text-center text-sm font-medium text-sage-deep">
-            {puzzleSkipped ? "已跳过" : "已完成"}
-          </div>
-        )}
-
-        {/* Scene / Narrative */}
-        {displayChapter.scene && (
-          <div className="mb-5 rounded-2xl border border-line bg-card p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
-              场景
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-ink">
-              {displayChapter.scene}
-            </p>
-          </div>
-        )}
-
-        {/* Dialogue */}
-        {displayChapter.dialogue && displayChapter.dialogue.length > 0 && (
-          <div className="mb-5 space-y-3">
-            {displayChapter.dialogue.map((d, i) => (
-              <div
-                key={i}
-                className="rounded-2xl border border-line bg-paper-warm p-4"
-              >
-                <p className="text-xs font-semibold text-sage-deep">{d.speaker}</p>
-                <p className="mt-1 text-sm italic leading-relaxed text-ink-soft">
-                  "{d.text}"
+        {needsArrival ? (
+          <section>
+            {currentComic ? (
+              <StoryImage
+                assetId={currentComic.asset_id}
+                alt={currentComic.alt}
+                eager
+                onOpen={() => openComic(currentComic)}
+              />
+            ) : (
+              <StoryImage
+                assetId={displayChapter.presentation?.assets[0] ?? "V4-PROP-03"}
+                alt={`${displayChapter.location_name ?? displayChapter.title}到达场景`}
+                eager
+                onOpen={(assetId) => setViewer({ assetId })}
+              />
+            )}
+            <div className="mt-4 rounded-2xl border border-line bg-card p-4">
+              <h2 className="font-serif text-lg font-semibold">到达确认</h2>
+              <p className="mt-2 text-base leading-7 text-ink-soft">
+                请只在开放、安全的区域确认到达。不需要进入封闭区域，
+                不需要触碰文物，也不强制使用 GPS。
+              </p>
+              {error && (
+                <p role="alert" className="mt-3 text-sm text-clay">
+                  {error}
                 </p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Time Layers */}
-        {displayChapter.time_layers && displayChapter.time_layers.length > 0 && (
-          <div className="mb-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
-              时间层
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {displayChapter.time_layers.map((tl, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setActiveTimeLayer(i)}
-                  className={`rounded-full border px-3 py-1.5 text-xs transition ${
-                    activeTimeLayer === i
-                      ? "border-sage-deep bg-sage-deep text-paper"
-                      : "border-line bg-paper text-ink-soft hover:border-sage"
-                  }`}
-                >
-                  {tl.period}
-                </button>
-              ))}
+              )}
             </div>
-            <div className="mt-3 rounded-xl border border-line bg-card p-4">
-              <p className="text-xs font-semibold text-sage-deep">
-                {displayChapter.time_layers[activeTimeLayer].period}
+          </section>
+        ) : advancedSnapshot ? (
+          <section className="space-y-4">
+            <div className="rounded-3xl border border-sage-deep/30 bg-sage-deep/5 p-5 text-center">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sage-deep">
+                {session.state.skipped_chapter_ids.includes(displayChapter.id)
+                  ? "谜题已跳过"
+                  : displayChapter.kind === "prologue"
+                    ? "路线已开启"
+                    : "章节完成"}
               </p>
-              <p className="mt-1 text-sm text-ink-soft">
-                {displayChapter.time_layers[activeTimeLayer].focus}
+              <h2 className="mt-2 font-serif text-xl font-semibold">
+                {lastActionResult?.message ?? "进度已经保存"}
+              </h2>
+              <p className="mt-2 text-base leading-7 text-ink-soft">
+                当前章节内容会保持到你主动查看下一站，不会被新的章节瞬间替换。
               </p>
             </div>
-          </div>
-        )}
+          </section>
+        ) : (
+          <>
+            {displayChapter.scene && (
+              <section className="rounded-2xl border border-line bg-card p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sage-deep">
+                  场景
+                </p>
+                <p className="mt-2 text-base leading-7 text-ink-soft">
+                  {displayChapter.scene}
+                </p>
+              </section>
+            )}
 
-        {/* Knowledge Cards */}
-        {displayChapter.knowledge_cards && displayChapter.knowledge_cards.length > 0 && (
-          <div className="mb-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
-              知识卡片
-            </p>
-            <div className="mt-2 space-y-2">
-              {displayChapter.knowledge_cards.map((card, i) => (
-                <div
-                  key={i}
-                  className="rounded-xl border border-line bg-card p-4"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full border border-line bg-paper-warm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sage-deep">
-                      {CONTENT_LABELS[card.kind] ?? card.kind}
-                    </span>
-                    <span className="text-sm font-medium text-ink">
-                      {card.title}
-                    </span>
+            {arrivalMessage && (
+              <p className="mt-3 rounded-xl border border-sage/30 bg-sage/10 p-3 text-sm text-sage-deep">
+                {arrivalMessage}
+              </p>
+            )}
+
+            {!comicDone && currentComic && (
+              <StoryComicReader
+                comics={comics}
+                index={comicIndex}
+                onIndexChange={setComicIndex}
+                onComplete={() => setComicDone(true)}
+                onOpen={openComic}
+              />
+            )}
+
+            {(comicDone || comics.length === 0) &&
+              !isEndingChapter &&
+              !dialogueDone &&
+              displayChapter.dialogue &&
+              displayChapter.dialogue.length > 0 && (
+                <section className="mt-5">
+                  <DialoguePlayer
+                    lines={displayChapter.dialogue}
+                    chapterId={displayChapter.id}
+                    continueLabel="继续观察"
+                    onComplete={() => setDialogueDone(true)}
+                  />
+                </section>
+              )}
+
+            {narrativeReady && (
+              <>
+                {clueAssets.length > 0 && (
+                  <section className="mt-5">
+                    <h2 className="font-serif text-xl font-semibold">现场观察与线索</h2>
+                    <div className="mt-3 grid gap-3">
+                      {clueAssets.map((assetId) => (
+                        <StoryImage
+                          key={assetId}
+                          assetId={assetId}
+                          alt={`${displayChapter.location_name ?? "本章"}线索`}
+                          onOpen={(openedAssetId) =>
+                            setViewer({ assetId: openedAssetId })
+                          }
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {displayChapter.knowledge_cards &&
+                  displayChapter.knowledge_cards.length > 0 && (
+                    <section className="mt-5">
+                      <h2 className="font-serif text-xl font-semibold">知识卡</h2>
+                      <div className="mt-3 space-y-3">
+                        {displayChapter.knowledge_cards.map((card) => (
+                          <KnowledgeCard
+                            key={`${card.kind}-${card.title}`}
+                            card={card}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  )}
+
+                {displayChapter.fallback && (
+                  <div className="mt-4 rounded-xl border border-ochre/30 bg-ochre/5 p-4">
+                    <p className="text-base leading-7 text-ink-soft">
+                      {displayChapter.fallback.text}
+                    </p>
                   </div>
-                  <p className="mt-2 text-xs leading-relaxed text-ink-soft">
-                    {card.text}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+                )}
 
-        {/* Fallback info */}
-        {displayChapter.fallback && (
-          <div className="mb-5 rounded-xl border border-ochre/30 bg-ochre/5 p-4">
-            <p className="text-xs text-ink-soft">{displayChapter.fallback.text}</p>
-          </div>
-        )}
+                {isPuzzleChapter && displayChapter.puzzle && (
+                  <section className="mt-6" aria-labelledby="chapter-puzzle-title">
+                    <h2 id="chapter-puzzle-title" className="font-serif text-xl font-semibold">
+                      阿澜留下的问题
+                    </h2>
+                    <div className="mt-3">
+                      <PuzzlePanel
+                        puzzle={displayChapter.puzzle}
+                        disabled={actionPending}
+                        onSubmitAnswer={(answer) => void handleAnswer(answer)}
+                        onRequestHint={() => void handleHint()}
+                        onSkip={() => void handleSkip()}
+                        attempts={session.state.attempts[displayChapter.id] ?? 0}
+                        lastHint={lastResultForChapter?.hint}
+                        lastMessage={lastResultForChapter?.message}
+                      />
+                    </div>
+                  </section>
+                )}
 
-        {/* Action area */}
-        <div className="mt-6">
-          {isCompleted ? (
-            <div className="rounded-2xl border border-line bg-card p-5 text-center">
-              <p className="text-sm text-ink-soft">故事已完成</p>
-              <button
-                type="button"
-                onClick={() =>
-                  navigate(`/story-sessions/${effectiveId}/ending`)
-                }
-                className="mt-3 rounded-full bg-sage-deep px-5 py-2.5 text-sm font-medium text-paper"
+                {isEndingChapter && (
+                  <>
+                    <section className="mt-6 rounded-2xl border border-line bg-card p-4">
+                      <h2 className="font-serif text-xl font-semibold">让两张图互相说明</h2>
+                      <p className="mt-2 text-base leading-7 text-ink-soft">
+                        调整透明度，让城市双图与今天的澳门叠在一起。
+                        这个动作只承担叙事体验，不作为接口答案。
+                      </p>
+                      <div className="relative mt-4 overflow-hidden rounded-2xl border border-line bg-paper-warm">
+                        <StoryImage
+                          assetId="V4-PROP-03"
+                          alt="城市双图"
+                          className="rounded-none border-0"
+                        />
+                        <div
+                          className="absolute inset-0"
+                          style={{ opacity: overlayOpacity / 100 }}
+                        >
+                          <StoryImage
+                            assetId="V4-FOR-03"
+                            alt="双图覆盖今天的城市"
+                            className="rounded-none border-0"
+                          />
+                        </div>
+                      </div>
+                      <label htmlFor="map-overlay" className="mt-4 block text-sm font-medium text-sage-deep">
+                        双图透明度：{overlayOpacity}%
+                      </label>
+                      <input
+                        id="map-overlay"
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={overlayOpacity}
+                        onChange={(event) => setOverlayOpacity(Number(event.target.value))}
+                        className="mt-2 min-h-11 w-full accent-sage-deep"
+                      />
+                      <button
+                        type="button"
+                        onPointerDown={() => setOverlayOpacity(100)}
+                        onPointerUp={() => setOverlayOpacity(70)}
+                        onPointerCancel={() => setOverlayOpacity(70)}
+                        className="mt-3 min-h-12 w-full rounded-full border border-sage-deep/30 bg-sage-deep/5 px-5 text-base font-medium text-sage-deep"
+                      >
+                        按住让双图重合
+                      </button>
+                      <div className="mt-4 border-t border-line pt-4">
+                        <StoryImage
+                          assetId="V4-FOR-08"
+                          alt="五站花瓣组成完整澳门市花"
+                          onOpen={(assetId) => setViewer({ assetId })}
+                          className="mx-auto max-w-64"
+                          imageClassName="object-contain"
+                        />
+                        <p className="mt-2 text-center text-sm leading-6 text-ink-soft">
+                          五站留下的纹理彼此补全，组成同一朵市花。
+                        </p>
+                      </div>
+                    </section>
+
+                    {!dialogueDone &&
+                      displayChapter.dialogue &&
+                      displayChapter.dialogue.length > 0 && (
+                        <section className="mt-5">
+                          <DialoguePlayer
+                            lines={displayChapter.dialogue}
+                            chapterId={displayChapter.id}
+                            continueLabel="完成回顾"
+                            onComplete={() => setDialogueDone(true)}
+                          />
+                        </section>
+                      )}
+                  </>
+                )}
+              </>
+            )}
+
+            {error && (
+              <div
+                role="alert"
+                className="mt-4 rounded-xl border border-clay/30 bg-clay/5 p-3 text-sm text-clay"
               >
-                查看结局
-              </button>
-            </div>
-          ) : needsArrive ? (
-            /* Arrival required */
-            <div className="space-y-3">
-              <p className="text-sm text-ink-soft text-center">
-                请先到达此地点，然后确认
-              </p>
-              <button
-                type="button"
-                disabled={actionState.busy}
-                onClick={handleArrive}
-                className="w-full rounded-full bg-sage-deep px-6 py-4 text-base font-medium text-paper shadow-[var(--shadow-soft)] transition hover:bg-moss active:scale-[0.99] disabled:opacity-50"
-              >
-                我已到达
-              </button>
-            </div>
-          ) : wasAdvanced ? (
-            /* Node completed / skipped — return to map */
-            <div className="space-y-3">
-              <div className="rounded-xl border border-sage-deep/30 bg-sage-deep/5 p-4 text-center">
-                <p className="text-sm font-medium text-sage-deep">
-                  {puzzleSkipped ? "已跳过此章节" : "章节完成"}
-                </p>
-                {actionState.lastMessage && (
-                  <p className="mt-1 text-sm text-ink-soft">
-                    {actionState.lastMessage}
-                  </p>
+                {errorStatus === 409
+                  ? "进度已在其他页面更新，请重新载入最新章节。"
+                  : errorStatus === 422
+                    ? "提交内容格式不正确，你的当前选择仍然保留。"
+                    : error}
+                {errorStatus === 409 && (
+                  <button
+                    type="button"
+                    onClick={() => void refreshSession()}
+                    className="ml-2 min-h-11 rounded-full border border-clay/30 px-3"
+                  >
+                    重新载入
+                  </button>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={handleBackToMap}
-                className="w-full rounded-full bg-sage-deep px-6 py-3.5 text-sm font-medium text-paper shadow-[var(--shadow-soft)] transition hover:bg-moss active:scale-[0.99]"
-              >
-                返回故事地图
-              </button>
-            </div>
-          ) : allowedActions.includes("answer") ? (
-            /* Puzzle node */
-            <PuzzlePanel
-              puzzle={displayChapter.puzzle!}
-              disabled={actionState.busy}
-              onSubmitAnswer={handleAnswer}
-              onRequestHint={handleHint}
-              onSkip={handleSkip}
-              attempts={attempts}
-              lastHint={actionState.lastHint}
-              lastMessage={actionState.lastMessage}
-            />
-          ) : allowedActions.includes("continue") ? (
-            /* Prologue / Narrative / Transition */
-            <button
-              type="button"
-              disabled={actionState.busy}
-              onClick={handleContinue}
-              className="w-full rounded-full bg-sage-deep px-6 py-4 text-base font-medium text-paper shadow-[var(--shadow-soft)] transition hover:bg-moss active:scale-[0.99] disabled:opacity-50"
-            >
-              {actionState.busy ? "处理中…" : "继续"}
-            </button>
-          ) : allowedActions.includes("choose_ending") ? (
-            /* Ending — go to ending page */
-            <button
-              type="button"
-              onClick={() =>
-                navigate(`/story-sessions/${effectiveId}/ending`)
-              }
-              className="w-full rounded-full bg-ochre px-6 py-4 text-base font-medium text-paper shadow-[var(--shadow-soft)] transition hover:opacity-90 active:scale-[0.99]"
-            >
-              选择结局
-            </button>
-          ) : (
-            /* Unknown state */
-            <div className="rounded-2xl border border-line bg-card p-5 text-center">
-              <p className="text-sm text-ink-soft">暂无可用操作</p>
-              <button
-                type="button"
-                onClick={handleBackToMap}
-                className="mt-3 rounded-full border border-line px-5 py-2.5 text-sm text-ink transition hover:border-sage"
-              >
-                返回故事地图
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Action feedback */}
-        {actionState.lastMessage && wasAdvanced && (
-          <div className="mt-4 rounded-xl border border-sage-deep/30 bg-sage-deep/5 p-4">
-            <p className="text-sm text-sage-deep">{actionState.lastMessage}</p>
-          </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* Reward reveal modal */}
-      {latestRewards.length > 0 && (
-        <RewardReveal rewards={latestRewards} onDismiss={clearLatestRewards} />
+      {needsArrival && (
+        <StoryBottomAction
+          label="我已到达"
+          busy={actionPending}
+          busyLabel="正在确认到达…"
+          onClick={() => void handleArrive()}
+          hint="请先确认周围环境安全"
+        />
       )}
+
+      {!needsArrival &&
+        !advancedSnapshot &&
+        narrativeReady &&
+        displayChapter.kind === "prologue" && (
+          <StoryBottomAction
+            label="去第一站：妈阁庙"
+            busy={actionPending}
+            busyLabel="正在开启路线…"
+            onClick={() => void handleContinue()}
+          />
+        )}
+
+      {!needsArrival &&
+        !advancedSnapshot &&
+        narrativeReady &&
+        isEndingChapter &&
+        (!hasDialogue || dialogueDone) && (
+          <StoryBottomAction
+            label="写下今日补记"
+            onClick={() =>
+              navigate(`/story-sessions/${session.session_id}/ending`)
+            }
+            tone="accent"
+          />
+        )}
+
+      {advancedSnapshot && latestRewards.length === 0 && (
+        <StoryBottomAction label="查看下一站" onClick={handleNextStop} />
+      )}
+
+      {latestRewards.length > 0 && (
+        <RewardReveal
+          rewards={latestRewards}
+          onDismiss={handleNextStop}
+        />
+      )}
+      <StoryAgentDrawer
+        open={agentOpen}
+        context={agentContext}
+        onClose={() => setAgentOpen(false)}
+      />
+      <StoryImageViewer
+        assetId={viewer?.assetId ?? null}
+        alt={viewer?.alt}
+        caption={viewer?.caption}
+        onClose={() => setViewer(null)}
+      />
     </main>
   );
 }

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1500" role="img" aria-labelledby="title description">
+  <title id="title">故事图片占位图</title>
+  <desc id="description">带有莲花、双图和澳门城市轮廓的故事素材占位插画</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f5efe2"/>
+      <stop offset="1" stop-color="#dfd5bd"/>
+    </linearGradient>
+    <linearGradient id="map" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#769286" stop-opacity=".72"/>
+      <stop offset="1" stop-color="#365d54" stop-opacity=".9"/>
+    </linearGradient>
+    <pattern id="grid" width="54" height="54" patternUnits="userSpaceOnUse">
+      <path d="M54 0H0V54" fill="none" stroke="#8e8067" stroke-opacity=".13" stroke-width="2"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="1500" fill="url(#paper)"/>
+  <rect width="1200" height="1500" fill="url(#grid)"/>
+  <path d="M0 1120c168-118 312-138 452-61 137 75 253 67 397-14 127-71 244-53 351 26v429H0z" fill="url(#map)"/>
+  <path d="M103 1103c152-172 259-231 401-203 101 20 173-75 272-53 97 22 151 128 322 197" fill="none" stroke="#faf4e8" stroke-opacity=".65" stroke-width="13" stroke-linecap="round"/>
+  <g transform="translate(600 650)" fill="none" stroke="#a76344" stroke-width="26">
+    <ellipse rx="112" ry="258" transform="rotate(-72) translate(0 -105)"/>
+    <ellipse rx="112" ry="258" transform="rotate(-36) translate(0 -105)"/>
+    <ellipse rx="112" ry="258" transform="translate(0 -105)"/>
+    <ellipse rx="112" ry="258" transform="rotate(36) translate(0 -105)"/>
+    <ellipse rx="112" ry="258" transform="rotate(72) translate(0 -105)"/>
+    <circle r="76" fill="#e6d09a" stroke="#a76344"/>
+  </g>
+  <g fill="#365d54" opacity=".78">
+    <path d="M128 1180h82v-141h64v141h77v-206h69v206h70v-105h83v105H128z"/>
+    <path d="M739 1180h70V980h64v200h65v-151h75v151h79v-238h58v238H739z"/>
+  </g>
+  <path d="M112 212c246-92 447-91 645 3 101 49 207 60 331 27" fill="none" stroke="#a76344" stroke-opacity=".42" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="112" cy="212" r="18" fill="#a76344"/>
+  <circle cx="1088" cy="242" r="18" fill="#a76344"/>
+</svg>

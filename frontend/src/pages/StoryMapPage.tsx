@@ -1,295 +1,375 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { LoadingState, ErrorState } from "@/components/common/States";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { ErrorState, LoadingState } from "@/components/common/States";
 import { MapRouteView } from "@/components/map/MapRouteView";
-import { RewardReveal } from "@/components/story/RewardReveal";
-import { fetchStory } from "@/api/stories";
 import { fetchRoutePois } from "@/api/routes";
-import type { RoutePoi } from "@/types/routes";
+import { StoryImage } from "@/features/story/assets";
+import { ChapterRecapDialog } from "@/features/story/components/ChapterRecapDialog";
+import { StoryAgentDrawer } from "@/features/story/components/StoryAgentDrawer";
+import { StoryBottomAction } from "@/features/story/components/StoryBottomAction";
+import { StoryImageViewer } from "@/features/story/components/StoryImageViewer";
+import { PetalProgress } from "@/features/story/components/PetalProgress";
+import { StoryTopBar } from "@/features/story/components/StoryTopBar";
+import { storyStationName } from "@/features/story/storyStations";
 import { useAuth } from "@/state/AuthContext";
 import { useStory, useStoryRestore } from "@/state/StoryContext";
+import type { RoutePoi } from "@/types/routes";
 import type { StoryNodeOverview } from "@/types/stories";
+
+type NodeStatus = "completed" | "current" | "locked";
 
 export function StoryMapPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const location = useLocation();
+  const { token, isRestoring } = useAuth();
   const {
     story,
     session,
-    latestRewards,
     loading,
     error,
+    errorStatus,
     restoreSession,
-    clearLatestRewards,
+    loadStory,
   } = useStory();
-  const { sessionId: persistedId } = useStoryRestore();
+  const { sessionId: effectiveId } = useStoryRestore(sessionId);
   const [pois, setPois] = useState<RoutePoi[]>([]);
-  const [poisLoading, setPoisLoading] = useState(false);
+  const [agentOpen, setAgentOpen] = useState(false);
+  const [viewerAssetId, setViewerAssetId] = useState<string | null>(null);
+  const [summaryNode, setSummaryNode] = useState<StoryNodeOverview | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  // Restore session on mount
-  const effectiveId = sessionId ?? persistedId;
   useEffect(() => {
-    if (effectiveId && token) {
-      restoreSession(effectiveId);
+    if (!isRestoring && !token) {
+      const returnTo = `${location.pathname}${location.search}`;
+      navigate(`/auth?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
     }
-  }, [effectiveId, token, restoreSession]);
+  }, [isRestoring, location.pathname, location.search, navigate, token]);
 
-  // If session loaded but no story, load it from the session's story_id
   useEffect(() => {
-    if (session && !story) {
-      fetchStory(session.story_id).catch(() => {});
+    if (effectiveId && token && session?.session_id !== effectiveId) {
+      void restoreSession(effectiveId);
     }
-  }, [session, story]);
+  }, [effectiveId, restoreSession, session?.session_id, token]);
 
-  // Load POI data for the route
   useEffect(() => {
-    if (!story) return;
-    const poiIds = story.nodes
-      .filter((n) => n.poi_id)
-      .map((n) => n.poi_id!);
-    if (poiIds.length === 0) {
+    if (session && story?.id !== session.story_id) {
+      void loadStory(session.story_id);
+    }
+  }, [loadStory, session, story?.id]);
+
+  useEffect(() => {
+    if (session?.status === "completed") {
+      navigate(`/story-sessions/${session.session_id}/ending`, { replace: true });
+    }
+  }, [navigate, session?.session_id, session?.status]);
+
+  const storyPoiIds = useMemo(
+    () => story?.nodes.flatMap((node) => (node.poi_id ? [node.poi_id] : [])) ?? [],
+    [story],
+  );
+  const storyPoiLabels = useMemo(
+    () =>
+      Object.fromEntries(
+        story?.nodes.flatMap((node) =>
+          node.poi_id
+            ? [[node.poi_id, storyStationName(node.id) ?? node.title]]
+            : [],
+        ) ?? [],
+      ),
+    [story],
+  );
+
+  useEffect(() => {
+    if (storyPoiIds.length === 0) {
       setPois([]);
       return;
     }
-    setPoisLoading(true);
-    fetchRoutePois(poiIds)
+    const controller = new AbortController();
+    void fetchRoutePois(storyPoiIds, controller.signal)
       .then(setPois)
-      .catch(() => setPois([]))
-      .finally(() => setPoisLoading(false));
-  }, [story]);
+      .catch(() => setPois([]));
+    return () => controller.abort();
+  }, [storyPoiIds]);
 
-  const currentChapter = session?.current_chapter;
-  const currentPoiId = currentChapter?.poi_id ?? undefined;
+  const completedIds = useMemo(
+    () =>
+      new Set([
+        ...(session?.state.completed_chapter_ids ?? []),
+        ...(session?.state.skipped_chapter_ids ?? []),
+      ]),
+    [session?.state.completed_chapter_ids, session?.state.skipped_chapter_ids],
+  );
+  const petalCount =
+    session?.state.rewards.filter((reward) => reward.kind === "note_petal").length ?? 0;
+  const stationNodes = story?.nodes.filter((node) => node.poi_id) ?? [];
+  const petalRewards =
+    session?.state.rewards.filter((reward) => reward.kind === "note_petal") ?? [];
 
-  // Compute node status from session state
-  const nodeStatus = useMemo(() => {
-    if (!session || !story) return new Map<string, "completed" | "current" | "locked">();
-    const completed = new Set([
-      ...session.state.completed_chapter_ids,
-      ...session.state.skipped_chapter_ids,
-    ]);
-    const map = new Map<string, "completed" | "current" | "locked">();
-    let foundCurrent = session.status === "completed";
-    for (const node of story.nodes) {
-      if (node.id === session.current_chapter_id) {
-        map.set(node.id, "current");
-        foundCurrent = true;
-      } else if (completed.has(node.id)) {
-        map.set(node.id, "completed");
-      } else if (!foundCurrent) {
-        map.set(node.id, "completed");
-      } else {
-        map.set(node.id, "locked");
-      }
-    }
-    return map;
-  }, [session, story]);
+  const statusFor = (node: StoryNodeOverview): NodeStatus => {
+    if (node.id === session?.current_chapter_id) return "current";
+    if (completedIds.has(node.id)) return "completed";
+    return "locked";
+  };
 
-  const handleGoToNode = (nodeId: string) => {
+  const enterCurrentChapter = () => {
     if (!session) return;
-    navigate(`/story-sessions/${session.session_id}/nodes/${nodeId}`);
+    navigate(
+      `/story-sessions/${session.session_id}/nodes/${session.current_chapter_id}`,
+    );
   };
 
-  const handleBack = () => {
-    if (story) navigate(`/stories/${story.id}`);
-    else navigate("/");
-  };
-
-  if (loading && !session) return <LoadingState label="加载故事进度…" />;
-  if (error && !session) {
-    return (
-      <div className="flex min-h-dvh flex-col bg-paper px-4 py-8">
-        <ErrorState
-          message={error}
-          onRetry={() => effectiveId && restoreSession(effectiveId)}
-        />
-      </div>
-    );
-  }
-  if (!session) {
-    return (
-      <div className="flex min-h-dvh flex-col bg-paper px-4 py-8">
-        <ErrorState message="未找到故事会话" />
-      </div>
-    );
+  if ((loading || isRestoring) && (!session || !story)) {
+    return <LoadingState label="正在恢复莲城路线…" />;
   }
 
-  const isCompleted = session.status === "completed";
-  const progress = session.progress;
-
-  return (
-    <main className="flex min-h-dvh flex-col bg-paper text-ink">
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 border-b border-line/80 bg-paper/95 px-4 py-3 backdrop-blur-md">
-        <div className="flex items-center justify-between">
+  if (!session || !story) {
+    const invalidSession = errorStatus === 403 || errorStatus === 404;
+    return (
+      <main className="grid min-h-dvh place-items-center bg-paper px-4">
+        <div className="w-full max-w-[480px]">
+          <ErrorState
+            message={
+              invalidSession
+                ? "这段旅程已经失效或不属于当前账号。你可以返回故事封面重新载入自己的进度。"
+                : error ?? "未找到故事会话"
+            }
+            onRetry={
+              effectiveId && !invalidSession
+                ? () => void restoreSession(effectiveId)
+                : undefined
+            }
+          />
           <button
             type="button"
-            onClick={handleBack}
-            className="text-sm text-ink-soft transition hover:text-ink"
+            onClick={() => navigate("/stories/lotus_city_double_map")}
+            className="mt-4 min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper"
           >
-            ← 返回
+            返回故事封面
           </button>
-          <div className="text-center">
-            <p className="font-serif text-sm font-semibold text-ink">
-              {story?.title ?? "剧情探索"}
-            </p>
-            <p className="text-xs text-ink-soft">
-              {isCompleted
-                ? "已完成"
-                : `进度 ${progress.completed_chapters}/${progress.total_chapters}`}
-            </p>
-          </div>
-          <div className="w-12" aria-hidden />
         </div>
-      </header>
+      </main>
+    );
+  }
 
-      {/* Map */}
-      <div className="relative h-[42dvh] shrink-0 overflow-hidden bg-paper-warm">
-        {poisLoading ? (
-          <div className="flex h-full items-center justify-center">
-            <LoadingState label="加载地图…" />
-          </div>
-        ) : (
-          <MapRouteView
-            poiIds={story?.nodes.filter((n) => n.poi_id).map((n) => n.poi_id!) ?? []}
-            currentPoiId={currentPoiId}
-            onSelectPoi={(poiId) => {
-              const node = story?.nodes.find((n) => n.poi_id === poiId);
-              if (node) handleGoToNode(node.id);
-            }}
-          />
-        )}
-      </div>
+  const currentChapter = session.current_chapter;
+  const currentPoi = pois.find((poi) => poi.poi_id === currentChapter?.poi_id);
+  const agentContext = currentChapter?.agent_context
+    ? {
+        ...currentChapter.agent_context,
+        chapter_title: currentChapter.title,
+      }
+    : undefined;
 
-      {/* Node list */}
-      <div className="flex-1 overflow-auto px-4 py-4 sm:mx-auto sm:max-w-lg sm:px-6">
-        {/* Current chapter CTA */}
-        {!isCompleted && currentChapter && (
-          <div className="mb-4 rounded-2xl border border-sage-deep/30 bg-sage-deep/5 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sage-deep">
-              当前章节
-            </p>
-            <p className="mt-1 font-serif text-lg font-semibold text-ink">
-              {currentChapter.title}
-            </p>
-            {currentChapter.story_time && (
-              <p className="text-xs text-ink-soft">{currentChapter.story_time}</p>
-            )}
-            {currentChapter.poi_id && (
-              <p className="mt-1 text-sm text-sage-deep">
-                📍 {pois.find((p) => p.poi_id === currentChapter.poi_id)?.poi_name ?? currentChapter.poi_id}
+  return (
+    <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-paper text-ink shadow-[var(--shadow-soft)]">
+      <StoryTopBar
+        title={story.title}
+        eyebrow="莲城路线"
+        petals={petalCount}
+        onBack={() => navigate(`/stories/${story.id}`)}
+        onAskAgent={agentContext ? () => setAgentOpen(true) : undefined}
+      />
+
+      <div className="flex-1 px-4 pb-28 pt-4">
+        <section className="rounded-2xl border border-sage-deep/25 bg-sage-deep/5 p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sage-deep">
+            当前任务
+          </p>
+          <h1 className="mt-1 font-serif text-xl font-semibold">
+            {currentChapter?.title ?? "载入当前章节"}
+          </h1>
+          <p className="mt-2 text-base leading-7 text-ink-soft">
+            {currentChapter?.location_name ??
+              currentPoi?.poi_name ??
+              "先完成序章，开启六站路线"}
+            {currentChapter?.story_time ? ` · ${currentChapter.story_time}` : ""}
+          </p>
+        </section>
+
+        <section className="mt-4 rounded-2xl border border-line bg-card p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="font-serif text-lg font-semibold">五张密笺</h2>
+              <p className="mt-1 text-sm text-ink-soft">
+                花瓣仅在服务端发放奖励后点亮
               </p>
-            )}
-            <button
-              type="button"
-              onClick={() => handleGoToNode(currentChapter.id)}
-              className="mt-4 w-full rounded-full bg-sage-deep px-5 py-3 text-sm font-medium text-paper shadow-[var(--shadow-soft)] transition hover:bg-moss active:scale-[0.99]"
-            >
-              进入章节
-            </button>
+            </div>
+            <PetalProgress collected={petalCount} />
           </div>
-        )}
-
-        {/* Completed banner */}
-        {isCompleted && (
-          <div className="mb-4 rounded-2xl border border-ochre/40 bg-ochre/5 p-5 text-center">
-            <p className="font-serif text-lg font-semibold text-ochre">
-              故事已完成
-            </p>
-            <p className="mt-1 text-sm text-ink-soft">
-              查看你的结局与收集的线索
-            </p>
-            <button
-              type="button"
-              onClick={() =>
-                navigate(
-                  `/story-sessions/${session.session_id}/ending`,
-                )
-              }
-              className="mt-3 rounded-full bg-ochre px-5 py-2.5 text-sm font-medium text-paper transition hover:opacity-90"
-            >
-              查看结局
-            </button>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <StoryImage
+              assetId="V4-PROP-03"
+              alt="城市双图"
+              onOpen={setViewerAssetId}
+              className="rounded-xl"
+            />
+            <StoryImage
+              assetId={petalCount === 5 ? "V4-PROP-05" : "V4-PROP-04"}
+              alt={petalCount === 5 ? "五张密笺重合" : "尚未集齐的密笺"}
+              onOpen={setViewerAssetId}
+              className="rounded-xl"
+            />
           </div>
-        )}
+        </section>
 
-        {/* Reward count */}
-        {session.state.rewards.length > 0 && (
-          <div className="mb-4 flex flex-wrap gap-2">
-            {session.state.rewards.map((r) => {
-              const icons: Record<string, string> = {
-                stamp: "🦭",
-                capability: "🔍",
-                coordinate: "📍",
-              };
+        <section className="mt-5" aria-labelledby="story-timeline-title">
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ochre">
+                一日六站
+              </p>
+              <h2 id="story-timeline-title" className="font-serif text-xl font-semibold">
+                章节时间线
+              </h2>
+            </div>
+            <span className="text-sm text-ink-soft">
+              {session.progress.solved_puzzles + session.progress.skipped_puzzles}/5
+            </span>
+          </div>
+
+          <ol className="relative mt-4 space-y-3 before:absolute before:bottom-7 before:left-[1.35rem] before:top-7 before:w-px before:bg-line">
+            {stationNodes.map((node, index) => {
+              const status = statusFor(node);
+              const poi = pois.find((item) => item.poi_id === node.poi_id);
+              const skipped = session.state.skipped_chapter_ids.includes(node.id);
               return (
-                <span
-                  key={r.id}
-                  className="inline-flex items-center gap-1 rounded-full border border-line bg-card px-3 py-1.5 text-xs text-ink-soft"
-                >
-                  {icons[r.kind] ?? "✦"} {r.name ?? r.id}
-                </span>
+                <li key={node.id} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (status === "current") {
+                        navigate(
+                          `/story-sessions/${session.session_id}/nodes/${node.id}`,
+                        );
+                      } else if (status === "completed") {
+                        setSummaryNode(node);
+                      } else {
+                        setNotice("完成前一站后解锁");
+                      }
+                    }}
+                    className={`flex min-h-20 w-full items-center gap-3 rounded-2xl border p-3 text-left ${
+                      status === "current"
+                        ? "border-sage-deep bg-sage-deep/8 shadow-[var(--shadow-soft)]"
+                        : status === "completed"
+                          ? "border-line bg-card"
+                          : "border-line bg-paper-warm opacity-65"
+                    }`}
+                  >
+                    <span
+                      className={`relative z-10 grid size-11 shrink-0 place-items-center rounded-full border font-serif font-semibold ${
+                        status === "current"
+                          ? "border-sage-deep bg-sage-deep text-paper"
+                          : status === "completed"
+                            ? "border-ochre bg-ochre/15 text-ochre"
+                            : "border-line bg-paper text-ink-soft"
+                      }`}
+                    >
+                      {status === "completed" ? "✓" : index + 1}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-base font-medium">
+                        {storyStationName(node.id) ?? poi?.poi_name ?? node.title}
+                      </span>
+                      <span className="mt-1 block text-sm text-ink-soft">
+                        {status === "current"
+                          ? "当前站 · 点击进入"
+                          : skipped
+                            ? "已完成 · 谜题已跳过"
+                            : status === "completed"
+                              ? "已完成 · 查看回顾"
+                              : "尚未解锁"}
+                      </span>
+                    </span>
+                    <span aria-hidden>{status === "locked" ? "锁" : "→"}</span>
+                  </button>
+                </li>
               );
             })}
+          </ol>
+        </section>
+
+        <details className="mt-5 overflow-hidden rounded-2xl border border-line bg-card">
+          <summary className="flex min-h-12 cursor-pointer items-center justify-between px-4 text-base font-medium">
+            查看六站地图
+            <span aria-hidden>⌄</span>
+          </summary>
+          <div className="relative isolate h-72 overflow-hidden border-t border-line">
+            <MapRouteView
+              poiIds={storyPoiIds}
+              poiLabels={storyPoiLabels}
+              currentPoiId={currentChapter?.poi_id}
+              onSelectPoi={(poiId) => {
+                const node = stationNodes.find((item) => item.poi_id === poiId);
+                if (!node) return;
+                if (statusFor(node) === "current") {
+                  navigate(`/story-sessions/${session.session_id}/nodes/${node.id}`);
+                } else {
+                  setSummaryNode(statusFor(node) === "completed" ? node : null);
+                  if (statusFor(node) === "locked") setNotice("完成前一站后解锁");
+                }
+              }}
+            />
+          </div>
+        </details>
+
+        {(notice || errorStatus === 409) && (
+          <div
+            role="status"
+            className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-ochre/30 bg-ochre/5 p-3 text-sm text-ink-soft"
+          >
+            <span>{errorStatus === 409 ? "进度已在其他页面更新，请重新载入。" : notice}</span>
+            <button
+              type="button"
+              onClick={() => {
+                setNotice(null);
+                if (errorStatus === 409) void restoreSession(session.session_id);
+              }}
+              className="min-h-11 shrink-0 rounded-full border border-line px-3"
+            >
+              {errorStatus === 409 ? "重新载入" : "知道了"}
+            </button>
           </div>
         )}
-
-        {/* All nodes */}
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
-            章节
-          </p>
-          {story?.nodes.map((node: StoryNodeOverview) => {
-            const status = nodeStatus.get(node.id) ?? "locked";
-            const poi = pois.find((p) => p.poi_id === node.poi_id);
-            return (
-              <button
-                key={node.id}
-                type="button"
-                disabled={status === "locked"}
-                onClick={() => handleGoToNode(node.id)}
-                className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                  status === "current"
-                    ? "border-sage-deep bg-sage-deep/10"
-                    : status === "completed"
-                      ? "border-line/60 bg-card/60"
-                      : "border-line bg-card opacity-50"
-                }`}
-              >
-                <span
-                  className={`grid size-8 shrink-0 place-items-center rounded-full font-serif text-xs font-bold ${
-                    status === "current"
-                      ? "bg-sage-deep text-paper"
-                      : status === "completed"
-                        ? "bg-sage-deep/20 text-sage-deep"
-                        : "bg-line/40 text-ink-soft"
-                  }`}
-                >
-                  {status === "completed" ? "✓" : node.order}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-ink">
-                    {node.title}
-                  </p>
-                  <p className="text-xs text-ink-soft">
-                    {poi?.poi_name ?? (node.poi_id ? node.poi_id : "无地点")}
-                    {node.story_time ? ` · ${node.story_time}` : ""}
-                  </p>
-                </div>
-                <span className="text-xs text-ink-soft">
-                  {status === "current" ? "→" : status === "completed" ? "✓" : "🔒"}
-                </span>
-              </button>
-            );
-          })}
-        </div>
       </div>
 
-      {/* Reward reveal modal */}
-      {latestRewards.length > 0 && (
-        <RewardReveal rewards={latestRewards} onDismiss={clearLatestRewards} />
+      {currentChapter && (
+        <StoryBottomAction
+          label="进入当前章节"
+          onClick={enterCurrentChapter}
+        />
       )}
+
+      <ChapterRecapDialog
+        node={summaryNode}
+        poiName={
+          summaryNode
+            ? storyStationName(summaryNode.id) ??
+              pois.find((poi) => poi.poi_id === summaryNode.poi_id)?.poi_name
+            : undefined
+        }
+        reward={
+          summaryNode
+            ? petalRewards[stationNodes.findIndex((node) => node.id === summaryNode.id)]
+            : undefined
+        }
+        skipped={
+          summaryNode
+            ? session.state.skipped_chapter_ids.includes(summaryNode.id)
+            : false
+        }
+        onClose={() => setSummaryNode(null)}
+      />
+
+      <StoryAgentDrawer
+        open={agentOpen}
+        context={agentContext}
+        onClose={() => setAgentOpen(false)}
+      />
+      <StoryImageViewer
+        assetId={viewerAssetId}
+        onClose={() => setViewerAssetId(null)}
+      />
     </main>
   );
 }
