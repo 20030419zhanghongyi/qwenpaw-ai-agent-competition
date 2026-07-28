@@ -1,4 +1,6 @@
 import type { StoryPuzzleData } from "../types";
+import { AssemblyPuzzle } from "./AssemblyPuzzle";
+import { EvidenceChainPuzzle } from "./EvidenceChainPuzzle";
 import { MappingPuzzle } from "./MappingPuzzle";
 import { MultiSelectPuzzle } from "./MultiSelectPuzzle";
 import { SingleChoicePuzzle } from "./SingleChoicePuzzle";
@@ -31,6 +33,22 @@ export function StoryPuzzleRenderer({
           onSubmit={onSubmit}
         />
       );
+    case "evidence_chain":
+      return (
+        <EvidenceChainPuzzle
+          puzzle={puzzle}
+          disabled={disabled}
+          onSubmit={onSubmit}
+        />
+      );
+    case "assembly":
+      return (
+        <AssemblyPuzzle
+          puzzle={puzzle}
+          disabled={disabled}
+          onSubmit={onSubmit}
+        />
+      );
     case "single_choice":
       return (
         <SingleChoicePuzzle
@@ -39,7 +57,5 @@ export function StoryPuzzleRenderer({
           onSubmit={onSubmit}
         />
       );
-    default:
-      return null;
   }
 }

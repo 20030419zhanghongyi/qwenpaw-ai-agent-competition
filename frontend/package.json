@@ -5,7 +5,7 @@
   "type": "module",
   "description": "澳跡同行 Macau StoryWalk — Web MVP (React + Vite + TS)",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview"
   },
