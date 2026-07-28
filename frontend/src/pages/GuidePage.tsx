@@ -4,7 +4,6 @@ import {
   askGuide,
   generateGuide,
   listPois,
-  recognizeGuidePhoto,
   synthesizeTts,
   type GuideGenerateResponse,
 } from "@/api/client";
@@ -14,6 +13,7 @@ import {
   GuideNarrationSections,
   sectionsFromText,
 } from "@/components/guide/GuideNarrationSections";
+import { PhotoRecognitionPanel } from "@/components/guide/PhotoRecognitionPanel";
 import { t } from "@/i18n";
 import { resolvePoiImage, curatedPoiImage } from "@/lib/poiImage";
 import { useWalk } from "@/state/WalkContext";
@@ -76,12 +76,8 @@ export function GuidePage() {
   const [question, setQuestion] = useState("");
   const [asking, setAsking] = useState(false);
 
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [photoBusy, setPhotoBusy] = useState(false);
-  const [photoNote, setPhotoNote] = useState<string | null>(null);
   const [sceneUrl, setSceneUrl] = useState<string>(heroImg);
   const [sceneLoading, setSceneLoading] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
   const deepLoaded = useRef<string | null>(null);
 
   useEffect(() => {
@@ -133,7 +129,6 @@ export function GuidePage() {
     setAudioUrl(null);
     setTtsFailed(false);
     setChat([]);
-    setPhotoNote(null);
     try {
       const gen = await generateGuide({
         poi: displayName || poi.poi_name,
@@ -249,74 +244,30 @@ export function GuidePage() {
     }
   }
 
-  async function onPhotoPicked(file: File | null) {
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    setPhotoPreview(url);
-    setPhotoBusy(true);
-    setPhotoNote(null);
-    try {
-      const res = await recognizeGuidePhoto({ file, language });
-      if (res.candidate_poi) {
-        setPhotoNote(
-          `${t(language, "guidePhotoRecognized")}${res.candidate_poi}${
-            res.confidence != null ? ` · ${Math.round(res.confidence * 100)}%` : ""
-          }`,
-        );
-        const match = pois.find(
-          (p) =>
-            p.poi_name === res.candidate_poi ||
-            p.poi_name.includes(res.candidate_poi!) ||
-            res.candidate_poi!.includes(p.poi_name),
-        );
-        if (match) {
-          selectPoi(match);
-        } else if (res.explanation?.text) {
-          setNarration({
-            text: res.explanation.text,
-            poi_name: res.candidate_poi,
-            source: "photo",
-            source_type: res.explanation.source_type,
-          });
-          setSelected((prev) =>
-            prev ?? {
-              poi_id: res.candidate_poi || "photo",
-              poi_name: res.candidate_poi || t(language, "guidePhotoUnknown"),
-              alias: null,
-              address: "",
-              longitude: 0,
-              latitude: 0,
-              category: "",
-              source: "photo",
-              created_at: "",
-              updated_at: "",
-            },
-          );
-        }
-      } else {
-        setPhotoNote(res.low_confidence_hint || res.error || t(language, "guidePhotoUncertain"));
-        if (res.description) {
-          setChat((prev) => [
-            ...prev,
-            {
-              role: "assistant",
-              text: `${t(language, "guidePhotoSeen")}${res.description}`,
-            },
-          ]);
-        }
-      }
-    } catch (err) {
-      setPhotoNote(err instanceof Error ? err.message : t(language, "guidePhotoError"));
-    } finally {
-      setPhotoBusy(false);
+  function onPhotoRecognized(name: string) {
+    const match = pois.find(
+      (p) => p.poi_name === name || p.poi_name.includes(name) || name.includes(p.poi_name),
+    );
+    if (match) {
+      selectPoi(match);
+      return;
     }
+    // 本地列表只取前 40 条；没命中时仍用识别到的名称拉讲解
+    selectPoi({
+      poi_id: name,
+      poi_name: name,
+      alias: null,
+      address: "",
+      longitude: 0,
+      latitude: 0,
+      category: "",
+      source: "photo",
+      created_at: "",
+      updated_at: "",
+    });
   }
 
   useEffect(() => {
-    if (photoPreview) {
-      setSceneUrl(photoPreview);
-      return;
-    }
     const name = selected?.poi_name || deepName || narration?.poi_name || "";
     const poiId = selected?.poi_id || deepPoi || "";
     if (!name && !poiId) {
@@ -341,7 +292,6 @@ export function GuidePage() {
       cancelled = true;
     };
   }, [
-    photoPreview,
     selected?.poi_id,
     selected?.poi_name,
     selected?.alias,
@@ -357,8 +307,6 @@ export function GuidePage() {
     setNarration(null);
     setAudioUrl(null);
     setChat([]);
-    setPhotoPreview(null);
-    setPhotoNote(null);
     setSearchParams({});
     deepLoaded.current = null;
   }
@@ -483,16 +431,14 @@ export function GuidePage() {
                     src={sceneUrl}
                     alt={title}
                     className={`h-full w-full object-cover transition duration-500 ${
-                      sceneLoading && !photoPreview ? "opacity-60 scale-105" : "opacity-95"
+                      sceneLoading ? "opacity-60 scale-105" : "opacity-95"
                     }`}
                     onError={() => setSceneUrl(heroImg)}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-moss/90 via-moss/20 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 p-5 text-paper">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.2em] opacity-80">
-                      {photoPreview
-                        ? t(language, "guidePhotoYourShot")
-                        : t(language, "guideVisualLabel")}
+                      {t(language, "guideVisualLabel")}
                     </p>
                     <h2 className="mt-1 font-display text-2xl">{title}</h2>
                     {selected?.address ? (
@@ -500,31 +446,13 @@ export function GuidePage() {
                     ) : null}
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-3 border-t border-paper/10 bg-moss/95 px-5 py-4">
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    capture="environment"
-                    className="hidden"
-                    onChange={(e) => void onPhotoPicked(e.target.files?.[0] ?? null)}
-                  />
-                  <button
-                    type="button"
-                    disabled={photoBusy}
-                    onClick={() => fileRef.current?.click()}
-                    className="rounded-full bg-paper px-5 py-2.5 text-sm font-medium text-moss transition hover:bg-paper-warm disabled:opacity-60"
-                  >
-                    {photoBusy ? t(language, "guidePhotoUploading") : t(language, "guidePhotoUpload")}
-                  </button>
-                  <p className="text-xs text-paper/75">{t(language, "guidePhotoHint")}</p>
-                </div>
-                {photoNote ? (
-                  <p className="border-t border-paper/10 px-5 py-3 text-xs text-paper/85">
-                    {photoNote}
-                  </p>
-                ) : null}
               </div>
+
+              <PhotoRecognitionPanel
+                language={language}
+                onRecognized={onPhotoRecognized}
+                onManualSelect={clearGuideSelection}
+              />
 
               <div className="rounded-[1.75rem] border border-line bg-card/90 p-5 shadow-[var(--shadow-soft)] sm:p-6">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sage-deep">
@@ -545,7 +473,7 @@ export function GuidePage() {
                       immersive={narration?.immersive}
                       imageUrl={narrationImage}
                       imageAlt={title}
-                      showImage={!photoPreview}
+                      showImage
                     />
                     {audioUrl ? (
                       <audio controls src={audioUrl} className="mt-4 w-full" />
