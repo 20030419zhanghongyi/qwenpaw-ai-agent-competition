@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { SkipPuzzleDialog } from "@/features/story/components/SkipPuzzleDialog";
+import { StoryPuzzleRenderer } from "@/features/story/puzzles";
+import type { StoryPuzzleData } from "@/features/story/types";
 import type { StoryPuzzle } from "@/types/stories";
 
 interface PuzzlePanelProps {
@@ -12,6 +15,14 @@ interface PuzzlePanelProps {
   lastMessage?: string | null;
 }
 
+const SUPPORTED_TYPES = new Set([
+  "single_choice",
+  "multi_select",
+  "mapping",
+  "evidence_chain",
+  "assembly",
+]);
+
 export function PuzzlePanel({
   puzzle,
   disabled,
@@ -22,107 +33,75 @@ export function PuzzlePanel({
   lastHint,
   lastMessage,
 }: PuzzlePanelProps) {
-  const [selected, setSelected] = useState<string | null>(null);
-  const isSingleChoice = puzzle.type === "single_choice";
-  const isWrong = lastMessage && !lastMessage.includes("正确") && attempts > 0;
-
-  const handleSubmit = () => {
-    if (isSingleChoice && selected) {
-      onSubmitAnswer(selected);
-    }
-  };
+  const [confirmingSkip, setConfirmingSkip] = useState(false);
+  const supported = SUPPORTED_TYPES.has(puzzle.type);
 
   return (
     <div className="space-y-4">
-      {/* Puzzle prompt */}
-      <div className="rounded-2xl border border-line bg-card p-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sage-deep">
-          谜题
-        </p>
-        <p className="mt-2 text-sm leading-relaxed text-ink">{puzzle.prompt}</p>
-
-        {/* Single choice options */}
-        {isSingleChoice && puzzle.options && (
-          <div className="mt-4 space-y-2.5">
-            {puzzle.options.map((opt) => {
-              const isSelected = selected === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => setSelected(opt.id)}
-                  className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition ${
-                    isSelected
-                      ? "border-sage-deep bg-sage-deep/10 text-sage-deep font-medium"
-                      : "border-line bg-paper hover:border-sage"
-                  } disabled:opacity-50`}
-                >
-                  {opt.text}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Feedback */}
-        {lastMessage && (
-          <p
-            className={`mt-4 text-sm font-medium ${
-              isWrong ? "text-clay" : "text-sage-deep"
-            }`}
-          >
-            {lastMessage}
+      {supported ? (
+        <StoryPuzzleRenderer
+          key={puzzle.id}
+          puzzle={puzzle as unknown as StoryPuzzleData}
+          disabled={disabled}
+          onSubmit={onSubmitAnswer}
+        />
+      ) : (
+        <div className="rounded-2xl border border-clay/30 bg-clay/5 p-4">
+          <p className="text-base text-clay">
+            暂不支持此谜题类型：{puzzle.type}
           </p>
-        )}
+        </div>
+      )}
 
-        {/* Hint */}
-        {lastHint && (
-          <div className="mt-3 rounded-xl border border-ochre/40 bg-ochre/5 px-4 py-3">
-            <p className="text-xs font-semibold text-ochre">提示</p>
-            <p className="mt-1 text-sm text-ink-soft">{lastHint}</p>
-          </div>
-        )}
+      {lastMessage && (
+        <div
+          role="status"
+          className="rounded-xl border border-sage/35 bg-sage/10 px-4 py-3"
+        >
+          <p className="text-base leading-7 text-ink">{lastMessage}</p>
+        </div>
+      )}
 
-        {/* Attempts counter */}
-        {attempts > 0 && (
-          <p className="mt-2 text-xs text-ink-soft">
-            已尝试 {attempts} 次
-          </p>
-        )}
-      </div>
+      {lastHint && (
+        <div className="rounded-xl border border-ochre/40 bg-ochre/5 px-4 py-3">
+          <p className="text-[13px] font-semibold text-ochre">阿莲的提示</p>
+          <p className="mt-1 text-base leading-7 text-ink-soft">{lastHint}</p>
+        </div>
+      )}
 
-      {/* Action buttons: Submit / Hint / Skip */}
-      <div className="flex gap-3">
-        {isSingleChoice && puzzle.options && (
-          <button
-            type="button"
-            disabled={disabled || !selected}
-            onClick={handleSubmit}
-            className="flex-1 rounded-full bg-sage-deep px-5 py-3 text-sm font-medium text-paper shadow-[var(--shadow-soft)] transition hover:bg-moss active:scale-[0.99] disabled:opacity-40"
-          >
-            提交答案
-          </button>
-        )}
+      {attempts > 0 && (
+        <p className="text-[13px] text-ink-soft">已尝试 {attempts} 次</p>
+      )}
 
+      <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
           disabled={disabled}
           onClick={onRequestHint}
-          className="rounded-full border border-line bg-paper px-4 py-3 text-sm text-ink-soft transition hover:border-sage hover:text-ink disabled:opacity-40"
+          className="min-h-12 rounded-full border border-line bg-paper px-4 text-base text-ink-soft transition disabled:opacity-40"
         >
           提示
         </button>
-
         <button
           type="button"
           disabled={disabled}
-          onClick={onSkip}
-          className="rounded-full border border-line bg-paper px-4 py-3 text-sm text-ink-soft transition hover:border-clay hover:text-clay disabled:opacity-40"
+          onClick={() => setConfirmingSkip(true)}
+          className="min-h-12 rounded-full border border-line bg-paper px-4 text-base text-ink-soft transition disabled:opacity-40"
         >
           跳过
         </button>
       </div>
+
+      <SkipPuzzleDialog
+        open={confirmingSkip}
+        busy={disabled}
+        message={puzzle.skip_text}
+        onCancel={() => setConfirmingSkip(false)}
+        onConfirm={() => {
+          setConfirmingSkip(false);
+          onSkip();
+        }}
+      />
     </div>
   );
 }

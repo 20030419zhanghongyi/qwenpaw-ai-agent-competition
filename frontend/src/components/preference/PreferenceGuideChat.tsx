@@ -175,14 +175,12 @@ export function PreferenceGuideChat({
     }
   };
 
-  const canSkip = !formVisible && !busy && !disabled;
+  const canSkip = !formVisible && !disabled;
 
   const handleSkip = () => {
     setReady(true);
-    void syncFromTranscript().finally(() => {
-      onReadyChange(true);
-      onRevealForm();
-    });
+    onReadyChange(true);
+    onRevealForm();
   };
 
   return (

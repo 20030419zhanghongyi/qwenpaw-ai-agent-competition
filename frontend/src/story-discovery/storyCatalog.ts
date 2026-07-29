@@ -19,16 +19,16 @@ export const STORY_CATALOG: StoryCatalogEntry[] = [
   {
     storyId: "lotus_city_double_map",
     status: "playable",
-    title: "莲城双图：消失的界线",
-    subtitle: "一场跨越约五百年的澳门时间层探索",
+    title: "莲城双图：未尽之图",
+    subtitle: "沿六处真实地点，读懂两张记录不同真实的澳门地图",
     region: "peninsula",
     estimatedHours: 7,
     invitationType: "telegram",
     matchRule: {
-      durationAnyOf: ["full", "multi"],
+      durationAnyOf: [],
       interestAnyOf: ["history", "culture", "arch"],
       themeAnyOf: ["heritage", "architecture"],
-      minScore: 2,
+      minScore: 0,
     },
   },
 

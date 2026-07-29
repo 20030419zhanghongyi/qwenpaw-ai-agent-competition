@@ -43,6 +43,11 @@ export function AuthPage() {
   const { language } = useWalk();
 
   const initialMode = searchParams.get("mode") === "register" ? "register" : "login";
+  const requestedReturnTo = searchParams.get("returnTo");
+  const returnTo =
+    requestedReturnTo?.startsWith("/") && !requestedReturnTo.startsWith("//")
+      ? requestedReturnTo
+      : "/preferences";
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -55,9 +60,9 @@ export function AuthPage() {
 
   useEffect(() => {
     if (!isRestoring && isAuthenticated) {
-      navigate("/preferences", { replace: true });
+      navigate(returnTo, { replace: true });
     }
-  }, [isAuthenticated, isRestoring, navigate]);
+  }, [isAuthenticated, isRestoring, navigate, returnTo]);
 
   const changeMode = (nextMode: Mode) => {
     setMode(nextMode);
@@ -99,7 +104,7 @@ export function AuthPage() {
           country: country || null,
         });
       }
-      navigate("/preferences");
+      navigate(returnTo);
     } catch {
       // The provider exposes the backend error for display.
     } finally {

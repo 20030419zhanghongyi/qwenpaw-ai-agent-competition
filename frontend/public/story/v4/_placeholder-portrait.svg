@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" role="img" aria-labelledby="title description">
+  <title id="title">角色素材纸张纹理占位图</title>
+  <desc id="description">用于未交付角色素材的浅色纸张纹理</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7f1e6"/>
+      <stop offset=".52" stop-color="#eee5d3"/>
+      <stop offset="1" stop-color="#e2d7c2"/>
+    </linearGradient>
+    <pattern id="fibres" width="64" height="48" patternUnits="userSpaceOnUse">
+      <path d="M3 10h22M41 35h19M12 45h10M49 6h8" stroke="#9b8b70" stroke-opacity=".09" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M7 22h36M31 15h28M2 38h31" stroke="#fffaf0" stroke-opacity=".32" stroke-width="1.5" stroke-linecap="round"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="1200" fill="url(#paper)"/>
+  <rect width="800" height="1200" fill="url(#fibres)"/>
+</svg>

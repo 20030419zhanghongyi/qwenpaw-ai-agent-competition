@@ -1,5 +1,5 @@
 /**
- * Authored cutscene content for 《莲城双图：消失的界线》
+ * Authored invitation content for 《莲城双图：未尽之图》
  *
  * This file is PURE DATA — no React, no QwenPaw, no dynamic generation.
  * Keeping text deterministic ensures typewriter timing, visual transitions,
@@ -11,7 +11,7 @@
  * Scene structure (v2):
  *   Act I   — Interruption: an unarchived record surfaces during route generation
  *   Act II  — Two Maps: two map layers appear with permanent offset
- *   Act III — Telegram: a letter from "澜" (Alan)
+ *   Act III — Telegram: the archived message reveals the research invitation
  *   Act IV  — Decision: the letter awaits an answer (integrated into cutscene)
  *
  * Audio cues (P0 — lightweight browser Audio):
@@ -103,7 +103,7 @@ export const LOTUS_TELEGRAM_SCENES: CutsceneScene[] = [
     audioCue: "time_reveal",
   },
 
-  // ── Act III: Telegram from 阿澜 ──────────────────────────────────────
+  // ── Act III: Story invitation ────────────────────────────────────────
   {
     id: "telegram",
     renderer: "telegram",
@@ -116,29 +116,24 @@ export const LOTUS_TELEGRAM_SCENES: CutsceneScene[] = [
     paragraphs: [
       "寻图人：",
       "",
-      "见字如面。",
+      "一本家藏旧书里，",
+      "夹着两张绘法不同的澳门地图。",
       "",
-      "如果你正在阅读这封信，",
-      "说明两张地图又一次找到了",
-      "能够同时看见它们的人。",
+      "一张记录城市的形状，",
+      "一张记录人怎样在城市里生活。",
       "",
       "不要急着判断",
       "哪一张是真的。",
       "",
-      "因为——",
+      "沿着五张秘密纸条，",
+      "亲自走过六处真实地点，",
+      "它们才会互相说明。",
       "",
-      "两张都真。",
-      "两张都不完整。",
+      "这是一段约一天的城市漫游。",
+      "五个谜题均可跳过。",
       "",
-      "澳门留下的，不只有街道。",
-      "",
-      "还有一些，",
-      "被时间移走的界线。",
-      "",
-      "如果你愿意，",
-      "替我把它们找回来。",
-      "",
-      "—— 阿澜",
+      "地图不是最后的判决。",
+      "一座城市，由许多人共同写成。",
     ],
     keepAllParagraphs: true,
     audioCue: "telegram_tick",
@@ -150,10 +145,10 @@ export const LOTUS_TELEGRAM_SCENES: CutsceneScene[] = [
     renderer: "decision",
     background: "dark",
     decisionConfig: {
-      preamble: "这封信，在等待你的回答。",
-      question: "你愿意成为寻图人吗？",
-      acceptLabel: "接受阿澜的邀请",
-      declineLabel: "暂时不接受",
+      preamble: "限定故事游 · 一日六站",
+      question: "跟着两张旧地图，重新认识澳门？",
+      acceptLabel: "进入《莲城双图》",
+      declineLabel: "继续普通路线规划",
     },
   },
 ];

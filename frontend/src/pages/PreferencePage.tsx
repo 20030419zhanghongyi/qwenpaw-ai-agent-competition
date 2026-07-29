@@ -5,6 +5,7 @@ import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { PreferenceGuideChat } from "@/components/preference/PreferenceGuideChat";
 import { TripDaysStepper } from "@/components/preference/TripDaysStepper";
+import { StoryInvitationCard } from "@/features/story/components/StoryInvitationCard";
 import { t } from "@/i18n";
 import {
   applyPreferenceToForm,
@@ -17,20 +18,16 @@ import {
   type WalkTag,
 } from "@/lib/preference";
 import { PORT_OPTIONS, portLabel } from "@/lib/ports";
+import { useAuth } from "@/state/AuthContext";
 import { useWalk } from "@/state/WalkContext";
 import type { Preference } from "@/types";
-import { useAuth } from "@/state/AuthContext";
 import { matchStory } from "@/story-discovery/storyMatcher";
 import {
-  clearInvitationState,
   hasActiveInvitationSuppression,
   markInvitationAccepted,
   markInvitationDeclined,
 } from "@/story-discovery/invitationState";
 import type { StoryDiscoveryPreference, StoryMatchResult } from "@/story-discovery/types";
-import { StoryInvitationExperience } from "@/components/story-invitation/StoryInvitationExperience";
-import { LOTUS_TELEGRAM_SCENES } from "@/components/story-invitation/scenes/lotusTelegram";
-import { startStorySession } from "@/api/stories";
 
 const THEME_OPTIONS: Array<{
   id: ThemeTag;
@@ -79,8 +76,8 @@ const WALK_OPTIONS: Array<{
 
 export function PreferencePage() {
   const navigate = useNavigate();
+  const { userId, isRestoring: authRestoring } = useAuth();
   const { language, saveMatch } = useWalk();
-  const { token } = useAuth();
   const [duration, setDuration] = useState<PreferenceFormState["duration"]>("half");
   const [tripDays, setTripDays] = useState(TRIP_DAYS_DEFAULT);
   const [interests, setInterests] = useState<string[]>([]);
@@ -96,6 +93,7 @@ export function PreferencePage() {
   const [flash, setFlash] = useState<Set<string>>(new Set());
   const [showAdjusters, setShowAdjusters] = useState(false);
   const adjustersRef = useRef<HTMLDivElement>(null);
+  const invitationRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<PreferenceFormState>({
     duration: "half",
     tripDays: TRIP_DAYS_DEFAULT,
@@ -142,6 +140,25 @@ export function PreferencePage() {
     const timer = window.setTimeout(() => setFlash(new Set()), 1400);
     return () => window.clearTimeout(timer);
   }, [flash]);
+
+  useEffect(() => {
+    if (authRestoring) {
+      setStoryInvitation(null);
+      return;
+    }
+    const match = matchStory({
+      duration,
+      interests,
+      themes,
+      walkTags,
+    });
+    setStoryInvitation(
+      match.matched &&
+        !hasActiveInvitationSuppression(match.storyId, userId)
+        ? match
+        : null,
+    );
+  }, [authRestoring, duration, interests, themes, userId, walkTags]);
 
   useEffect(() => {
     if (!showAdjusters) return;
@@ -231,12 +248,10 @@ export function PreferencePage() {
     });
 
   const generate = async () => {
-    console.log("[StoryDiscovery] generate() called");
     setError(null);
     setLoading(true);
     try {
       const snapshot = formSnapshot();
-      console.log("[StoryDiscovery] snapshot:", snapshot.duration, snapshot.interests, snapshot.themes);
       const preference = toPreference(snapshot);
 
       // ── Story Discovery (before parseIntent — uses form state only) ──
@@ -247,21 +262,20 @@ export function PreferencePage() {
         walkTags: snapshot.walkTags,
       };
       const storyMatch = matchStory(discoveryPref);
-      const suppressed = hasActiveInvitationSuppression(storyMatch.storyId);
-      console.log("[StoryDiscovery] pref:", discoveryPref, "match:", storyMatch, "suppressed:", suppressed);
+      const suppressed =
+        storyMatch.matched &&
+        hasActiveInvitationSuppression(storyMatch.storyId, userId);
 
-      if (storyMatch.matched) {
-        // Auto-clear previous decline state so cutscene always triggers during testing.
-        // In production, we'd respect the cooldown, but for dev/demo this removes friction.
-        if (suppressed) {
-          console.log("[StoryDiscovery] Auto-clearing suppression for", storyMatch.storyId);
-          clearInvitationState(storyMatch.storyId);
-        }
-        console.log("[StoryDiscovery] Showing cutscene for", storyMatch.storyId);
+      if (storyMatch.matched && !suppressed) {
         setStoryInvitation(storyMatch);
+        window.requestAnimationFrame(() =>
+          invitationRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          }),
+        );
         return;
       }
-      console.log("[StoryDiscovery] No story matched — proceeding to route generation");
 
       if (customNote.trim()) {
         try {
@@ -344,36 +358,19 @@ export function PreferencePage() {
 
   // ── Story invitation handlers ───────────────────────────────────────────
 
-  const handleStoryAccept = async () => {
+  const handleStoryAccept = () => {
     if (!storyInvitation) return;
 
-    if (!token) {
-      navigate("/auth?redirect=story-invite");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      markInvitationAccepted(storyInvitation.storyId);
-      const sess = await startStorySession(storyInvitation.storyId, token);
-      navigate(
-        `/story-sessions/${sess.session_id}/nodes/${sess.current_chapter_id}`,
-      );
-    } catch {
-      setError("故事初始化失败，已切换到普通路线");
-      markInvitationDeclined(storyInvitation.storyId);
-      executeRouteMatch(toPreference(formSnapshot()));
-    } finally {
-      setLoading(false);
-      setStoryInvitation(null);
-    }
+    const coverPath = `/stories/${storyInvitation.storyId}`;
+    markInvitationAccepted(storyInvitation.storyId, userId);
+    setStoryInvitation(null);
+    navigate(coverPath);
   };
 
   const handleStoryDecline = () => {
     if (!storyInvitation) return;
-    markInvitationDeclined(storyInvitation.storyId);
+    markInvitationDeclined(storyInvitation.storyId, userId);
     setStoryInvitation(null);
-    executeRouteMatch(toPreference(formSnapshot()));
   };
 
   return (
@@ -615,6 +612,15 @@ export function PreferencePage() {
               </div>
             </Section>
 
+            {storyInvitation && (
+              <div ref={invitationRef}>
+                <StoryInvitationCard
+                  onAccept={handleStoryAccept}
+                  onDecline={handleStoryDecline}
+                />
+              </div>
+            )}
+
             <Section
               title={t(language, "companionTitle")}
               caption={t(language, "companionCaption")}
@@ -701,14 +707,6 @@ export function PreferencePage() {
       ) : null}
     </main>
 
-    {/* ── Story Invitation Cutscene ── */}
-    {storyInvitation && (
-      <StoryInvitationExperience
-        scenes={LOTUS_TELEGRAM_SCENES}
-        onAccept={handleStoryAccept}
-        onDecline={handleStoryDecline}
-      />
-    )}
     </>
   );
 }

@@ -13,6 +13,8 @@ interface MapRouteViewProps {
   poiIds: string[];
   currentPoiId?: string;
   onSelectPoi?: (poiId: string) => void;
+  /** Optional story-specific display labels keyed by POI id. */
+  poiLabels?: Record<string, string>;
   /** Live user GPS; shown as a distinct blue-dot marker when present. */
   userLocation?: MapUserLocation | null;
   /** Increment to pan/center the map on the current userLocation. */
@@ -153,6 +155,7 @@ export function MapRouteView({
   poiIds,
   currentPoiId,
   onSelectPoi,
+  poiLabels,
   userLocation = null,
   recenterToken = 0,
 }: MapRouteViewProps) {
@@ -171,6 +174,7 @@ export function MapRouteView({
   const [warning, setWarning] = useState<string | null>(null);
   const [mapReadyTick, setMapReadyTick] = useState(0);
   const poiKey = poiIds.join("|");
+  const poiLabelKey = JSON.stringify(poiLabels ?? {});
   const stablePoiIds = poiKey ? poiKey.split("|") : [];
 
   useEffect(() => {
@@ -303,9 +307,10 @@ export function MapRouteView({
           overlays.push(userMarker);
         }
         for (const [index, poi] of pois.entries()) {
+          const displayName = poiLabels?.[poi.poi_id] ?? poi.poi_name;
           const marker = new namespace.Marker({
             position: [poi.longitude, poi.latitude],
-            title: poi.poi_name,
+            title: displayName,
             anchor: "center",
             content: markerContent(index + 1, poi.poi_id === currentPoiRef.current),
             zIndex: poi.poi_id === currentPoiId ? 130 : 120,
@@ -365,7 +370,14 @@ export function MapRouteView({
       if (createdMap) createdMap.destroy();
       if (mapRef.current === createdMap) mapRef.current = null;
     };
-  }, [copy.loadFailed, copy.missingKey, copy.noStops, copy.pathFailed, poiKey]);
+  }, [
+    copy.loadFailed,
+    copy.missingKey,
+    copy.noStops,
+    copy.pathFailed,
+    poiKey,
+    poiLabelKey,
+  ]);
 
   return (
     <div className="map-route-view absolute inset-0 z-0 overflow-hidden bg-paper-warm [contain:paint]">
