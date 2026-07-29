@@ -789,9 +789,11 @@ async function waitAndClick(labels, description = labels.join(" / ")) {
   return waitFor(description, () => clickAny(labels, { optional: true }));
 }
 
-async function fillInput(selector, value, description) {
+async function fillInput(selector, value, description, index = 0) {
   const filled = await evaluate(`(() => {
-    const element = document.querySelector(${JSON.stringify(selector)});
+    const element = document.querySelectorAll(
+      ${JSON.stringify(selector)}
+    )[${JSON.stringify(index)}];
     if (!element) return false;
     const setter = Object.getOwnPropertyDescriptor(
       element instanceof HTMLTextAreaElement
@@ -1778,6 +1780,12 @@ async function runStoryFlow() {
     "input[type='password']",
     password,
     "切换账号注册密码",
+  );
+  await fillInput(
+    "input[type='password']",
+    password,
+    "切换账号确认密码",
+    1,
   );
   await fillInput(
     "input[autocomplete='name']",
