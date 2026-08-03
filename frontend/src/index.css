@@ -294,6 +294,10 @@
   animation: story-flower-final-in 620ms ease-out 2s forwards;
 }
 
+.story-reward-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
 @media (orientation: landscape) and (max-height: 520px) {
   .landscape-story-hint {
     display: block;

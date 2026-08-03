@@ -10,6 +10,17 @@ interface AssemblyPuzzleProps {
   onSubmit: (answer: string[]) => void;
 }
 
+const DEFAULT_PIECE_ASSET_IDS: Readonly<Record<string, string>> = {
+  upper_frame: "V4-LOU-P01",
+  lower_frame: "V4-LOU-P02",
+  oyster_shell_panel: "V4-LOU-P03",
+  wooden_shutter: "V4-LOU-P04",
+  stained_glass: "V4-LOU-P05",
+  iron_grille: "V4-LOU-P06",
+  aluminum_frame: "V4-LOU-P07",
+  stone_lattice: "V4-LOU-P08",
+};
+
 function PieceVisual({
   piece,
   fallbackIndex,
@@ -17,18 +28,27 @@ function PieceVisual({
   piece: StoryPuzzleOption;
   fallbackIndex: number;
 }) {
+  const assetId = piece.asset_id ?? DEFAULT_PIECE_ASSET_IDS[piece.id];
+
   return (
     <>
-      {piece.asset_id ? (
+      {assetId ? (
         <StoryImage
-          assetId={piece.asset_id}
-          alt=""
+          assetId={assetId}
+          alt={piece.text}
           className="mx-auto mb-1 w-14 rounded-lg"
           imageClassName="object-contain"
         />
       ) : (
-        <span className="mx-auto mb-2 grid size-12 place-items-center rounded-lg border border-line bg-paper-warm font-mono text-xs text-ink-soft">
-          P{fallbackIndex + 1}
+        <span className="mx-auto mb-2 flex size-14 flex-col items-center justify-center rounded-lg border border-line bg-[url('/story/v4/_placeholder.svg')] bg-cover px-1 text-center text-[10px] leading-3 text-ink-soft">
+          <span>
+            {import.meta.env.DEV ? "构件图片未映射" : "构件图片暂未提供"}
+          </span>
+          {import.meta.env.DEV ? (
+            <span className="mt-0.5 max-w-full break-all font-mono text-[8px] leading-[10px] text-ink-soft/70">
+              {piece.id || `piece-${fallbackIndex + 1}`}
+            </span>
+          ) : null}
         </span>
       )}
       <span>{piece.text}</span>

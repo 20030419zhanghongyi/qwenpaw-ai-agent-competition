@@ -13,6 +13,9 @@ function placeholderImage(assetId: string): string {
   if (PETAL_ASSET_IDS.has(assetId)) {
     return "/story/v4/_placeholder-petal.svg";
   }
+  if (assetId.startsWith("V4-CHAR-")) {
+    return "/story/v4/_placeholder-portrait.svg";
+  }
   return "/story/v4/_placeholder.svg";
 }
 

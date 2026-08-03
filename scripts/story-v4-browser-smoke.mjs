@@ -789,9 +789,11 @@ async function waitAndClick(labels, description = labels.join(" / ")) {
   return waitFor(description, () => clickAny(labels, { optional: true }));
 }
 
-async function fillInput(selector, value, description) {
+async function fillInput(selector, value, description, index = 0) {
   const filled = await evaluate(`(() => {
-    const element = document.querySelector(${JSON.stringify(selector)});
+    const element = document.querySelectorAll(
+      ${JSON.stringify(selector)}
+    )[${JSON.stringify(index)}];
     if (!element) return false;
     const setter = Object.getOwnPropertyDescriptor(
       element instanceof HTMLTextAreaElement
@@ -1084,6 +1086,69 @@ async function dismissRewardAndReturnToMap(sessionId, index) {
   }
 
   if (index === 5) {
+    await setMobileViewport(390, 480);
+    await waitFor(
+      "第五瓣奖励与完整市花分步展示",
+      async () => {
+        const state = await evaluate(`(() => {
+          const dialog = document.querySelector('[role="dialog"]');
+          const scroll = document.querySelector("[data-reward-scroll]");
+          const button = [...document.querySelectorAll("button")].find(
+            (element) =>
+              element.textContent?.includes("收下第五瓣") &&
+              element.textContent?.includes("完整市花")
+          );
+          return {
+            hasPetalDetail: dialog?.textContent?.includes("窗格花瓣"),
+            hasFlowerAnimation: Boolean(
+              document.querySelector(".story-flower-petal-group")
+            ),
+            buttonVisible: Boolean(
+              button &&
+                button.getBoundingClientRect().top >= 0 &&
+                button.getBoundingClientRect().bottom <= innerHeight
+            ),
+            scrollable: Boolean(
+              scroll && scroll.scrollHeight > scroll.clientHeight
+            ),
+          };
+        })()`);
+        return state.hasPetalDetail &&
+          !state.hasFlowerAnimation &&
+          state.buttonVisible &&
+          state.scrollable
+          ? state
+          : null;
+      },
+    );
+    await sleep(350);
+    await screenshot("08-05-fifth-petal");
+    const scrolledState = await evaluate(`(() => {
+      const scroll = document.querySelector("[data-reward-scroll]");
+      const button = [...document.querySelectorAll("button")].find(
+        (element) =>
+          element.textContent?.includes("收下第五瓣") &&
+          element.textContent?.includes("完整市花")
+      );
+      if (!scroll || !button) return null;
+      scroll.scrollTop = scroll.scrollHeight;
+      const buttonRect = button.getBoundingClientRect();
+      return {
+        scrollTop: scroll.scrollTop,
+        buttonVisible:
+          buttonRect.top >= 0 && buttonRect.bottom <= innerHeight,
+      };
+    })()`);
+    if (!scrolledState?.scrollTop || !scrolledState.buttonVisible) {
+      throw new Error("第五瓣奖励弹层滚动后未保持操作按钮可见");
+    }
+    await sleep(100);
+    await screenshot("08-05-fifth-petal-scroll");
+    await waitAndClick(
+      ["收下第五瓣，查看完整市花"],
+      "确认收下第五瓣并进入完整市花展示",
+    );
+    await setMobileViewport(390, 844);
     await waitFor(
       "第五瓣完整市花动画",
       () =>
@@ -1149,6 +1214,7 @@ async function dismissRewardAndReturnToMap(sessionId, index) {
     },
     labels: [
       "收下并查看下一站",
+      "收下第五瓣，查看完整市花",
       "收下",
       "查看下一站",
       "下一站",
@@ -1778,6 +1844,12 @@ async function runStoryFlow() {
     "input[type='password']",
     password,
     "切换账号注册密码",
+  );
+  await fillInput(
+    "input[type='password']",
+    password,
+    "切换账号确认密码",
+    1,
   );
   await fillInput(
     "input[autocomplete='name']",

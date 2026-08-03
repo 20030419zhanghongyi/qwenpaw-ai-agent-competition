@@ -113,9 +113,39 @@ http://localhost:5173/stories/lotus_city_double_map
 - 前端以 `/api/v1/stories` 和 `/api/v1/story-sessions` 的实际响应为准，
   不在浏览器内保存答案或判题规则。
 - 故事图片统一通过 `src/features/story/assets/storyAssetManifest.ts`
-  映射；素材尚未交付时显示带资产编号的占位图，不会阻塞流程。
+  映射到 `public/story/v4/` 的分目录素材。图片缺失或加载失败时会自动
+  回退到纸张纹理占位图，不会阻塞流程。
 - 故事问答抽屉复用现有 `/guide/ask` 能力；服务不可用时不影响主线。
 - 跳过谜题必须二次确认，且服务端仍记录跳过结果。
+
+检查 05 文档、资产 manifest 和正式素材是否存在编号、文件名、比例或
+遗漏冲突：
+
+```powershell
+cd frontend
+npm run check:story-assets
+```
+
+#### 开发与生产显示
+
+资产调试信息使用 Vite 内置的 `import.meta.env.DEV` 判断，不需要修改
+`.env`：
+
+```powershell
+# 开发环境：缺图占位会显示资产编号和具体素材说明
+cd frontend
+npm run dev
+
+# 生产环境：先构建，再预览 dist；缺图时只显示简洁说明
+cd frontend
+npm run build
+npm run preview
+```
+
+部署平台也应发布 `npm run build` 生成的 `dist/`，此时
+`import.meta.env.PROD` 为 `true`、`import.meta.env.DEV` 为 `false`。
+正式图片成功加载时两种环境都不会额外覆盖资产编号；编号只用于开发
+环境中的缺图、未登记素材和花瓣组合调试信息。
 
 #### Story Walk 浏览器冒烟测试
 
