@@ -6,6 +6,8 @@ from sqlalchemy import select
 
 from app.db.models import Checkin as CheckinRecord
 from app.db.models import Trip as TripRecord
+from app.db.models import User as UserRecord
+from app.db.models.user import DEFAULT_GUEST_USER_NAME, guest_user_email
 from app.db.session import SessionLocal
 from app.features.trips.store import trip_store
 from app.main import app
@@ -53,6 +55,18 @@ def test_created_trip_is_persisted_in_database():
         assert record is not None
         assert record.user_id == USER_ID
         assert record.route_id == ROUTE_ID
+
+
+def test_create_trip_creates_guest_user_with_default_name():
+    guest_user_id = "guest-trip-user"
+
+    create_trip(guest_user_id)
+
+    with SessionLocal() as session:
+        guest = session.get(UserRecord, guest_user_id)
+        assert guest is not None
+        assert guest.name == DEFAULT_GUEST_USER_NAME
+        assert guest.email == guest_user_email(guest_user_id)
 
 
 def test_create_trip_with_custom_stop_poi_ids():

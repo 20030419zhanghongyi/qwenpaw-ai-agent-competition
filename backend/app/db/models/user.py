@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from hashlib import sha256
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Integer, JSON, String, func
@@ -13,6 +14,15 @@ from app.db.base import Base, utc_now
 if TYPE_CHECKING:
     from .profile import Favorite, TripFeedback
     from .trip import Trip
+
+
+DEFAULT_GUEST_USER_NAME = "Guest traveler"
+
+
+def guest_user_email(user_id: str) -> str:
+    """Return a deterministic non-login email for an anonymous local user."""
+    digest = sha256(user_id.encode("utf-8")).hexdigest()[:32]
+    return f"guest-{digest}@local.invalid"
 
 
 class User(Base):

@@ -10,6 +10,7 @@ from app.db.models import Favorite as FavoriteRecord
 from app.db.models import TripFeedback as FeedbackRecord
 from app.db.models import User as UserRecord
 from app.db.session import SessionLocal
+from app.db.models.user import DEFAULT_GUEST_USER_NAME, guest_user_email
 
 from .models import FavoritePoi, TripFeedback
 
@@ -48,7 +49,14 @@ class SqlAlchemyProfileRepository:
     @staticmethod
     def _ensure_user(session: Session, user_id: str) -> None:
         if session.get(UserRecord, user_id) is None:
-            session.add(UserRecord(id=user_id, interests=[]))
+            session.add(
+                UserRecord(
+                    id=user_id,
+                    name=DEFAULT_GUEST_USER_NAME,
+                    email=guest_user_email(user_id),
+                    interests=[],
+                )
+            )
 
     def add_favorite(self, favorite: FavoritePoi) -> tuple[FavoritePoi, bool]:
         with self._session_factory() as session:

@@ -9,7 +9,9 @@ skills/
 ├── preference-guide/SKILL.md     # 偏好多轮引导 agent（多轮对话 → 逐步收集偏好 → Preference JSON）
 ├── macau-guide/SKILL.md         # P2：文化讲解 agent（POI 资料 → 有据讲解 + 来源/置信）
 ├── photo-recognize/SKILL.md     # P4：拍照识别 agent（图 → {描述,候选POI,置信} JSON）
-└── postcard-scene/SKILL.md      # 明信片场景插画（参考实景 → 四时段 SVG）
+├── postcard-scene/SKILL.md      # 旧版明信片场景插画（参考实景 → 四时段 SVG）
+├── qwen-image-postcard/SKILL.md # Qwen-Image 数字旅行回忆图
+└── photo-abstract-editorial/SKILL.md # 用户照片 → 原片 + 抽象记忆面板编辑明信片
 ```
 
 ## 部署到 QwenPaw（开发期）
@@ -48,7 +50,7 @@ curl -X POST http://127.0.0.1:8088/api/skills/pool/refresh
 | `pref-guide` | 偏好多轮引导 | `preference-guide` | 多轮对话逐步收集偏好，够了输出 Preference JSON |
 | `guide` | 文化讲解 | `macau-guide`、`source-attribution`、`anti-sycophancy` | RAG 取料 + 来源/置信度 |
 | `photo` | 拍照识别 | `photo-recognize`、`source-attribution` | 多模态 + 内置 `view_image` 工具 |
-| `scene` | 明信片场景插画 | `postcard-scene` | 多模态 + `view_image`；先看参考实景再画四时段 SVG |
+| `scene` | 明信片场景 | `postcard-scene`、`qwen-image-postcard`、`photo-abstract-editorial` | 用户授权照片优先做编辑明信片；无照片时用 Qwen-Image 并标注“AI 场景示意” |
 | `reviewer` | 独立审核 | `content-safety-review` | pass / revise / block 独立裁定 |
 
 > `source-attribution` 不承担独立审核；生成结果仍由 `reviewer` 做后置安全裁定。
@@ -171,12 +173,14 @@ pref-guide 是**多轮对话引导**（发现缺失 → 一次问一个问题 �
 
 ## 在 QwenPaw 里建明信片场景 agent（scene）—— 技能源已就位
 
-专用 agent：先 `view_image` 看后端下好的实景参考图，再输出四时段明信片 SVG。
-与 `photo`（识别 JSON）分工不同——`scene` **只画图**。
+专用 agent：用户授权照片优先使用 `photo-abstract-editorial`，通过 `edit_image_qwen`
+输出“原照片保留区 + 抽象记忆面板”的竖版编辑明信片；无个人照片时用
+`qwen-image-postcard` 调用 `generate_image_qwen`，且必须标注“AI 场景示意”。
+`postcard-scene` 仅保留为旧版 SVG 兼容技能，不得把 SVG 伪装成 Qwen-Image 成图。
 
 ```bash
 # 1. 技能进池 + reconcile
-cp -R skills/postcard-scene ~/.qwenpaw/skill_pool/
+cp -R skills/postcard-scene skills/qwen-image-postcard skills/photo-abstract-editorial ~/.qwenpaw/skill_pool/
 curl -X POST http://127.0.0.1:8088/api/skills/pool/refresh
 
 # 2. 建 agent（多模态模型；与 photo 同 provider）
@@ -186,7 +190,7 @@ curl -X POST http://127.0.0.1:8088/api/agents \
     "id": "scene",
     "name": "明信片场景",
     "active_model": {"provider_id": "aliyun-tokenplan-intl", "model": "qwen3.6-plus"},
-    "skill_names": ["postcard-scene"],
+    "skill_names": ["postcard-scene", "qwen-image-postcard", "photo-abstract-editorial"],
     "language": "zh"
   }'
 

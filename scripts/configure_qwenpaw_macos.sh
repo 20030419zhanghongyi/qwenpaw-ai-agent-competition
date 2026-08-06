@@ -41,6 +41,7 @@ skill_sources=(
   "skills/photo-recognize"
   "skills/postcard-scene"
   "skills/qwen-image-postcard"
+  "skills/photo-abstract-editorial"
   "ethics/qwenpaw-skills/fairness-gate"
   "ethics/qwenpaw-skills/source-attribution"
   "ethics/qwenpaw-skills/anti-sycophancy"
@@ -86,7 +87,7 @@ create_agent_if_missing intent "需求理解" requirement-understand fairness-ga
 create_agent_if_missing pref-guide "偏好多轮引导" preference-guide
 create_agent_if_missing guide "文化讲解" macau-guide source-attribution anti-sycophancy
 create_agent_if_missing photo "拍照识别" photo-recognize source-attribution
-create_agent_if_missing scene "明信片场景" postcard-scene qwen-image-postcard
+create_agent_if_missing scene "明信片场景" postcard-scene qwen-image-postcard photo-abstract-editorial
 create_agent_if_missing reviewer "独立审核" content-safety-review
 
 # Copy any missing pool skill into existing workspaces without overwriting user-edited copies.
@@ -96,7 +97,7 @@ for mapping in \
   'pref-guide:preference-guide' \
   'guide:macau-guide,source-attribution,anti-sycophancy' \
   'photo:photo-recognize,source-attribution' \
-  'scene:postcard-scene,qwen-image-postcard' \
+  'scene:postcard-scene,qwen-image-postcard,photo-abstract-editorial' \
   'reviewer:content-safety-review'; do
   agent_id="${mapping%%:*}"
   IFS=',' read -r -a agent_skills <<< "${mapping#*:}"

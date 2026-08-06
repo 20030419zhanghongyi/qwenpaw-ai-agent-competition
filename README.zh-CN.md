@@ -70,7 +70,7 @@ cp .env.example .env
 open -e .env
 ```
 
-至少填写 `DASHSCOPE_API_KEY`、`AMAP_WEB_SERVICE_KEY`、
+至少填写你自行申请的 `DASHSCOPE_API_KEY`、`AMAP_WEB_SERVICE_KEY`、
 `VITE_AMAP_API_KEY` 和 `VITE_AMAP_SECURITY_CODE`。不要提交 `.env`；它已经被
 Git 忽略。完整字段说明见下方“配置要求”。
 
@@ -186,7 +186,7 @@ curl -fsS http://127.0.0.1:8088/api/version
 
 | 变量 | 必需性 | 说明 |
 |---|---|---|
-| `DASHSCOPE_API_KEY` | 完整 AI 功能必需 | 百炼/DashScope；TTS、图片、部分后端能力使用 |
+| `DASHSCOPE_API_KEY` | 完整 AI 功能必需 | 部署者自行申请的百炼/DashScope Key；用于 TTS、图片和部分后端能力，**不是赛委会提供的 Key** |
 | `QWEN_EMBEDDING_API_KEY` | 可选 | RAG embedding 专用；留空时回退到 DashScope Key |
 | `AMAP_WEB_SERVICE_KEY` | 路线步行规划必需 | 高德“Web 服务”Key |
 | `VITE_AMAP_API_KEY` | 前端地图必需 | 高德“Web 端（JS API）”Key |
@@ -194,8 +194,10 @@ curl -fsS http://127.0.0.1:8088/api/version
 | `AMAP_API_KEY` / `AMAP_SECURITY_CODE` | 建议同步填写 | 后端兼容字段，与前端 Key/安全密钥保持一致 |
 | `QWENPAW_BASE_URL` | 有默认值 | 本机开发使用 `http://127.0.0.1:8088` |
 
-高德 Key 在[高德开放平台](https://lbs.amap.com/)创建；DashScope Key 在
-[阿里云百炼控制台](https://bailian.console.aliyun.com/)创建。密钥还需要在
+高德 Key 在[高德开放平台](https://lbs.amap.com/)创建；DashScope Key 需要由部署者
+在[阿里云百炼控制台](https://bailian.console.aliyun.com/)自行创建。图像生成所需的
+DashScope Key **并非赛委会提供**，请使用自己可控的账号与 Key，并自行确认额度、
+计费与区域。密钥还需要在
 QwenPaw 的模型 Provider 中单独配置，QwenPaw 不会自动读取项目 `.env` 作为
 模型 Provider 配置。
 
@@ -285,14 +287,15 @@ bash scripts/configure_qwenpaw_macos.sh
 
 脚本会校验并导入本地 Skills，创建缺失的项目 Agents（已有 Agent 不会被删除），
 注入统一伦理基线，安装 Qwen-Image Plugin，并在根目录 `.env` 已配置
-`DASHSCOPE_API_KEY` 时为 `scene` 配置和启用两项图片工具。它不会在终端显示
-密钥；无 Key 时会保留插件已安装、工具未启用的状态。可用
+部署者自行提供的 `DASHSCOPE_API_KEY` 时为 `scene` 配置和启用两项图片工具。
+仓库与赛委会环境不会提供图像生成 Key；相关用量、额度与费用由部署账号承担。
+脚本不会在终端显示密钥；无 Key 时会保留插件已安装、工具未启用的状态。可用
 `QWENPAW_BASE_URL=http://127.0.0.1:8088 bash scripts/configure_qwenpaw_macos.sh`
 覆盖默认地址。
 
 ### 1. 导入全部本地 Skills
 
-本项目包含 6 个业务 Skill 和 4 个伦理 Skill：
+本项目包含 8 个业务 Skill 和 4 个伦理 Skill：
 
 | Skill | 用途 | 挂载到 |
 |---|---|---|
@@ -303,6 +306,7 @@ bash scripts/configure_qwenpaw_macos.sh
 | `photo-recognize` | 图片描述与 POI 判断 | `photo` |
 | `postcard-scene` | SVG 明信片场景约束 | `scene` |
 | `qwen-image-postcard` | 调用 Qwen-Image 的真实旅行回忆图 | `scene` |
+| `photo-abstract-editorial` | 用户授权照片 → 原片保留 + 抽象记忆面板编辑图 | `scene` |
 | `fairness-gate` | 偏好公平性检查 | `intent` |
 | `source-attribution` | 来源和置信度标注 | `guide`、`photo` |
 | `anti-sycophancy` | 避免迎合与无依据断言 | `guide` |
@@ -332,6 +336,7 @@ $skillSources = @(
   "skills\photo-recognize",
   "skills\postcard-scene",
   "skills\qwen-image-postcard",
+  "skills\photo-abstract-editorial",
   "ethics\qwenpaw-skills\fairness-gate",
   "ethics\qwenpaw-skills\source-attribution",
   "ethics\qwenpaw-skills\anti-sycophancy",
@@ -395,7 +400,7 @@ Invoke-QwenPawChecked agents create --agent-id photo --name "拍照识别" --lan
   --skill source-attribution
 Invoke-QwenPawChecked agents create --agent-id scene --name "明信片场景" --language zh `
   --provider-id $provider --model-id $model --skill postcard-scene `
-  --skill qwen-image-postcard
+  --skill qwen-image-postcard --skill photo-abstract-editorial
 Invoke-QwenPawChecked agents create --agent-id reviewer --name "独立审核" --language zh `
   --provider-id $provider --model-id $model --skill content-safety-review
 
@@ -538,10 +543,11 @@ foreach ($toolName in $toolNames) {
 `https://dashscope-intl.aliyuncs.com/api/v1`，Key 与 endpoint 必须同区域。
 若启用了 QwenPaw Web 鉴权，还需给上述请求补充相应 Authorization/Cookie。
 
-`postcard-scene` Skill 还保留了旧版 SVG 输出约束；在线明信片链路会由后端明确
-要求调用 `generate_image_qwen` 或 `edit_image_qwen`。验收在线链路时应看到插件的
-`plugin_call_output` 并取得图片；若只返回 SVG，说明旧约束干扰了工具调用，不能
-视为 Qwen-Image 配置成功。
+用户提供授权照片时，使用 `photo-abstract-editorial`：通过 `edit_image_qwen` 保留
+原片并提炼抽象记忆面板。没有个人照片时，`qwen-image-postcard` 可以调用
+`generate_image_qwen`；展示结果必须标注为**“AI 场景示意”**。旧版
+`postcard-scene` 不得作为图像工具失败时的回退。验收在线链路时应看到插件的
+`plugin_call_output` 并取得图片。
 
 ### 5. 验证 QwenPaw 配置
 
@@ -559,7 +565,7 @@ $expectedSkills = [ordered]@{
   "pref-guide" = @("preference-guide")
   guide = @("macau-guide", "source-attribution", "anti-sycophancy")
   photo = @("photo-recognize", "source-attribution")
-  scene = @("postcard-scene", "qwen-image-postcard")
+  scene = @("postcard-scene", "qwen-image-postcard", "photo-abstract-editorial")
   reviewer = @("content-safety-review")
 }
 
