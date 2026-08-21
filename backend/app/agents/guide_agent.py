@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import uuid
 from typing import Any
 
 from pydantic import BaseModel, ValidationError
@@ -251,7 +252,10 @@ def generate(
                 travel_type=travel_type,
                 next_stop=next_stop,
             ),
-            session_name="harness-guide",
+            # A Console session is persisted by name.  Reusing a fixed name
+            # mixes unrelated guide turns (for example old postcard-caption
+            # experiments) into later POI explanations.
+            session_name=f"harness-guide-{uuid.uuid4().hex}",
         )
     except QwenPawError as exc:
         logger.info("guide agent 调用失败，降级：%s", exc)
@@ -314,7 +318,9 @@ def answer(
             _build_ask_prompt(
                 poi, question, material, language=language, interests=interests
             ),
-            session_name="harness-guide-ask",
+            # Keep follow-up answers isolated from both other answers and
+            # full-guide generation sessions in the Console history.
+            session_name=f"harness-guide-ask-{uuid.uuid4().hex}",
         )
     except QwenPawError as exc:
         logger.info("guide ask 调用失败，降级：%s", exc)

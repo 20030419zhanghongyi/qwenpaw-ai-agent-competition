@@ -73,7 +73,7 @@ cp .env.example .env
 open -e .env
 ```
 
-At minimum, set `DASHSCOPE_API_KEY`, `AMAP_WEB_SERVICE_KEY`,
+At minimum, set your own `DASHSCOPE_API_KEY`, `AMAP_WEB_SERVICE_KEY`,
 `VITE_AMAP_API_KEY`, and `VITE_AMAP_SECURITY_CODE`. Do not commit `.env`; it is
 already ignored by Git. See "Configuration Requirements" below for every
 field.
@@ -193,7 +193,7 @@ the following credentials:
 
 | Variable | Requirement | Description |
 |---|---|---|
-| `DASHSCOPE_API_KEY` | Required for complete AI functionality | Model Studio/DashScope; used by TTS, images, and some backend capabilities |
+| `DASHSCOPE_API_KEY` | Required for complete AI functionality | Your own Alibaba Cloud Model Studio/DashScope key, used by TTS, images, and some backend capabilities; it is not provided by the competition organizer |
 | `QWEN_EMBEDDING_API_KEY` | Optional | Dedicated RAG embedding key; falls back to the DashScope key when empty |
 | `AMAP_WEB_SERVICE_KEY` | Required for walking-route planning | AMap "Web Service" key |
 | `VITE_AMAP_API_KEY` | Required for the frontend map | AMap "Web (JS API)" key |
@@ -201,9 +201,12 @@ the following credentials:
 | `AMAP_API_KEY` / `AMAP_SECURITY_CODE` | Recommended | Backend compatibility fields; keep them consistent with the frontend key/security code |
 | `QWENPAW_BASE_URL` | Has a default | Use `http://127.0.0.1:8088` for local development |
 
-Create AMap keys on the [AMap Open Platform](https://lbs.amap.com/) and a
-DashScope key in the [Alibaba Cloud Model Studio
-console](https://bailian.console.aliyun.com/). You must also configure the key
+Create AMap keys on the [AMap Open Platform](https://lbs.amap.com/) and create
+your own DashScope key in the [Alibaba Cloud Model Studio
+console](https://bailian.console.aliyun.com/). The DashScope image-generation
+key is not supplied by the competition organizer: use an account and key you
+control, and make sure its quota, billing, and region are suitable for your
+deployment. You must also configure the key
 separately in QwenPaw's model provider. QwenPaw does not automatically use the
 project `.env` as model-provider configuration.
 
@@ -301,13 +304,16 @@ bash scripts/configure_qwenpaw_macos.sh
 The script validates and imports local Skills, creates only missing project
 Agents, injects the shared ethics baseline, installs the Qwen-Image Plugin, and
 configures/enables its two image tools for `scene` when the root `.env`
-contains `DASHSCOPE_API_KEY`. It never prints the key. Without a key, it leaves
+contains your self-provided `DASHSCOPE_API_KEY`. This repository and the
+competition environment do not provide an image-generation key; its usage,
+quota, and charges belong to the deploying account. The script never prints the
+key. Without a key, it leaves
 the plugin installed while keeping the image tools unconfigured and disabled.
 Set `QWENPAW_BASE_URL` before the command to override the default endpoint.
 
 ### 1. Import All Local Skills
 
-The project contains six business Skills and four ethics Skills:
+The project contains eight business Skills and four ethics Skills:
 
 | Skill | Purpose | Mounted on |
 |---|---|---|
@@ -318,6 +324,7 @@ The project contains six business Skills and four ethics Skills:
 | `photo-recognize` | Image descriptions and POI identification | `photo` |
 | `postcard-scene` | SVG postcard-scene constraints | `scene` |
 | `qwen-image-postcard` | Real travel-memory images through Qwen-Image | `scene` |
+| `photo-abstract-editorial` | Authorized photo → retained photograph plus abstract editorial memory panel | `scene` |
 | `fairness-gate` | Preference fairness checks | `intent` |
 | `source-attribution` | Source and confidence attribution | `guide`, `photo` |
 | `anti-sycophancy` | Avoid agreement-seeking and unsupported assertions | `guide` |
@@ -347,6 +354,7 @@ $skillSources = @(
   "skills\photo-recognize",
   "skills\postcard-scene",
   "skills\qwen-image-postcard",
+  "skills\photo-abstract-editorial",
   "ethics\qwenpaw-skills\fairness-gate",
   "ethics\qwenpaw-skills\source-attribution",
   "ethics\qwenpaw-skills\anti-sycophancy",
@@ -413,7 +421,7 @@ Invoke-QwenPawChecked agents create --agent-id photo --name "拍照识别" --lan
   --skill source-attribution
 Invoke-QwenPawChecked agents create --agent-id scene --name "明信片场景" --language zh `
   --provider-id $provider --model-id $model --skill postcard-scene `
-  --skill qwen-image-postcard
+  --skill qwen-image-postcard --skill photo-abstract-editorial
 Invoke-QwenPawChecked agents create --agent-id reviewer --name "独立审核" --language zh `
   --provider-id $provider --model-id $model --skill content-safety-review
 
@@ -571,12 +579,13 @@ For an international DashScope key, change the endpoint to
 to the same region. If QwenPaw web authentication is enabled, add the
 appropriate Authorization header or Cookie to these requests.
 
-The `postcard-scene` Skill retains legacy SVG-output constraints. In the online
-postcard flow, the backend explicitly requests `generate_image_qwen` or
-`edit_image_qwen`. A successful online test must show the Plugin's
-`plugin_call_output` and return an image. If it only returns SVG, the legacy
-constraints interfered with the tool call and the Qwen-Image setup has not
-succeeded.
+Use `photo-abstract-editorial` for a user-authorized photo: it preserves the
+source photograph and derives a restrained abstract memory panel through
+`edit_image_qwen`. With no personal photo, `qwen-image-postcard` may call
+`generate_image_qwen`; label the displayed result **“AI scene illustration.”**
+The legacy `postcard-scene` Skill must not be used as a fallback for a failed
+image-tool call. A successful online test must show the Plugin's
+`plugin_call_output` and return an image.
 
 ### 5. Verify the QwenPaw Configuration
 
@@ -595,7 +604,7 @@ $expectedSkills = [ordered]@{
   "pref-guide" = @("preference-guide")
   guide = @("macau-guide", "source-attribution", "anti-sycophancy")
   photo = @("photo-recognize", "source-attribution")
-  scene = @("postcard-scene", "qwen-image-postcard")
+  scene = @("postcard-scene", "qwen-image-postcard", "photo-abstract-editorial")
   reviewer = @("content-safety-review")
 }
 

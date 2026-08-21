@@ -1,6 +1,6 @@
 ---
 name: qwen-image-postcard
-description: "澳门旅行回忆生图：先核对实景参考，再调用 Qwen-Image 生成或编辑无文字、可用于明信片的图像。"
+description: "澳门旅行回忆图：用 Qwen-Image 生成或编辑数字旅行回忆图，并如实标示 AI 场景与失败状态。"
 metadata:
   qwenpaw:
     emoji: "🖼️"
@@ -12,13 +12,14 @@ metadata:
 
 ## 使用条件
 
-- 用户明确要“生成图片 / 场景图 / 旅行回忆配图”时，优先调用 `generate_image_qwen`。
-- 用户提供参考图片并要求换风格、补画或融合时，优先调用 `edit_image_qwen`。
+- 用户提供授权照片并希望制作编辑风明信片时，先使用 `photo-abstract-editorial`，再调用 `edit_image_qwen`。
+- 用户提供参考图片并要求换风格、补画或融合时，调用 `edit_image_qwen`。
+- 不存在个人照片但用户需要场景图时，调用 `generate_image_qwen`；展示时必须标注为“AI 场景示意”。
 - 如果工具返回“未配置 API Key”或调用失败，明确说明无法生成真实图片；**不要伪装为已生图，也不要改输出 SVG 代替。**
 
 ## 工作流程
 
-1. 有本地参考图时，先调用 `view_image`，辨认建筑主体、立面材质、铺地和周边关系。
+1. 有本地参考图时，先调用 `view_image`，辨认建筑主体、立面材质、铺地和周边关系；有用户照片时优先交由 `photo-abstract-editorial` 处理。
 2. 写出一段完整提示词：地点、真实可见的建筑特征、构图、光线、旅行记忆氛围和风格。
 3. 调用一次 `generate_image_qwen`：
    - `prompt`：上一步提示词；
@@ -27,7 +28,7 @@ metadata:
    - `negative_prompt`：`no text, no logo, no watermark, no fabricated landmark, no sci-fi neon, no distorted architecture`；
    - `prompt_extend`：`true`。
 4. 若用户要求以参考照片为基础编辑，则调用 `edit_image_qwen`，将本地图片绝对路径或 URL 放入 `reference_images`。
-5. 工具成功后，只返回图片结果和一句简短的地点／时段说明；不得声称历史细节来自图片生成模型。
+5. 工具成功后，只返回图片结果和一句简短的地点／时段说明；纯 AI 生图必须标注“AI 场景示意”，不得声称历史细节来自图片生成模型。
 
 ## 视觉与事实约束
 

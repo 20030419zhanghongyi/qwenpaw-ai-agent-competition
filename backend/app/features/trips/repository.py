@@ -13,6 +13,7 @@ from app.db.models import Trip as TripRecord
 from app.db.models import TripStop as TripStopRecord
 from app.db.models import User as UserRecord
 from app.db.session import SessionLocal
+from app.db.models.user import DEFAULT_GUEST_USER_NAME, guest_user_email
 
 from .models import Trip, TripProgress, TripStatus
 
@@ -68,7 +69,14 @@ class SqlAlchemyTripRepository:
     def create_trip(self, trip: Trip) -> Trip:
         with self._session_factory() as session:
             if session.get(UserRecord, trip.user_id) is None:
-                session.add(UserRecord(id=trip.user_id, interests=[]))
+                session.add(
+                    UserRecord(
+                        id=trip.user_id,
+                        name=DEFAULT_GUEST_USER_NAME,
+                        email=guest_user_email(trip.user_id),
+                        interests=[],
+                    )
+                )
 
             record = TripRecord(
                 id=trip.trip_id,
