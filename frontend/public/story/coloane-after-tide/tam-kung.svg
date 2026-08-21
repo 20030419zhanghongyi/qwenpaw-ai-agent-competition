@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1125" role="img" aria-label="Tam Kung temple placeholder">
-  <rect width="900" height="1125" fill="#edf5f1"/>
-  <path d="M150 710 C250 635 650 635 750 710 L690 845 C570 900 330 900 210 845 Z" fill="#8a5b44"/>
-  <path d="M225 710 C310 760 590 760 675 710" fill="none" stroke="#fff8e8" stroke-width="20" stroke-linecap="round"/>
-  <path d="M295 655 C360 590 540 590 605 655" fill="none" stroke="#5b6f68" stroke-width="22" stroke-linecap="round"/>
-  <circle cx="450" cy="355" r="120" fill="#d9b98f"/>
-  <path d="M210 355 H690 M260 420 H640 M310 485 H590" stroke="#6c4b3d" stroke-width="16" stroke-linecap="round"/>
-  <text x="450" y="1010" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" fill="#4b5f56">tam kung placeholder</text>
-</svg>

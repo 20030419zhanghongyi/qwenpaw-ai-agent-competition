@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1125" role="img" aria-label="Coloane sound postcard placeholder">
-  <rect width="900" height="1125" fill="#f7f1e5"/>
-  <rect x="140" y="170" width="620" height="785" rx="28" fill="#fff8e8" stroke="#60786d" stroke-width="14"/>
-  <path d="M190 715 C310 670 390 760 520 720 C640 680 690 690 710 700 L710 900 H190 Z" fill="#567267"/>
-  <path d="M230 575 C260 520 305 520 335 575 C365 630 410 630 440 575 C470 520 515 520 545 575 C575 630 620 630 650 575" fill="none" stroke="#b56a4d" stroke-width="18" stroke-linecap="round"/>
-  <path d="M220 310 H680 M220 390 H600 M220 470 H640" stroke="#60786d" stroke-width="16" stroke-linecap="round" opacity=".55"/>
-  <text x="450" y="1015" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" fill="#4b5f56">sound postcard placeholder</text>
-</svg>

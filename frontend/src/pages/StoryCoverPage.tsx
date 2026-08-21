@@ -58,7 +58,7 @@ export function StoryCoverPage() {
   const hasActive = session?.status === "active";
   const coverSrc =
     story.id === "coloane_after_tide"
-      ? "/story/coloane-after-tide/cover.svg"
+      ? "/story/coloane-after-tide/cover.jpg"
       : null;
 
   return (

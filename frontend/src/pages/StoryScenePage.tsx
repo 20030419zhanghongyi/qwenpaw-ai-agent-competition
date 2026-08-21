@@ -16,14 +16,14 @@ const CONTENT_LABELS: Record<string, string> = {
 };
 
 const STORY_ASSET_SRC: Record<string, string> = {
-  "CAT-COVER-01": "/story/coloane-after-tide/cover.svg",
-  "CAT-PROP-01": "/story/coloane-after-tide/tide-workbook.svg",
-  "CAT-SEA-01": "/story/coloane-after-tide/temple.svg",
-  "CAT-BOAT-01": "/story/coloane-after-tide/tam-kung.svg",
-  "CAT-VILLAGE-01": "/story/coloane-after-tide/chapel-square.svg",
-  "CAT-CRAFT-01": "/story/coloane-after-tide/shipyards.svg",
-  "CAT-SOIL-01": "/story/coloane-after-tide/hac-sa.svg",
-  "CAT-END-01": "/story/coloane-after-tide/sound-postcard.svg",
+  "CAT-COVER-01": "/story/coloane-after-tide/cover.jpg",
+  "CAT-PROP-01": "/story/coloane-after-tide/tide-workbook.jpg",
+  "CAT-SEA-01": "/story/coloane-after-tide/temple.jpg",
+  "CAT-BOAT-01": "/story/coloane-after-tide/tam-kung.jpg",
+  "CAT-VILLAGE-01": "/story/coloane-after-tide/chapel-square.jpg",
+  "CAT-CRAFT-01": "/story/coloane-after-tide/shipyards.jpg",
+  "CAT-SOIL-01": "/story/coloane-after-tide/hac-sa.jpg",
+  "CAT-END-01": "/story/coloane-after-tide/sound-postcard.jpg",
 };
 
 const INITIAL_ACTION_STATE = {

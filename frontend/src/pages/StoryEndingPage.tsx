@@ -48,7 +48,7 @@ export function StoryEndingPage() {
     : null;
   const endingImageSrc =
     story?.id === "coloane_after_tide"
-      ? "/story/coloane-after-tide/sound-postcard.svg"
+      ? "/story/coloane-after-tide/sound-postcard.jpg"
       : null;
 
   const handleSubmit = async (action: StoryAction) => {
