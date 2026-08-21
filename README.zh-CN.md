@@ -267,12 +267,17 @@ qwenpaw app
 `host.docker.internal:8088`：
 
 ```powershell
-$qwenpawBaseUrl = "http://127.0.0.1:8088"
+$qwenpawBaseUrl = if ($env:QWENPAW_BASE_URL) {
+  $env:QWENPAW_BASE_URL.TrimEnd("/")
+} else {
+  "http://127.0.0.1:8088"
+}
 Invoke-RestMethod "$qwenpawBaseUrl/api/version"
 ```
 
 以下代码块默认在同一个 PowerShell 会话中依次执行；若打开新终端，请先重新设置
-`$qwenpawBaseUrl`。
+`$qwenpawBaseUrl`。如需使用其他地址，请在执行前设置
+`$env:QWENPAW_BASE_URL`。
 
 #### macOS/zsh 一次性配置
 
@@ -355,7 +360,8 @@ foreach ($source in $skillSources) {
   & qwenpaw skills test $destination
   if ($LASTEXITCODE -ne 0) { throw "Skill 检查失败：$skillName" }
 }
-Invoke-RestMethod -Method Post "$qwenpawBaseUrl/api/skills/pool/refresh"
+Invoke-RestMethod -Method Post `
+  "$qwenpawBaseUrl/api/skills/pool/refresh" | Out-Null
 ```
 
 QwenPaw 不会仅因文件出现在 `skill_pool` 就自动登记；最后的 `pool/refresh` 是
@@ -373,43 +379,103 @@ QwenPaw 不会仅因文件出现在 `skill_pool` 就自动登记；最后的 `po
 
 ```powershell
 function Invoke-QwenPawChecked {
-  & qwenpaw @args
+  param([string[]] $CommandArgs)
+  & qwenpaw @CommandArgs
   if ($LASTEXITCODE -ne 0) {
-    throw "QwenPaw 命令失败：qwenpaw $($args -join ' ')"
+    throw "QwenPaw 命令失败：qwenpaw $($CommandArgs -join ' ')"
   }
 }
 
 $activeModel = Invoke-RestMethod "$qwenpawBaseUrl/api/models/active"
 $provider = $activeModel.active_llm.provider_id
 $model = $activeModel.active_llm.model
-if (-not $provider -or -not $model) { throw "QwenPaw 默认模型尚未配置" }
+if (-not $provider -or -not $model) {
+  throw "QwenPaw 默认模型尚未配置"
+}
 Write-Host "Agents 将使用：$provider / $model"
 
-Invoke-QwenPawChecked agents create --agent-id route --name "路线微调" --language zh `
-  --provider-id $provider --model-id $model --skill route-adjust
-Invoke-QwenPawChecked agents create --agent-id intent --name "需求理解" --language zh `
-  --provider-id $provider --model-id $model --skill requirement-understand `
-  --skill fairness-gate
-Invoke-QwenPawChecked agents create --agent-id pref-guide --name "偏好多轮引导" `
-  --language zh --provider-id $provider --model-id $model --skill preference-guide
-Invoke-QwenPawChecked agents create --agent-id guide --name "文化讲解" --language zh `
-  --provider-id $provider --model-id $model --skill macau-guide `
-  --skill source-attribution --skill anti-sycophancy
-Invoke-QwenPawChecked agents create --agent-id photo --name "拍照识别" --language zh `
-  --provider-id $provider --model-id $model --skill photo-recognize `
-  --skill source-attribution
-Invoke-QwenPawChecked agents create --agent-id scene --name "明信片场景" --language zh `
-  --provider-id $provider --model-id $model --skill postcard-scene `
-  --skill qwen-image-postcard --skill photo-abstract-editorial
-Invoke-QwenPawChecked agents create --agent-id reviewer --name "独立审核" --language zh `
-  --provider-id $provider --model-id $model --skill content-safety-review
+$agentSpecs = @(
+  @{ id = "route"; name = "路线微调"; skills = @("route-adjust") },
+  @{
+    id = "intent"
+    name = "需求理解"
+    skills = @("requirement-understand", "fairness-gate")
+  },
+  @{ id = "pref-guide"; name = "偏好多轮引导"; skills = @("preference-guide") },
+  @{
+    id = "guide"
+    name = "文化讲解"
+    skills = @("macau-guide", "source-attribution", "anti-sycophancy")
+  },
+  @{
+    id = "photo"
+    name = "拍照识别"
+    skills = @("photo-recognize", "source-attribution")
+  },
+  @{
+    id = "scene"
+    name = "明信片场景"
+    skills = @(
+      "postcard-scene",
+      "qwen-image-postcard",
+      "photo-abstract-editorial"
+    )
+  },
+  @{
+    id = "reviewer"
+    name = "独立审核"
+    skills = @("content-safety-review")
+  }
+)
 
-Invoke-QwenPawChecked agents list
+$agentResponse = Invoke-RestMethod "$qwenpawBaseUrl/api/agents"
+$existingAgentIds = @($agentResponse.agents | ForEach-Object { $_.id })
+foreach ($spec in $agentSpecs) {
+  if ($spec.id -notin $existingAgentIds) {
+    $createArgs = @(
+      "agents", "create",
+      "--agent-id", $spec.id,
+      "--name", $spec.name,
+      "--language", "zh",
+      "--provider-id", $provider,
+      "--model-id", $model
+    )
+    foreach ($skillName in $spec.skills) {
+      $createArgs += @("--skill", $skillName)
+    }
+    Invoke-QwenPawChecked -CommandArgs $createArgs
+  } else {
+    Write-Host "Agent 已存在：$($spec.id)"
+  }
+}
+
+# 为现有 Agent 补挂缺少的 Skill，但不覆盖开发者已经修改过的工作区副本。
+# HTTP 409 表示该 Skill 已挂载，可以安全忽略。
+foreach ($spec in $agentSpecs) {
+  foreach ($skillName in $spec.skills) {
+    $downloadBody = @{
+      skill_name = $skillName
+      targets = @(@{ workspace_id = $spec.id })
+      overwrite = $false
+    } | ConvertTo-Json -Depth 4
+    try {
+      Invoke-RestMethod -Method Post `
+        -Uri "$qwenpawBaseUrl/api/skills/pool/download" `
+        -ContentType "application/json" -Body $downloadBody | Out-Null
+    } catch {
+      $statusCode = [int]$_.Exception.Response.StatusCode
+      if ($statusCode -ne 409) { throw }
+    }
+  }
+}
+
+Invoke-QwenPawChecked -CommandArgs @("agents", "list")
 ```
 
-这些命令用于首次配置；若 Agent 已存在，不要删除重建，可运行
-`qwenpaw skills config --agent-id <agent-id>` 交互式修正技能。`photo` 还必须保留
-内置 `view_image` 工具为启用状态。
+该代码块可以安全重跑：它只创建缺失的 Agent、补挂缺失的 Skill，不会删除已有
+Agent，也不会覆盖工作区中已存在的 Skill 副本。其他调整可运行
+`qwenpaw skills config --agent-id <agent-id>` 交互式完成。`photo` 还必须保留内置
+`view_image` 工具为启用状态。
 
 `intent` 用于把一段较完整的需求一次性解析为 Preference；`pref-guide` 用于信息
 不足时进行多轮引导，每轮只追问一个缺失项，信息足够后再输出 Preference。后端
@@ -496,46 +562,55 @@ QwenPaw 运行时安装会热加载；未运行时会离线安装，并在下次
 `edit_image_qwen`，只需给 `scene` Agent 启用。
 
 下面的 PowerShell 从项目 `.env` 读取 Key，不把明文写进命令历史，并通过本机
-QwenPaw API 配置、按需启用两个工具：
+QwenPaw API 配置、按需启用两个工具。与 macOS 便捷脚本一致，它也会优先读取
+当前进程环境中的 `DASHSCOPE_API_KEY`；两个来源都没有 Key 时，保留插件安装
+结果并跳过工具配置，不会使其余配置中断：
 
 ```powershell
-$keyLine = Get-Content .env |
-  Where-Object { $_ -match '^DASHSCOPE_API_KEY=' } |
-  Select-Object -First 1
-$dashscopeKey = (($keyLine -split '=', 2)[1]).Trim().Trim('"').Trim("'")
-if (-not $dashscopeKey) { throw "DASHSCOPE_API_KEY 未配置" }
-
-$headers = @{ "X-Agent-Id" = "scene" }
-$toolNames = @("generate_image_qwen", "edit_image_qwen")
-$toolConfig = @{
-  config = @{
-    api_key = $dashscopeKey
-    endpoint = "https://dashscope.aliyuncs.com/api/v1"
-    model = "qwen-image-2.0-pro"
-    timeout = 180
+$dashscopeKey = "$($env:DASHSCOPE_API_KEY)".Trim().Trim('"').Trim("'")
+if (-not $dashscopeKey -and (Test-Path -LiteralPath ".env")) {
+  $keyLine = Get-Content -LiteralPath ".env" |
+    Where-Object { $_ -match '^DASHSCOPE_API_KEY=' } |
+    Select-Object -First 1
+  if ($keyLine) {
+    $dashscopeKey = (($keyLine -split '=', 2)[1]).Trim().Trim('"').Trim("'")
   }
-} | ConvertTo-Json -Depth 4
-
-foreach ($toolName in $toolNames) {
-  Invoke-RestMethod -Method Post `
-    -Uri "$qwenpawBaseUrl/api/tools/$toolName/config" `
-    -Headers $headers -ContentType "application/json" `
-    -Body $toolConfig | Out-Null
 }
 
-$allTools = Invoke-RestMethod -Method Get `
-  -Uri "$qwenpawBaseUrl/api/tools" -Headers $headers
-foreach ($toolName in $toolNames) {
-  $current = $null
-  foreach ($candidate in $allTools) {
-    if ($candidate.name -eq $toolName) { $current = $candidate }
+if (-not $dashscopeKey) {
+  Write-Warning "未配置 DASHSCOPE_API_KEY；插件已安装，跳过图片工具配置。"
+} else {
+  $headers = @{ "X-Agent-Id" = "scene" }
+  $toolNames = @("generate_image_qwen", "edit_image_qwen")
+  $toolConfig = @{
+    config = @{
+      api_key = $dashscopeKey
+      endpoint = "https://dashscope.aliyuncs.com/api/v1"
+      model = "qwen-image-2.0-pro"
+      timeout = 180
+    }
+  } | ConvertTo-Json -Depth 4
+
+  foreach ($toolName in $toolNames) {
+    Invoke-RestMethod -Method Post `
+      -Uri "$qwenpawBaseUrl/api/tools/$toolName/config" `
+      -Headers $headers -ContentType "application/json" `
+      -Body $toolConfig | Out-Null
   }
-  if ($null -eq $current) { throw "未找到工具：$toolName" }
-  if (-not $current.enabled) {
-    Invoke-RestMethod -Method Patch `
-      -Uri "$qwenpawBaseUrl/api/tools/$toolName/toggle" `
-      -Headers $headers | Out-Null
+
+  $allTools = Invoke-RestMethod -Method Get `
+    -Uri "$qwenpawBaseUrl/api/tools" -Headers $headers
+  foreach ($toolName in $toolNames) {
+    $current = @($allTools | Where-Object { $_.name -eq $toolName })[0]
+    if ($null -eq $current) { throw "未找到工具：$toolName" }
+    if (-not $current.enabled) {
+      Invoke-RestMethod -Method Patch `
+        -Uri "$qwenpawBaseUrl/api/tools/$toolName/toggle" `
+        -Headers $headers | Out-Null
+    }
   }
+  Remove-Variable dashscopeKey -ErrorAction SilentlyContinue
+  Write-Host "已为 scene 配置 Qwen-Image。"
 }
 ```
 
@@ -555,7 +630,11 @@ foreach ($toolName in $toolNames) {
 健康检查，并核对全部项目 Agent、Skill、伦理基线和图片工具；不会生成明信片图片。
 
 ```powershell
-$qwenpawBaseUrl = "http://127.0.0.1:8088"
+$qwenpawBaseUrl = if ($env:QWENPAW_BASE_URL) {
+  $env:QWENPAW_BASE_URL.TrimEnd("/")
+} else {
+  "http://127.0.0.1:8088"
+}
 $projectAgentIds = @(
   "default", "route", "intent", "pref-guide", "guide", "photo", "scene", "reviewer"
 )
