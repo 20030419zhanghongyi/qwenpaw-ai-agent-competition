@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { StoryImage } from "../assets";
 import type { StoryDialogueLine } from "../types";
 import { DialogueBubble } from "./DialogueBubble";
+import { useStoryMessages } from "../storyI18n";
 
 interface DialoguePlayerProps {
   lines: StoryDialogueLine[];
@@ -14,8 +15,10 @@ export function DialoguePlayer({
   lines,
   chapterId,
   onComplete,
-  continueLabel = "继续",
+  continueLabel,
 }: DialoguePlayerProps) {
+  const st = useStoryMessages();
+  const resolvedContinueLabel = continueLabel ?? st("nextPanel");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [archiving, setArchiving] = useState(false);
@@ -63,10 +66,10 @@ export function DialoguePlayer({
     : currentLine.portrait_asset_id;
 
   return (
-    <section aria-label="故事对话">
+    <section aria-label={st("storyDialogue")}>
       <div className="mb-3 flex min-h-11 items-center justify-between gap-3">
         <p className="text-[13px] text-ink-soft" aria-live="polite">
-          对话 {currentIndex + 1}/{lines.length}
+          {st("dialogue", { current: currentIndex + 1, total: lines.length })}
         </p>
         {historyLines.length > 0 && (
           <button
@@ -76,7 +79,7 @@ export function DialoguePlayer({
             aria-expanded={historyOpen}
             aria-controls="story-dialogue-history"
           >
-            {historyOpen ? "收起历史" : "查看历史对话"}
+            {historyOpen ? st("hideHistory") : st("showHistory")}
           </button>
         )}
       </div>
@@ -85,7 +88,7 @@ export function DialoguePlayer({
         <div
           id="story-dialogue-history"
           role="log"
-          aria-label="历史对话"
+          aria-label={st("showHistory")}
           className="story-dialogue-history mb-4 max-h-72 space-y-3 overflow-y-auto rounded-2xl border border-line bg-paper-warm/70 p-3"
         >
           {historyLines.map((line, index) => (
@@ -151,7 +154,7 @@ export function DialoguePlayer({
 
       {historyLines.length > 0 && !historyOpen && (
         <p className="mt-2 text-center text-[13px] text-ink-soft">
-          向上划可回看历史对话
+          {st("swipeHistory")}
         </p>
       )}
 
@@ -161,7 +164,7 @@ export function DialoguePlayer({
           onClick={onComplete}
           className="mt-4 min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper shadow-[var(--shadow-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage"
         >
-          {continueLabel}
+          {resolvedContinueLabel}
         </button>
       )}
     </section>

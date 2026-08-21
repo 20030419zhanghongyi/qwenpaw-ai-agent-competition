@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { askGuide } from "@/api/client";
 import { useWalk } from "@/state/WalkContext";
+import type { LanguageCode } from "@/types";
+import { storyT } from "../storyI18n";
 import type {
   StoryAgentAnswer,
   StoryAgentContextData,
@@ -17,7 +19,7 @@ interface ChatMessage {
 interface StoryAgentDrawerProps {
   open: boolean;
   context?: StoryAgentContextData;
-  language?: string;
+  language?: LanguageCode;
   onClose: () => void;
   ask?: (
     question: string,
@@ -70,6 +72,10 @@ export function StoryAgentDrawer({
 }: StoryAgentDrawerProps) {
   const { language: appLanguage } = useWalk();
   const effectiveLanguage = language ?? appLanguage;
+  const st = (
+    key: Parameters<typeof storyT>[1],
+    values?: Record<string, string | number>,
+  ) => storyT(effectiveLanguage, key, values);
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [busy, setBusy] = useState(false);
@@ -113,15 +119,15 @@ export function StoryAgentDrawer({
         {
           id: messageIdRef.current,
           role: "assistant",
-          text: response.text || "阿莲暂时没有找到合适的回答。",
+          text: response.text || st("agentIntro"),
           sources: response.webSources,
           sourceLabel:
             response.source ||
-            (response.webUsed ? "联网资料" : "AI 讲解"),
+            response.webUsed ? "Web" : "AI",
         },
       ]);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "提问失败，请稍后再试。");
+      setError(caught instanceof Error ? caught.message : st("close"));
       setQuestion(normalized);
     } finally {
       setBusy(false);
@@ -153,17 +159,17 @@ export function StoryAgentDrawer({
         >
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ochre">
-              随行问答
+              {st("agentTitle")}
             </p>
             <h2 id="story-agent-title" className="font-serif text-lg text-ink">
-              问{context?.persona ?? "阿莲"}
+              {st("ask", { persona: context?.persona ?? "A Lin" })}
             </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="grid size-11 place-items-center rounded-full border border-line bg-card text-xl text-ink"
-            aria-label="关闭问答"
+            aria-label={st("close")}
           >
             ×
           </button>
@@ -173,14 +179,14 @@ export function StoryAgentDrawer({
           {messages.length === 0 && (
             <div className="rounded-2xl border border-line bg-card p-4">
               <p className="text-base leading-7 text-ink-soft">
-                可以问我当前地点、公开历史或已经出现的剧情。我不会提前透露谜题答案。
+                {st("agentIntro")}
               </p>
             </div>
           )}
           {context?.suggested_questions &&
             context.suggested_questions.length > 0 && (
               <div className="mt-4">
-                <p className="text-[13px] font-medium text-ink-soft">你可以这样问</p>
+                <p className="text-[13px] font-medium text-ink-soft">{st("suggested")}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {context.suggested_questions.map((suggestion) => (
                     <button
@@ -223,10 +229,10 @@ export function StoryAgentDrawer({
                             rel="noreferrer"
                             className="underline underline-offset-2"
                           >
-                            {source.title ?? source.source ?? "参考来源"}
+                            {source.title ?? source.source ?? "Source"}
                           </a>
                         ) : (
-                          source.title ?? source.source ?? "参考来源"
+                          source.title ?? source.source ?? "Source"
                         )}
                       </li>
                     ))}
@@ -236,7 +242,7 @@ export function StoryAgentDrawer({
             ))}
             {busy && (
               <div className="mr-auto rounded-2xl border border-line bg-card px-4 py-3 text-base text-ink-soft">
-                阿莲正在查找资料…
+                {st("thinking")}
               </div>
             )}
           </div>

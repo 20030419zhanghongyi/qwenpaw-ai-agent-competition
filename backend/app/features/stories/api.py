@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.contracts import CONFLICT_RESPONSE, NOT_FOUND_RESPONSE, UNPROCESSABLE_RESPONSE
 from app.core.security import require_user_id
@@ -47,9 +47,12 @@ def _raise_http_error(exc: Exception) -> None:
     summary="Get public story content",
     responses={**NOT_FOUND_RESPONSE, **UNPROCESSABLE_RESPONSE},
 )
-def get_story(story_id: str) -> dict[str, Any]:
+def get_story(
+    story_id: str,
+    language: str = Query(default="zh-CN", description="Story display language"),
+) -> dict[str, Any]:
     try:
-        return story_service.get_story(story_id)
+        return story_service.get_story(story_id, language=language)
     except (StoryNotFoundError, StoryContentError) as exc:
         _raise_http_error(exc)
 
@@ -62,10 +65,12 @@ def get_story(story_id: str) -> dict[str, Any]:
     responses={**NOT_FOUND_RESPONSE, **UNPROCESSABLE_RESPONSE},
 )
 def start_story(
-    story_id: str, user_id: str = Depends(require_user_id)
+    story_id: str,
+    language: str = Query(default="zh-CN", description="Story display language"),
+    user_id: str = Depends(require_user_id),
 ) -> StorySessionResponse:
     try:
-        return story_service.start(story_id, user_id)
+        return story_service.start(story_id, user_id, language=language)
     except (StoryNotFoundError, StoryContentError, RouteNotFoundError, InvalidRouteError) as exc:
         _raise_http_error(exc)
 
@@ -77,10 +82,12 @@ def start_story(
     responses={**NOT_FOUND_RESPONSE, **UNPROCESSABLE_RESPONSE},
 )
 def get_session(
-    session_id: str, user_id: str = Depends(require_user_id)
+    session_id: str,
+    language: str = Query(default="zh-CN", description="Story display language"),
+    user_id: str = Depends(require_user_id),
 ) -> StorySessionResponse:
     try:
-        return story_service.get_session(session_id, user_id)
+        return story_service.get_session(session_id, user_id, language=language)
     except (
         StorySessionNotFoundError,
         StorySessionOwnershipError,
@@ -100,10 +107,11 @@ def get_session(
 def act(
     session_id: str,
     request: StoryActionRequest,
+    language: str = Query(default="zh-CN", description="Story display language"),
     user_id: str = Depends(require_user_id),
 ) -> StoryActionResponse:
     try:
-        return story_service.act(session_id, user_id, request)
+        return story_service.act(session_id, user_id, request, language=language)
     except (
         StorySessionNotFoundError,
         StoryNotFoundError,

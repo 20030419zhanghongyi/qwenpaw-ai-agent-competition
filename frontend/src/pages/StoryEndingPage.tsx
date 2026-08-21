@@ -8,7 +8,7 @@ import { StoryBottomAction } from "@/features/story/components/StoryBottomAction
 import { StoryImageViewer } from "@/features/story/components/StoryImageViewer";
 import { PetalProgress } from "@/features/story/components/PetalProgress";
 import { StoryTopBar } from "@/features/story/components/StoryTopBar";
-import { storyStationName } from "@/features/story/storyStations";
+import { useStoryMessages } from "@/features/story/storyI18n";
 import { useAuth } from "@/state/AuthContext";
 import { useStory, useStoryRestore } from "@/state/StoryContext";
 import type { StoryNodeOverview } from "@/types/stories";
@@ -32,6 +32,7 @@ export function StoryEndingPage() {
     submitAction,
   } = useStory();
   const { sessionId: effectiveId } = useStoryRestore(sessionId);
+  const st = useStoryMessages();
   const [reflection, setReflection] = useState("");
   const [viewerAssetId, setViewerAssetId] = useState<string | null>(null);
   const [agentOpen, setAgentOpen] = useState(false);
@@ -127,7 +128,7 @@ export function StoryEndingPage() {
   };
 
   if ((loading || isRestoring) && !session) {
-    return <LoadingState label="正在打开今日补记…" />;
+    return <LoadingState label={st("loadingChapter")} />;
   }
 
   if (!session) {
@@ -138,8 +139,8 @@ export function StoryEndingPage() {
           <ErrorState
             message={
               invalidSession
-                ? "这段旅程已经失效或不属于当前账号。"
-                : error ?? "未找到故事会话"
+                ? st("storyUnavailable")
+                : error ?? st("loadingRoute")
             }
             onRetry={
               effectiveId && !invalidSession
@@ -152,7 +153,7 @@ export function StoryEndingPage() {
             onClick={() => navigate("/stories/lotus_city_double_map")}
             className="mt-4 min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper"
           >
-            返回故事封面
+            {st("back")}
           </button>
         </div>
       </main>
@@ -190,8 +191,8 @@ export function StoryEndingPage() {
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-paper text-ink shadow-[var(--shadow-soft)]">
         <StoryTopBar
-          title={story?.title ?? "莲城双图：未尽之图"}
-          eyebrow="旅程完成"
+          title={story?.title ?? st("journeyComplete")}
+          eyebrow={st("journeyComplete")}
           petals={petalCount}
           onBack={() => navigate("/preferences")}
           onAskAgent={agentContext ? () => setAgentOpen(true) : undefined}
@@ -208,33 +209,33 @@ export function StoryEndingPage() {
 
           <section className="relative mt-4 rounded-3xl border border-line bg-paper p-5 text-center shadow-[var(--shadow-lift)]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ochre">
-              城由人共写
+              {session.ending?.title ?? st("journeyComplete")}
             </p>
             <h1 className="mt-2 font-display text-3xl">
-              {session.ending?.title ?? "今日补记已保存"}
+              {session.ending?.title ?? st("noteToday")}
             </h1>
             <p className="mt-3 text-base leading-7 text-ink-soft">
               {session.ending?.text ??
-                "地图会变旧，城市仍在继续。你为今天的澳门补上了一笔。"}
+                st("noteBody")}
             </p>
           </section>
 
           <section className="mt-4 grid grid-cols-2 gap-3">
             <StoryImage
               assetId="V4-FOR-08"
-              alt="完整五瓣澳门市花"
+              alt={st("petalsComplete")}
               onOpen={setViewerAssetId}
             />
             <StoryImage
               assetId="V4-PROP-05"
-              alt="五张密笺迎光重合"
+              alt={st("secretNotes")}
               onOpen={setViewerAssetId}
             />
           </section>
 
           <section className="mt-4 rounded-2xl border border-line bg-card p-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-serif text-lg font-semibold">五瓣密笺</h2>
+              <h2 className="font-serif text-lg font-semibold">{st("secretNotes")}</h2>
               <PetalProgress collected={petalCount} />
             </div>
             <div className="mt-3 space-y-2">
@@ -253,15 +254,15 @@ export function StoryEndingPage() {
           </section>
 
           <section className="mt-4 rounded-2xl border border-ochre/30 bg-ochre/5 p-4">
-            <h2 className="font-serif text-lg font-semibold">你的今日补记</h2>
+            <h2 className="font-serif text-lg font-semibold">{st("noteToday")}</h2>
             <p className="mt-2 whitespace-pre-wrap text-base italic leading-7 text-ink-soft">
               {session.state.ending_reflection?.trim() ||
-                "今天仍留有一处空白，交给下一位来到这里的人。"}
+                st("leaveReader")}
             </p>
           </section>
 
           <section className="mt-5">
-            <h2 className="font-serif text-xl font-semibold">六站路线回顾</h2>
+            <h2 className="font-serif text-xl font-semibold">{st("timeline")}</h2>
             <ol className="mt-3 space-y-2">
               {stationNodes.map((node, index) => (
                   <li
@@ -277,13 +278,13 @@ export function StoryEndingPage() {
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-base">
-                          {storyStationName(node.id) ?? node.title}
+                          {node.title}
                         </span>
                         <span className="mt-0.5 block text-sm text-ink-soft">
                           {node.title}
                         </span>
                       </span>
-                      <span className="text-sm text-sage-deep">查看回顾 →</span>
+                      <span className="text-sm text-sage-deep">{st("recap")} →</span>
                     </button>
                   </li>
                 ))}
@@ -292,7 +293,7 @@ export function StoryEndingPage() {
         </div>
 
         <StoryBottomAction
-          label="返回普通旅行规划"
+          label={st("returnPlanner")}
           onClick={() => navigate("/preferences")}
         />
         <StoryAgentDrawer
@@ -307,7 +308,7 @@ export function StoryEndingPage() {
         <ChapterRecapDialog
           node={summaryNode}
           poiName={
-            summaryNode ? storyStationName(summaryNode.id) : undefined
+            summaryNode?.title
           }
           reward={summaryReward}
           skipped={
@@ -325,7 +326,7 @@ export function StoryEndingPage() {
     return (
       <main className="grid min-h-dvh place-items-center bg-paper px-4">
         <ErrorState
-          message="当前还没有进入今日补记。"
+          message={st("noteToday")}
           onRetry={() => void refreshSession()}
         />
       </main>
@@ -335,8 +336,8 @@ export function StoryEndingPage() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-paper text-ink shadow-[var(--shadow-soft)]">
       <StoryTopBar
-        title="今日补记"
-        eyebrow="最终章"
+        title={st("noteToday")}
+        eyebrow={st("ending")}
         petals={petalCount}
         onBack={() => navigate(`/story-sessions/${session.session_id}/map`)}
         onAskAgent={agentContext ? () => setAgentOpen(true) : undefined}
@@ -345,25 +346,24 @@ export function StoryEndingPage() {
       <div className="flex-1 px-4 pb-32 pt-4">
         <StoryImage
           assetId="V4-FOR-07"
-          alt="等待玩家书写的今日补记"
+          alt={st("noteToday")}
           eager
           onOpen={setViewerAssetId}
         />
 
         <section className="mt-4 rounded-2xl border border-line bg-card p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ochre">
-            留给下一位读者
+            {st("leaveReader")}
           </p>
           <h1 className="mt-2 font-display text-2xl leading-tight">
-            把今天看到的澳门，留给下一位读者
+            {st("noteHeading")}
           </h1>
           <p className="mt-3 text-base leading-7 text-ink-soft">
-            不必重画整座城市。写下你在什么时间来到这里、看见了什么，
-            以及今天仍值得继续查证的部分。
+            {st("noteBody")}
           </p>
 
           <label htmlFor="today-note" className="mt-5 block text-sm font-semibold text-sage-deep">
-            今日补记（可选）
+            {st("noteOptional")}
           </label>
           <textarea
             id="today-note"
@@ -371,7 +371,7 @@ export function StoryEndingPage() {
             onChange={(event) => setReflection(event.target.value)}
             maxLength={2000}
             rows={6}
-            placeholder="例如：今天的城市仍然不是澳门的全部……"
+            placeholder={st("notePlaceholder")}
             className="mt-2 w-full resize-y rounded-2xl border border-line bg-paper px-4 py-3 text-base leading-7 text-ink outline-none placeholder:text-ink-soft/55 focus:border-sage focus:ring-2 focus:ring-sage/25"
           />
           <p className="mt-1 text-right text-xs text-ink-soft">
@@ -403,13 +403,13 @@ export function StoryEndingPage() {
       </div>
 
       <StoryBottomAction
-        label={endingChoice?.choice_text ?? "完成今日补记"}
+        label={endingChoice?.choice_text ?? st("finishNote")}
         onClick={() => void completeTodayNote()}
         busy={actionPending}
-        busyLabel="正在保存补记…"
+        busyLabel={st("saveNote")}
         disabled={!endingChoice}
         tone="accent"
-        hint="服务端保存成功后才会完成故事"
+        hint={st("progressSaved")}
       />
       <StoryAgentDrawer
         open={agentOpen}
