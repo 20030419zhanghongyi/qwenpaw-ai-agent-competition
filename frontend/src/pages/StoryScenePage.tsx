@@ -5,7 +5,7 @@ import { PuzzlePanel } from "@/components/story/PuzzlePanel";
 import { RewardReveal } from "@/components/story/RewardReveal";
 import { useAuth } from "@/state/AuthContext";
 import { useStory, useStoryRestore } from "@/state/StoryContext";
-import type { StoryAction, StoryChapter } from "@/types/stories";
+import type { StoryAction, StoryChapter, StoryPage } from "@/types/stories";
 
 const CONTENT_LABELS: Record<string, string> = {
   historical_fact: "史实",
@@ -14,6 +14,31 @@ const CONTENT_LABELS: Record<string, string> = {
   fictional_story: "虚构剧情",
   dynamic_operational_info: "动态营运信息",
 };
+
+const STORY_ASSET_SRC: Record<string, string> = {
+  "CAT-COVER-01": "/story/coloane-after-tide/cover.jpg",
+  "CAT-PROP-01": "/story/coloane-after-tide/tide-workbook.jpg",
+  "CAT-SEA-01": "/story/coloane-after-tide/temple.jpg",
+  "CAT-BOAT-01": "/story/coloane-after-tide/tam-kung.jpg",
+  "CAT-VILLAGE-01": "/story/coloane-after-tide/chapel-square.jpg",
+  "CAT-CRAFT-01": "/story/coloane-after-tide/shipyards.jpg",
+  "CAT-SOIL-01": "/story/coloane-after-tide/hac-sa.jpg",
+  "CAT-END-01": "/story/coloane-after-tide/sound-postcard.jpg",
+};
+
+const INITIAL_ACTION_STATE = {
+  busy: false,
+  lastMessage: null as string | null,
+  lastHint: null as string | null,
+  hintCount: 0,
+  solved: false,
+  skipped: false,
+};
+
+function storyAssetSrc(page?: StoryPage | null) {
+  if (!page?.asset_id) return null;
+  return STORY_ASSET_SRC[page.asset_id] ?? null;
+}
 
 export function StoryScenePage() {
   const { sessionId, nodeId } = useParams<{ sessionId: string; nodeId: string }>();
@@ -38,7 +63,10 @@ export function StoryScenePage() {
     hintCount: number;
     solved: boolean;
     skipped: boolean;
-  }>({ busy: false, lastMessage: null, lastHint: null, hintCount: 0, solved: false, skipped: false });
+  }>(INITIAL_ACTION_STATE);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [activeTimeLayer, setActiveTimeLayer] = useState(0);
+  const [viewChapter, setViewChapter] = useState<StoryChapter | null>(null);
 
   // Restore session on mount
   const effectiveId = sessionId ?? persistedId;
@@ -52,6 +80,20 @@ export function StoryScenePage() {
   useEffect(() => {
     refreshSession();
   }, [nodeId, refreshSession]);
+
+  useEffect(() => {
+    setPageIndex(0);
+    setActiveTimeLayer(0);
+    setActionState(INITIAL_ACTION_STATE);
+    setViewChapter(null);
+  }, [nodeId]);
+
+  const currentSessionChapter = session?.current_chapter ?? null;
+  useEffect(() => {
+    if (currentSessionChapter && (!nodeId || currentSessionChapter.id === nodeId)) {
+      setViewChapter(currentSessionChapter);
+    }
+  }, [currentSessionChapter, nodeId]);
 
   if (loading && !session) return <LoadingState label="加载章节…" />;
   if (error && !session) {
@@ -73,11 +115,13 @@ export function StoryScenePage() {
   }
 
   const chapter = session.current_chapter;
-  const allowedActions = session.allowed_actions;
+  const isViewingCurrentChapter = !nodeId || chapter?.id === nodeId;
+  const allowedActions = isViewingCurrentChapter ? session.allowed_actions : [];
   const isCompleted = session.status === "completed";
 
   // Determine chapter display
-  const displayChapter: StoryChapter | null = chapter ?? null;
+  const displayChapter: StoryChapter | null =
+    viewChapter ?? (isViewingCurrentChapter ? chapter : null);
   if (!displayChapter) {
     return (
       <div className="flex min-h-dvh flex-col bg-paper px-4 py-8">
@@ -96,6 +140,7 @@ export function StoryScenePage() {
 
   // Node kinds that require arrival
   const needsArrive =
+    isViewingCurrentChapter &&
     displayChapter.poi_id &&
     !session.state.arrived_chapter_ids.includes(displayChapter.id) &&
     !chapterComplete;
@@ -152,9 +197,17 @@ export function StoryScenePage() {
 
   // Determine if node was advanced (after solve/skip/continue)
   const wasAdvanced = chapterComplete || puzzleSolved || puzzleSkipped;
-
-  /* ── Render: Time layer tabs state ── */
-  const [activeTimeLayer, setActiveTimeLayer] = useState(0);
+  const pages = displayChapter.pages ?? [];
+  const hasPages = pages.length > 0;
+  const currentPage = hasPages ? pages[Math.min(pageIndex, pages.length - 1)] : null;
+  const currentPageAssetSrc = storyAssetSrc(currentPage);
+  const isLastPage = !hasPages || pageIndex >= pages.length - 1;
+  const canAdvancePage = hasPages && pageIndex < pages.length - 1;
+  const shouldShowPuzzle = !hasPages || currentPage?.kind === "puzzle";
+  const handleNextPage = () =>
+    setPageIndex((index) => Math.min(index + 1, Math.max(pages.length - 1, 0)));
+  const handlePrevPage = () =>
+    setPageIndex((index) => Math.max(index - 1, 0));
 
   return (
     <main className="flex min-h-dvh flex-col bg-paper text-ink">
@@ -201,7 +254,7 @@ export function StoryScenePage() {
           )}
           {displayChapter.poi_id && (
             <p className="mt-1 text-xs text-sage-deep">
-              📍 {displayChapter.poi_id}
+              地点：{displayChapter.location_name ?? displayChapter.poi_id}
             </p>
           )}
         </div>
@@ -213,8 +266,78 @@ export function StoryScenePage() {
           </div>
         )}
 
+        {/* Page-by-page script */}
+        {hasPages && currentPage && (
+          <section className="mb-5 overflow-hidden rounded-2xl border border-line bg-card">
+            {currentPageAssetSrc && (
+              <img
+                src={currentPageAssetSrc}
+                alt=""
+                className="h-56 w-full object-cover"
+                loading="lazy"
+              />
+            )}
+            <div className="p-5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
+                  第 {pageIndex + 1} 页 / 共 {pages.length} 页
+                </p>
+                {currentPage.kind && (
+                  <span className="rounded-full border border-line bg-paper-warm px-2.5 py-1 text-[10px] font-semibold text-sage-deep">
+                    {currentPage.kind === "puzzle"
+                      ? "谜题"
+                      : currentPage.kind === "dialogue"
+                        ? "对话"
+                        : currentPage.kind === "transition"
+                          ? "衔接"
+                          : "剧情"}
+                  </span>
+                )}
+              </div>
+              {currentPage.title && (
+                <h3 className="mt-3 font-serif text-lg font-semibold leading-tight text-ink">
+                  {currentPage.title}
+                </h3>
+              )}
+              {currentPage.speaker && (
+                <p className="mt-3 text-xs font-semibold text-sage-deep">
+                  {currentPage.speaker}
+                </p>
+              )}
+              {currentPage.text && (
+                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink">
+                  {currentPage.kind === "dialogue"
+                    ? `"${currentPage.text}"`
+                    : currentPage.text}
+                </p>
+              )}
+              {pages.length > 1 && (
+                <div className="mt-5 flex gap-3">
+                  <button
+                    type="button"
+                    disabled={pageIndex === 0}
+                    onClick={handlePrevPage}
+                    className="rounded-full border border-line bg-paper px-4 py-2 text-sm text-ink-soft transition hover:border-sage hover:text-ink disabled:opacity-40"
+                  >
+                    上一页
+                  </button>
+                  {canAdvancePage && (
+                    <button
+                      type="button"
+                      onClick={handleNextPage}
+                      className="flex-1 rounded-full bg-sage-deep px-5 py-2 text-sm font-medium text-paper transition hover:bg-moss"
+                    >
+                      下一页
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* Scene / Narrative */}
-        {displayChapter.scene && (
+        {!hasPages && displayChapter.scene && (
           <div className="mb-5 rounded-2xl border border-line bg-card p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
               场景
@@ -226,7 +349,7 @@ export function StoryScenePage() {
         )}
 
         {/* Dialogue */}
-        {displayChapter.dialogue && displayChapter.dialogue.length > 0 && (
+        {!hasPages && displayChapter.dialogue && displayChapter.dialogue.length > 0 && (
           <div className="mb-5 space-y-3">
             {displayChapter.dialogue.map((d, i) => (
               <div
@@ -243,7 +366,7 @@ export function StoryScenePage() {
         )}
 
         {/* Time Layers */}
-        {displayChapter.time_layers && displayChapter.time_layers.length > 0 && (
+        {!hasPages && displayChapter.time_layers && displayChapter.time_layers.length > 0 && (
           <div className="mb-5">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
               时间层
@@ -276,7 +399,7 @@ export function StoryScenePage() {
         )}
 
         {/* Knowledge Cards */}
-        {displayChapter.knowledge_cards && displayChapter.knowledge_cards.length > 0 && (
+        {!hasPages && displayChapter.knowledge_cards && displayChapter.knowledge_cards.length > 0 && (
           <div className="mb-5">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
               知识卡片
@@ -362,7 +485,16 @@ export function StoryScenePage() {
                 返回故事地图
               </button>
             </div>
-          ) : allowedActions.includes("answer") ? (
+          ) : canAdvancePage && !shouldShowPuzzle ? (
+            /* Page mode — read forward before the action */
+            <button
+              type="button"
+              onClick={handleNextPage}
+              className="w-full rounded-full bg-sage-deep px-6 py-4 text-base font-medium text-paper shadow-[var(--shadow-soft)] transition hover:bg-moss active:scale-[0.99]"
+            >
+              下一页
+            </button>
+          ) : allowedActions.includes("answer") && shouldShowPuzzle ? (
             /* Puzzle node */
             <PuzzlePanel
               puzzle={displayChapter.puzzle!}
@@ -374,6 +506,22 @@ export function StoryScenePage() {
               lastHint={actionState.lastHint}
               lastMessage={actionState.lastMessage}
             />
+          ) : allowedActions.includes("answer") && canAdvancePage ? (
+            <button
+              type="button"
+              onClick={handleNextPage}
+              className="w-full rounded-full bg-sage-deep px-6 py-4 text-base font-medium text-paper shadow-[var(--shadow-soft)] transition hover:bg-moss active:scale-[0.99]"
+            >
+              前往谜题页
+            </button>
+          ) : allowedActions.includes("continue") && !isLastPage ? (
+            <button
+              type="button"
+              onClick={handleNextPage}
+              className="w-full rounded-full bg-sage-deep px-6 py-4 text-base font-medium text-paper shadow-[var(--shadow-soft)] transition hover:bg-moss active:scale-[0.99]"
+            >
+              下一页
+            </button>
           ) : allowedActions.includes("continue") ? (
             /* Prologue / Narrative / Transition */
             <button
@@ -383,6 +531,14 @@ export function StoryScenePage() {
               className="w-full rounded-full bg-sage-deep px-6 py-4 text-base font-medium text-paper shadow-[var(--shadow-soft)] transition hover:bg-moss active:scale-[0.99] disabled:opacity-50"
             >
               {actionState.busy ? "处理中…" : "继续"}
+            </button>
+          ) : allowedActions.includes("choose_ending") && !isLastPage ? (
+            <button
+              type="button"
+              onClick={handleNextPage}
+              className="w-full rounded-full bg-sage-deep px-6 py-4 text-base font-medium text-paper shadow-[var(--shadow-soft)] transition hover:bg-moss active:scale-[0.99]"
+            >
+              下一页
             </button>
           ) : allowedActions.includes("choose_ending") ? (
             /* Ending — go to ending page */

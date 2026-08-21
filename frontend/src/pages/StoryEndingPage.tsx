@@ -46,6 +46,10 @@ export function StoryEndingPage() {
   const savedEnding = isCompleted && savedEndingId
     ? endings.find((e) => e.id === savedEndingId)
     : null;
+  const endingImageSrc =
+    story?.id === "coloane_after_tide"
+      ? "/story/coloane-after-tide/sound-postcard.jpg"
+      : null;
 
   const handleSubmit = async (action: StoryAction) => {
     if (!currentChapter || !session) return;
@@ -112,6 +116,15 @@ export function StoryEndingPage() {
       </header>
 
       <div className="flex-1 overflow-auto px-4 py-6 sm:mx-auto sm:max-w-lg sm:px-6">
+        {endingImageSrc && (
+          <img
+            src={endingImageSrc}
+            alt=""
+            className="mb-6 h-56 w-full rounded-2xl border border-line object-cover"
+            loading="lazy"
+          />
+        )}
+
         {/* Timeline Reconstruction scene */}
         {currentChapter?.scene && (
           <div className="mb-6 rounded-2xl border border-line bg-card p-5">
@@ -226,7 +239,7 @@ export function StoryEndingPage() {
                 你的选择
               </p>
               <p className="mt-1 text-sm text-ink-soft">
-                你将如何处理收集到的地图与记录？
+                你将如何完成{story?.title ? `《${story.title}》` : "这段旅程"}的最后一页？
               </p>
             </div>
 

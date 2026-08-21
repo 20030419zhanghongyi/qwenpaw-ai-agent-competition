@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { LoadingState, ErrorState } from "@/components/common/States";
 import { MapRouteView } from "@/components/map/MapRouteView";
 import { RewardReveal } from "@/components/story/RewardReveal";
-import { fetchStory } from "@/api/stories";
 import { fetchRoutePois } from "@/api/routes";
 import type { RoutePoi } from "@/types/routes";
 import { useAuth } from "@/state/AuthContext";
@@ -20,6 +19,7 @@ export function StoryMapPage() {
     latestRewards,
     loading,
     error,
+    loadStory,
     restoreSession,
     clearLatestRewards,
   } = useStory();
@@ -37,10 +37,10 @@ export function StoryMapPage() {
 
   // If session loaded but no story, load it from the session's story_id
   useEffect(() => {
-    if (session && !story) {
-      fetchStory(session.story_id).catch(() => {});
+    if (session && story?.id !== session.story_id) {
+      loadStory(session.story_id).catch(() => {});
     }
-  }, [session, story]);
+  }, [loadStory, session, story]);
 
   // Load POI data for the route
   useEffect(() => {
@@ -178,7 +178,7 @@ export function StoryMapPage() {
             )}
             {currentChapter.poi_id && (
               <p className="mt-1 text-sm text-sage-deep">
-                📍 {pois.find((p) => p.poi_id === currentChapter.poi_id)?.poi_name ?? currentChapter.poi_id}
+                📍 {currentChapter.location_name ?? pois.find((p) => p.poi_id === currentChapter.poi_id)?.poi_name ?? currentChapter.poi_id}
               </p>
             )}
             <button

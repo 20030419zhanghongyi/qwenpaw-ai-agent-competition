@@ -567,6 +567,72 @@
         }
       ],
       "description": "《莲城双图：未尽之图》V4 固定剧情路线。依次走访妈阁庙、郑家大屋、议事亭前地、三街会馆、卢家大屋和大炮台，通过城市双图、六组地点局部双图和五张秘密纸条理解不同时代、用途与人的城市记录。现场开放、宗教活动、交通和临时通行情况以官方与现场信息为准。"
+    },
+    {
+      "id": "coloane_after_tide",
+      "name": "《潮退之後》路環劇情半日線",
+      "theme": "海、手藝與社區",
+      "duration_label": "半日",
+      "duration_hours": 4.0,
+      "walk_distance_km": 3.2,
+      "physical_level": "medium",
+      "suitable_for": [
+        "history",
+        "culture",
+        "photo",
+        "solo",
+        "friends",
+        "relax"
+      ],
+      "nodes": [
+        {
+          "poi_id": "poi_0236",
+          "order": 1,
+          "suggested_stay_min": 35,
+          "note": "第一章：天后古廟／觀音古廟；區分古廟史實、船戶集資與出海平安信俗，補上「海」",
+          "replaceable_with": [
+            "poi_0237"
+          ]
+        },
+        {
+          "poi_id": "poi_0240",
+          "order": 2,
+          "suggested_stay_min": 30,
+          "note": "第二章：譚公廟占位錨點；以鯨骨龍舟區分文物事實、信俗與地方意義，補上「船」",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0241",
+          "order": 3,
+          "suggested_stay_min": 35,
+          "note": "第三章：聖方濟各聖堂及廣場；把建築、事件和社區記憶分層，補上「村」",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0330",
+          "order": 4,
+          "suggested_stay_min": 45,
+          "note": "第四章：荔枝碗船廠片區占位錨點；用空間、手藝和行業變化理解船廠，補上「工」",
+          "replaceable_with": []
+        },
+        {
+          "poi_id": "poi_0024",
+          "order": 5,
+          "suggested_stay_min": 35,
+          "note": "第五章：黑沙知識層；以遠程考古時間線完成，不進入敏感點，補上「土」",
+          "replaceable_with": [
+            "poi_0286"
+          ]
+        },
+        {
+          "poi_id": "poi_0286",
+          "order": 6,
+          "suggested_stay_min": 30,
+          "note": "終章：安全公共空間；完成路環聲音明信片與最後反思",
+          "replaceable_with": []
+        }
+      ],
+      "description": "《潮退之後》占位版固定劇情路線。由路環古廟進入海與信俗，再到譚公廟、聖方濟各聖堂及廣場、荔枝碗船廠片區與黑沙知識層，最後在安全公共空間完成聲音明信片。譚公廟與荔枝碗船廠片區目前使用資料庫中鄰近既有 POI 作為路線錨點；前端故事頁以章節 location_name 顯示正式劇情地點。現場開放、交通、宗教活動、船廠開放區與海岸安全均以官方與現場標識為準。"
     }
   ]
 }

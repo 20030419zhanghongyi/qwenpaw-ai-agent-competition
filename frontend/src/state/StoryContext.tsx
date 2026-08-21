@@ -62,7 +62,7 @@ export interface StoryContextValue {
   /** Load a story overview. */
   loadStory: (storyId: string) => Promise<void>;
   /** Start or resume a story session. Requires a valid JWT. */
-  startStory: (storyId: string) => Promise<void>;
+  startStory: (storyId: string) => Promise<StorySessionResponse>;
   /** Restore a previously-persisted session by ID. */
   restoreSession: (sessionId: string) => Promise<void>;
   /** Refresh the current session from backend. */
@@ -108,6 +108,7 @@ export function StoryProvider({ children }: { children: ReactNode }) {
       const sess = await startStorySession(storyId, token);
       setSession(sess);
       writeSessionId(sess.session_id);
+      return sess;
     } catch (e) {
       setError(errorMessage(e));
       throw e;

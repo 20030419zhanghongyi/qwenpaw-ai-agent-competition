@@ -25,6 +25,12 @@ export interface StoryOverview {
   summary: string;
   route_id: string;
   estimated_hours: number;
+  presentation?: {
+    default_orientation?: string;
+    max_content_width_px?: number;
+    cover_asset_id?: string;
+    asset_base_path?: string;
+  };
   identity?: StoryIdentity;
   content_notice?: string;
   content_labels?: Record<string, string>;
@@ -110,7 +116,9 @@ export interface StoryPuzzle {
   id: string;
   type: string;
   prompt: string;
+  fields?: Array<{ id: string; label: string }>;
   options?: PuzzleOption[];
+  required_count?: number;
   hints?: string[];
   explanation?: string;
   skip_text?: string;
@@ -134,10 +142,12 @@ export interface StoryChapter {
   order: number;
   kind: string;
   title: string;
+  location_name?: string;
   story_time?: string;
   poi_id?: string;
   secondary_poi_ids?: string[];
   scene?: string;
+  pages?: StoryPage[];
   dialogue?: Array<{ speaker: string; text: string }>;
   time_layers?: TimeLayer[];
   knowledge_cards?: StoryKnowledgeCard[];
@@ -146,6 +156,15 @@ export interface StoryChapter {
   reward?: StoryReward;
   poi_status?: string;
   ending_options?: StoryEndingOverview[];
+}
+
+export interface StoryPage {
+  id: string;
+  kind?: string;
+  title?: string;
+  text?: string;
+  speaker?: string;
+  asset_id?: string;
 }
 
 /* ── Session responses ── */

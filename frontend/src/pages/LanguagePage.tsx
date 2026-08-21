@@ -119,7 +119,7 @@ export function LanguagePage() {
                 {t(language, "beginWalk")}
               </Link>
               <Link
-                to="/stories/lotus_city_double_map"
+                to="/stories"
                 className="block w-full rounded-full border border-ochre/50 bg-ochre/10 px-6 py-4 text-center font-medium text-ochre shadow-[var(--shadow-soft)] transition hover:bg-ochre/20 active:scale-[0.99]"
               >
                 📖 剧情探索 StoryWalk
