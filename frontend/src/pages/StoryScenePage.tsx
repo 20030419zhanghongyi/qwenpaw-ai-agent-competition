@@ -66,6 +66,7 @@ export function StoryScenePage() {
   }>(INITIAL_ACTION_STATE);
   const [pageIndex, setPageIndex] = useState(0);
   const [activeTimeLayer, setActiveTimeLayer] = useState(0);
+  const [viewChapter, setViewChapter] = useState<StoryChapter | null>(null);
 
   // Restore session on mount
   const effectiveId = sessionId ?? persistedId;
@@ -84,7 +85,15 @@ export function StoryScenePage() {
     setPageIndex(0);
     setActiveTimeLayer(0);
     setActionState(INITIAL_ACTION_STATE);
+    setViewChapter(null);
   }, [nodeId]);
+
+  const currentSessionChapter = session?.current_chapter ?? null;
+  useEffect(() => {
+    if (currentSessionChapter && (!nodeId || currentSessionChapter.id === nodeId)) {
+      setViewChapter(currentSessionChapter);
+    }
+  }, [currentSessionChapter, nodeId]);
 
   if (loading && !session) return <LoadingState label="加载章节…" />;
   if (error && !session) {
@@ -106,11 +115,13 @@ export function StoryScenePage() {
   }
 
   const chapter = session.current_chapter;
-  const allowedActions = session.allowed_actions;
+  const isViewingCurrentChapter = !nodeId || chapter?.id === nodeId;
+  const allowedActions = isViewingCurrentChapter ? session.allowed_actions : [];
   const isCompleted = session.status === "completed";
 
   // Determine chapter display
-  const displayChapter: StoryChapter | null = chapter ?? null;
+  const displayChapter: StoryChapter | null =
+    viewChapter ?? (isViewingCurrentChapter ? chapter : null);
   if (!displayChapter) {
     return (
       <div className="flex min-h-dvh flex-col bg-paper px-4 py-8">
@@ -129,6 +140,7 @@ export function StoryScenePage() {
 
   // Node kinds that require arrival
   const needsArrive =
+    isViewingCurrentChapter &&
     displayChapter.poi_id &&
     !session.state.arrived_chapter_ids.includes(displayChapter.id) &&
     !chapterComplete;
