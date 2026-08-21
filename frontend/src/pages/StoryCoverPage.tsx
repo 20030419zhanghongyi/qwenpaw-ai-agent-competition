@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { LoadingState, ErrorState } from "@/components/common/States";
 import { useAuth } from "@/state/AuthContext";
 import { useStory } from "@/state/StoryContext";
+import { useWalk } from "@/state/WalkContext";
 
 export function StoryCoverPage() {
   const { storyId } = useParams<{ storyId: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, register } = useAuth();
+  const { language } = useWalk();
   const { story, session, loading, error, loadStory, startStory, clearStory } =
     useStory();
   const [starting, setStarting] = useState(false);
@@ -17,11 +19,27 @@ export function StoryCoverPage() {
     if (storyId) loadStory(storyId);
   }, [storyId, loadStory]);
 
-  const handleStart = async () => {
+  const ensureStoryGuest = useCallback(async () => {
+    if (isAuthenticated) return;
+    const guestId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    await register({
+      email: `story-guest-${guestId}@local.test`,
+      password: `StoryGuest-${guestId}`,
+      name: "剧情游客",
+      language,
+      country: null,
+    });
+  }, [isAuthenticated, language, register]);
+
+  const handleStart = useCallback(async () => {
     if (!storyId) return;
     setStarting(true);
     setActionError(null);
     try {
+      await ensureStoryGuest();
       const started = await startStory(storyId);
       // Navigate to the map after starting
       navigate(`/story-sessions/${started.session_id}/map`);
@@ -32,13 +50,32 @@ export function StoryCoverPage() {
     } finally {
       setStarting(false);
     }
-  };
+  }, [ensureStoryGuest, navigate, startStory, storyId]);
 
-  const handleGoToMap = () => {
+  const handleGoToMap = useCallback(() => {
     if (session) {
       navigate(`/story-sessions/${session.session_id}/map`);
     }
-  };
+  }, [navigate, session]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || starting || loading) return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.closest("input, textarea, select, button, a, [contenteditable='true']")
+      ) {
+        return;
+      }
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        if (session?.status === "active") handleGoToMap();
+        else void handleStart();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [handleGoToMap, handleStart, loading, session?.status, starting]);
 
   const handleBack = () => {
     clearStory();
@@ -144,23 +181,11 @@ export function StoryCoverPage() {
 
         {/* Actions */}
         <div className="mt-8 space-y-3">
-          {!isAuthenticated ? (
-            <div className="rounded-2xl border border-line bg-card p-5 text-center">
-              <p className="text-sm text-ink-soft">
-                请先登录以开始剧情探索。
-              </p>
-              <button
-                type="button"
-                onClick={() => navigate("/auth")}
-                className="mt-3 inline-block rounded-full bg-sage-deep px-6 py-2.5 text-sm font-medium text-paper"
-              >
-                登录 / 注册
-              </button>
-            </div>
-          ) : hasActive ? (
+          {hasActive ? (
             <>
               <button
                 type="button"
+                autoFocus
                 onClick={handleGoToMap}
                 className="w-full rounded-full bg-sage-deep px-6 py-4 text-base font-medium text-paper shadow-[var(--shadow-soft)] transition hover:bg-moss active:scale-[0.99]"
               >
@@ -176,14 +201,26 @@ export function StoryCoverPage() {
               </button>
             </>
           ) : (
-            <button
-              type="button"
-              disabled={starting}
-              onClick={handleStart}
-              className="w-full rounded-full bg-sage-deep px-6 py-4 text-base font-medium text-paper shadow-[var(--shadow-soft)] transition hover:bg-moss active:scale-[0.99] disabled:opacity-50"
-            >
-              {starting ? "正在准备…" : "开始探索"}
-            </button>
+            <>
+              <button
+                type="button"
+                autoFocus
+                disabled={starting}
+                onClick={handleStart}
+                className="w-full rounded-full bg-sage-deep px-6 py-4 text-base font-medium text-paper shadow-[var(--shadow-soft)] transition hover:bg-moss active:scale-[0.99] disabled:opacity-50"
+              >
+                {starting
+                  ? "正在准备…"
+                  : isAuthenticated
+                    ? "开始探索"
+                    : "游客开始探索"}
+              </button>
+              {!isAuthenticated && (
+                <p className="text-center text-xs text-ink-soft">
+                  演示模式会自动建立临时游客身份，不需要填写账号密码。
+                </p>
+              )}
+            </>
           )}
         </div>
 
