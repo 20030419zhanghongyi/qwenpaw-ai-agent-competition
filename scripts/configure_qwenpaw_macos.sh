@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Configure the project-specific QwenPaw skills, agents, ethics baseline, and image plugin on macOS.
+# Configure the project-specific QwenPaw skills, agents, ethics baseline, and tool plugins on macOS.
 # Run from any directory: bash scripts/configure_qwenpaw_macos.sh
 
 set -euo pipefail
@@ -121,6 +121,12 @@ import sys
 root = Path(sys.argv[1])
 ethics_lines = (root / "ethics/prompts/_ethics_base.md").read_text(encoding="utf-8").splitlines()[8:42]
 block = ["<!-- MACAU_ETHICS_BASE_START -->", *ethics_lines, "<!-- MACAU_ETHICS_BASE_END -->"]
+tts_block = [
+    "<!-- MACAU_GUIDE_TTS_START -->",
+    "For a request beginning TTS_RENDER_REQUEST: call synthesize_speech_qwen exactly once with the supplied text and language.",
+    "Do not rewrite, translate, summarize, expand, or disclose the approved narration; respond only after the tool completes.",
+    "<!-- MACAU_GUIDE_TTS_END -->",
+]
 ids = {"default", "route", "intent", "pref-guide", "guide", "photo", "scene", "reviewer"}
 agents = [a for a in json.loads(os.environ["AGENTS_JSON"]).get("agents", []) if a.get("id") in ids]
 missing = ids - {a["id"] for a in agents}
@@ -137,12 +143,21 @@ for agent in agents:
         if len(lines) < 44:
             raise SystemExit(f"Unexpected short AGENTS.md: {path}")
         updated = lines[:13] + block + lines[44:]
+    if agent["id"] == "guide":
+        try:
+            start = updated.index("<!-- MACAU_GUIDE_TTS_START -->")
+            end = updated.index("<!-- MACAU_GUIDE_TTS_END -->", start)
+            updated = updated[:start] + tts_block + updated[end + 1:]
+        except ValueError:
+            updated += ["", *tts_block]
     path.write_text("\n".join(updated) + "\n", encoding="utf-8")
     print(f"Updated ethics baseline: {agent['id']}")
 PY
 
 qwenpaw plugin validate backend/app/tools/qwen-image
 qwenpaw plugin install backend/app/tools/qwen-image --force
+qwenpaw plugin validate backend/app/tools/qwen-tts
+qwenpaw plugin install backend/app/tools/qwen-tts --force
 
 if [[ -f .env && -z "${DASHSCOPE_API_KEY:-}" ]]; then
   DASHSCOPE_API_KEY="$(python3 - <<'PY'
@@ -182,12 +197,38 @@ print("true" if next((x.get("enabled") for x in json.load(sys.stdin) if x.get("n
     [[ "$enabled" == "true" ]] || curl -fsS -X PATCH "$qwenpaw_base_url/api/tools/$tool_name/toggle" -H 'X-Agent-Id: scene' >/dev/null
   done
   echo "Configured Qwen-Image for scene."
+
+  tts_config_file="$(mktemp)"
+  trap 'rm -f "$config_file" "$tts_config_file"' EXIT
+  DASHSCOPE_API_KEY="$DASHSCOPE_API_KEY" python3 - "$tts_config_file" <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+Path(sys.argv[1]).write_text(json.dumps({"config": {
+    "api_key": os.environ["DASHSCOPE_API_KEY"],
+    "model": "qwen3-tts-flash",
+    "timeout": 60,
+}}), encoding="utf-8")
+PY
+  tool_name="synthesize_speech_qwen"
+  curl -fsS -X POST "$qwenpaw_base_url/api/tools/$tool_name/config" \
+    -H 'X-Agent-Id: guide' -H 'Content-Type: application/json' \
+    --data-binary "@$tts_config_file" >/dev/null
+  enabled="$(curl -fsS -H 'X-Agent-Id: guide' "$qwenpaw_base_url/api/tools" | python3 -c '
+import json, sys
+name = sys.argv[1]
+print("true" if next((x.get("enabled") for x in json.load(sys.stdin) if x.get("name") == name), False) else "false")
+' "$tool_name")"
+  [[ "$enabled" == "true" ]] || curl -fsS -X PATCH "$qwenpaw_base_url/api/tools/$tool_name/toggle" -H 'X-Agent-Id: guide' >/dev/null
+  echo "Configured Qwen TTS for guide."
 else
-  echo "DASHSCOPE_API_KEY is absent; Qwen-Image is installed but left unconfigured and disabled."
+  echo "DASHSCOPE_API_KEY is absent; Qwen-Image and Qwen TTS are installed but left unconfigured and disabled."
 fi
 
 qwenpaw doctor
 qwenpaw agents list
 qwenpaw skills list --agent-id scene
 qwenpaw plugin info qwen-image-tool
+qwenpaw plugin info qwen-tts-tool
 echo "QwenPaw macOS configuration completed."
