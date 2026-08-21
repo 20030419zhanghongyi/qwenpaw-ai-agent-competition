@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1125" role="img" aria-label="Coloane temple placeholder">
+  <rect width="900" height="1125" fill="#e8efe6"/>
+  <path d="M120 775 H780 L705 1010 H195 Z" fill="#d7c08d"/>
+  <path d="M210 550 H690 L760 690 H140 Z" fill="#7d5145"/>
+  <path d="M260 470 H640 L700 570 H200 Z" fill="#b75f4f"/>
+  <rect x="310" y="680" width="280" height="330" fill="#f8f0db" stroke="#60463b" stroke-width="12"/>
+  <rect x="405" y="750" width="90" height="260" fill="#4b5f56"/>
+  <circle cx="450" cy="255" r="95" fill="#f2cc6b" opacity=".85"/>
+  <path d="M0 930 C200 880 310 980 500 925 C650 880 770 870 900 915 L900 1125 L0 1125 Z" fill="#57736a" opacity=".75"/>
+  <text x="450" y="1070" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" fill="#fff8e8">temple placeholder</text>
+</svg>

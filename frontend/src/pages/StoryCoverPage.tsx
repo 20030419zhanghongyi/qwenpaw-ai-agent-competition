@@ -22,9 +22,9 @@ export function StoryCoverPage() {
     setStarting(true);
     setActionError(null);
     try {
-      await startStory(storyId);
+      const started = await startStory(storyId);
       // Navigate to the map after starting
-      navigate(`/story-sessions/${story?.id ?? storyId}/map`);
+      navigate(`/story-sessions/${started.session_id}/map`);
     } catch (e) {
       setActionError(
         e instanceof Error ? e.message : "无法开始故事，请稍后重试",
@@ -56,6 +56,10 @@ export function StoryCoverPage() {
   if (!story) return null;
 
   const hasActive = session?.status === "active";
+  const coverSrc =
+    story.id === "coloane_after_tide"
+      ? "/story/coloane-after-tide/cover.svg"
+      : null;
 
   return (
     <main className="flex min-h-dvh flex-col bg-paper text-ink">
@@ -70,7 +74,16 @@ export function StoryCoverPage() {
         </button>
 
         {/* Header */}
-        <div className="rounded-2xl border border-line bg-card p-6 shadow-[var(--shadow-soft)]">
+        <div className="overflow-hidden rounded-2xl border border-line bg-card shadow-[var(--shadow-soft)]">
+          {coverSrc && (
+            <img
+              src={coverSrc}
+              alt=""
+              className="h-44 w-full object-cover"
+              loading="lazy"
+            />
+          )}
+          <div className="p-6">
           <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-ochre">
             StoryWalk
           </p>
@@ -94,6 +107,7 @@ export function StoryCoverPage() {
             <span className="rounded-full border border-line bg-paper-warm px-3 py-1">
               {story.nodes.length} 个章节
             </span>
+          </div>
           </div>
         </div>
 
