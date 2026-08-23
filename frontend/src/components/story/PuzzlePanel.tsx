@@ -3,6 +3,7 @@ import { SkipPuzzleDialog } from "@/features/story/components/SkipPuzzleDialog";
 import { StoryPuzzleRenderer } from "@/features/story/puzzles";
 import type { StoryPuzzleData } from "@/features/story/types";
 import type { StoryPuzzle } from "@/types/stories";
+import { useStoryMessages } from "@/features/story/storyI18n";
 
 interface PuzzlePanelProps {
   puzzle: StoryPuzzle;
@@ -33,6 +34,7 @@ export function PuzzlePanel({
   lastHint,
   lastMessage,
 }: PuzzlePanelProps) {
+  const st = useStoryMessages();
   const [confirmingSkip, setConfirmingSkip] = useState(false);
   const supported = SUPPORTED_TYPES.has(puzzle.type);
 
@@ -48,7 +50,7 @@ export function PuzzlePanel({
       ) : (
         <div className="rounded-2xl border border-clay/30 bg-clay/5 p-4">
           <p className="text-base text-clay">
-            暂不支持此谜题类型：{puzzle.type}
+            {st("puzzleQuestion")}: {puzzle.type}
           </p>
         </div>
       )}
@@ -64,13 +66,13 @@ export function PuzzlePanel({
 
       {lastHint && (
         <div className="rounded-xl border border-ochre/40 bg-ochre/5 px-4 py-3">
-          <p className="text-[13px] font-semibold text-ochre">阿莲的提示</p>
+          <p className="text-[13px] font-semibold text-ochre">{st("aliansHint")}</p>
           <p className="mt-1 text-base leading-7 text-ink-soft">{lastHint}</p>
         </div>
       )}
 
       {attempts > 0 && (
-        <p className="text-[13px] text-ink-soft">已尝试 {attempts} 次</p>
+        <p className="text-[13px] text-ink-soft">{st("attemptCount", { count: attempts })}</p>
       )}
 
       <div className="grid grid-cols-2 gap-3">
@@ -80,7 +82,7 @@ export function PuzzlePanel({
           onClick={onRequestHint}
           className="min-h-12 rounded-full border border-line bg-paper px-4 text-base text-ink-soft transition disabled:opacity-40"
         >
-          提示
+          {st("hint")}
         </button>
         <button
           type="button"
@@ -88,7 +90,7 @@ export function PuzzlePanel({
           onClick={() => setConfirmingSkip(true)}
           className="min-h-12 rounded-full border border-line bg-paper px-4 text-base text-ink-soft transition disabled:opacity-40"
         >
-          跳过
+          {st("skip")}
         </button>
       </div>
 

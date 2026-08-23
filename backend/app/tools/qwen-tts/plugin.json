@@ -1,0 +1,59 @@
+{
+  "id": "qwen-tts-tool",
+  "name": "Qwen TTS Tool",
+  "version": "1.0.0",
+  "description": "Synthesize narrated audio with Alibaba Qwen3-TTS for QwenPaw agents",
+  "description_i18n": {
+    "zh-CN": "供 QwenPaw Agent 调用的 Qwen3 语音合成工具",
+    "en-US": "Qwen3 text-to-speech tool for QwenPaw agents"
+  },
+  "author": "Macau StoryWalk Team",
+  "entry": {
+    "backend": "qwen_tts.py"
+  },
+  "dependencies": ["dashscope>=1.20", "httpx>=0.24.0"],
+  "qwenpaw_version": {
+    "min": "1.1.6",
+    "max": "2.1.0"
+  },
+  "meta": {
+    "tools": [
+      {
+        "name": "synthesize_speech_qwen",
+        "description": "Synthesize a short, approved narration script into an MP3. Use only when the request explicitly asks for audio delivery; never alter the supplied script.",
+        "icon": "🔊",
+        "requires_config": true,
+        "config_fields": [
+          {
+            "name": "api_key",
+            "label": "DashScope API Key",
+            "type": "password",
+            "required": true,
+            "placeholder": "sk-...",
+            "help": "Key for Qwen3-TTS in Alibaba Cloud Model Studio."
+          },
+          {
+            "name": "model",
+            "label": "Model",
+            "type": "text",
+            "required": false,
+            "default": "qwen3-tts-flash",
+            "help": "Qwen3 TTS model ID."
+          },
+          {
+            "name": "timeout",
+            "label": "Request Timeout (seconds)",
+            "type": "number",
+            "required": false,
+            "default": 60,
+            "min": 15,
+            "max": 180,
+            "help": "Provider request and audio-download timeout."
+          }
+        ]
+      }
+    ],
+    "api_key_url": "https://bailian.console.aliyun.com/",
+    "api_key_hint": "Get a DashScope API key from Alibaba Cloud Model Studio."
+  }
+}

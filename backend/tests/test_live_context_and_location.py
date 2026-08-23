@@ -20,7 +20,7 @@ def test_live_context_parses_official_weather_and_event_signal(monkeypatch):
         """,
         live_context.MGTO_EVENT_CALENDAR_URL: "Festival programme — July 28 Main Square",
     }
-    monkeypatch.setattr(live_context, "_fetch", lambda url: responses[url])
+    monkeypatch.setattr(live_context, "_fetch", lambda url: responses.get(url))
     live_context._cache.clear()
 
     context = live_context.get_live_route_context(date(2026, 7, 28).isoformat())
@@ -30,6 +30,147 @@ def test_live_context_parses_official_weather_and_event_signal(monkeypatch):
     assert context["events"]["events"]
     assert context["crowd_signal"] == "event-proxy"
     assert "实时天气" in context["notes"][0]
+
+
+def test_event_parser_matches_monthly_concert_date_range(monkeypatch):
+    target = date(2026, 8, 29)
+    monkeypatch.setattr(
+        live_context,
+        "_fetch",
+        lambda url: "2026 i-dle World Tour Concert 29-30/8 Upcoming"
+        if "whatson" in url
+        else None,
+    )
+
+    events = live_context._events(target)
+
+    assert events["status"] == "ok"
+    assert events["events"]
+    assert live_context._event_crowd_level(events) == "high"
+
+
+def test_weather_advice_recommends_umbrella_for_rainy_arrival(monkeypatch):
+    monkeypatch.setattr(
+        live_context,
+        "_fetch_json",
+        lambda _url, _params: {
+            "daily": {
+                "time": ["2026-07-28", "2026-07-29"],
+                "weather_code": [61, 2],
+                "temperature_2m_max": [29, 31],
+                "temperature_2m_min": [25, 26],
+                "precipitation_probability_max": [70, 20],
+                "precipitation_sum": [3.5, 0],
+                "wind_speed_10m_max": [18, 15],
+            }
+        },
+    )
+    live_context._cache.clear()
+
+    advice = live_context.get_weather_advice("2026-07-28", trip_days=2, language="zh-CN")
+
+    assert advice["status"] == "ok"
+    assert advice["flags"]["umbrella"] is True
+    assert advice["flags"]["sunscreen"] is True
+    assert any("带伞" in item for item in advice["advice"])
+    assert advice["days"][0]["condition"] == "小雨"
+
+
+def test_weather_advice_degrades_when_forecast_unavailable(monkeypatch):
+    monkeypatch.setattr(live_context, "_fetch_json", lambda _url, _params: None)
+    live_context._cache.clear()
+
+    advice = live_context.get_weather_advice("bad-date", trip_days=1, language="en")
+
+    assert advice["status"] == "unavailable"
+    assert advice["days"] == []
+    assert advice["flags"]["umbrella"] is False
+    assert "temporarily unavailable" in advice["advice"][0]
+
+
+def test_crowd_advice_flags_mainland_golden_week(monkeypatch):
+    monkeypatch.setattr(
+        live_context,
+        "_events",
+        lambda _target: {"status": "ok", "events": [], "source": {"name": "events"}},
+    )
+    live_context._cache.clear()
+
+    advice = live_context.get_crowd_advice("2026-10-03", trip_days=1, language="zh-CN")
+
+    assert advice["status"] == "estimated"
+    assert advice["level"] == "very_high"
+    assert any(factor["kind"] == "mainland_china_holiday" for factor in advice["factors"])
+    assert any("十一黄金周" in factor["note"] for factor in advice["factors"])
+
+
+def test_crowd_advice_flags_official_concert_signal(monkeypatch):
+    monkeypatch.setattr(
+        live_context,
+        "_events",
+        lambda _target: {
+            "status": "ok",
+            "events": ["2026 Macao World Tour Concert at Cotai Arena"],
+            "source": {"name": "events"},
+        },
+    )
+    live_context._cache.clear()
+
+    advice = live_context.get_crowd_advice("2026-08-20", trip_days=1, language="zh-CN")
+
+    assert advice["level"] == "high"
+    assert any(factor["kind"] == "official_event_calendar" for factor in advice["factors"])
+
+
+def test_live_travel_advice_returns_realtime_bundle(monkeypatch):
+    monkeypatch.setattr(live_context, "_fetch_json", lambda _url, _params: None)
+    monkeypatch.setattr(
+        live_context,
+        "_events",
+        lambda _target: {"status": "ok", "events": [], "source": {"name": "events"}},
+    )
+    live_context._cache.clear()
+
+    advice = live_context.get_live_travel_advice("2026-05-02", trip_days=2, language="en")
+
+    assert advice["weather"]["status"] == "unavailable"
+    assert advice["crowd"]["level"] == "very_high"
+    assert advice["transport"]["status"] == "advice-only"
+    assert "AMap" in advice["transport"]["notes"][0]
+    assert advice["opening_hours"]["status"] == "advice-only"
+
+
+@pytest.mark.parametrize(
+    ("language", "transport_text", "opening_text"),
+    [
+        ("zh-CN", "巴士报站", "景点开放时间"),
+        ("zh-TW", "巴士報站", "景點開放時間"),
+        ("en", "Bus Reporting", "Opening hours"),
+        ("pt", "autocarros", "horários de funcionamento"),
+    ],
+)
+def test_live_travel_advice_localizes_operational_notes(
+    monkeypatch,
+    language,
+    transport_text,
+    opening_text,
+):
+    monkeypatch.setattr(live_context, "_fetch_json", lambda _url, _params: None)
+    monkeypatch.setattr(
+        live_context,
+        "_events",
+        lambda _target: {"status": "ok", "events": [], "source": {"name": "events"}},
+    )
+    live_context._cache.clear()
+
+    advice = live_context.get_live_travel_advice(
+        "2026-08-24",
+        trip_days=1,
+        language=language,
+    )
+
+    assert transport_text in advice["transport"]["notes"][0]
+    assert opening_text in advice["opening_hours"]["notes"][0]
 
 
 def test_distance_meters_supports_gps_checkin_thresholds():

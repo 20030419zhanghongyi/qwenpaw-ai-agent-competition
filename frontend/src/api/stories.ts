@@ -4,6 +4,7 @@ import type {
   StoryOverview,
   StorySessionResponse,
 } from "@/types/stories";
+import type { LanguageCode } from "@/types";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
@@ -104,16 +105,26 @@ async function request<T>(
   return response.json() as Promise<T>;
 }
 
-export function fetchStory(storyId: string): Promise<StoryOverview> {
-  return request<StoryOverview>(`/api/v1/stories/${encodeURIComponent(storyId)}`);
+function languageQuery(language: LanguageCode): string {
+  return `?language=${encodeURIComponent(language)}`;
+}
+
+export function fetchStory(
+  storyId: string,
+  language: LanguageCode,
+): Promise<StoryOverview> {
+  return request<StoryOverview>(
+    `/api/v1/stories/${encodeURIComponent(storyId)}${languageQuery(language)}`,
+  );
 }
 
 export function startStorySession(
   storyId: string,
   token: string,
+  language: LanguageCode,
 ): Promise<StorySessionResponse> {
   return request<StorySessionResponse>(
-    `/api/v1/stories/${encodeURIComponent(storyId)}/sessions`,
+    `/api/v1/stories/${encodeURIComponent(storyId)}/sessions${languageQuery(language)}`,
     { method: "POST" },
     token,
   );
@@ -122,9 +133,10 @@ export function startStorySession(
 export function fetchStorySession(
   sessionId: string,
   token: string,
+  language: LanguageCode,
 ): Promise<StorySessionResponse> {
   return request<StorySessionResponse>(
-    `/api/v1/story-sessions/${encodeURIComponent(sessionId)}`,
+    `/api/v1/story-sessions/${encodeURIComponent(sessionId)}${languageQuery(language)}`,
     undefined,
     token,
   );
@@ -134,9 +146,10 @@ export function applyStoryAction(
   sessionId: string,
   actionRequest: StoryActionRequest,
   token: string,
+  language: LanguageCode,
 ): Promise<StoryActionResponse> {
   return request<StoryActionResponse>(
-    `/api/v1/story-sessions/${encodeURIComponent(sessionId)}/actions`,
+    `/api/v1/story-sessions/${encodeURIComponent(sessionId)}/actions${languageQuery(language)}`,
     {
       method: "POST",
       body: JSON.stringify(actionRequest),

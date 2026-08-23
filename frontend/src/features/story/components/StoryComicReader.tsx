@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { StoryImage } from "../assets";
 import type { StoryAssetRef } from "@/types/stories";
+import { useStoryMessages } from "../storyI18n";
 
 interface StoryComicReaderProps {
   comics: StoryAssetRef[];
@@ -17,6 +18,7 @@ export function StoryComicReader({
   onComplete,
   onOpen,
 }: StoryComicReaderProps) {
+  const st = useStoryMessages();
   const touchStartX = useRef<number | null>(null);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const currentComic = comics[index];
@@ -40,7 +42,7 @@ export function StoryComicReader({
   return (
     <section
       className="mt-4"
-      aria-label="章节漫画"
+      aria-label={st("scene")}
       onTouchStart={(event) => {
         touchStartX.current = event.changedTouches[0]?.clientX ?? null;
       }}
@@ -76,16 +78,16 @@ export function StoryComicReader({
           disabled={index === 0}
           className="min-h-11 rounded-full border border-line bg-card px-4 text-sm font-medium text-sage-deep disabled:cursor-not-allowed disabled:opacity-35"
         >
-          上一格
+          {st("previousPanel")}
         </button>
-        <div className="flex justify-center" aria-label={`第 ${index + 1} 格，共 ${comics.length} 格`}>
+        <div className="flex justify-center" aria-label={st("dialogue", { current: index + 1, total: comics.length })}>
           {comics.map((comic, pageIndex) => (
             <button
               key={comic.asset_id}
               type="button"
               onClick={() => goTo(pageIndex)}
               className="grid size-11 place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage"
-              aria-label={`查看第 ${pageIndex + 1} 格`}
+              aria-label={`${st("scene")} ${pageIndex + 1}`}
               aria-current={pageIndex === index ? "step" : undefined}
             >
               <span
@@ -102,12 +104,12 @@ export function StoryComicReader({
           onClick={next}
           className="min-h-11 rounded-full bg-sage-deep px-4 text-sm font-medium text-paper"
         >
-          {index < comics.length - 1 ? "阅读下一格" : "进入对话"}
+          {index < comics.length - 1 ? st("nextPanel") : st("enterDialogue")}
         </button>
       </div>
       {comics.length > 1 && (
         <p className="mt-1 text-center text-[13px] text-ink-soft">
-          {index + 1}/{comics.length} · 可左右滑动翻页
+          {index + 1}/{comics.length} · {st("swipePages")}
         </p>
       )}
     </section>

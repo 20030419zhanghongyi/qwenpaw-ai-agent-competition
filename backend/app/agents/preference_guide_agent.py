@@ -15,7 +15,6 @@ from __future__ import annotations
 import json
 import logging
 import re
-import uuid
 from typing import Any
 
 from pydantic import ValidationError
@@ -60,7 +59,9 @@ def _build_prompt(
     if action == "start":
         return (
             f"[Language: reply ONLY in `{language}`]\n"
-            "开始偏好引导对话。请先打招呼，然后问第一个问题（时长）。"
+            "开始偏好引导对话。请礼貌欢迎用户，并询问本次在澳门的游览时长。"
+            "问题必须明确列出半日、一日、多日和夜间漫游四个选项；不要只问‘今天’，"
+            "因为用户可能计划多日行程。"
         )
 
     user_text = (message or "").strip()

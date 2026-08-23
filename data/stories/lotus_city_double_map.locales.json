@@ -1,0 +1,59 @@
+{
+  "zh-TW": {
+    "title": "蓮城雙圖：未竟之圖",
+    "subtitle": "沿六處真實地點，讀懂兩張記錄不同真實的澳門地圖",
+    "summary": "為研究澳門城市沿革，你向本地同學阿蓮借來家藏的1923年《香山縣志續編》。從書頁間掉出的信封、城市雙圖、六組地點局部雙圖和五張秘密紙條，引你們踏上一天的城市考察。",
+    "identity": { "name": "城市研究者", "description": "你不是預先知道答案的專家；要依靠現場、雙圖、紙條、阿蓮的查證，以及已取得的證據作出判斷。" },
+    "content_notice": "真實地點知識分為史實、民間信俗或地方記憶、語境化重建、劇情虛構及動態營運資訊。阿瀾、M先生、兩張虛構地圖、六組局部雙圖、五張秘密紙條及謎題均屬劇情創作。",
+    "content_labels": { "historical_fact": "史實", "folklore": "民間信俗／地方記憶", "contextual_reconstruction": "語境化重建", "fictional_story": "劇情虛構", "dynamic_operational_info": "動態營運資訊" },
+    "props": ["1923年《香山縣志續編》", "城市測繪圖", "蓮城脈圖", "六組地點局部雙圖", "五張秘密紙條"],
+    "nodes": [
+      { "title": "開場：從舊書掉出的路線", "scene": "你為研究澳門城市沿革，向本地同學阿蓮借來家藏的1923年《香山縣志續編》。翻到有關澳門地理、輿圖和地方沿革的書頁時，一隻舊信封和成套摺疊圖紙從頁間滑落。", "dialogue": [{"speaker":"玩家","text":"這兩張澳門地圖畫得不同。我們應先相信哪一張？"},{"speaker":"阿蓮","text":"先別選。阿瀾和M先生記錄的，可能本來就不是同一種事物。你負責懷疑，我負責陪你查清楚。"},{"speaker":"玩家","text":"第一張紙條沒有寫地點，只說要找一個在城名以前已被記住的地方。"},{"speaker":"阿蓮","text":"山不離海，香不離風，而且與澳門名稱的地方傳說有關。我們先到媽閣廟。"}], "reward":{"name":"成套雙圖與五張紙條","text":"你和阿蓮決定按紙條次序親自走一遍。"} },
+      { "title": "第一章：海從哪裡開始", "location_name":"媽閣廟", "scene":"舊地圖的海岸更貼近山腳，今天的海岸已向外延伸；兩張圖卻都保留了廟宇和山體的大致位置。" },
+      { "title": "第二章：缺失的第五行", "location_name":"鄭家大屋", "scene":"從入口望進去，視線不能直達深處。沿牆轉身後，樑柱、天井、院心和門件依次出現；紙條上第五個孔仍是空白。" },
+      { "title": "第三章：後來多出的城市", "location_name":"議事亭前地", "scene":"阿瀾的舊廣場草圖沒有噴水池，也沒有今天的黑白波浪形鋪地。她問後來的人：舊地圖沒有畫出後來出現的東西，能算畫錯嗎？" },
+      { "title":"第四章：少掉的兩包貨", "location_name":"三街會館", "scene":"三街會館附近的舊商業街提醒你：建築之外還有商情、糾紛、互助和看不見的社會網絡。阿瀾留下三份互相補充的記錄。" },
+      { "title":"第五章：一扇窗該畫在哪張圖上", "location_name":"盧家大屋", "scene":"天井引入光線，青磚、木構和窗戶共同組織人的日常生活。阿瀾把一扇窗拆成多個構件，問它究竟屬於建築形狀，還是人的生活。" },
+      { "title":"最終章：留給後來人的一筆", "location_name":"大炮台", "scene":"你和阿蓮登上大炮台。歷史城區、山體、海岸和現代城市同時展開。城市雙圖與今日景象無法完全重合，卻也不再互相否定。" }
+    ],
+    "endings": [{ "title":"城由人共寫", "text":"你沒有找到唯一正確的澳門地圖。你為兩張圖補上年代、來源和用途，也把今天看見的城市寫進新的空白。地圖不是最後判決；一座城市，由不同時代、不同用途和不同的人共同寫成。", "choice_text":"完成今日補記" }]
+  },
+  "en": {
+    "title": "Lotus City, Two Maps: The Map Still Unfinished",
+    "subtitle": "Follow six real places to read two maps that preserve different truths about Macau",
+    "summary": "While researching Macau’s changing cityscape, you borrow a family copy of the 1923 Continuation of the Xiangshan County Gazetteer from your local classmate, A Lin. An envelope, two city maps, six paired map fragments and five private notes slip from its pages, setting the two of you on a day-long urban investigation.",
+    "identity": { "name": "Urban researcher", "description": "You are not an expert who already knows the answer. Use the places before you, the paired maps, the notes, A Lin’s checking, and the evidence you have earned to make your own judgement." },
+    "content_notice": "Knowledge about real places is identified as historical fact, folk belief or local memory, contextual reconstruction, fictional narrative, or changing operational information. A Lan, Mr M, the two fictional maps, six paired fragments, five notes and all puzzles are created for this story.",
+    "content_labels": { "historical_fact": "Historical fact", "folklore": "Folk belief / local memory", "contextual_reconstruction": "Contextual reconstruction", "fictional_story": "Fictional narrative", "dynamic_operational_info": "Changing visitor information" },
+    "props": ["1923 Continuation of the Xiangshan County Gazetteer", "Survey Map of the City", "Lotus City Living Map", "Six paired map fragments", "Five private notes"],
+    "nodes": [
+      { "title":"Opening: A route falls from an old book", "scene":"For your research on Macau’s urban history, you borrow A Lin’s family copy of the 1923 Continuation of the Xiangshan County Gazetteer. As you turn pages on Macau’s geography, maps and local history, an old envelope and a set of folded maps slide out.", "dialogue":[{"speaker":"You","text":"These two maps of Macau do not show the same city. Which one should we trust first?"},{"speaker":"A Lin","text":"Neither—yet. A Lan and Mr M may have been recording different kinds of truth. You keep questioning; I will help us check."},{"speaker":"You","text":"The first note names no place. It only says to find somewhere remembered before the city had its name."},{"speaker":"A Lin","text":"Mountain by the sea, fragrance in the wind, and a local story tied to Macau’s name. We begin at A-Ma Temple."}], "reward":{"name":"The paired maps and five notes","text":"You and A Lin decide to walk the route in the notes’ order."} },
+      { "title":"Chapter 1: Where does the sea begin?", "location_name":"A-Ma Temple", "scene":"On the older map, the shoreline lies much closer to the foot of the hill; today it reaches farther out. Both maps, however, keep the temple and hill in roughly the same relationship." },
+      { "title":"Chapter 2: The missing fifth line", "location_name":"Mandarin’s House", "scene":"From the entrance, the deeper spaces remain out of sight. Turn along the wall and beams, skylights, courtyards and door fittings appear one by one; the fifth hole in the note is still blank." },
+      { "title":"Chapter 3: A city added later", "location_name":"Senado Square", "scene":"A Lan’s older sketch has neither the fountain nor today’s black-and-white wave paving. She asks a later visitor: if an old map cannot show what appeared later, is it wrong?" },
+      { "title":"Chapter 4: Two missing parcels", "location_name":"Sam Kai Vui Kun", "scene":"The old commercial streets near Sam Kai Vui Kun remind you that a city is more than its buildings: trade, disputes, mutual aid and invisible social ties also leave traces. A Lan has left three records that complete one another." },
+      { "title":"Chapter 5: Which map should hold a window?", "location_name":"Lou Kau Mansion", "scene":"A courtyard brings in light; grey brick, timber and windows organise daily life together. A Lan separates one window into its parts and asks whether it belongs to architectural form or to lived experience." },
+      { "title":"Final chapter: A line for those who come after", "location_name":"Mount Fortress", "scene":"You and A Lin climb Mount Fortress. The historic centre, hills, coastline and modern city unfold at once. The paired maps cannot perfectly coincide with what you see today, yet neither cancels the other." }
+    ],
+    "endings":[{ "title":"A city is written by its people", "text":"You have not found the one correct map of Macau. You have added dates, sources and purposes to both maps, and entered the city you saw today into a new blank space. A map is not a final verdict: a city is written together by different times, different uses and different people.", "choice_text":"Complete today’s note" }]
+  },
+  "pt": {
+    "title": "Cidade de Lótus, Dois Mapas: O Mapa Inacabado",
+    "subtitle": "Percorra seis lugares reais para ler dois mapas que guardam verdades diferentes sobre Macau",
+    "summary": "Enquanto estuda as transformações urbanas de Macau, pede emprestado à sua colega local, A Lin, um exemplar de família da Continuação da Gazeta do Condado de Xiangshan, de 1923. Entre as páginas caem um envelope, dois mapas da cidade, seis pares de mapas locais e cinco bilhetes, iniciando uma investigação urbana de um dia.",
+    "identity": { "name":"Investigador urbano", "description":"Não é um especialista com a resposta pronta. Use o que observa no local, os dois mapas, os bilhetes, as verificações de A Lin e as provas já reunidas para formar o seu juízo." },
+    "content_notice":"O conhecimento sobre lugares reais é assinalado como facto histórico, crença popular ou memória local, reconstrução contextual, narrativa ficcional ou informação operacional variável. A Lan, o Sr. M, os dois mapas ficcionais, seis pares de mapas locais, cinco bilhetes e todos os enigmas são criações desta história.",
+    "content_labels": { "historical_fact":"Facto histórico", "folklore":"Crença popular / memória local", "contextual_reconstruction":"Reconstrução contextual", "fictional_story":"Narrativa ficcional", "dynamic_operational_info":"Informação operacional variável" },
+    "props":["Continuação da Gazeta do Condado de Xiangshan (1923)", "Mapa de Levantamento da Cidade", "Mapa Vivo da Cidade de Lótus", "Seis pares de mapas locais", "Cinco bilhetes secretos"],
+    "nodes":[
+      { "title":"Abertura: um percurso cai de um livro antigo", "scene":"Para a sua investigação sobre a história urbana de Macau, pede emprestada a A Lin a Continuação da Gazeta do Condado de Xiangshan, de 1923, guardada pela família. Ao folhear as páginas sobre geografia, cartografia e história local de Macau, caem um envelope antigo e um conjunto de mapas dobrados.", "dialogue":[{"speaker":"Você","text":"Estes dois mapas de Macau não desenham a mesma cidade. Em qual devemos confiar primeiro?"},{"speaker":"A Lin","text":"Ainda não escolha. A Lan e o Sr. M podem ter registado coisas de natureza diferente. Você questiona; eu ajudo a confirmar."},{"speaker":"Você","text":"O primeiro bilhete não indica um lugar; diz apenas para encontrar algo lembrado antes de a cidade ter o seu nome."},{"speaker":"A Lin","text":"Montanha junto ao mar, perfume no vento, e uma tradição ligada ao nome de Macau. Começamos no Templo de A-Má."}], "reward":{"name":"Os mapas emparelhados e cinco bilhetes","text":"Você e A Lin decidem percorrer a ordem deixada nos bilhetes."} },
+      { "title":"Capítulo 1: Onde começa o mar?", "location_name":"Templo de A-Má", "scene":"No mapa mais antigo, a linha de costa está mais perto da encosta; hoje avançou para fora. Ainda assim, ambos conservam aproximadamente a posição do templo e da montanha." },
+      { "title":"Capítulo 2: A quinta linha em falta", "location_name":"Casa do Mandarim", "scene":"Da entrada, não se alcança diretamente o interior. Ao virar junto à parede, surgem vigas, pátios de luz, núcleos de pátio e ferragens; o quinto espaço do bilhete continua vazio." },
+      { "title":"Capítulo 3: A cidade que veio depois", "location_name":"Largo do Senado", "scene":"O esboço antigo de A Lan não tem a fonte nem o pavimento ondulado preto e branco de hoje. Ela pergunta: se um mapa antigo não mostra o que surgiu depois, estará errado?" },
+      { "title":"Capítulo 4: Dois volumes em falta", "location_name":"Sam Kai Vui Kun", "scene":"As antigas ruas comerciais junto ao Sam Kai Vui Kun lembram que uma cidade é feita também de comércio, conflitos, ajuda mútua e redes sociais invisíveis. A Lan deixou três registos que se completam." },
+      { "title":"Capítulo 5: Em que mapa cabe uma janela?", "location_name":"Casa de Lou Kau", "scene":"O pátio introduz a luz; tijolo cinzento, madeira e janelas organizam juntos a vida quotidiana. A Lan separa uma janela em componentes e pergunta se ela pertence à forma arquitectónica ou à vida das pessoas." },
+      { "title":"Capítulo final: uma linha para quem vier depois", "location_name":"Fortaleza do Monte", "scene":"Você e A Lin sobem à Fortaleza do Monte. Centro histórico, colinas, costa e cidade moderna abrem-se ao mesmo tempo. Os dois mapas não coincidem por completo com a paisagem de hoje, mas também já não se negam." }
+    ],
+    "endings":[{ "title":"A cidade é escrita por quem a vive", "text":"Não encontrou o único mapa correto de Macau. Acrescentou datas, fontes e usos aos dois mapas e escreveu a cidade de hoje num novo espaço em branco. Um mapa não é uma sentença final: uma cidade é escrita em conjunto por tempos, usos e pessoas diferentes.", "choice_text":"Concluir a nota de hoje" }]
+  }
+}

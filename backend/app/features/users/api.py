@@ -20,6 +20,7 @@ from .models import (
     LoginRequest,
     LoginResponse,
     PreferenceUpdateResponse,
+    PreferenceMemoryResponse,
     RegisterRequest,
     SendVerificationRequest,
     UserDetailResponse,
@@ -105,6 +106,15 @@ def get_user(user_id: str) -> UserDetailResponse:
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"user {user_id} not found")
     return UserDetailResponse(user=user)
+
+
+@router.get(
+    "/{user_id}/preference-memory",
+    response_model=PreferenceMemoryResponse,
+    summary="Get the user's structured long-term preference memory",
+)
+def get_preference_memory(user_id: str) -> PreferenceMemoryResponse:
+    return PreferenceMemoryResponse(user_id=user_id, memory=user_service.get_preference_memory(user_id))
 
 
 @router.put(

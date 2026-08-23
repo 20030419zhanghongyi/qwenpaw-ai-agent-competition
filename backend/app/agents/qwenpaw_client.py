@@ -42,6 +42,14 @@ _SAVED_IMAGE_RE = re.compile(
     r"Saved to:\s*(.+?\.(?:png|jpe?g|webp))(?=\s*(?:$|[,;]))",
     re.IGNORECASE | re.MULTILINE,
 )
+_AUDIO_URI_RE = re.compile(
+    r"(?:file|https?)://[^\r\n\"\]}]+?\.(?:mp3|wav|m4a|ogg)(?:\?[^\s\"\]}]*)?",
+    re.IGNORECASE,
+)
+_SAVED_AUDIO_RE = re.compile(
+    r"Saved to:\s*(.+?\.(?:mp3|wav|m4a|ogg))(?=\s*(?:$|[,;]))",
+    re.IGNORECASE | re.MULTILINE,
+)
 
 
 class QwenPawError(RuntimeError):
@@ -243,8 +251,73 @@ class QwenPawClient:
         )
         return image_ref
 
+    def ask_for_audio(
+        self,
+        agent_id: str,
+        text: str,
+        *,
+        session_id: str,
+    ) -> str:
+        """Run an agent until its mounted TTS tool emits an audio reference."""
+        url = f"{self.base_url}{self.send_path}"
+        payload = {
+            "input": [{"role": "user", "content": [{"type": "text", "text": text}]}],
+            "session_id": session_id,
+            "user_id": "default",
+            "channel": "console",
+            "stream": True,
+        }
+        headers = self._headers(json_body=True)
+        headers["X-Agent-Id"] = agent_id
+        events: list[dict[str, Any]] = []
+        audio_ref = ""
+        t0 = time.perf_counter()
+        try:
+            with httpx.stream(
+                "POST", url, headers=headers, json=payload, timeout=self.timeout
+            ) as resp:
+                self._raise_for_status(resp, self.send_path)
+                for event in _iter_sse(resp):
+                    events.append(event)
+                    refs = _extract_audio_refs(event.get("data_obj"))
+                    if refs:
+                        audio_ref = refs[0]
+                        break
+        except httpx.HTTPError as exc:
+            raise QwenPawError(f"POST {self.send_path} 网络失败：{exc}") from exc
+
+        if audio_ref:
+            self._stop_chat_for_session(session_id, agent_id)
+        else:
+            refs = _extract_audio_refs(events)
+            audio_ref = refs[0] if refs else ""
+        if not audio_ref:
+            answer = _assemble_answer(events)
+            raise QwenPawError(f"guide agent 未返回音频：{answer[:200]}")
+
+        latency_ms = int((time.perf_counter() - t0) * 1000)
+        record_trace(
+            kind="qwenpaw.audio",
+            agent_id=agent_id,
+            chat_id=session_id,
+            input_summary=text[:200],
+            output_summary=audio_ref[:200],
+            latency_ms=latency_ms,
+            tokens=_extract_usage(events),
+        )
+        record_audit(
+            kind="qwenpaw.audio",
+            status="ok",
+            subject=session_id,
+            agent_id=agent_id,
+            latency_ms=latency_ms,
+            input_chars=len(text),
+            output_chars=len(audio_ref),
+        )
+        return audio_ref
+
     def download_media(self, reference: str, *, timeout: float = 45.0) -> bytes:
-        """Download an HTTP image or a QwenPaw-local ``file://`` image."""
+        """Download a QwenPaw-local or HTTP image/audio media reference."""
         if reference.lower().startswith("file://"):
             local_path = unquote(reference[len("file://") :]).replace("\\", "/")
             # Canonical Windows file URIs use ``file:///C:/...`` while the
@@ -259,7 +332,7 @@ class QwenPawClient:
             url = reference
             headers = self._headers() if reference.startswith(self.base_url) else {}
         else:
-            raise QwenPawError("scene agent 返回了不支持的图片引用")
+            raise QwenPawError("QwenPaw agent 返回了不支持的媒体引用")
 
         try:
             response = httpx.get(
@@ -270,9 +343,9 @@ class QwenPawClient:
             )
             self._raise_for_status(response, "/api/files/preview")
         except httpx.HTTPError as exc:
-            raise QwenPawError(f"下载 scene agent 图片失败：{exc}") from exc
+            raise QwenPawError(f"下载 QwenPaw agent 媒体失败：{exc}") from exc
         if len(response.content) > 20 * 1024 * 1024:
-            raise QwenPawError("scene agent 图片超过 20 MiB 限制")
+            raise QwenPawError("QwenPaw agent 媒体超过 20 MiB 限制")
         return response.content
 
     def upload_media(
@@ -471,6 +544,35 @@ def _extract_image_refs(obj: Any) -> list[str]:
             if ref not in found:
                 found.append(ref)
     return found
+
+
+def _extract_audio_refs(obj: Any) -> list[str]:
+    """Find MP3/WAV references from QwenPaw tool output or response text."""
+    inline: list[str] = []
+    saved: list[str] = []
+
+    def add(bucket: list[str], value: str) -> None:
+        cleaned = value.strip().rstrip(".,;)")
+        if cleaned and cleaned not in bucket:
+            bucket.append(cleaned)
+
+    def visit(value: Any) -> None:
+        if isinstance(value, dict):
+            for child in value.values():
+                visit(child)
+            return
+        if isinstance(value, list):
+            for child in value:
+                visit(child)
+            return
+        if isinstance(value, str):
+            for match in _AUDIO_URI_RE.finditer(value):
+                add(inline, match.group(0))
+            for match in _SAVED_AUDIO_RE.finditer(value):
+                add(saved, f"file://{match.group(1).strip()}")
+
+    visit(obj)
+    return [*inline, *saved]
 
 
 def _assemble_answer(events: list[dict[str, Any]]) -> str:

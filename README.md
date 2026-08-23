@@ -576,9 +576,9 @@ and do not add them to `AGENTS.md` or an Agent system prompt. Their rules
 duplicate `SKILL.md`; injecting both increases prompt conflicts and context
 noise.
 
-### 4. Install the Qwen-Image Tool Plugin
+### 4. Install the QwenPaw Tool Plugins
 
-The repository includes a copy of the official Plugin compatible with
+The repository includes Qwen-Image and Qwen TTS Plugins compatible with
 AgentScope 1.0 / QwenPaw 1.1.12 post3:
 
 ```powershell
@@ -586,14 +586,20 @@ AgentScope 1.0 / QwenPaw 1.1.12 post3:
 if ($LASTEXITCODE -ne 0) { throw "Qwen-Image Plugin 校验失败" }
 & qwenpaw plugin install .\backend\app\tools\qwen-image --force
 if ($LASTEXITCODE -ne 0) { throw "Qwen-Image Plugin 安装失败" }
+& qwenpaw plugin validate .\backend\app\tools\qwen-tts
+if ($LASTEXITCODE -ne 0) { throw "Qwen TTS Plugin 校验失败" }
+& qwenpaw plugin install .\backend\app\tools\qwen-tts --force
+if ($LASTEXITCODE -ne 0) { throw "Qwen TTS Plugin 安装失败" }
 & qwenpaw plugin list
 if ($LASTEXITCODE -ne 0) { throw "无法读取 Plugin 列表" }
 ```
 
 If QwenPaw is running, installation hot-loads the Plugin. If it is stopped, the
 Plugin is installed offline and loads the next time `qwenpaw app` starts. It
-provides `generate_image_qwen` and `edit_image_qwen`; enable them only for the
-`scene` Agent.
+provides `generate_image_qwen` / `edit_image_qwen` for the `scene` Agent and
+`synthesize_speech_qwen` for the existing `guide` Agent. Do not create a voice
+Agent: `guide` owns grounded narration and only invokes TTS to render its
+already-reviewed `audio_script`.
 
 The following PowerShell reads the key from the project `.env` without writing
 the plaintext value to command history, configures the tools through the local
@@ -601,6 +607,13 @@ QwenPaw API, and enables them when necessary. Like the macOS helper, it also
 accepts `DASHSCOPE_API_KEY` from the current process environment. If neither
 source contains a key, it leaves the Plugin installed and skips tool
 configuration without failing the rest of the setup:
+
+After the script has configured `synthesize_speech_qwen` for `guide`, set
+`QWENPAW_TTS_ENABLED=true` in the backend environment. Audio returns from the
+QwenPaw Tool to the backend, which uploads it as a private OSS object and gives
+the browser only a short-lived URL. Set
+`QWENPAW_TTS_DIRECT_FALLBACK_ENABLED=false` to require QwenPaw and surface a
+clear availability error instead of using the legacy direct-provider fallback.
 
 ```powershell
 $dashscopeKey = "$($env:DASHSCOPE_API_KEY)".Trim().Trim('"').Trim("'")

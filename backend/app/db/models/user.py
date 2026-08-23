@@ -41,6 +41,8 @@ class User(Base):
     # name 改为必填（迁移 20260725_01）。
     name: Mapped[str] = mapped_column(String(128), nullable=False)
     preference: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # 仅保存从显式偏好、行程和反馈归纳出的结构化长期记忆；不保存原始对话。
+    preference_memory: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     # country：ISO 3166-1 alpha-2 国家码，用于个性化讲解（迁移 20260725_01）
     country: Mapped[str | None] = mapped_column(String(8), nullable=True)
     # verification：邮箱/手机验证状态（迁移 20260725_02）

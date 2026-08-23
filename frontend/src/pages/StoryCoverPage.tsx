@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { StoryImage } from "@/features/story/assets";
 import { StoryBottomAction } from "@/features/story/components/StoryBottomAction";
+import { useStoryMessages } from "@/features/story/storyI18n";
 import { useAuth } from "@/state/AuthContext";
 import { useStory, useStoryRestore } from "@/state/StoryContext";
 import type { StorySessionResponse } from "@/types/stories";
@@ -34,6 +35,7 @@ export function StoryCoverPage() {
     clearError,
   } = useStory();
   const { sessionId: persistedSessionId } = useStoryRestore();
+  const st = useStoryMessages();
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
@@ -58,11 +60,11 @@ export function StoryCoverPage() {
   const ownStorySession =
     session && session.story_id === storyId ? session : null;
   const primaryLabel = useMemo(() => {
-    if (!isAuthenticated) return "登录并开始";
-    if (ownStorySession?.status === "completed") return "查看完成记录";
-    if (ownStorySession?.status === "active") return "继续上次进度";
-    return "开始故事";
-  }, [isAuthenticated, ownStorySession?.status]);
+    if (!isAuthenticated) return st("loginToStart");
+    if (ownStorySession?.status === "completed") return st("viewRecord");
+    if (ownStorySession?.status === "active") return st("resume");
+    return st("startStory");
+  }, [isAuthenticated, ownStorySession?.status, st]);
 
   const handlePrimaryAction = async () => {
     if (!storyId || starting) return;
@@ -89,7 +91,7 @@ export function StoryCoverPage() {
   };
 
   if ((loading || isRestoring) && !story) {
-    return <LoadingState label="正在打开故事…" />;
+    return <LoadingState label={st("loadingStory")} />;
   }
 
   if (!story && error) {
@@ -98,7 +100,7 @@ export function StoryCoverPage() {
         <div className="w-full max-w-[480px]">
           <ErrorState
             message={
-              errorStatus === 404 ? "故事暂未开放" : error
+              errorStatus === 404 ? st("storyUnavailable") : error
             }
             onRetry={() => storyId && void loadStory(storyId)}
           />
@@ -117,19 +119,19 @@ export function StoryCoverPage() {
           onClick={() => navigate("/stories")}
           className="mb-3 inline-flex min-h-11 items-center rounded-full px-2 text-sm text-ink-soft"
         >
-          ← 返回故事选择
+          {st("backToPreferences")}
         </button>
 
         <StoryImage
           assetId={story.presentation.cover_asset_id}
-          alt={`${story.title}故事封面`}
+          alt={story.title}
           eager
           imageClassName="object-contain"
         />
 
         <section className="relative mt-4 rounded-3xl border border-line bg-paper px-5 pb-5 pt-6 shadow-[var(--shadow-lift)]">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-ochre">
-            Story Walk · 限定故事游
+            {st("limitedWalk")}
           </p>
           <h1 className="mt-2 font-display text-3xl leading-tight">
             {story.title}
@@ -143,10 +145,10 @@ export function StoryCoverPage() {
 
           <div className="mt-5 grid grid-cols-2 gap-2 text-sm text-ink-soft">
             {[
-              `约 ${story.estimated_hours} 小时`,
-              `${story.nodes.filter((node) => node.poi_id).length} 个真实地点`,
-              `${story.nodes.filter((node) => node.kind === "puzzle").length} 个现场任务`,
-              "任务均可跳过",
+              st("estimatedHours", { hours: story.estimated_hours }),
+              st("realPlaces"),
+              st("fieldPuzzles"),
+              st("puzzlesSkippable"),
             ].map((label) => (
               <span
                 key={label}
@@ -159,18 +161,18 @@ export function StoryCoverPage() {
         </section>
 
         <section className="mt-4 rounded-2xl border border-line bg-card p-4">
-          <h2 className="text-sm font-semibold text-sage-deep">安全游览说明</h2>
+          <h2 className="text-sm font-semibold text-sage-deep">{st("safetyTitle")}</h2>
           <ul className="mt-2 space-y-1 text-sm leading-6 text-ink-soft">
-            <li>请在开放区域游览，不进入封闭或施工区域。</li>
-            <li>不需要触碰文物，也不以 GPS 作为强制通关条件。</li>
-            <li>现场环境变化时，以安全和官方开放安排为先。</li>
+            <li>{st("safety1")}</li>
+            <li>{st("safety2")}</li>
+            <li>{st("safety3")}</li>
           </ul>
         </section>
 
         {story.content_notice && (
           <details className="mt-4 rounded-2xl border border-ochre/30 bg-ochre/5 p-4">
             <summary className="min-h-11 cursor-pointer text-sm font-semibold text-ochre">
-              史实与剧情边界
+              {st("contentBoundary")}
             </summary>
             <p className="text-sm leading-6 text-ink-soft">
               {story.content_notice}
@@ -188,11 +190,11 @@ export function StoryCoverPage() {
       <StoryBottomAction
         label={primaryLabel}
         busy={starting}
-        busyLabel="正在准备故事…"
+        busyLabel={st("preparing")}
         onClick={() => void handlePrimaryAction()}
         hint={
           ownStorySession?.status === "active"
-            ? "会从服务端保存的最新章节继续"
+            ? st("resumeHint")
             : undefined
         }
       />

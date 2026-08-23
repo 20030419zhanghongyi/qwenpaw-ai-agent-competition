@@ -10,7 +10,7 @@ import pytest
 from PIL import Image
 
 from app.agents import qwenpaw_client
-from app.agents.qwenpaw_client import QwenPawClient, _extract_image_refs
+from app.agents.qwenpaw_client import QwenPawClient, _extract_audio_refs, _extract_image_refs
 from app.features.postcards import scene_image
 
 
@@ -27,6 +27,63 @@ def test_extract_image_refs_prefers_local_tool_output():
 
     assert refs[0] == local
     assert PurePosixPath("/tmp/qwenpaw-fallback.png").as_uri() in refs
+
+
+def test_extract_audio_refs_uses_qwenpaw_tool_saved_path():
+    event = {
+        "content": [
+            {
+                "type": "text",
+                "text": "Audio ready. Saved to: /tmp/qwenpaw/media/guide.mp3",
+            }
+        ]
+    }
+
+    assert _extract_audio_refs(event) == ["file:///tmp/qwenpaw/media/guide.mp3"]
+
+
+def test_ask_for_audio_stops_after_plugin_audio(monkeypatch):
+    event = {
+        "object": "message",
+        "type": "plugin_call_output",
+        "content": [{"type": "text", "text": "Saved to: /tmp/narration.mp3"}],
+    }
+
+    class FakeResponse:
+        status_code = 200
+        text = ""
+
+        def read(self):
+            return b""
+
+        def iter_lines(self):
+            yield f"data: {json.dumps(event)}"
+            yield ""
+            raise AssertionError("stream should stop after the audio event")
+
+    class FakeStream:
+        def __enter__(self):
+            return FakeResponse()
+
+        def __exit__(self, *_args):
+            return False
+
+    stopped: list[tuple[str, str]] = []
+    monkeypatch.setattr(qwenpaw_client.httpx, "stream", lambda *_args, **_kwargs: FakeStream())
+    monkeypatch.setattr(qwenpaw_client, "record_trace", lambda **_kwargs: None)
+    monkeypatch.setattr(qwenpaw_client, "record_audit", lambda **_kwargs: None)
+    monkeypatch.setattr(
+        QwenPawClient,
+        "_stop_chat_for_session",
+        lambda _self, session_id, agent_id: stopped.append((session_id, agent_id)),
+    )
+
+    result = QwenPawClient(base_url="http://qwenpaw", timeout=5).ask_for_audio(
+        "guide", "synthesize", session_id="guide-tts-test"
+    )
+
+    assert result == "file:///tmp/narration.mp3"
+    assert stopped == [("guide-tts-test", "guide")]
 
 
 def test_ask_for_image_stops_after_plugin_image(monkeypatch):

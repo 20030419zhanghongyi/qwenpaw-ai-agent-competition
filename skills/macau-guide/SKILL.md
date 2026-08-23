@@ -97,6 +97,13 @@ metadata:
 6. **聚焦兴趣**：兴趣如只问建筑/摄影，观察清单与互动建议加重该侧，不必面面俱到。
 7. **追问场景**（用户带 `question`）：可只保证 `text` + 伦理字段完整；能填沉浸字段则更好。
 
+### 已批准朗读稿的工具调用例外
+
+当后端明确发送以 `TTS_RENDER_REQUEST` 开头的请求时，输入中的朗读稿已经通过
+Guide / Reviewer 管道审批。此时不要输出本技能的讲解 JSON，也不要改写、翻译、摘要或补充
+朗读稿；只调用一次 `synthesize_speech_qwen(text, language)`，参数必须逐字使用请求内的
+`script` 与 `language`。工具完成后，仅简短确认音频已生成。
+
 ## 样例
 
 输入：POI `poi_senado`（议事亭前地），兴趣 `["history","architecture"]`，语言 `zh-CN`，

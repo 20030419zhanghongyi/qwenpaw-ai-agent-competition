@@ -20,6 +20,19 @@ interface PreferenceGuideChatProps {
   onRevealForm: () => void;
 }
 
+function openingMessage(language: LanguageCode): string {
+  if (language === "en") {
+    return "Welcome to Macau StoryWalk. To help us plan a trip that suits you, may I ask how long you would like to explore Macau this time: half a day, one day, multiple days, or an evening stroll?";
+  }
+  if (language === "pt") {
+    return "Bem-vindo ao Macau StoryWalk. Para prepararmos um roteiro mais adequado, poderia dizer quanto tempo pretende explorar Macau desta vez: meio dia, um dia, vários dias ou um passeio noturno?";
+  }
+  if (language === "zh-TW") {
+    return "您好，歡迎使用澳跡同行。為了替您安排更合適的行程，想先請問您這次預計在澳門遊覽多久呢？可以選擇半日、一日、多日，或夜間漫遊。";
+  }
+  return "您好，欢迎使用澳迹同行。为了替您安排更合适的行程，想先请问您这次预计在澳门游览多久呢？可以选择半日、一日、多日，或夜间漫游。";
+}
+
 export function PreferenceGuideChat({
   language,
   disabled,
@@ -56,6 +69,7 @@ export function PreferenceGuideChat({
     setError(null);
     userTextsRef.current = [];
     onReadyChange(false);
+    setMessages([{ id: `a-local-${Date.now()}`, role: "assistant", text: openingMessage(language) }]);
     void startChat(language);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
@@ -94,35 +108,13 @@ export function PreferenceGuideChat({
   };
 
   const startChat = async (lang: LanguageCode) => {
-    setBusy(true);
-    setError(null);
     try {
       const res = await guideIntent({ action: "start", language: lang });
-      setSessionId(res.session_id);
-      setMessages([
-        { id: `a-${Date.now()}`, role: "assistant", text: stripChatMarkdown(res.reply) },
-      ]);
+      if (userTextsRef.current.length === 0) setSessionId(res.session_id);
       if (res.preference) onApplyPreference(res.preference);
       if (res.ready) markReady(true);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "guide failed";
-      setError(message.includes("Failed to fetch") ? t(lang, "backendDown") : message);
-      setMessages([
-        {
-          id: `a-fallback-${Date.now()}`,
-          role: "assistant",
-          text:
-            lang === "en"
-              ? "Hi — how long do you want to wander: half day, full day, multi-day, or evening?"
-              : lang === "pt"
-                ? "Olá — quanto tempo quer passear hoje: meio dia, dia inteiro, ou à noite?"
-                : lang === "zh-TW"
-                  ? "你好，今天想逛多久？半日、一日、多日，還是夜間小走？"
-                  : "你好，今天想逛多久？半日、一日、多日，还是夜间小走？",
-        },
-      ]);
-    } finally {
-      setBusy(false);
+    } catch {
+      // The local opening remains usable; the first user answer can still use the rule fallback.
     }
   };
 
