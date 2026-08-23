@@ -620,6 +620,30 @@ def get_live_travel_advice(
     """Return the current live-consultation bundle for route planning."""
     weather = get_weather_advice(travel_date, trip_days=trip_days, language=language)
     crowd = get_crowd_advice(travel_date, trip_days=trip_days, language=language)
+    transport_note = {
+        "zh-CN": "出发前建议查询“巴士报站”或高德地图 App，了解巴士到站和路线资讯。",
+        "zh-TW": "出發前建議查詢「巴士報站」或高德地圖 App，了解巴士到站和路線資訊。",
+        "en": (
+            "For bus arrivals and route planning, use Bus Reporting or the AMap app "
+            "before departure."
+        ),
+        "pt": (
+            "Antes de partir, consulte a aplicação Bus Reporting ou AMap para ver "
+            "as chegadas dos autocarros e planear o percurso."
+        ),
+    }.get(language, "出发前建议查询“巴士报站”或高德地图 App，了解巴士到站和路线资讯。")
+    opening_hours_note = {
+        "zh-CN": "景点开放时间会因场馆和假期变动，出发前建议查询景点官方网站。",
+        "zh-TW": "景點開放時間會因場館和假期變動，出發前建議查詢景點官方網站。",
+        "en": (
+            "Opening hours can change by venue and holiday; check the attraction's "
+            "official website before departure."
+        ),
+        "pt": (
+            "Os horários de funcionamento podem variar conforme o local e os feriados; "
+            "consulte o site oficial da atração antes de partir."
+        ),
+    }.get(language, "景点开放时间会因场馆和假期变动，出发前建议查询景点官方网站。")
     return {
         "travel_date": weather["travel_date"],
         "trip_days": weather["trip_days"],
@@ -627,24 +651,12 @@ def get_live_travel_advice(
         "crowd": crowd,
         "transport": {
             "status": "advice-only",
-            "notes": [
-                (
-                    "For bus arrivals and route planning, use Bus Reporting or the AMap app before departure."
-                    if language == "en"
-                    else "出发前建议查询“巴士报站”或高德地图 App，了解巴士到站和路线资讯。"
-                )
-            ],
+            "notes": [transport_note],
             "sources": [],
         },
         "opening_hours": {
             "status": "advice-only",
-            "notes": [
-                (
-                    "Opening hours can change by venue and holiday; check the attraction's official website before departure."
-                    if language == "en"
-                    else "景点开放时间会因场馆和假期变动，出发前建议查询景点官方网站。"
-                )
-            ],
+            "notes": [opening_hours_note],
             "sources": [],
         },
     }
