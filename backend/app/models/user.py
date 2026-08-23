@@ -62,3 +62,4 @@ class UserProfile(BaseModel):
     country: str | None = None
     verification_status: str = "unverified"  # unverified | pending | verified
     preference: Preference | None = None
+    preference_memory: dict[str, Any] | None = None

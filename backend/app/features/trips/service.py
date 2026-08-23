@@ -7,6 +7,7 @@ from uuid import uuid4
 from app.db.session import SessionLocal
 from app.features.pois.repository import PoiRepository
 from app.features.routes.repository import get_template
+from app.features.users.repository import user_repository
 
 from .models import (
     Trip,
@@ -129,7 +130,9 @@ class TripService:
             created_at=now,
             updated_at=now,
         )
-        return self._with_progress(self._repository.create_trip(trip))
+        created = self._repository.create_trip(trip)
+        user_repository.record_trip_memory(user_id, route_id)
+        return self._with_progress(created)
 
     @staticmethod
     def _normalize_stop_poi_ids(stop_poi_ids: list[str]) -> list[str]:

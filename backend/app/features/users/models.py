@@ -4,6 +4,8 @@
 路线配对、讲解等模块同一份偏好定义。
 """
 
+from typing import Any
+
 from pydantic import BaseModel
 
 from app.models.user import Preference, UserProfile
@@ -54,6 +56,13 @@ class UserDetailResponse(BaseModel):
 
 class PreferenceUpdateResponse(UserMutationResponse):
     preference: Preference
+
+
+class PreferenceMemoryResponse(BaseModel):
+    """A privacy-minimised summary used for cross-session personalisation."""
+
+    user_id: str
+    memory: dict[str, Any]
 
 
 # ── Verification (placeholder — needs cloud email/SMS service) ────────────

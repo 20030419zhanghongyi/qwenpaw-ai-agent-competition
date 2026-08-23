@@ -10,6 +10,7 @@ from app.features.trips.models import TripStatus
 from app.features.trips.repository import SqlAlchemyTripRepository
 from app.features.trips.service import TripService
 from app.features.trips.store import trip_store
+from app.features.users.repository import user_repository
 
 from .models import (
     FavoritePoi,
@@ -143,7 +144,11 @@ class ProfileService:
             created_at=now,
             updated_at=now,
         )
-        return self._repository.upsert_feedback(feedback)
+        saved, created = self._repository.upsert_feedback(feedback)
+        user_repository.record_feedback_memory(
+            saved.user_id, saved.trip_id, saved.rating, saved.walking_comfortable
+        )
+        return saved, created
 
     def get_feedback(self, trip_id: str) -> TripFeedback:
         if self._trips.get(trip_id) is None:

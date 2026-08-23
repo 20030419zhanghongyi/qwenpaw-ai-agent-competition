@@ -28,6 +28,7 @@ class RouteRequest(BaseModel):
     text: str = ""
     has_image: bool = False
     current_route_id: str | None = None
+    user_id: str | None = None
 
 
 class RouteDecision(BaseModel):
@@ -40,6 +41,17 @@ class RouteDecision(BaseModel):
     reason: str
     signals: list[str] = Field(default_factory=list)
     fallback: bool = False
+    workflow: list["WorkflowStep"] = Field(default_factory=list)
+    shared_context: dict[str, str] = Field(default_factory=dict)
+
+
+class WorkflowStep(BaseModel):
+    """A concrete Agent handoff, suitable for QwenPaw workflow execution."""
+
+    step_id: str
+    agent_id: str
+    task: str
+    depends_on: list[str] = Field(default_factory=list)
 
 
 _REVIEW_CUES = (
@@ -118,16 +130,36 @@ def _decision(
     signals: list[str],
     *,
     agent_chain: list[str] | None = None,
+    current_route_id: str | None = None,
+    user_id: str | None = None,
     fallback: bool = False,
 ) -> RouteDecision:
+    chain = agent_chain or [agent_id]
+    steps = [
+        WorkflowStep(
+            step_id=f"step_{index + 1}",
+            agent_id=step_agent,
+            task="extract visual facts" if step_agent == "photo" else "produce the requested travel result",
+            depends_on=[f"step_{index}"] if index else [],
+        )
+        for index, step_agent in enumerate(chain)
+    ]
+    shared_context = {"context_scope": "request"}
+    if user_id:
+        shared_context["user_id"] = user_id
+        shared_context["memory_key"] = f"user:{user_id}:preference-memory"
+    if current_route_id:
+        shared_context["route_id"] = current_route_id
     return RouteDecision(
         intent=intent,
         agent_id=agent_id,
-        agent_chain=agent_chain or [agent_id],
+        agent_chain=chain,
         confidence=confidence,
         reason=reason,
         signals=list(dict.fromkeys(signals)),
         fallback=fallback,
+        workflow=steps,
+        shared_context=shared_context,
     )
 
 
@@ -143,6 +175,8 @@ def classify_intent(request: RouteRequest) -> RouteDecision:
             0.96,
             "用户显式要求审核内容，先进入独立安全审核 Agent。",
             review_hits,
+            current_route_id=request.current_route_id,
+            user_id=request.user_id,
         )
 
     guide_hits = _matches(text, _GUIDE_CUES)
@@ -162,6 +196,8 @@ def classify_intent(request: RouteRequest) -> RouteDecision:
             reason,
             signals,
             agent_chain=chain,
+            current_route_id=request.current_route_id,
+            user_id=request.user_id,
         )
 
     route_object_hits = _matches(text, _ROUTE_OBJECTS)
@@ -178,6 +214,8 @@ def classify_intent(request: RouteRequest) -> RouteDecision:
             0.95 if request.current_route_id else 0.86,
             "请求针对已有路线或行程节点做增量修改，交给路线微调 Agent。",
             signals,
+            current_route_id=request.current_route_id,
+            user_id=request.user_id,
         )
 
     if guide_hits:
@@ -187,6 +225,8 @@ def classify_intent(request: RouteRequest) -> RouteDecision:
             0.88,
             "请求询问景点的历史、故事或文化背景，交给文化讲解 Agent。",
             guide_hits,
+            current_route_id=request.current_route_id,
+            user_id=request.user_id,
         )
 
     trip_hits = _matches(text, _TRIP_CUES)
@@ -197,6 +237,8 @@ def classify_intent(request: RouteRequest) -> RouteDecision:
             0.82,
             "请求描述首次出行偏好，交给需求理解 Agent 生成结构化 Preference。",
             trip_hits,
+            current_route_id=request.current_route_id,
+            user_id=request.user_id,
         )
 
     return _decision(
@@ -205,5 +247,7 @@ def classify_intent(request: RouteRequest) -> RouteDecision:
         0.32,
         "未发现足够明确的业务信号，保守回落到需求理解 Agent 继续澄清。",
         [],
+        current_route_id=request.current_route_id,
+        user_id=request.user_id,
         fallback=True,
     )
