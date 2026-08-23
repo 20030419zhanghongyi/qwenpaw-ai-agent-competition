@@ -32,6 +32,15 @@ function asset(
   };
 }
 
+function publicAsset(
+  id: string,
+  src: string,
+  aspectRatio: StoryAssetAspectRatio,
+  fallbackLabel: string,
+): StoryAssetManifestItem {
+  return { id, src, aspectRatio, fallbackLabel };
+}
+
 const items: StoryAssetManifestItem[] = [
   asset(
     "V4-COVER-01",
@@ -370,6 +379,57 @@ items.push(
     "lou-kau/pieces/V4-LOU-P08_stone-lattice.png",
     "1/1",
     "石花格",
+  ),
+);
+
+items.push(
+  publicAsset(
+    "CAT-COVER-01",
+    "/story/coloane-after-tide/cover.jpg",
+    "4/5",
+    "《潮退之後》故事封面",
+  ),
+  publicAsset(
+    "CAT-PROP-01",
+    "/story/coloane-after-tide/tide-workbook.jpg",
+    "4/5",
+    "潮汐工作簿",
+  ),
+  publicAsset(
+    "CAT-SEA-01",
+    "/story/coloane-after-tide/temple.jpg",
+    "4/5",
+    "路環古廟",
+  ),
+  publicAsset(
+    "CAT-BOAT-01",
+    "/story/coloane-after-tide/tam-kung.jpg",
+    "4/5",
+    "譚公廟與鯨骨龍舟",
+  ),
+  publicAsset(
+    "CAT-VILLAGE-01",
+    "/story/coloane-after-tide/chapel-square.jpg",
+    "4/5",
+    "聖方濟各聖堂廣場",
+  ),
+  publicAsset(
+    "CAT-CRAFT-01",
+    "/story/coloane-after-tide/shipyards.jpg",
+    "4/5",
+    "荔枝碗船廠片區",
+  ),
+  publicAsset(
+    "CAT-SOIL-01",
+    "/story/coloane-after-tide/hac-sa.jpg",
+    "4/5",
+    "黑沙海灘與土地記憶",
+  ),
+  publicAsset(
+    "CAT-END-01",
+    "/story/coloane-after-tide/sound-postcard.jpg",
+    "4/5",
+    "路環聲音明信片",
   ),
 );
 

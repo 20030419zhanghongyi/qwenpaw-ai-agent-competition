@@ -103,9 +103,14 @@ export function StoryMapPage() {
   );
   const petalCount =
     session?.state.rewards.filter((reward) => reward.kind === "note_petal").length ?? 0;
+  const isLotusStory = story?.id === "lotus_city_double_map";
+  const recordCount =
+    session?.state.rewards.filter((reward) => reward.kind === "stamp").length ?? 0;
   const stationNodes = story?.nodes.filter((node) => node.poi_id) ?? [];
-  const petalRewards =
-    session?.state.rewards.filter((reward) => reward.kind === "note_petal") ?? [];
+  const collectibleRewards =
+    session?.state.rewards.filter((reward) =>
+      isLotusStory ? reward.kind === "note_petal" : reward.kind === "stamp",
+    ) ?? [];
 
   const statusFor = (node: StoryNodeOverview): NodeStatus => {
     if (node.id === session?.current_chapter_id) return "current";
@@ -167,7 +172,7 @@ export function StoryMapPage() {
       <StoryTopBar
         title={story.title}
         eyebrow={st("routeEyebrow")}
-        petals={petalCount}
+        petals={isLotusStory ? petalCount : undefined}
         onBack={() => navigate(`/stories/${story.id}`)}
         onAskAgent={agentContext ? () => setAgentOpen(true) : undefined}
       />
@@ -191,23 +196,33 @@ export function StoryMapPage() {
         <section className="mt-4 rounded-2xl border border-line bg-card p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="font-serif text-lg font-semibold">{st("secretNotes")}</h2>
+              <h2 className="font-serif text-lg font-semibold">
+                {isLotusStory ? st("secretNotes") : "潮汐工作簿"}
+              </h2>
               <p className="mt-1 text-sm text-ink-soft">
-                {st("petalsServer")}
+                {isLotusStory
+                  ? st("petalsServer")
+                  : `已收集 ${recordCount}/5 枚路环记录章`}
               </p>
             </div>
-            <PetalProgress collected={petalCount} />
+            {isLotusStory && <PetalProgress collected={petalCount} />}
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <StoryImage
-              assetId="V4-PROP-03"
-              alt={st("cityMaps")}
+              assetId={isLotusStory ? "V4-PROP-03" : "CAT-COVER-01"}
+              alt={isLotusStory ? st("cityMaps") : "潮退之后"}
               onOpen={setViewerAssetId}
               className="rounded-xl"
             />
             <StoryImage
-              assetId={petalCount === 5 ? "V4-PROP-05" : "V4-PROP-04"}
-              alt={petalCount === 5 ? st("secretNotes") : st("incompleteNotes")}
+              assetId={
+                isLotusStory
+                  ? petalCount === 5
+                    ? "V4-PROP-05"
+                    : "V4-PROP-04"
+                  : "CAT-PROP-01"
+              }
+              alt={isLotusStory ? st("secretNotes") : "潮汐工作簿"}
               onOpen={setViewerAssetId}
               className="rounded-xl"
             />
@@ -351,7 +366,9 @@ export function StoryMapPage() {
         }
         reward={
           summaryNode
-            ? petalRewards[stationNodes.findIndex((node) => node.id === summaryNode.id)]
+            ? collectibleRewards[
+                stationNodes.findIndex((node) => node.id === summaryNode.id)
+              ]
             : undefined
         }
         skipped={

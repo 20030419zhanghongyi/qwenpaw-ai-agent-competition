@@ -674,6 +674,7 @@ export function PreferencePage() {
             {storyInvitation && (
               <div ref={invitationRef}>
                 <StoryInvitationCard
+                  storyId={storyInvitation.storyId}
                   onAccept={handleStoryAccept}
                   onDecline={handleStoryDecline}
                 />
