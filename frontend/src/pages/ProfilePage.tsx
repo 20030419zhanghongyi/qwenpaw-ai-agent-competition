@@ -4,6 +4,7 @@ import { listPois, matchRoutes } from "@/api/client";
 import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { TripDaysStepper } from "@/components/preference/TripDaysStepper";
+import { TravelHistoryPanel } from "@/components/profile/TravelHistoryPanel";
 import { t } from "@/i18n";
 import {
   applyPreferenceToForm,
@@ -269,6 +270,8 @@ export function ProfilePage() {
             {t(language, "postcardOpenGallery")}
           </Link>
         </section>
+
+        <TravelHistoryPanel userId={user?.user_id ?? null} language={language} />
 
         <div className="overflow-hidden rounded-[1.75rem] border border-sage-deep/25 bg-gradient-to-b from-card via-card to-paper-warm shadow-[var(--shadow-soft)]">
           <div className="border-b border-line/80 bg-sage-deep/[0.06] px-5 py-4 sm:px-7">

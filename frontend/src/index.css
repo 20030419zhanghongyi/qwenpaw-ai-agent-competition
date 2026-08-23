@@ -170,3 +170,158 @@
   max-width: 100%;
   pointer-events: none;
 }
+
+@keyframes story-dialogue-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes story-dialogue-archive {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-36px) scale(0.98);
+  }
+}
+
+@keyframes story-dialogue-history-in {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes story-comic-page-in-forward {
+  from {
+    opacity: 0;
+    transform: translateX(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes story-comic-page-in-backward {
+  from {
+    opacity: 0;
+    transform: translateX(-22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes story-petal-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--petal-rotation)) scale(0.72);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--petal-rotation)) scale(1);
+  }
+}
+
+@keyframes story-petal-group-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes story-flower-final-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.story-dialogue-turn {
+  animation: story-dialogue-enter 240ms ease-out both;
+}
+
+.story-dialogue-turn--archiving {
+  animation: story-dialogue-archive 240ms ease-in both;
+  pointer-events: none;
+}
+
+.story-dialogue-history {
+  animation: story-dialogue-history-in 220ms ease-out both;
+}
+
+.story-comic-page--forward {
+  animation: story-comic-page-in-forward 220ms ease-out both;
+}
+
+.story-comic-page--backward {
+  animation: story-comic-page-in-backward 220ms ease-out both;
+}
+
+.story-flower-petal {
+  opacity: 0;
+  transform-origin: 50% 86%;
+  animation: story-petal-in 420ms ease-out forwards;
+  animation-delay: calc(var(--petal-index) * 280ms);
+}
+
+.story-flower-petal-group {
+  animation: story-petal-group-out 620ms ease-in 2s forwards;
+}
+
+.story-flower-final {
+  opacity: 0;
+  animation: story-flower-final-in 620ms ease-out 2s forwards;
+}
+
+.story-reward-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .landscape-story-hint {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .story-flower-petal-group {
+    display: none !important;
+    animation: none !important;
+  }
+
+  .story-flower-final {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}

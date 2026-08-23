@@ -35,3 +35,9 @@ Add or update Pytest coverage for behavior changes. Name files `test_<area>.py` 
 ## Commit & Pull Request Guidelines
 
 Use concise Conventional Commit-style subjects seen in project history: `feat(routes): persist templates`, `fix(api): register router`, `docs(harness): update evidence`. Keep commits focused. PRs should explain the user-facing or data impact, list verification commands, link the relevant issue or plan item when available, and include screenshots for frontend/UI changes. Never commit `.env`, API keys, or local database volumes.
+
+### Feature-Level Commits
+
+- Treat each independently complete feature or bug fix as one focused commit.
+- Before committing, run the relevant verification and stage only files belonging to that change; never fold unrelated user work into the commit.
+- Use a separate follow-up commit when a later change alters a different feature, even if both changes are made in the same working session.

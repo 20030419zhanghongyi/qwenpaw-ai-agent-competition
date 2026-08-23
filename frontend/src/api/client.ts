@@ -39,6 +39,98 @@ export function matchRoutes(preference: Preference): Promise<RouteMatchResponse>
   });
 }
 
+export interface WeatherAdviceDay {
+  date: string;
+  condition: string;
+  weather_code?: number | null;
+  temperature_max_c?: number | null;
+  temperature_min_c?: number | null;
+  precipitation_probability_percent?: number | null;
+  precipitation_sum_mm?: number | null;
+  wind_speed_max_kmh?: number | null;
+}
+
+export interface WeatherAdviceResponse {
+  travel_date: string;
+  trip_days: number;
+  status: "ok" | "unavailable" | string;
+  summary: string;
+  days: WeatherAdviceDay[];
+  advice: string[];
+  flags: {
+    umbrella: boolean;
+    sunscreen: boolean;
+    indoor_backup: boolean;
+  };
+  source?: {
+    name?: string;
+    url?: string;
+  } | null;
+  fetched_at?: string | null;
+}
+
+export function fetchWeatherAdvice(params: {
+  travelDate: string;
+  tripDays?: number | null;
+  language: LanguageCode;
+}): Promise<WeatherAdviceResponse> {
+  const search = new URLSearchParams();
+  search.set("travel_date", params.travelDate);
+  search.set("language", params.language);
+  if (params.tripDays != null) search.set("trip_days", String(params.tripDays));
+  return request<WeatherAdviceResponse>(`/api/v1/routes/weather-advice?${search.toString()}`);
+}
+
+export interface LiveAdviceSource {
+  name: string;
+  url: string;
+}
+
+export interface CrowdAdviceResponse {
+  status: "estimated" | string;
+  level: "low" | "medium" | "high" | "very_high" | string;
+  factors: Array<{
+    kind: string;
+    date: string;
+    level: string;
+    name: string;
+    note: string;
+    events?: string[];
+    source?: LiveAdviceSource;
+  }>;
+  notes: string[];
+  sources: LiveAdviceSource[];
+}
+
+export interface LiveTravelAdviceResponse {
+  travel_date: string;
+  trip_days: number;
+  weather: WeatherAdviceResponse;
+  crowd: CrowdAdviceResponse;
+  transport: {
+    status: string;
+    notes: string[];
+    sources: LiveAdviceSource[];
+  };
+  opening_hours: {
+    status: string;
+    notes: string[];
+    sources: LiveAdviceSource[];
+  };
+}
+
+export function fetchLiveTravelAdvice(params: {
+  travelDate: string;
+  tripDays?: number | null;
+  language: LanguageCode;
+}): Promise<LiveTravelAdviceResponse> {
+  const search = new URLSearchParams();
+  search.set("travel_date", params.travelDate);
+  search.set("language", params.language);
+  if (params.tripDays != null) search.set("trip_days", String(params.tripDays));
+  return request<LiveTravelAdviceResponse>(`/api/v1/routes/live-advice?${search.toString()}`);
+}
+
 export interface WalkSegment {
   from_poi_id: string;
   to_poi_id: string;

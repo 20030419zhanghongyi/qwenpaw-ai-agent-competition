@@ -1,4 +1,4 @@
-"""Non-streaming Qwen3 TTS plus private OSS delivery."""
+"""QwenPaw-first TTS with private OSS delivery and direct-provider fallback."""
 
 from __future__ import annotations
 
@@ -10,21 +10,28 @@ from uuid import uuid4
 import httpx
 
 from app.core.config import settings
+from app.agents.qwenpaw_client import QwenPawClient, QwenPawError
 
 logger = logging.getLogger("macau_storywalk.tts")
 
-# Qwen3 TTS system voices: Cherry covers Mandarin/English/Portuguese;
-# Rocky is the configured Cantonese voice.
-VOICE_BY_LANGUAGE = {"zh-CN": "Cherry", "yue": "Rocky", "en": "Cherry", "pt": "Cherry"}
+# Qwen3 TTS system voices: Cherry covers Mandarin/English/Portuguese.
+# The product's Traditional Chinese mode is the Macau-facing Cantonese narration
+# mode, so it must be accepted by the public UI contract as well as ``yue``.
+VOICE_BY_LANGUAGE = {
+    "zh-CN": "Cherry",
+    "zh-TW": "Rocky",
+    "yue": "Rocky",
+    "en": "Cherry",
+    "pt": "Cherry",
+}
 
 
 class TTSUnavailableError(RuntimeError):
     pass
 
 
-def _require_config() -> None:
+def _require_oss_config() -> None:
     required = {
-        "DASHSCOPE_API_KEY or TTS_API_KEY": settings.dashscope_api_key or settings.tts_api_key,
         "OSS_ENDPOINT": settings.oss_endpoint,
         "OSS_REGION": settings.oss_region,
         "OSS_BUCKET": settings.oss_bucket,
@@ -34,6 +41,11 @@ def _require_config() -> None:
     missing = [name for name, value in required.items() if not value]
     if missing:
         raise TTSUnavailableError(f"TTS delivery is not configured ({', '.join(missing)})")
+
+
+def _require_direct_provider_config() -> None:
+    if not (settings.dashscope_api_key or settings.tts_api_key):
+        raise TTSUnavailableError("DASHSCOPE_API_KEY or TTS_API_KEY is not configured")
 
 
 def _audio_url(result: Any) -> str:
@@ -49,6 +61,7 @@ def _audio_url(result: Any) -> str:
 
 def synthesize_audio(text: str, language: str) -> tuple[bytes, str]:
     """Generate MP3 bytes through the DashScope HTTP Qwen3-TTS client."""
+    _require_direct_provider_config()
     voice = VOICE_BY_LANGUAGE[language]
     api_key = settings.tts_api_key or settings.dashscope_api_key
     try:
@@ -99,9 +112,45 @@ def upload_audio(audio: bytes, *, language: str) -> tuple[str, str]:
     return url, key
 
 
+def _qwenpaw_tts_prompt(text: str, language: str) -> str:
+    """Ask the guide agent to render an already-approved script verbatim."""
+    return (
+        "TTS_RENDER_REQUEST\n"
+        "Use the synthesize_speech_qwen tool exactly once. Do not answer with JSON, "
+        "do not rewrite, translate, summarize, or add to the script. Use language "
+        f"`{language}` and synthesize this approved narration verbatim:\n---\n{text}\n---"
+    )
+
+
+def synthesize_audio_via_qwenpaw(text: str, language: str) -> tuple[bytes, str]:
+    """Use the mounted QwenPaw TTS tool on the existing guide agent."""
+    try:
+        client = QwenPawClient()
+        reference = client.ask_for_audio(
+            settings.qwenpaw_tts_agent_id,
+            _qwenpaw_tts_prompt(text, language),
+            session_id=f"storywalk-tts-{uuid4()}",
+        )
+        audio = client.download_media(reference)
+    except QwenPawError as exc:
+        raise TTSUnavailableError(f"QwenPaw TTS tool unavailable: {exc}") from exc
+    if not audio:
+        raise TTSUnavailableError("QwenPaw TTS tool returned empty audio")
+    return audio, VOICE_BY_LANGUAGE[language]
+
+
 def synthesize_to_oss(text: str, language: str) -> dict[str, str | int]:
-    _require_config()
-    audio, voice = synthesize_audio(text, language)
+    _require_oss_config()
+    if settings.qwenpaw_tts_enabled:
+        try:
+            audio, voice = synthesize_audio_via_qwenpaw(text, language)
+        except TTSUnavailableError:
+            if not settings.qwenpaw_tts_direct_fallback_enabled:
+                raise
+            logger.warning("QwenPaw TTS failed; using explicit direct-provider fallback")
+            audio, voice = synthesize_audio(text, language)
+    else:
+        audio, voice = synthesize_audio(text, language)
     audio_url, object_key = upload_audio(audio, language=language)
     return {
         "audio_url": audio_url,

@@ -4,17 +4,69 @@ import type {
   StoryOverview,
   StorySessionResponse,
 } from "@/types/stories";
+import type { LanguageCode } from "@/types";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
-export class StoryApiError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message);
-    this.name = "StoryApiError";
+export type StoryApiErrorStatus = 401 | 403 | 404 | 409 | 422;
+
+interface StoryErrorBody {
+  detail?: unknown;
+  [key: string]: unknown;
+}
+
+function detailMessage(detail: unknown, fallback: string): string {
+  if (typeof detail === "string" && detail.trim()) return detail;
+  if (detail != null) {
+    try {
+      return JSON.stringify(detail);
+    } catch {
+      // Fall through to the HTTP status text.
+    }
   }
+  return fallback;
+}
+
+export class StoryApiError extends Error {
+  readonly status: number;
+  readonly detail: unknown;
+  readonly body: StoryErrorBody | null;
+  readonly path: string;
+
+  constructor(options: {
+    message: string;
+    status: number;
+    detail?: unknown;
+    body?: StoryErrorBody | null;
+    path?: string;
+  }) {
+    super(options.message);
+    this.name = "StoryApiError";
+    this.status = options.status;
+    this.detail = options.detail;
+    this.body = options.body ?? null;
+    this.path = options.path ?? "";
+  }
+
+  isStatus(...statuses: StoryApiErrorStatus[]): boolean {
+    return statuses.includes(this.status as StoryApiErrorStatus);
+  }
+}
+
+export function isStoryApiError(
+  error: unknown,
+  ...statuses: StoryApiErrorStatus[]
+): error is StoryApiError {
+  if (!(error instanceof StoryApiError)) return false;
+  return statuses.length === 0 || error.isStatus(...statuses);
+}
+
+export function createStoryAuthError(message = "请先登录"): StoryApiError {
+  return new StoryApiError({
+    message,
+    status: 401,
+    detail: message,
+  });
 }
 
 async function request<T>(
@@ -33,29 +85,46 @@ async function request<T>(
 
   const response = await fetch(`${API_BASE}${path}`, { ...init, headers });
   if (!response.ok) {
-    let detail = `${response.status} ${response.statusText}`;
+    const fallback = `${response.status} ${response.statusText}`.trim();
+    let body: StoryErrorBody | null = null;
     try {
-      const body = (await response.json()) as { detail?: unknown };
-      if (typeof body.detail === "string") detail = body.detail;
-      else if (body.detail != null) detail = JSON.stringify(body.detail);
+      body = (await response.json()) as StoryErrorBody;
     } catch {
-      // keep status text
+      // Non-JSON error bodies are represented by the status text.
     }
-    throw new StoryApiError(detail, response.status);
+    const detail = body?.detail;
+    throw new StoryApiError({
+      message: detailMessage(detail, fallback),
+      status: response.status,
+      detail,
+      body,
+      path,
+    });
   }
+
   return response.json() as Promise<T>;
 }
 
-export function fetchStory(storyId: string): Promise<StoryOverview> {
-  return request<StoryOverview>(`/api/v1/stories/${encodeURIComponent(storyId)}`);
+function languageQuery(language: LanguageCode): string {
+  return `?language=${encodeURIComponent(language)}`;
+}
+
+export function fetchStory(
+  storyId: string,
+  language: LanguageCode,
+): Promise<StoryOverview> {
+  return request<StoryOverview>(
+    `/api/v1/stories/${encodeURIComponent(storyId)}${languageQuery(language)}`,
+  );
 }
 
 export function startStorySession(
   storyId: string,
   token: string,
+  language: LanguageCode,
 ): Promise<StorySessionResponse> {
   return request<StorySessionResponse>(
-    `/api/v1/stories/${encodeURIComponent(storyId)}/sessions`,
+    `/api/v1/stories/${encodeURIComponent(storyId)}/sessions${languageQuery(language)}`,
     { method: "POST" },
     token,
   );
@@ -64,9 +133,10 @@ export function startStorySession(
 export function fetchStorySession(
   sessionId: string,
   token: string,
+  language: LanguageCode,
 ): Promise<StorySessionResponse> {
   return request<StorySessionResponse>(
-    `/api/v1/story-sessions/${encodeURIComponent(sessionId)}`,
+    `/api/v1/story-sessions/${encodeURIComponent(sessionId)}${languageQuery(language)}`,
     undefined,
     token,
   );
@@ -76,9 +146,10 @@ export function applyStoryAction(
   sessionId: string,
   actionRequest: StoryActionRequest,
   token: string,
+  language: LanguageCode,
 ): Promise<StoryActionResponse> {
   return request<StoryActionResponse>(
-    `/api/v1/story-sessions/${encodeURIComponent(sessionId)}/actions`,
+    `/api/v1/story-sessions/${encodeURIComponent(sessionId)}/actions${languageQuery(language)}`,
     {
       method: "POST",
       body: JSON.stringify(actionRequest),

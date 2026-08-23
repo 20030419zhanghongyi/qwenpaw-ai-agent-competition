@@ -43,10 +43,16 @@ export function AuthPage() {
   const { language } = useWalk();
 
   const initialMode = searchParams.get("mode") === "register" ? "register" : "login";
+  const requestedReturnTo = searchParams.get("returnTo");
+  const returnTo =
+    requestedReturnTo?.startsWith("/") && !requestedReturnTo.startsWith("//")
+      ? requestedReturnTo
+      : "/preferences";
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -54,9 +60,9 @@ export function AuthPage() {
 
   useEffect(() => {
     if (!isRestoring && isAuthenticated) {
-      navigate("/preferences", { replace: true });
+      navigate(returnTo, { replace: true });
     }
-  }, [isAuthenticated, isRestoring, navigate]);
+  }, [isAuthenticated, isRestoring, navigate, returnTo]);
 
   const changeMode = (nextMode: Mode) => {
     setMode(nextMode);
@@ -85,6 +91,10 @@ export function AuthPage() {
       } else {
         const normalizedName = name.trim();
         if (!normalizedName) return;
+        if (password !== confirmPassword) {
+          setFormError(t(language, "authPasswordMismatch"));
+          return;
+        }
         await register({
           email: normalizedEmail,
           phone: normalizedPhone,
@@ -94,7 +104,7 @@ export function AuthPage() {
           country: country || null,
         });
       }
-      navigate("/preferences");
+      navigate(returnTo);
     } catch {
       // The provider exposes the backend error for display.
     } finally {
@@ -180,7 +190,7 @@ export function AuthPage() {
               type="password"
               value={password}
               onChange={(event) => { setPassword(event.target.value); setFormError(null); }}
-              placeholder={t(language, "authPasswordPlaceholder")}
+              placeholder={mode === "register" ? t(language, "authPasswordPlaceholder") : t(language, "authPasswordPlaceholderLogin")}
               className="h-11 w-full rounded-xl border border-line bg-paper px-4 text-ink outline-none focus:border-sage-deep"
               autoComplete={mode === "register" ? "new-password" : "current-password"}
             />
@@ -188,6 +198,20 @@ export function AuthPage() {
 
           {mode === "register" ? (
             <>
+              {/* Confirm password */}
+              <label className="block">
+                <span className="mb-1.5 block text-sm text-ink">{t(language, "authConfirmPassword")}</span>
+                <input
+                  required
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(event) => { setConfirmPassword(event.target.value); setFormError(null); }}
+                  placeholder={t(language, "authConfirmPasswordPlaceholder")}
+                  className="h-11 w-full rounded-xl border border-line bg-paper px-4 text-ink outline-none focus:border-sage-deep"
+                  autoComplete="new-password"
+                />
+              </label>
+
               {/* Nickname */}
               <label className="block">
                 <span className="mb-1.5 block text-sm text-ink">{t(language, "authNickname")}</span>

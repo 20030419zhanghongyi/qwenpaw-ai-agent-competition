@@ -11,6 +11,8 @@ from app.features.trips.service import TripService, trip_service
 from .content import (
     chapter_by_id,
     load_story,
+    localize_story,
+    normalize_story_language,
     public_chapter,
     public_story,
     story_overview,
@@ -51,17 +53,19 @@ class StoryService:
         self._trips = trips
 
     @staticmethod
-    def get_story(story_id: str) -> dict[str, Any]:
-        return story_overview(load_story(story_id))
+    def get_story(story_id: str, *, language: str = "zh-CN") -> dict[str, Any]:
+        return story_overview(localize_story(load_story(story_id), language))
 
-    def start(self, story_id: str, user_id: str) -> StorySessionResponse:
+    def start(
+        self, story_id: str, user_id: str, *, language: str = "zh-CN"
+    ) -> StorySessionResponse:
         story = load_story(story_id)
         existing = self._repository.get_active(user_id, story_id)
         if (
             existing is not None
             and existing.state.content_version == story["version"]
         ):
-            return self._response(story, existing)
+            return self._response(story, existing, language=language)
 
         story_stop_poi_ids = [
             str(node["poi_id"])
@@ -86,19 +90,30 @@ class StoryService:
             created_at=now,
             updated_at=now,
         )
-        return self._response(story, self._repository.create(story_session))
+        return self._response(
+            story,
+            self._repository.create(story_session),
+            language=language,
+        )
 
-    def get_session(self, session_id: str, user_id: str) -> StorySessionResponse:
+    def get_session(
+        self, session_id: str, user_id: str, *, language: str = "zh-CN"
+    ) -> StorySessionResponse:
         story_session = self._repository.get(session_id)
         if story_session is None:
             raise StorySessionNotFoundError(f"Story session not found: {session_id}")
         self._require_owner(story_session, user_id)
         story = load_story(story_session.story_id)
         self._require_current_version(story, story_session)
-        return self._response(story, story_session)
+        return self._response(story, story_session, language=language)
 
     def act(
-        self, session_id: str, user_id: str, request: StoryActionRequest
+        self,
+        session_id: str,
+        user_id: str,
+        request: StoryActionRequest,
+        *,
+        language: str = "zh-CN",
     ) -> StoryActionResponse:
         story_session = self._repository.get(session_id)
         if story_session is None:
@@ -116,7 +131,7 @@ class StoryService:
 
         if result.changed:
             story_session = self._repository.save(story_session)
-        return self._action_response(story, story_session, result)
+        return self._action_response(story, story_session, result, language=language)
 
     @staticmethod
     def _progress(
@@ -141,26 +156,35 @@ class StoryService:
 
     @staticmethod
     def _ending(
-        story: dict[str, Any], story_session: StorySession
+        story: dict[str, Any], story_session: StorySession, *, language: str
     ) -> dict[str, Any] | None:
         ending_id = story_session.state.ending_id
         if ending_id is None:
             return None
         return next(
-            (ending for ending in public_story(story)["endings"] if ending["id"] == ending_id),
+            (
+                ending
+                for ending in public_story(localize_story(story, language))["endings"]
+                if ending["id"] == ending_id
+            ),
             None,
         )
 
     def _response(
-        self, story: dict[str, Any], story_session: StorySession
+        self,
+        story: dict[str, Any],
+        story_session: StorySession,
+        *,
+        language: str = "zh-CN",
     ) -> StorySessionResponse:
+        display_story = localize_story(story, normalize_story_language(language))
         current = None
         if story_session.status != StorySessionStatus.COMPLETED:
             current = public_chapter(
-                chapter_by_id(story, story_session.current_chapter_id)
+                chapter_by_id(display_story, story_session.current_chapter_id)
             )
             if current["kind"] == "ending":
-                current["ending_options"] = story_overview(story)["endings"]
+                current["ending_options"] = story_overview(display_story)["endings"]
         return StorySessionResponse(
             session_id=story_session.session_id,
             user_id=story_session.user_id,
@@ -170,7 +194,7 @@ class StoryService:
             status=story_session.status,
             state=story_session.state,
             current_chapter=current,
-            ending=self._ending(story, story_session),
+            ending=self._ending(story, story_session, language=language),
             allowed_actions=allowed_actions(story, story_session),
             progress=self._progress(story, story_session),
             created_at=story_session.created_at,
@@ -197,6 +221,8 @@ class StoryService:
         story: dict[str, Any],
         story_session: StorySession,
         result: TransitionResult,
+        *,
+        language: str = "zh-CN",
     ) -> StoryActionResponse:
         return StoryActionResponse(
             accepted=result.accepted,
@@ -204,7 +230,7 @@ class StoryService:
             hint=result.hint,
             new_clues=result.new_clues,
             new_rewards=result.new_rewards,
-            session=self._response(story, story_session),
+            session=self._response(story, story_session, language=language),
         )
 
 

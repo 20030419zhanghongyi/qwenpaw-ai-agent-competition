@@ -16,9 +16,7 @@ Ask 追问（``/ask``）为 **web-first**：短超时联网为主，``_gather_ma
 from __future__ import annotations
 
 import logging
-import os
 import re
-import tempfile
 import time
 from typing import Annotated
 
@@ -558,21 +556,11 @@ async def photo(
 
     scrubbed = scrub(raw)  # EXIF 剥离 + 人脸模糊（恒成功，不抛）
 
-    # 脱敏后的图写到临时文件，交给 QwenPaw photo agent 的 view_image 工具读取
-    recog = None
-    latency_ms: int | None = None
-    tmp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
-    try:
-        tmp.write(scrubbed)
-        tmp.close()
-        t0 = time.perf_counter()
-        recog = photo_agent.recognize(tmp.name, language=language)
-        latency_ms = int((time.perf_counter() - t0) * 1000)
-    finally:
-        try:
-            os.unlink(tmp.name)
-        except OSError:
-            pass
+    # 脱敏后的图字节直接交给 photo agent（其内部 upload_media 上传进 QwenPaw 工作区，
+    # 宿主可读；不再写容器内临时文件——宿主 QwenPaw 看不见容器路径）
+    t0 = time.perf_counter()
+    recog = photo_agent.recognize(scrubbed, language=language)
+    latency_ms = int((time.perf_counter() - t0) * 1000)
 
     if recog is not None:
         status, source = "ok", "agent"

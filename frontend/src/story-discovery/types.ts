@@ -6,11 +6,6 @@
  * stays self-contained and easy to unit-test.
  */
 
-// ── Constants ──────────────────────────────────────────────────────────────
-
-/** Days before a declined invitation can be re-offered. */
-export const INVITATION_DECLINE_COOLDOWN_DAYS = 7;
-
 // ── Enums ──────────────────────────────────────────────────────────────────
 
 /** How the story is presented to the user in the cutscene. */

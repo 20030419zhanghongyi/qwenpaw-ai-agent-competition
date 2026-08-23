@@ -3,9 +3,11 @@
 调用 QwenPaw ``photo`` agent：它用自带的 ``view_image`` 工具看一张本地图片，输出
 ``{description, candidate_poi, confidence}``。**只识别 + 描述，不讲解**（讲解交 guide agent）。
 
-机制（2026-07-13 实测确认）：QwenPaw agent **不**通过内联 image content block 看图，
-而是用 ``view_image`` 工具读取「本地文件路径」。故后端把脱敏图写到临时文件、把绝对路径
-发给 photo agent，agent 自行 view_image 后输出 JSON。
+机制：QwenPaw agent **不**通过内联 image content block 看图，而是用 ``view_image`` 工具
+读取其工作区内的图片文件。故本函数先用 ``QwenPawClient.upload_media`` 把（已脱敏的）图片
+字节上传进 photo agent 的工作区，拿到宿主可读的引用路径，再把它发进 prompt，agent 自行
+``view_image`` 后输出 JSON。与明信片 ``scene_image.stylize_photo_via_qwenpaw`` 同款交接方式
+（容器化后端 ↔ 宿主 QwenPaw 必须走工作区引用，不能传容器内本地路径——宿主看不见容器路径）。
 
 前提：photo agent 需配**多模态模型** + 启用 ``view_image`` 工具 + 挂 ``photo-recognize``
 技能（见 ``skills/README.md``）。当前纯文本模型（如 glm-5）会明确回复「不支持多模态」，
@@ -98,10 +100,13 @@ class PhotoRecognition(BaseModel):
     confidence: float = 0.0
 
 
-def _build_prompt(image_path: str, language: str) -> str:
-    """构造发给 photo agent 的 prompt（agent 自带 photo-recognize 技能为 system prompt）。"""
+def _build_prompt(image_ref: str, language: str) -> str:
+    """构造发给 photo agent 的 prompt（agent 自带 photo-recognize 技能为 system prompt）。
+
+    ``image_ref`` 是 ``upload_media`` 返回的、photo agent 工作区内宿主可读的图片引用路径。
+    """
     return (
-        f"图片路径：{image_path}\n"
+        f"图片路径：{image_ref}\n"
         f"语言：{language}\n\n"
         "请按 photo-recognize 技能先调用 view_image 查看图片，并按“视觉证据 → POI 匹配”顺序判断。\n"
         f"澳门常见 POI 标准名称与视觉锚点：{_VISUAL_CATALOG}\n"
@@ -288,14 +293,25 @@ def _coerce(obj: dict[str, Any]) -> PhotoRecognition:
 
 
 def recognize(
-    image_path: str, *, language: str = "zh-CN", client: QwenPawClient | None = None
+    image_bytes: bytes,
+    *,
+    language: str = "zh-CN",
+    client: QwenPawClient | None = None,
+    filename: str | None = None,
 ) -> PhotoRecognition | None:
-    """调 photo agent 识别一张**本地图片文件**。任一环节失败返回 None（→ 调用方降级）。"""
+    """调 photo agent 识别一张图片（原始字节）。
+
+    先用 ``upload_media`` 把字节上传进 photo agent 工作区、拿宿主可读引用（容器化后端不能
+    把容器内路径直接发给宿主 QwenPaw——宿主看不见），再把引用发进 prompt 让 agent ``view_image``。
+    任一环节（上传/网络/解析/校验/模型非多模态）失败返回 None（→ 调用方降级）。
+    """
     client = client or QwenPawClient()
-    # 每张图独立会话，避免上一张图的描述串扰当前识别
+    # 每张图独立会话，避免上一张图的描述串扰当前识别；同时用作上传文件名（不泄漏样本原名）
     session_id = f"harness-photo-{uuid4().hex[:8]}"
+    upload_name = filename or f"{session_id}.jpg"
     try:
-        text = client.ask(PHOTO_AGENT_ID, _build_prompt(image_path, language), session_id=session_id)
+        reference = client.upload_media(image_bytes, filename=upload_name, agent_id=PHOTO_AGENT_ID)
+        text = client.ask(PHOTO_AGENT_ID, _build_prompt(reference, language), session_id=session_id)
     except QwenPawError as exc:
         logger.info("photo agent 调用失败，降级：%s", exc)
         return None

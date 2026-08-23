@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from hashlib import sha256
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Integer, JSON, String, func
@@ -13,6 +14,15 @@ from app.db.base import Base, utc_now
 if TYPE_CHECKING:
     from .profile import Favorite, TripFeedback
     from .trip import Trip
+
+
+DEFAULT_GUEST_USER_NAME = "Guest traveler"
+
+
+def guest_user_email(user_id: str) -> str:
+    """Return a deterministic non-login email for an anonymous local user."""
+    digest = sha256(user_id.encode("utf-8")).hexdigest()[:32]
+    return f"guest-{digest}@local.invalid"
 
 
 class User(Base):
@@ -31,6 +41,8 @@ class User(Base):
     # name 改为必填（迁移 20260725_01）。
     name: Mapped[str] = mapped_column(String(128), nullable=False)
     preference: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # 仅保存从显式偏好、行程和反馈归纳出的结构化长期记忆；不保存原始对话。
+    preference_memory: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     # country：ISO 3166-1 alpha-2 国家码，用于个性化讲解（迁移 20260725_01）
     country: Mapped[str | None] = mapped_column(String(8), nullable=True)
     # verification：邮箱/手机验证状态（迁移 20260725_02）

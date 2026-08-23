@@ -5,6 +5,7 @@ top-level language 与 preference.language 保持同步，方便其它模块直�
 """
 
 from collections.abc import Callable
+from datetime import datetime, timezone
 from threading import RLock
 
 from sqlalchemy import select
@@ -40,6 +41,7 @@ class SqlAlchemyUserRepository:
             country=record.country,
             verification_status=record.verification_status or "unverified",
             preference=preference,
+            preference_memory=record.preference_memory,
         )
 
     def get(self, user_id: str) -> UserProfile | None:
@@ -84,6 +86,7 @@ class SqlAlchemyUserRepository:
                 country=country,
                 password_hash=password_hash,
                 interests=[],
+                preference_memory=_empty_memory(),
             )
             session.add(record)
             session.commit()
@@ -104,16 +107,51 @@ class SqlAlchemyUserRepository:
                     email=f"auto_{user_id}@placeholder.local",
                     name="未命名用户",
                     interests=[],
+                    preference_memory=_empty_memory(),
                 )
                 session.add(record)
             record.preference = pref_dict
             record.language = preference.language  # 顶层语言与偏好同步
+            record.preference_memory = _record_preference(record.preference_memory, preference)
             session.commit()
             result = self._to_domain(record)
         if created:
             with self._created_ids_lock:
                 self._created_user_ids.add(user_id)
         return result
+
+    def get_preference_memory(self, user_id: str) -> dict:
+        with self._session_factory() as session:
+            record = session.get(UserRecord, user_id)
+            return dict(record.preference_memory or _empty_memory()) if record else _empty_memory()
+
+    def record_trip_memory(self, user_id: str, route_id: str) -> None:
+        with self._session_factory() as session:
+            record = session.get(UserRecord, user_id)
+            if record is None:
+                return
+            memory = dict(record.preference_memory or _empty_memory())
+            routes = list(memory.get("route_history") or [])
+            routes.append({"route_id": route_id, "created_at": _now_iso()})
+            memory["route_history"] = routes[-12:]
+            memory["updated_at"] = _now_iso()
+            record.preference_memory = memory
+            session.commit()
+
+    def record_feedback_memory(
+        self, user_id: str, trip_id: str, rating: int, walking_comfortable: bool | None
+    ) -> None:
+        with self._session_factory() as session:
+            record = session.get(UserRecord, user_id)
+            if record is None:
+                return
+            memory = dict(record.preference_memory or _empty_memory())
+            feedback = dict(memory.get("feedback_by_trip") or {})
+            feedback[trip_id] = {"rating": rating, "walking_comfortable": walking_comfortable}
+            memory["feedback_by_trip"] = feedback
+            memory["updated_at"] = _now_iso()
+            record.preference_memory = memory
+            session.commit()
 
     def list_all(self) -> list[UserProfile]:
         with self._session_factory() as session:
@@ -147,3 +185,45 @@ class SqlAlchemyUserRepository:
 
 
 user_repository = SqlAlchemyUserRepository()
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _empty_memory() -> dict:
+    return {
+        "version": 1,
+        "updated_at": None,
+        "preference_updates": 0,
+        "signal_counts": {"themes": {}, "interests": {}, "physical": {}, "durations": {}, "languages": {}},
+        "latest_preference": {},
+        "route_history": [],
+        "feedback_by_trip": {},
+    }
+
+
+def _increment(counts: dict, values: list[str]) -> None:
+    for value in values:
+        if value:
+            counts[value] = int(counts.get(value, 0)) + 1
+
+
+def _record_preference(memory: dict | None, preference: Preference) -> dict:
+    result = dict(memory or _empty_memory())
+    signal_counts = dict(result.get("signal_counts") or {})
+    for key, values in {
+        "themes": preference.themes,
+        "interests": preference.interests,
+        "physical": preference.physical,
+        "durations": [preference.duration],
+        "languages": [preference.language],
+    }.items():
+        counts = dict(signal_counts.get(key) or {})
+        _increment(counts, values)
+        signal_counts[key] = counts
+    result["signal_counts"] = signal_counts
+    result["preference_updates"] = int(result.get("preference_updates", 0)) + 1
+    result["latest_preference"] = preference.model_dump(exclude={"travel_date"})
+    result["updated_at"] = _now_iso()
+    return result

@@ -1,268 +1,203 @@
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { LoadingState, ErrorState } from "@/components/common/States";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { ErrorState, LoadingState } from "@/components/common/States";
+import { StoryImage } from "@/features/story/assets";
+import { StoryBottomAction } from "@/features/story/components/StoryBottomAction";
+import { useStoryMessages } from "@/features/story/storyI18n";
 import { useAuth } from "@/state/AuthContext";
-import { useStory } from "@/state/StoryContext";
-import { useWalk } from "@/state/WalkContext";
+import { useStory, useStoryRestore } from "@/state/StoryContext";
+import type { StorySessionResponse } from "@/types/stories";
+
+function sessionDestination(session: StorySessionResponse): string {
+  if (session.status === "completed") {
+    return `/story-sessions/${session.session_id}/ending`;
+  }
+  if (session.current_chapter_id === "prologue_old_book") {
+    return `/story-sessions/${session.session_id}/nodes/${session.current_chapter_id}`;
+  }
+  return `/story-sessions/${session.session_id}/map`;
+}
 
 export function StoryCoverPage() {
   const { storyId } = useParams<{ storyId: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated, register } = useAuth();
-  const { language } = useWalk();
-  const { story, session, loading, error, loadStory, startStory, clearStory } =
-    useStory();
+  const location = useLocation();
+  const { isAuthenticated, isRestoring } = useAuth();
+  const {
+    story,
+    session,
+    loading,
+    error,
+    errorStatus,
+    loadStory,
+    startStory,
+    restoreSession,
+    clearError,
+  } = useStory();
+  const { sessionId: persistedSessionId } = useStoryRestore();
+  const st = useStoryMessages();
   const [starting, setStarting] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (storyId) loadStory(storyId);
-  }, [storyId, loadStory]);
+    if (storyId) void loadStory(storyId);
+  }, [loadStory, storyId]);
 
-  const ensureStoryGuest = useCallback(async () => {
-    if (isAuthenticated) return;
-    const guestId =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    await register({
-      email: `story-guest-${guestId}@local.test`,
-      password: `StoryGuest-${guestId}`,
-      name: "剧情游客",
-      language,
-      country: null,
-    });
-  }, [isAuthenticated, language, register]);
+  useEffect(() => {
+    if (
+      isAuthenticated &&
+      persistedSessionId &&
+      session?.session_id !== persistedSessionId
+    ) {
+      void restoreSession(persistedSessionId);
+    }
+  }, [
+    isAuthenticated,
+    persistedSessionId,
+    restoreSession,
+    session?.session_id,
+  ]);
 
-  const handleStart = useCallback(async () => {
-    if (!storyId) return;
+  const ownStorySession =
+    session && session.story_id === storyId ? session : null;
+  const primaryLabel = useMemo(() => {
+    if (!isAuthenticated) return st("loginToStart");
+    if (ownStorySession?.status === "completed") return st("viewRecord");
+    if (ownStorySession?.status === "active") return st("resume");
+    return st("startStory");
+  }, [isAuthenticated, ownStorySession?.status, st]);
+
+  const handlePrimaryAction = async () => {
+    if (!storyId || starting) return;
+    clearError();
+
+    if (!isAuthenticated) {
+      const returnTo = `${location.pathname}${location.search}`;
+      navigate(`/auth?returnTo=${encodeURIComponent(returnTo)}`);
+      return;
+    }
+
+    if (ownStorySession) {
+      navigate(sessionDestination(ownStorySession));
+      return;
+    }
+
     setStarting(true);
-    setActionError(null);
     try {
-      await ensureStoryGuest();
-      const started = await startStory(storyId);
-      // Navigate to the map after starting
-      navigate(`/story-sessions/${started.session_id}/map`);
-    } catch (e) {
-      setActionError(
-        e instanceof Error ? e.message : "无法开始故事，请稍后重试",
-      );
+      const startedSession = await startStory(storyId);
+      navigate(sessionDestination(startedSession));
     } finally {
       setStarting(false);
     }
-  }, [ensureStoryGuest, navigate, startStory, storyId]);
-
-  const handleGoToMap = useCallback(() => {
-    if (session) {
-      navigate(`/story-sessions/${session.session_id}/map`);
-    }
-  }, [navigate, session]);
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || starting || loading) return;
-      const target = event.target as HTMLElement | null;
-      if (
-        target?.closest("input, textarea, select, button, a, [contenteditable='true']")
-      ) {
-        return;
-      }
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        if (session?.status === "active") handleGoToMap();
-        else void handleStart();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [handleGoToMap, handleStart, loading, session?.status, starting]);
-
-  const handleBack = () => {
-    clearStory();
-    navigate("/");
   };
 
-  if (loading) return <LoadingState label="加载故事信息…" />;
-  if (error) {
+  if ((loading || isRestoring) && !story) {
+    return <LoadingState label={st("loadingStory")} />;
+  }
+
+  if (!story && error) {
     return (
-      <div className="flex min-h-dvh flex-col bg-paper px-4 py-8">
-        <ErrorState message={error} onRetry={() => storyId && loadStory(storyId)} />
-      </div>
+      <main className="grid min-h-dvh place-items-center bg-paper px-4">
+        <div className="w-full max-w-[480px]">
+          <ErrorState
+            message={
+              errorStatus === 404 ? st("storyUnavailable") : error
+            }
+            onRetry={() => storyId && void loadStory(storyId)}
+          />
+        </div>
+      </main>
     );
   }
+
   if (!story) return null;
 
-  const hasActive = session?.status === "active";
-  const coverSrc =
-    story.id === "coloane_after_tide"
-      ? "/story/coloane-after-tide/cover.jpg"
-      : null;
-
   return (
-    <main className="flex min-h-dvh flex-col bg-paper text-ink">
-      <div className="flex-1 px-4 pb-8 pt-6 sm:mx-auto sm:max-w-lg sm:px-6">
-        {/* Back */}
+    <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-paper text-ink shadow-[var(--shadow-soft)]">
+      <div className="flex-1 px-4 pb-32 pt-[max(1rem,env(safe-area-inset-top))]">
         <button
           type="button"
-          onClick={handleBack}
-          className="mb-4 text-sm text-ink-soft transition hover:text-ink"
+          onClick={() => navigate("/preferences")}
+          className="mb-3 inline-flex min-h-11 items-center rounded-full px-2 text-sm text-ink-soft"
         >
-          ← 返回首页
+          {st("backToPreferences")}
         </button>
 
-        {/* Header */}
-        <div className="overflow-hidden rounded-2xl border border-line bg-card shadow-[var(--shadow-soft)]">
-          {coverSrc && (
-            <img
-              src={coverSrc}
-              alt=""
-              className="h-44 w-full object-cover"
-              loading="lazy"
-            />
-          )}
-          <div className="p-6">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-ochre">
-            StoryWalk
+        <StoryImage
+          assetId={story.presentation.cover_asset_id}
+          alt={story.title}
+          eager
+          imageClassName="object-contain"
+        />
+
+        <section className="relative mt-4 rounded-3xl border border-line bg-paper px-5 pb-5 pt-6 shadow-[var(--shadow-lift)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-ochre">
+            {st("limitedWalk")}
           </p>
-          <h1 className="mt-2 font-display text-2xl leading-tight text-ink">
+          <h1 className="mt-2 font-display text-3xl leading-tight">
             {story.title}
           </h1>
-          <p className="mt-1 font-serif text-base italic text-sage-deep">
+          <p className="mt-2 font-serif text-base leading-relaxed text-sage-deep">
             {story.subtitle}
           </p>
-          <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+          <p className="mt-4 text-base leading-7 text-ink-soft">
             {story.summary}
           </p>
 
-          {/* Meta */}
-          <div className="mt-4 flex flex-wrap gap-3 text-xs text-ink-soft">
-            {story.estimated_hours && (
-              <span className="rounded-full border border-line bg-paper-warm px-3 py-1">
-                约 {story.estimated_hours} 小时
+          <div className="mt-5 grid grid-cols-2 gap-2 text-sm text-ink-soft">
+            {[
+              st("estimatedHours", { hours: story.estimated_hours }),
+              st("realPlaces"),
+              st("fieldPuzzles"),
+              st("puzzlesSkippable"),
+            ].map((label) => (
+              <span
+                key={label}
+                className="rounded-xl border border-line bg-paper-warm px-3 py-2 text-center"
+              >
+                {label}
               </span>
-            )}
-            <span className="rounded-full border border-line bg-paper-warm px-3 py-1">
-              {story.nodes.length} 个章节
-            </span>
-          </div>
-          </div>
-        </div>
-
-        {/* Identity */}
-        {story.identity && (
-          <div className="mt-4 rounded-2xl border border-line bg-paper-warm p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sage-deep">
-              你的身份
-            </p>
-            <p className="mt-1 font-serif text-lg text-ink">
-              {story.identity.name}
-            </p>
-            <p className="mt-1 text-sm text-ink-soft">
-              {story.identity.description}
-            </p>
-          </div>
-        )}
-
-        {/* Content notice */}
-        {story.content_notice && (
-          <div className="mt-4 rounded-2xl border border-ochre/30 bg-ochre/5 p-4">
-            <p className="text-xs leading-relaxed text-ink-soft">
-              {story.content_notice}
-            </p>
-          </div>
-        )}
-
-        {/* Error */}
-        {actionError && (
-          <div className="mt-4 rounded-xl border border-clay/30 bg-clay/5 p-4 text-sm text-clay">
-            {actionError}
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className="mt-8 space-y-3">
-          {hasActive ? (
-            <>
-              <button
-                type="button"
-                autoFocus
-                onClick={handleGoToMap}
-                className="w-full rounded-full bg-sage-deep px-6 py-4 text-base font-medium text-paper shadow-[var(--shadow-soft)] transition hover:bg-moss active:scale-[0.99]"
-              >
-                继续探索
-              </button>
-              <button
-                type="button"
-                disabled={starting}
-                onClick={handleStart}
-                className="w-full rounded-full border border-line bg-card px-6 py-3.5 text-sm text-ink-soft transition hover:border-sage"
-              >
-                重新开始
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                autoFocus
-                disabled={starting}
-                onClick={handleStart}
-                className="w-full rounded-full bg-sage-deep px-6 py-4 text-base font-medium text-paper shadow-[var(--shadow-soft)] transition hover:bg-moss active:scale-[0.99] disabled:opacity-50"
-              >
-                {starting
-                  ? "正在准备…"
-                  : isAuthenticated
-                    ? "开始探索"
-                    : "游客开始探索"}
-              </button>
-              {!isAuthenticated && (
-                <p className="text-center text-xs text-ink-soft">
-                  演示模式会自动建立临时游客身份，不需要填写账号密码。
-                </p>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Chapter preview */}
-        <div className="mt-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
-            章节概览
-          </p>
-          <div className="mt-3 space-y-2">
-            {story.nodes.map((node) => (
-              <div
-                key={node.id}
-                className="flex items-center gap-3 rounded-xl border border-line bg-card px-4 py-3"
-              >
-                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-sage-deep/10 font-serif text-xs font-bold text-sage-deep">
-                  {node.order}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-ink">
-                    {node.title}
-                  </p>
-                  <p className="text-xs text-ink-soft">
-                    {node.kind === "prologue"
-                      ? "序章"
-                      : node.kind === "transition"
-                        ? "过渡"
-                        : node.kind === "ending"
-                          ? "终章"
-                          : node.kind === "narrative"
-                            ? "叙述"
-                            : "谜题"}
-                    {node.story_time ? ` · ${node.story_time}` : ""}
-                  </p>
-                </div>
-              </div>
             ))}
           </div>
-        </div>
+        </section>
+
+        <section className="mt-4 rounded-2xl border border-line bg-card p-4">
+          <h2 className="text-sm font-semibold text-sage-deep">{st("safetyTitle")}</h2>
+          <ul className="mt-2 space-y-1 text-sm leading-6 text-ink-soft">
+            <li>{st("safety1")}</li>
+            <li>{st("safety2")}</li>
+            <li>{st("safety3")}</li>
+          </ul>
+        </section>
+
+        {story.content_notice && (
+          <details className="mt-4 rounded-2xl border border-ochre/30 bg-ochre/5 p-4">
+            <summary className="min-h-11 cursor-pointer text-sm font-semibold text-ochre">
+              {st("contentBoundary")}
+            </summary>
+            <p className="text-sm leading-6 text-ink-soft">
+              {story.content_notice}
+            </p>
+          </details>
+        )}
+
+        {error && (
+          <p role="alert" className="mt-4 rounded-xl border border-clay/30 bg-clay/5 p-3 text-sm text-clay">
+            {error}
+          </p>
+        )}
       </div>
 
-      {/* Bottom calcada */}
-      <div className="calcada-wave mx-4 mb-6 h-2.5 shrink-0 opacity-40 sm:mx-6" />
+      <StoryBottomAction
+        label={primaryLabel}
+        busy={starting}
+        busyLabel={st("preparing")}
+        onClick={() => void handlePrimaryAction()}
+        hint={
+          ownStorySession?.status === "active"
+            ? st("resumeHint")
+            : undefined
+        }
+      />
     </main>
   );
 }

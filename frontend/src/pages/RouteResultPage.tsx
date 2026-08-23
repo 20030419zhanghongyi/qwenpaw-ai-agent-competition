@@ -144,7 +144,7 @@ export function RouteResultPage() {
   const navigate = useNavigate();
   const { session, language, setSession } = useWalk();
   const { userId: authUserId } = useAuth();
-  const { trip, loading: tripLoading, simulateArrive } = useTrip();
+  const { trip, loading: tripLoading, checkInAtLocation } = useTrip();
   const tripUserId = resolveTripUserId(authUserId);
   const [sheetOpen, setSheetOpen] = useState<SheetSnap>("half");
   const [sheetDragHeight, setSheetDragHeight] = useState<number | null>(null);
@@ -606,12 +606,33 @@ export function RouteResultPage() {
     }
   }
 
-  async function simulateArriveCurrentStop() {
+  async function checkInCurrentStop() {
     if (!currentNode) return;
+    if (!navigator.geolocation) {
+      setError(t(language, "gpsUnsupported"));
+      return;
+    }
     setError(null);
     setStatusNote(t(language, "tripSimulateArriveBusy"));
     try {
-      await simulateArrive(tripUserId, route.id, currentNode.poiId, nodePoiIds);
+      const position = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 12_000,
+          maximumAge: 10_000,
+        }),
+      );
+      await checkInAtLocation(
+        tripUserId,
+        route.id,
+        currentNode.poiId,
+        {
+          longitude: position.coords.longitude,
+          latitude: position.coords.latitude,
+          accuracy: position.coords.accuracy,
+        },
+        nodePoiIds,
+      );
       setStatusNote(t(language, "tripSimulateArriveDone"));
     } catch (err) {
       setStatusNote(null);
@@ -830,7 +851,7 @@ export function RouteResultPage() {
             }
             startDisabled={checking || generating}
             onSimulate={() => void simulateNearCurrentStop()}
-            onSimulateArrive={() => void simulateArriveCurrentStop()}
+            onSimulateArrive={() => void checkInCurrentStop()}
             onStartGuide={() => (guiding ? handleNextStop() : handleStartGuide())}
             onSelectStop={handleSelectStop}
             curatorSuffix={t(language, "curatorSuffix")}
@@ -901,7 +922,7 @@ export function RouteResultPage() {
             }
             startDisabled={checking || generating}
             onSimulate={() => void simulateNearCurrentStop()}
-            onSimulateArrive={() => void simulateArriveCurrentStop()}
+            onSimulateArrive={() => void checkInCurrentStop()}
             onStartGuide={() => (guiding ? handleNextStop() : handleStartGuide())}
             onSelectStop={handleSelectStop}
             curatorSuffix={t(language, "curatorSuffix")}

@@ -1,25 +1,41 @@
 # qwenpaw-ai-agent-competition
 
-Team project repository for the "千模百炼 AI 开发者学生竞赛".
+**English** | [简体中文](README.zh-CN.md)
 
-“澳迹同行 · Macau StoryWalk”是一套面向澳门旅行者的全栈 AI 导览应用：React
-前端负责路线、地图、讲解和明信片交互，FastAPI 后端负责编排业务与安全降级，
-QwenPaw 负责需求理解、路线调整、文化讲解、拍照识别、内容审核和图片生成。
+![Python 3.11–3.13](https://img.shields.io/badge/Python-3.11%E2%80%933.13-3776AB?logo=python&logoColor=white)
+![Node.js 18+](https://img.shields.io/badge/Node.js-18%2B-339933?logo=nodedotjs&logoColor=white)
+![React 18](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![FastAPI](https://img.shields.io/badge/FastAPI-backend-009688?logo=fastapi&logoColor=white)
+[![GitHub stars](https://img.shields.io/github/stars/20030419zhanghongyi/qwenpaw-ai-agent-competition)](https://github.com/20030419zhanghongyi/qwenpaw-ai-agent-competition/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/20030419zhanghongyi/qwenpaw-ai-agent-competition)](https://github.com/20030419zhanghongyi/qwenpaw-ai-agent-competition/forks)
+[![Last commit on master](https://img.shields.io/github/last-commit/20030419zhanghongyi/qwenpaw-ai-agent-competition/master)](https://github.com/20030419zhanghongyi/qwenpaw-ai-agent-competition/commits/master)
+[![Repository size](https://img.shields.io/github/repo-size/20030419zhanghongyi/qwenpaw-ai-agent-competition)](https://github.com/20030419zhanghongyi/qwenpaw-ai-agent-competition)
 
-## Quick Start（新手快速开始）
+Team project repository for the "千模百炼 AI Developer Student Competition."
 
-本节以及后文的运行资产自动化脚本以 Windows PowerShell 为准。macOS/Linux
-用户可使用“QwenPaw 下载与初始化”中的 Bash 命令完成安装；若要原样执行后文的
-PowerShell 脚本，请先安装 PowerShell 7 并在 `pwsh` 中运行，不要混用 Bash 语法。
+**Macau StoryWalk** is a full-stack AI travel guide for visitors to Macau. The
+React frontend handles routes, maps, guided commentary, and postcard
+interactions; the FastAPI backend orchestrates application logic and safe
+fallbacks; and QwenPaw provides multi-turn preference guidance, intent
+understanding, route adjustment, cultural commentary, photo recognition,
+content review, and image generation.
 
-### 1. 安装基础工具
+## Quick Start
 
-请先安装：
+Windows PowerShell instructions remain below, alongside native macOS/zsh
+commands. After installing and initializing QwenPaw, macOS users can run
+`bash scripts/configure_qwenpaw_macos.sh` to configure the project's Skills,
+Agents, ethics baseline, and Qwen-Image Plugin without installing PowerShell 7.
 
-- Git；
-- Docker Desktop，并确认 `docker compose version` 可用；
-- Node.js 18+（推荐当前 LTS）和 npm；
-- Python 3.11–3.13，用于运行 QwenPaw。后端若采用 Docker，无需另装后端依赖。
+### 1. Install the Prerequisites
+
+Install:
+
+- Git;
+- Docker Desktop, with `docker compose version` available;
+- Node.js 18+ (the current LTS is recommended) and npm;
+- Python 3.11–3.13 for QwenPaw. If the backend runs in Docker, you do not need
+  to install its dependencies locally.
 
 ```powershell
 git --version
@@ -29,7 +45,17 @@ npm --version
 py --version
 ```
 
-### 2. 克隆项目并准备环境变量
+macOS/zsh:
+
+```zsh
+git --version
+docker compose version
+node --version
+npm --version
+python3 --version
+```
+
+### 2. Clone the Repository and Prepare Environment Variables
 
 ```powershell
 git clone https://github.com/20030419zhanghongyi/qwenpaw-ai-agent-competition.git
@@ -38,11 +64,21 @@ Copy-Item .env.example .env
 notepad .env
 ```
 
-至少填写 `DASHSCOPE_API_KEY`、`AMAP_WEB_SERVICE_KEY`、
-`VITE_AMAP_API_KEY` 和 `VITE_AMAP_SECURITY_CODE`。不要提交 `.env`；它已经被
-Git 忽略。完整字段说明见下方“配置要求”。
+macOS/zsh:
 
-### 3. 安装并初始化 QwenPaw
+```zsh
+git clone https://github.com/20030419zhanghongyi/qwenpaw-ai-agent-competition.git
+cd qwenpaw-ai-agent-competition
+cp .env.example .env
+open -e .env
+```
+
+At minimum, set your own `DASHSCOPE_API_KEY`, `AMAP_WEB_SERVICE_KEY`,
+`VITE_AMAP_API_KEY`, and `VITE_AMAP_SECURITY_CODE`. Do not commit `.env`; it is
+already ignored by Git. See "Configuration Requirements" below for every
+field.
+
+### 3. Install and Initialize QwenPaw
 
 ```powershell
 py -m venv .venv
@@ -53,28 +89,40 @@ qwenpaw init
 qwenpaw models config
 ```
 
-`qwenpaw init` 和 `qwenpaw models config` 是交互式命令：选择一个可用的云端
-Provider，填写模型 API Key，并指定默认模型。完成后先继续第 4 步启动服务；
-首次完整配置还需按照“配置 QwenPaw 运行资产”一次性创建本项目所需的
-Agent、Skills 和 Plugin。
+macOS/zsh:
 
-### 4. 启动三个进程
+```zsh
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip qwenpaw
+qwenpaw --version
+qwenpaw init
+qwenpaw models config
+```
 
-终端 A：
+`qwenpaw init` and `qwenpaw models config` are interactive. Select an available
+cloud provider, enter the model API key, and choose the default model. Then
+continue to step 4 to start the services. For a complete first-time setup, also
+follow "Configure QwenPaw Runtime Assets" to create the Agents, Skills, and
+Plugin required by this project.
+
+### 4. Start the Three Processes
+
+Terminal A:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
 qwenpaw app
 ```
 
-终端 B：
+Terminal B:
 
 ```powershell
 docker compose up -d --build
 docker compose ps
 ```
 
-终端 C：
+Terminal C:
 
 ```powershell
 cd frontend
@@ -82,77 +130,114 @@ npm install
 npm run dev
 ```
 
-打开以下地址：
+Open:
 
-- 前端：<http://localhost:5173>
-- 后端 OpenAPI：<http://localhost:8000/docs>
-- QwenPaw Console：<http://127.0.0.1:8088>
+- Frontend: <http://localhost:5173>
+- Backend OpenAPI: <http://localhost:8000/docs>
+- QwenPaw Console: <http://127.0.0.1:8088>
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8000/api/v1/health
 Invoke-RestMethod http://127.0.0.1:8088/api/version
 ```
 
-如果暂时没有配置 Agent，路线等接口仍会使用规则版或本地资源降级；完整 AI
-能力需要继续完成下方 QwenPaw 配置。
+Use three macOS/zsh terminals:
 
-## 配置要求
+```zsh
+# Terminal A: QwenPaw
+source .venv/bin/activate
+qwenpaw app
+```
 
-### 软件与端口
+```zsh
+# Terminal B: backend and database
+docker compose up -d --build
+docker compose ps
+```
 
-| 项目 | 要求 | 用途 |
+```zsh
+# Terminal C: frontend
+cd frontend
+npm install
+npm run dev
+```
+
+```zsh
+curl -fsS http://127.0.0.1:8000/api/v1/health
+curl -fsS http://127.0.0.1:8088/api/version
+```
+
+If the Agents have not been configured yet, route and related endpoints still
+fall back to rule-based or local-resource implementations. Complete the
+QwenPaw setup below to enable all AI features.
+
+## Configuration Requirements
+
+### Software and Ports
+
+| Item | Requirement | Purpose |
 |---|---|---|
-| Docker Desktop | Compose v2 | PostGIS/pgvector、数据初始化、FastAPI |
-| Python | QwenPaw 要求 3.11–3.13；后端源码支持 3.10+ | QwenPaw、本地后端开发与测试 |
-| Node.js | 18+，推荐当前 LTS | React + Vite 前端 |
-| `8088` | 本机可用 | QwenPaw；容器通过 `host.docker.internal` 访问 |
-| `8000` | 本机可用 | FastAPI |
-| `5173` | 本机可用 | Vite 开发服务器 |
-| `5432` | 本机可用 | Compose 内的 PostGIS/pgvector |
+| Docker Desktop | Compose v2 | PostGIS/pgvector, data initialization, and FastAPI |
+| Python | QwenPaw requires 3.11–3.13; backend source supports 3.10+ | QwenPaw, local backend development, and testing |
+| Node.js | 18+; current LTS recommended | React + Vite frontend |
+| `8088` | Available on the host | QwenPaw; containers access it through `host.docker.internal` |
+| `8000` | Available on the host | FastAPI |
+| `5173` | Available on the host | Vite development server |
+| `5432` | Available on the host | PostGIS/pgvector in Compose |
 
-### `.env` 与外部服务
+### `.env` and External Services
 
-仓库根目录的 `.env.example` 是唯一模板；后端和前端都会从根目录 `.env` 读取
-配置。完整功能建议准备以下凭据：
+The root `.env.example` is the single template. Both the backend and frontend
+read configuration from the root `.env`. For complete functionality, prepare
+the following credentials:
 
-| 变量 | 必需性 | 说明 |
+| Variable | Requirement | Description |
 |---|---|---|
-| `DASHSCOPE_API_KEY` | 完整 AI 功能必需 | 百炼/DashScope；TTS、图片、部分后端能力使用 |
-| `QWEN_EMBEDDING_API_KEY` | 可选 | RAG embedding 专用；留空时回退到 DashScope Key |
-| `AMAP_WEB_SERVICE_KEY` | 路线步行规划必需 | 高德“Web 服务”Key |
-| `VITE_AMAP_API_KEY` | 前端地图必需 | 高德“Web 端（JS API）”Key |
-| `VITE_AMAP_SECURITY_CODE` | 前端地图必需 | 与 Web 端 Key 配套的安全密钥 |
-| `AMAP_API_KEY` / `AMAP_SECURITY_CODE` | 建议同步填写 | 后端兼容字段，与前端 Key/安全密钥保持一致 |
-| `QWENPAW_BASE_URL` | 有默认值 | 本机开发使用 `http://127.0.0.1:8088` |
+| `DASHSCOPE_API_KEY` | Required for complete AI functionality | Your own Alibaba Cloud Model Studio/DashScope key, used by TTS, images, and some backend capabilities; it is not provided by the competition organizer |
+| `QWEN_EMBEDDING_API_KEY` | Optional | Dedicated RAG embedding key; falls back to the DashScope key when empty |
+| `AMAP_WEB_SERVICE_KEY` | Required for walking-route planning | AMap "Web Service" key |
+| `VITE_AMAP_API_KEY` | Required for the frontend map | AMap "Web (JS API)" key |
+| `VITE_AMAP_SECURITY_CODE` | Required for the frontend map | Security code paired with the Web key |
+| `AMAP_API_KEY` / `AMAP_SECURITY_CODE` | Recommended | Backend compatibility fields; keep them consistent with the frontend key/security code |
+| `QWENPAW_BASE_URL` | Has a default | Use `http://127.0.0.1:8088` for local development |
 
-高德 Key 在[高德开放平台](https://lbs.amap.com/)创建；DashScope Key 在
-[阿里云百炼控制台](https://bailian.console.aliyun.com/)创建。密钥还需要在
-QwenPaw 的模型 Provider 中单独配置，QwenPaw 不会自动读取项目 `.env` 作为
-模型 Provider 配置。
+Create AMap keys on the [AMap Open Platform](https://lbs.amap.com/) and create
+your own DashScope key in the [Alibaba Cloud Model Studio
+console](https://bailian.console.aliyun.com/). The DashScope image-generation
+key is not supplied by the competition organizer: use an account and key you
+control, and make sure its quota, billing, and region are suitable for your
+deployment. You must also configure the key
+separately in QwenPaw's model provider. QwenPaw does not automatically use the
+project `.env` as model-provider configuration.
 
-Agent 开关默认关闭，完成相应 Agent 配置后再改为 `true`：
+Agent switches are disabled by default. Set each switch to `true` after its
+Agent has been configured:
 
 ```dotenv
 ROUTE_AGENT_ENABLED=true
 INTENT_AGENT_ENABLED=true
+PREFERENCE_GUIDE_AGENT_ENABLED=true
 REVIEWER_AGENT_ENABLED=true
 GUIDE_AGENT_ENABLED=true
 PHOTO_AGENT_ENABLED=true
 ```
 
-RAG 是可选增强。执行 `docker compose run --rm rag-seed` 完成向量灌库后，设置
-`PGVECTOR_ENABLED=true` 并重建后端；否则讲解会回退到关键词检索。生产部署还应
-另行配置强随机 `JWT_SECRET`、OSS 凭据和审计盐，详见
-[`backend/README.md`](backend/README.md)。
+RAG is an optional enhancement. Run `docker compose run --rm rag-seed` to seed
+the vector database, set `PGVECTOR_ENABLED=true`, and rebuild the backend.
+Otherwise, commentary falls back to keyword retrieval. Production deployments
+should also configure a strong random `JWT_SECRET`, OSS credentials, and an
+audit salt; see [`backend/README.md`](backend/README.md).
 
-## QwenPaw 下载与初始化
+## Download and Initialize QwenPaw
 
-官方支持 pip、安装脚本、Docker 和桌面版。本项目推荐开发者使用 pip：环境可控，
-也方便从仓库本地安装 Qwen-Image Plugin。QwenPaw 当前要求 Python 3.11–3.13。
+QwenPaw officially supports pip, an installation script, Docker, and a desktop
+application. This project recommends pip for developers because it gives you a
+controlled environment and makes it easy to install the Qwen-Image Plugin from
+the repository. QwenPaw currently requires Python 3.11–3.13.
 
-### 推荐：pip 安装
+### Recommended: Install with pip
 
-Windows PowerShell：
+Windows PowerShell:
 
 ```powershell
 py -m venv .venv
@@ -163,7 +248,7 @@ qwenpaw models config
 qwenpaw app
 ```
 
-macOS/Linux：
+macOS/Linux:
 
 ```bash
 python3 -m venv .venv
@@ -174,52 +259,78 @@ qwenpaw models config
 qwenpaw app
 ```
 
-默认工作目录是 `~/.qwenpaw`，密钥位于独立的
-`~/.qwenpaw.secret`；不要把这两个目录复制进仓库或提交。服务默认监听
-`127.0.0.1:8088`。
+The default working directory is `~/.qwenpaw`, and secrets are stored
+separately in `~/.qwenpaw.secret`. Do not copy either directory into the
+repository or commit them. The service listens on `127.0.0.1:8088` by default.
 
-其他安装方式和版本要求以官方页面为准：
+For other installation methods and current version requirements, consult the
+official pages:
 
 - [QwenPaw Quick Start](https://qwenpaw.agentscope.io/docs/quickstart/)
-- [QwenPaw 下载页](https://qwenpaw.agentscope.io/downloads)
+- [QwenPaw Downloads](https://qwenpaw.agentscope.io/downloads)
 - [QwenPaw CLI](https://qwenpaw.agentscope.io/docs/cli/)
-- [配置与工作目录](https://qwenpaw.agentscope.io/docs/config/)
+- [Configuration and Working Directory](https://qwenpaw.agentscope.io/docs/config/)
 
-## 配置 QwenPaw 运行资产
+## Configure QwenPaw Runtime Assets
 
-以下是新机器上的一次性配置。保持终端 A 中的 `qwenpaw app` 运行，另开一个
-PowerShell 终端，`cd` 到仓库根目录并重新执行
-`.\.venv\Scripts\Activate.ps1`。先完成 `qwenpaw init` 和
-`qwenpaw models config`，再执行本节命令。
-以下 PowerShell 片段统一使用一个地址变量；默认安装使用 `8088`。若自行修改
-端口，请同步修改这里、项目 `.env`，以及 `compose.yml` 中的
-`host.docker.internal:8088`：
+The following is a one-time setup on a new machine. Keep `qwenpaw app` running
+in terminal A, open another terminal at the repository root, and activate the
+same QwenPaw virtual environment. Complete `qwenpaw init` and
+`qwenpaw models config` before running this section.
+
+All PowerShell snippets use one base-URL variable. A default installation uses
+port `8088`. If you change the port, update it here, in the project `.env`, and
+in `host.docker.internal:8088` in `compose.yml`:
 
 ```powershell
 $qwenpawBaseUrl = "http://127.0.0.1:8088"
 Invoke-RestMethod "$qwenpawBaseUrl/api/version"
 ```
 
-以下代码块默认在同一个 PowerShell 会话中依次执行；若打开新终端，请先重新设置
-`$qwenpawBaseUrl`。
+The following blocks are intended to run sequentially in the same PowerShell
+session. If you open a new terminal, set `$qwenpawBaseUrl` again first.
 
-### 1. 导入全部本地 Skills
+#### macOS/zsh one-command setup
 
-本项目包含 5 个业务 Skill 和 4 个伦理 Skill：
+macOS users do not need to translate each PowerShell block below. With
+`qwenpaw app` still running, execute:
 
-| Skill | 用途 | 挂载到 |
+```zsh
+cd /path/to/qwenpaw-ai-agent-competition
+source .venv/bin/activate
+bash scripts/configure_qwenpaw_macos.sh
+```
+
+The script validates and imports local Skills, creates only missing project
+Agents, injects the shared ethics baseline, installs the Qwen-Image Plugin, and
+configures/enables its two image tools for `scene` when the root `.env`
+contains your self-provided `DASHSCOPE_API_KEY`. This repository and the
+competition environment do not provide an image-generation key; its usage,
+quota, and charges belong to the deploying account. The script never prints the
+key. Without a key, it leaves
+the plugin installed while keeping the image tools unconfigured and disabled.
+Set `QWENPAW_BASE_URL` before the command to override the default endpoint.
+
+### 1. Import All Local Skills
+
+The project contains eight business Skills and four ethics Skills:
+
+| Skill | Purpose | Mounted on |
 |---|---|---|
-| `route-adjust` | 自然语言路线微调 | `route` |
-| `requirement-understand` | 游览需求结构化 | `intent` |
-| `macau-guide` | 有据文化讲解 | `guide` |
-| `photo-recognize` | 图片描述与 POI 判断 | `photo` |
-| `postcard-scene` | 明信片场景约束 | `scene` |
-| `fairness-gate` | 偏好公平性检查 | `intent` |
-| `source-attribution` | 来源和置信度标注 | `guide`、`photo` |
-| `anti-sycophancy` | 避免迎合与无依据断言 | `guide` |
-| `content-safety-review` | 独立内容安全裁定 | `reviewer` |
+| `route-adjust` | Natural-language route refinement | `route` |
+| `requirement-understand` | Structure travel requirements | `intent` |
+| `preference-guide` | Multi-turn route-preference completion | `pref-guide` |
+| `macau-guide` | Evidence-grounded cultural commentary | `guide` |
+| `photo-recognize` | Image descriptions and POI identification | `photo` |
+| `postcard-scene` | SVG postcard-scene constraints | `scene` |
+| `qwen-image-postcard` | Real travel-memory images through Qwen-Image | `scene` |
+| `photo-abstract-editorial` | Authorized photo → retained photograph plus abstract editorial memory panel | `scene` |
+| `fairness-gate` | Preference fairness checks | `intent` |
+| `source-attribution` | Source and confidence attribution | `guide`, `photo` |
+| `anti-sycophancy` | Avoid agreement-seeking and unsupported assertions | `guide` |
+| `content-safety-review` | Independent content-safety decisions | `reviewer` |
 
-PowerShell 导入命令：
+Import them with PowerShell:
 
 ```powershell
 $agentResponse = Invoke-RestMethod "$qwenpawBaseUrl/api/agents"
@@ -238,9 +349,12 @@ $ethicsSkillNames = @(
 $skillSources = @(
   "skills\route-adjust",
   "skills\requirement-understand",
+  "skills\preference-guide",
   "skills\macau-guide",
   "skills\photo-recognize",
   "skills\postcard-scene",
+  "skills\qwen-image-postcard",
+  "skills\photo-abstract-editorial",
   "ethics\qwenpaw-skills\fairness-gate",
   "ethics\qwenpaw-skills\source-attribution",
   "ethics\qwenpaw-skills\anti-sycophancy",
@@ -262,18 +376,21 @@ foreach ($source in $skillSources) {
 Invoke-RestMethod -Method Post "$qwenpawBaseUrl/api/skills/pool/refresh"
 ```
 
-QwenPaw 不会仅因文件出现在 `skill_pool` 就自动登记；最后的 `pool/refresh` 是
-必需步骤。可用 `qwenpaw skills list` 检查，更多原理和故障说明见
-[`skills/README.md`](skills/README.md) 与
-[QwenPaw Skills 文档](https://qwenpaw.agentscope.io/docs/skills/)。
+QwenPaw does not register a Skill merely because its file appears in
+`skill_pool`; the final `pool/refresh` call is required. Check the result with
+`qwenpaw skills list`. For background and troubleshooting, see
+[`skills/README.md`](skills/README.md) and the [QwenPaw Skills
+documentation](https://qwenpaw.agentscope.io/docs/skills/).
 
-### 2. 创建全部 Agents 并挂载 Skills
+### 2. Create All Agents and Mount Their Skills
 
-先用 `qwenpaw models list` 确认默认模型已配置。下面直接从正在运行的 QwenPaw
-读取活动 Provider ID 和 Model ID，避免复制文档中的过期模型名。`photo` 和 `scene`
-必须使用支持视觉的多模态模型；若默认模型不支持图片，请先在 QwenPaw 中换成
-支持图片的模型。`qwenpaw init` 创建的 `default` Agent 请保留；下面另外创建的
-6 个专用 Agent ID 是后端契约的一部分，不能随意改名。
+First run `qwenpaw models list` to confirm that the default model is configured.
+The commands below read the active Provider ID and Model ID from the running
+QwenPaw instance, avoiding stale model names copied from documentation. `photo`
+and `scene` must use a vision-capable multimodal model. If the default model
+cannot process images, switch to a compatible model in QwenPaw first. Keep the
+`default` Agent created by `qwenpaw init`; the seven dedicated Agent IDs below
+are part of the backend contract and must not be renamed.
 
 ```powershell
 function Invoke-QwenPawChecked {
@@ -294,6 +411,8 @@ Invoke-QwenPawChecked agents create --agent-id route --name "路线微调" --lan
 Invoke-QwenPawChecked agents create --agent-id intent --name "需求理解" --language zh `
   --provider-id $provider --model-id $model --skill requirement-understand `
   --skill fairness-gate
+Invoke-QwenPawChecked agents create --agent-id pref-guide --name "偏好多轮引导" `
+  --language zh --provider-id $provider --model-id $model --skill preference-guide
 Invoke-QwenPawChecked agents create --agent-id guide --name "文化讲解" --language zh `
   --provider-id $provider --model-id $model --skill macau-guide `
   --skill source-attribution --skill anti-sycophancy
@@ -301,28 +420,43 @@ Invoke-QwenPawChecked agents create --agent-id photo --name "拍照识别" --lan
   --provider-id $provider --model-id $model --skill photo-recognize `
   --skill source-attribution
 Invoke-QwenPawChecked agents create --agent-id scene --name "明信片场景" --language zh `
-  --provider-id $provider --model-id $model --skill postcard-scene
+  --provider-id $provider --model-id $model --skill postcard-scene `
+  --skill qwen-image-postcard --skill photo-abstract-editorial
 Invoke-QwenPawChecked agents create --agent-id reviewer --name "独立审核" --language zh `
   --provider-id $provider --model-id $model --skill content-safety-review
 
 Invoke-QwenPawChecked agents list
 ```
 
-这些命令用于首次配置；若 Agent 已存在，不要删除重建，可运行
-`qwenpaw skills config --agent-id <agent-id>` 交互式修正技能。`photo` 还必须保留
-内置 `view_image` 工具为启用状态。
+These commands are for first-time setup. If an Agent already exists, do not
+delete and recreate it; run `qwenpaw skills config --agent-id <agent-id>` to
+correct its Skills interactively. The built-in `view_image` tool must remain
+enabled for `photo`.
 
-### 3. 向所有项目 Agents 注入统一伦理基线
+`intent` parses a relatively complete request into a Preference in one pass.
+`pref-guide` handles incomplete input through multiple turns, asking for only
+one missing item in each turn and emitting a Preference once enough information
+has been collected. The backend always calls `pref-guide`, so do not rename its
+Agent ID to an underscore form or any other value. This Agent can use a regular
+text model; it does not need `view_image`, a multimodal model, or the Qwen-Image
+Plugin.
 
-所有项目 Agent（包括 `qwenpaw init` 创建的 `default`）必须共享同一伦理提示词。
-统一内容严格取自 [`ethics/prompts/_ethics_base.md`](ethics/prompts/_ethics_base.md)
-第 9–42 行，并在首次执行时覆盖这 7 个项目工作区默认 `AGENTS.md` 的第 14–44 行。
+### 3. Inject the Shared Ethics Baseline into All Project Agents
 
-下面的脚本会加入注释标记，因此可以安全重跑：首次按上述行号替换，以后只更新
-标记区。它通过 QwenPaw API 取得工作区实际路径，只处理本项目的 `default` 和
-6 个专用 Agent，不会修改 QwenPaw 内置 QA Agent 或用户的其他 Agent。请在所有
-专用 Agent 创建完成后执行。内置 QA Agent 不属于本项目运行契约，并有自己的
-专用问答指令，因此不覆盖它的 `AGENTS.md`。
+Every project Agent, including the `default` created by `qwenpaw init`, must use
+the same ethics prompt. Its contents come exactly from lines 9–42 of
+[`ethics/prompts/_ethics_base.md`](ethics/prompts/_ethics_base.md), and the
+first run replaces lines 14–44 in the default `AGENTS.md` files of all eight
+project workspaces.
+
+The script below adds comment markers, making it safe to rerun. The first run
+replaces the lines described above; subsequent runs only update the marked
+region. It obtains actual workspace paths through the QwenPaw API and only
+processes this project's `default` and seven dedicated Agents. It does not
+change QwenPaw's built-in QA Agent or any other user Agents. Run it after
+creating every dedicated Agent. The built-in QA Agent is not part of this
+project's runtime contract and has its own QA instructions, so its `AGENTS.md`
+is intentionally left unchanged.
 
 ```powershell
 $ethicsPath = Join-Path (Get-Location) "ethics\prompts\_ethics_base.md"
@@ -332,7 +466,9 @@ if ($ethicsLines.Count -lt 42) { throw "_ethics_base.md 少于 42 行" }
 $startMarker = "<!-- MACAU_ETHICS_BASE_START -->"
 $endMarker = "<!-- MACAU_ETHICS_BASE_END -->"
 $ethicsBlock = @($startMarker) + @($ethicsLines[8..41]) + @($endMarker)
-$projectAgentIds = @("default", "route", "intent", "guide", "photo", "scene", "reviewer")
+$projectAgentIds = @(
+  "default", "route", "intent", "pref-guide", "guide", "photo", "scene", "reviewer"
+)
 $agentResponse = Invoke-RestMethod "$qwenpawBaseUrl/api/agents"
 $projectAgents = @($agentResponse.agents | Where-Object { $_.id -in $projectAgentIds })
 $missingAgentIds = @($projectAgentIds | Where-Object { $_ -notin $projectAgents.id })
@@ -368,29 +504,47 @@ foreach ($agentFile in $agentFiles) {
 }
 ```
 
-只使用 `ethics/qwenpaw-skills/<skill>/SKILL.md` 作为伦理 Skill 内容。该目录内
-的独立 `prompt.md` 不复制、不挂载，也不要再写入 `AGENTS.md` 或 Agent system
-prompt；其规则与 `SKILL.md` 重复，重复注入会增加提示词冲突和上下文噪声。
+Use only `ethics/qwenpaw-skills/<skill>/SKILL.md` as the contents of an ethics
+Skill. Do not copy or mount the standalone `prompt.md` files in that directory,
+and do not add them to `AGENTS.md` or an Agent system prompt. Their rules
+duplicate `SKILL.md`; injecting both increases prompt conflicts and context
+noise.
 
-### 4. 安装 Qwen-Image Tool Plugin
+### 4. Install the QwenPaw Tool Plugins
 
-仓库已经包含与 AgentScope1.0/QwenPaw1.1.12 post3 兼容的官方插件副本：
+The repository includes Qwen-Image and Qwen TTS Plugins compatible with
+AgentScope 1.0 / QwenPaw 1.1.12 post3:
 
 ```powershell
 & qwenpaw plugin validate .\backend\app\tools\qwen-image
 if ($LASTEXITCODE -ne 0) { throw "Qwen-Image Plugin 校验失败" }
 & qwenpaw plugin install .\backend\app\tools\qwen-image --force
 if ($LASTEXITCODE -ne 0) { throw "Qwen-Image Plugin 安装失败" }
+& qwenpaw plugin validate .\backend\app\tools\qwen-tts
+if ($LASTEXITCODE -ne 0) { throw "Qwen TTS Plugin 校验失败" }
+& qwenpaw plugin install .\backend\app\tools\qwen-tts --force
+if ($LASTEXITCODE -ne 0) { throw "Qwen TTS Plugin 安装失败" }
 & qwenpaw plugin list
 if ($LASTEXITCODE -ne 0) { throw "无法读取 Plugin 列表" }
 ```
 
-QwenPaw 运行时安装会热加载；未运行时会离线安装，并在下次
-`qwenpaw app` 时加载。插件提供 `generate_image_qwen` 和
-`edit_image_qwen`，只需给 `scene` Agent 启用。
+If QwenPaw is running, installation hot-loads the Plugin. If it is stopped, the
+Plugin is installed offline and loads the next time `qwenpaw app` starts. It
+provides `generate_image_qwen` / `edit_image_qwen` for the `scene` Agent and
+`synthesize_speech_qwen` for the existing `guide` Agent. Do not create a voice
+Agent: `guide` owns grounded narration and only invokes TTS to render its
+already-reviewed `audio_script`.
 
-下面的 PowerShell 从项目 `.env` 读取 Key，不把明文写进命令历史，并通过本机
-QwenPaw API 配置、按需启用两个工具：
+The following PowerShell reads the key from the project `.env` without writing
+the plaintext value to command history, configures the tools through the local
+QwenPaw API, and enables them when necessary:
+
+After the script has configured `synthesize_speech_qwen` for `guide`, set
+`QWENPAW_TTS_ENABLED=true` in the backend environment. Audio returns from the
+QwenPaw Tool to the backend, which uploads it as a private OSS object and gives
+the browser only a short-lived URL. Set
+`QWENPAW_TTS_DIRECT_FALLBACK_ENABLED=false` to require QwenPaw and surface a
+clear availability error instead of using the legacy direct-provider fallback.
 
 ```powershell
 $keyLine = Get-Content .env |
@@ -433,29 +587,37 @@ foreach ($toolName in $toolNames) {
 }
 ```
 
-国际版 DashScope Key 应把 endpoint 改为
-`https://dashscope-intl.aliyuncs.com/api/v1`，Key 与 endpoint 必须同区域。
-若启用了 QwenPaw Web 鉴权，还需给上述请求补充相应 Authorization/Cookie。
+For an international DashScope key, change the endpoint to
+`https://dashscope-intl.aliyuncs.com/api/v1`. The key and endpoint must belong
+to the same region. If QwenPaw web authentication is enabled, add the
+appropriate Authorization header or Cookie to these requests.
 
-`postcard-scene` Skill 还保留了旧版 SVG 输出约束；在线明信片链路会由后端明确
-要求调用 `generate_image_qwen` 或 `edit_image_qwen`。验收在线链路时应看到插件的
-`plugin_call_output` 并取得图片；若只返回 SVG，说明旧约束干扰了工具调用，不能
-视为 Qwen-Image 配置成功。
+Use `photo-abstract-editorial` for a user-authorized photo: it preserves the
+source photograph and derives a restrained abstract memory panel through
+`edit_image_qwen`. With no personal photo, `qwen-image-postcard` may call
+`generate_image_qwen`; label the displayed result **“AI scene illustration.”**
+The legacy `postcard-scene` Skill must not be used as a fallback for a failed
+image-tool call. A successful online test must show the Plugin's
+`plugin_call_output` and return an image.
 
-### 5. 验证 QwenPaw 配置
+### 5. Verify the QwenPaw Configuration
 
-下面的脚本可在新的 PowerShell 会话中独立运行。它会调用一次 QwenPaw 的模型
-健康检查，并核对全部项目 Agent、Skill、伦理基线和图片工具；不会生成明信片图片。
+The script below can run independently in a new PowerShell session. It performs
+one QwenPaw model health check and verifies every project Agent, Skill, ethics
+baseline, and image tool. It does not generate a postcard image.
 
 ```powershell
 $qwenpawBaseUrl = "http://127.0.0.1:8088"
-$projectAgentIds = @("default", "route", "intent", "guide", "photo", "scene", "reviewer")
+$projectAgentIds = @(
+  "default", "route", "intent", "pref-guide", "guide", "photo", "scene", "reviewer"
+)
 $expectedSkills = [ordered]@{
   route = @("route-adjust")
   intent = @("requirement-understand", "fairness-gate")
+  "pref-guide" = @("preference-guide")
   guide = @("macau-guide", "source-attribution", "anti-sycophancy")
   photo = @("photo-recognize", "source-attribution")
-  scene = @("postcard-scene")
+  scene = @("postcard-scene", "qwen-image-postcard", "photo-abstract-editorial")
   reviewer = @("content-safety-review")
 }
 
@@ -552,70 +714,99 @@ $version = Invoke-RestMethod "$qwenpawBaseUrl/api/version"
 Write-Host "QwenPaw 配置验证通过：$($version.version)"
 ```
 
-确认无误后，把 `.env` 中五个 Agent 开关改为 `true`，并保持
-`POSTCARD_AI_IMAGE_ENABLED=true`，再执行：
+After verification, set all six Agent switches in `.env` to `true`, keep
+`POSTCARD_AI_IMAGE_ENABLED=true`, and run:
 
 ```powershell
 docker compose up -d --build
 ```
 
-QwenPaw 详细分工、结构化输出约束和回退机制见
-[`skills/README.md`](skills/README.md)，明信片插件细节见
-[`backend/README.md`](backend/README.md#明信片-qwen-image-场景图与照片风格化)。
+For QwenPaw responsibilities, structured-output constraints, and fallback
+behavior, see [`skills/README.md`](skills/README.md). For postcard Plugin
+details, see
+[`backend/README.md`](backend/README.md#明信片-qwen-image-场景图与照片风格化).
 
 ## Project Overview
 
-An AI-powered travel companion for exploring Macau's historic districts. Delivered as a WeChat Mini Program / mobile app, it provides real-time location-based commentary, intelligent route planning, and a gamified experience for tourists.
+An AI-powered travel companion for exploring Macau's historic districts.
+Delivered as a WeChat Mini Program / mobile app, it provides real-time
+location-based commentary, intelligent route planning, and a gamified
+experience for tourists.
 
 ## Core Features
 
-### 1. Historic District Guide (核心：旧区位置讲解)
-- **Location-aware commentary**: When users enter a district, the app generates contextual descriptions (history, landmarks, culture) based on their current location.
-- **Audio narration**: All content is delivered with voice commentary.
-- **Tour route generation**: Automatically creates optimized walking routes with guided narration.
+### 1. Historic District Guide
 
-### 2. Intelligent Route Planning (核心路线规划)
-- **Route optimization**: Combines local attractions and trending spots into curated routes.
-- **Dynamic adjustments**: Fine-tunes routes based on crowd levels, weather, and seasonality.
-- **Map visualization**: Highlights key stops and connections on a map; tapping a stop reveals a timeline with detailed content.
+- **Location-aware commentary**: When users enter a district, the app generates
+  contextual descriptions of its history, landmarks, and culture based on
+  their current location.
+- **Audio narration**: All content is delivered with voice commentary.
+- **Tour route generation**: Automatically creates optimized walking routes
+  with guided narration.
+
+### 2. Intelligent Route Planning
+
+- **Route optimization**: Combines local attractions and trending spots into
+  curated routes.
+- **Dynamic adjustments**: Fine-tunes routes based on crowd levels, weather,
+  and seasonality.
+- **Map visualization**: Highlights key stops and connections on a map; tapping
+  a stop reveals a timeline with detailed content.
 - **Itinerary view**: A memo-style trip plan for easy reference.
-- **Gamification**: Check-in points to encourage exploration (similar to Duolingo's engagement model).
+- **Gamification**: Check-in points encourage exploration, following an
+  engagement model similar to Duolingo.
 
 #### Input Factors
-- Real-time crowd levels (人流)
-- Weather conditions (天气)
-- Optimal local routes (本身地区的最优化路线)
-- User-defined travel type and purpose (用户自定义的旅游类型和目的)
-- Macau festivals and cultural events (澳门节庆和文化活动)
-- Casino shuttle bus routes (发财车路线)
 
-### 3. User Management (基础功能)
-- **Registration & Login**: Collects name, contact (email/phone), origin country, language preference, visit duration, and travel type (solo, family, post-conference leisure).
-- **Preference Checklist**: Understands what the user wants to explore in Macau (entertainment, culture, history, etc.).
+- Real-time crowd levels
+- Weather conditions
+- Optimal local routes
+- User-defined travel type and purpose
+- Macau festivals and cultural events
+- Casino shuttle-bus routes
+
+### 3. User Management
+
+- **Registration and login**: Collects name, contact details (email/phone),
+  country of origin, language preference, visit duration, and travel type
+  (solo, family, or post-conference leisure).
+- **Preference checklist**: Learns what the user wants to explore in Macau,
+  such as entertainment, culture, or history.
 - **Tutorial**: An onboarding video walkthrough of app features.
-- **Personal Center**: Profile and trip management.
+- **Personal center**: Profile and trip management.
 
-### 4. Human-in-the-Loop Curation (人工调度)
-- **Offline research data**: Uses the team's existing Xiaohongshu dataset (100 high-engagement notes + 751 comments, 2023–2025) as a static source for POI popularity, pain points, and route priors. No real-time social media monitoring or ongoing crawling in the competition scope.
-- **Crowd intelligence**: Monitors crowd levels at ports and attractions when available (via CrowdPass or similar data sources).
-- **Manual curation & feedback**: Team-reviewed content updates and in-app user feedback replace live social listening for knowledge iteration.
+### 4. Human-in-the-Loop Curation
+
+- **Offline research data**: Uses the team's existing Xiaohongshu dataset (100
+  high-engagement notes and 751 comments, 2023–2025) as a static source for POI
+  popularity, pain points, and route priors. Real-time social-media monitoring
+  and continued crawling are outside the competition scope.
+- **Crowd intelligence**: Monitors crowd levels at ports and attractions when
+  available through CrowdPass or similar data sources.
+- **Manual curation and feedback**: Team-reviewed content updates and in-app
+  user feedback replace live social listening for knowledge iteration.
 
 ## Current Stage
 
-前后端核心闭环已可用：用户/偏好、路线匹配与 Agent 微调、RAG 讲解、拍照识别、
-高德地图和步行路径、位置触发、四语 TTS、明信片与 Qwen-Image 生成/风格化均已
-接入。当前重点是验证全新环境的可复现部署，使用真实高德、DashScope、OSS 与
-QwenPaw 完成端到端 smoke test，并持续补充评测证据。
+The core frontend-to-backend loop is operational: multi-turn preference
+guidance, route matching and Agent refinement, RAG commentary, photo
+recognition, AMap maps and walking routes, location triggers, four-language
+TTS, postcards, and Qwen-Image generation/stylization are all integrated. The
+current priority is validating reproducible deployment in a clean environment,
+running end-to-end smoke tests with real AMap, DashScope, OSS, and QwenPaw
+services, and continuing to build evaluation evidence.
 
 ## Project Goal
 
-Build an interactive AI Agent application prototype based on QwenPaw that delivers a seamless, personalized tour experience for Macau visitors.
+Build an interactive AI Agent application prototype based on QwenPaw that
+delivers a seamless, personalized tour experience for Macau visitors.
 
 ## Team Collaboration
 
-- Keep docs updated as decisions become clearer.
+- Keep documentation updated as decisions become clearer.
 - Use `docs/idea-pool.md` to collect and compare project ideas.
 - Use `docs/team-roles.md` to clarify ownership and collaboration boundaries.
-- Keep frontend, backend, RAG, assets, and scripts work in their dedicated folders.
-- Prefer small, frequent commits with clear commit messages.
-- Discuss major architecture, product, and competition-track decisions before implementation.
+- Keep frontend, backend, RAG, assets, and scripts in their dedicated folders.
+- Prefer small, frequent commits with clear messages.
+- Discuss major architecture, product, and competition-track decisions before
+  implementation.

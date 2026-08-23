@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" role="img" aria-labelledby="title description">
+  <title id="title">密笺花瓣占位图</title>
+  <desc id="description">用于测试五份密笺组合动画的单片纸质花瓣</desc>
+  <defs>
+    <linearGradient id="petal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f5ead4"/>
+      <stop offset=".58" stop-color="#dfc796"/>
+      <stop offset="1" stop-color="#b67555"/>
+    </linearGradient>
+    <pattern id="lines" width="54" height="54" patternUnits="userSpaceOnUse">
+      <path d="M0 27h54M27 0v54" stroke="#866e54" stroke-opacity=".14" stroke-width="3"/>
+    </pattern>
+  </defs>
+  <path d="M500 80C745 182 835 397 722 620 660 742 570 823 500 917 430 823 340 742 278 620 165 397 255 182 500 80z" fill="url(#petal)" stroke="#9d5d43" stroke-width="26"/>
+  <path d="M500 80C745 182 835 397 722 620 660 742 570 823 500 917 430 823 340 742 278 620 165 397 255 182 500 80z" fill="url(#lines)"/>
+  <path d="M500 166v640M369 349c97 35 166 35 263 0M321 517c123 42 235 42 358 0" fill="none" stroke="#8e5a45" stroke-opacity=".42" stroke-width="17" stroke-linecap="round"/>
+  <circle cx="500" cy="811" r="58" fill="#d7b469" stroke="#9d5d43" stroke-width="18"/>
+</svg>

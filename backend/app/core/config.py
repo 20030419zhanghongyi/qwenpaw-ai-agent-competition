@@ -76,6 +76,11 @@ class Settings(BaseSettings):
     qwen_vision_model: str = "qwen-vl-max"
     qwen_embedding_model: str = "text-embedding-v3"
     qwen_tts_model: str = "qwen3-tts-flash"
+    # TTS is mounted as a QwenPaw tool on the existing guide agent.  Direct
+    # DashScope remains an explicit availability fallback, not the primary path.
+    qwenpaw_tts_enabled: bool = False
+    qwenpaw_tts_agent_id: str = "guide"
+    qwenpaw_tts_direct_fallback_enabled: bool = True
 
     # 高德地图
     amap_api_key: str = ""

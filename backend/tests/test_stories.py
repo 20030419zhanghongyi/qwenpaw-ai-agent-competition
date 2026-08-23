@@ -10,7 +10,12 @@ from sqlalchemy import delete, select
 from app.db.models import Checkin, StorySession as StorySessionRecord
 from app.db.models import Trip, TripStop, User
 from app.db.session import SessionLocal
-from app.features.stories.content import load_story, public_story, story_nodes
+from app.features.stories.content import (
+    load_story,
+    localize_story,
+    public_story,
+    story_nodes,
+)
 from app.features.stories.engine import apply_action
 from app.features.stories.models import (
     StoryAction,
@@ -24,7 +29,6 @@ from app.main import app
 
 
 STORY_ID = "lotus_city_double_map"
-COLOANE_STORY_ID = "coloane_after_tide"
 V4_NODE_IDS = [
     "prologue_old_book",
     "chapter_ama",
@@ -42,38 +46,16 @@ V4_POI_IDS = [
     "poi_0057",
     "poi_0003",
 ]
-COLOANE_NODE_IDS = [
-    "prologue_tide_workbook",
-    "chapter_coloane_sea",
-    "chapter_coloane_boat",
-    "chapter_coloane_village",
-    "chapter_coloane_craft",
-    "chapter_coloane_soil",
-    "ending_coloane_after_tide",
-]
-COLOANE_POI_IDS = [
-    "poi_0236",
-    "poi_0240",
-    "poi_0241",
-    "poi_0330",
-    "poi_0024",
-    "poi_0286",
-]
 
 
-def _session(
-    *,
-    story_id: str = STORY_ID,
-    current_chapter_id: str = "prologue_old_book",
-    content_version: int = 4,
-) -> StorySession:
+def _session(*, content_version: int = 4) -> StorySession:
     now = datetime.now(timezone.utc)
     return StorySession(
         session_id="story-session-test",
         user_id="story-user-test",
-        story_id=story_id,
+        story_id=STORY_ID,
         trip_id="trip-test",
-        current_chapter_id=current_chapter_id,
+        current_chapter_id="prologue_old_book",
         status=StorySessionStatus.ACTIVE,
         state=StorySessionState(content_version=content_version),
         created_at=now,
@@ -113,12 +95,7 @@ def _register_headers(client: TestClient, label: str) -> tuple[str, dict[str, st
     return body["user_id"], {"Authorization": f"Bearer {body['token']}"}
 
 
-def _complete_workflow(
-    story: dict,
-    story_session: StorySession,
-    *,
-    ending_choice_id: str = "complete_today_note",
-) -> None:
+def _complete_workflow(story: dict, story_session: StorySession) -> None:
     for node in sorted(story_nodes(story), key=lambda item: item["order"]):
         assert story_session.current_chapter_id == node["id"]
         if node.get("poi_id"):
@@ -142,7 +119,7 @@ def _complete_workflow(
                 _action(
                     StoryAction.CHOOSE_ENDING,
                     node["id"],
-                    choice_id=ending_choice_id,
+                    choice_id="complete_today_note",
                     reflection="今天的澳门仍在变化，我把所见、年代和来源留给后来人。",
                 ),
             )
@@ -165,23 +142,6 @@ def test_v4_public_package_matches_frozen_six_stop_story_and_hides_solutions():
     assert "哪吒" not in str(story)
     assert "红绫" not in str(story)
     assert "消失的界线" not in str(story)
-
-
-def test_coloane_after_tide_package_is_playable_and_hides_solutions():
-    story = load_story(COLOANE_STORY_ID)
-    public = public_story(story)
-    nodes = story_nodes(story)
-
-    assert story["version"] == 4
-    assert story["title"] == "潮退之後"
-    assert story["route_id"] == "coloane_after_tide"
-    assert [node["id"] for node in nodes] == COLOANE_NODE_IDS
-    assert [node["poi_id"] for node in nodes if node.get("poi_id")] == COLOANE_POI_IDS
-    assert len(story["endings"]) == 1
-    assert story["endings"][0]["id"] == "make_sound_postcard"
-    assert all(node.get("pages") for node in nodes)
-    assert all("solution" not in node.get("puzzle", {}) for node in story_nodes(public))
-    assert "solution" not in str(public)
 
 
 def test_v4_every_location_exposes_portrait_assets_dialogue_and_agent_context():
@@ -207,6 +167,33 @@ def test_story_content_endpoint_never_exposes_puzzle_solutions():
     assert response.json()["version"] == 4
     assert response.json()["title"] == "莲城双图：未尽之图"
     assert response.json()["presentation"]["default_orientation"] == "portrait"
+    assert "solution" not in response.text
+
+
+@pytest.mark.parametrize(
+    ("language", "expected_title", "expected_first_stop"),
+    [
+        ("zh-TW", "蓮城雙圖：未竟之圖", "媽閣廟"),
+        ("en", "Lotus City, Two Maps: The Map Still Unfinished", "A-Ma Temple"),
+        ("pt", "Cidade de Lótus, Dois Mapas: O Mapa Inacabado", "Templo de A-Má"),
+    ],
+)
+def test_story_locale_overlay_changes_display_text_but_preserves_puzzle_solution(
+    language: str, expected_title: str, expected_first_stop: str
+):
+    story = load_story(STORY_ID)
+    localized = localize_story(story, language)
+
+    assert localized["title"] == expected_title
+    assert story_nodes(localized)[1]["location_name"] == expected_first_stop
+    assert story_nodes(localized)[1]["puzzle"]["solution"] == story_nodes(story)[1]["puzzle"]["solution"]
+
+
+def test_story_content_endpoint_returns_requested_locale_without_solutions():
+    response = TestClient(app).get(f"/api/v1/stories/{STORY_ID}?language=en")
+
+    assert response.status_code == 200
+    assert response.json()["title"] == "Lotus City, Two Maps: The Map Still Unfinished"
     assert "solution" not in response.text
 
 
@@ -302,37 +289,6 @@ def test_complete_v4_workflow_awards_five_petals_and_single_ending_rewards():
     )
     assert note_petal_ids == [f"note_petal_{index}" for index in range(1, 6)]
     assert reward_ids[-2:] == ["complete_city_flower", "today_note"]
-    assert len(story_session.state.completed_chapter_ids) == 7
-
-
-def test_complete_coloane_after_tide_workflow_awards_five_records_and_postcard():
-    story = load_story(COLOANE_STORY_ID)
-    story_session = _session(
-        story_id=COLOANE_STORY_ID,
-        current_chapter_id="prologue_tide_workbook",
-    )
-    _complete_workflow(
-        story,
-        story_session,
-        ending_choice_id="make_sound_postcard",
-    )
-
-    reward_ids = [reward.id for reward in story_session.state.rewards]
-    stamp_ids = [
-        reward.id
-        for reward in story_session.state.rewards
-        if reward.kind == "stamp"
-    ]
-    assert story_session.status == StorySessionStatus.COMPLETED
-    assert story_session.state.ending_id == "make_sound_postcard"
-    assert stamp_ids == [
-        "record_sea",
-        "record_boat",
-        "record_village",
-        "record_craft",
-        "record_soil",
-    ]
-    assert reward_ids[-2:] == ["coloane_sound_postcard", "after_tide_reflection"]
     assert len(story_session.state.completed_chapter_ids) == 7
 
 

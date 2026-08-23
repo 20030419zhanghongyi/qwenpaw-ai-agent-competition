@@ -6,6 +6,8 @@ from sqlalchemy import select
 
 from app.db.models import Favorite as FavoriteRecord
 from app.db.models import TripFeedback as FeedbackRecord
+from app.db.models import User as UserRecord
+from app.db.models.user import DEFAULT_GUEST_USER_NAME, guest_user_email
 from app.db.session import SessionLocal
 from app.features.profile.store import profile_store
 from app.features.trips.store import trip_store
@@ -119,6 +121,19 @@ def test_add_valid_favorite():
     response = client.post(f"/api/v1/users/{USER_ID}/favorites/pois/{POI_ID}")
     assert response.status_code == 201
     assert response.json()["poi_id"] == POI_ID
+
+
+def test_add_favorite_creates_guest_user_with_default_name():
+    guest_user_id = "guest-favorite-user"
+
+    response = client.post(f"/api/v1/users/{guest_user_id}/favorites/pois/{POI_ID}")
+
+    assert response.status_code == 201
+    with SessionLocal() as session:
+        guest = session.get(UserRecord, guest_user_id)
+        assert guest is not None
+        assert guest.name == DEFAULT_GUEST_USER_NAME
+        assert guest.email == guest_user_email(guest_user_id)
 
 
 def test_favorite_is_persisted_in_database():
