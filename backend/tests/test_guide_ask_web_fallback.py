@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from fastapi.testclient import TestClient
 
 from app.features.guide import api as guide_api
@@ -309,7 +311,7 @@ def test_web_only_poi_without_local_material(monkeypatch, tmp_path):
     response = client.post(
         "/api/v1/guide/ask",
         json={
-            "poi": "未知地标XYZ",
+            "poi": "Macau Tower",
             "question": "这是什么建筑",
             "language": "zh-CN",
         },
@@ -319,3 +321,105 @@ def test_web_only_poi_without_local_material(monkeypatch, tmp_path):
     assert payload["web_used"] is True
     assert payload["source"] == "web"
     assert "Macau Tower" in payload["text"] or "tower" in payload["text"].lower()
+
+
+def test_english_ask_localizes_chinese_poi_key(monkeypatch, tmp_path):
+    _reset(monkeypatch, tmp_path)
+    seen_queries: list[str] = []
+
+    def _search(queries, **_kwargs):
+        seen_queries.extend(queries)
+        return [
+            {
+                "title": "Ruins of Saint Paul's",
+                "snippet": "The church complex was largely destroyed by fire in 1835.",
+                "url": "https://example.com/stpaul",
+                "source": "wikipedia:en",
+            }
+        ]
+
+    monkeypatch.setattr(guide_api, "search_web_multi", _search)
+    response = client.post(
+        "/api/v1/guide/ask",
+        json={
+            "poi": "大三巴牌坊",
+            "question": "How has it changed over time?",
+            "language": "en",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["poi_name"] == "Ruins of St. Paul's"
+    assert "About Ruins of St. Paul's" in payload["text"]
+    assert re.search(r"[\u3400-\u9fff]", payload["text"]) is None
+    assert "（" not in payload["text"]
+    assert any("Ruins of St. Paul's" in query for query in seen_queries)
+
+
+def test_portuguese_ask_filters_chinese_web_snippet(monkeypatch, tmp_path):
+    _reset(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        guide_api,
+        "search_web_multi",
+        lambda *_args, **_kwargs: [
+            {
+                "title": "大三巴牌坊",
+                "snippet": "大三巴牌坊在1835年的火灾后只留下前壁。",
+                "url": "https://example.com/zh",
+                "source": "web",
+            }
+        ],
+    )
+
+    response = client.post(
+        "/api/v1/guide/ask",
+        json={
+            "poi": "大三巴牌坊",
+            "question": "Como mudou ao longo do tempo?",
+            "language": "pt",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["poi_name"] == "Ruínas de S. Paulo"
+    assert re.search(r"[\u3400-\u9fff]", payload["text"]) is None
+
+
+def test_macao_museum_rejects_unrelated_museum_results(monkeypatch, tmp_path):
+    _reset(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        guide_api,
+        "search_web_multi",
+        lambda *_args, **_kwargs: [
+            {
+                "title": "Hong Kong",
+                "snippet": "Hong Kong is a special administrative region of China.",
+                "url": "https://example.com/hong-kong",
+                "source": "wikipedia:en",
+            },
+            {
+                "title": "Macao Museum",
+                "snippet": "Macao Museum presents the history and cultures of Macau.",
+                "url": "https://example.com/macao-museum",
+                "source": "official",
+            },
+        ],
+    )
+
+    response = client.post(
+        "/api/v1/guide/ask",
+        json={
+            "poi": "Macao Museum",
+            "question": "Which details are worth noticing on site?",
+            "language": "en",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["poi_name"] == "Macao Museum"
+    assert "Macao Museum presents" in payload["text"]
+    assert "Hong Kong" not in payload["text"]
+    assert [source["title"] for source in payload["web_sources"]] == ["Macao Museum"]

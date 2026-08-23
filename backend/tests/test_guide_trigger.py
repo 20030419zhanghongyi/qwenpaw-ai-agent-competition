@@ -69,7 +69,10 @@ def test_trigger_returns_nearest_poi_prompt_and_guide_request():
         "poi": "Trigger Test POI",
         "language": "en",
         "interests": None,
+        "travel_type": None,
         "next_stop": None,
+        "next_distance": None,
+        "next_walk_time": None,
     }
 
 
