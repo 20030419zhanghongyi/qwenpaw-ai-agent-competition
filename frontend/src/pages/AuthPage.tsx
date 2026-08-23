@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/state/AuthContext";
 import { useWalk } from "@/state/WalkContext";
 import { t } from "@/i18n";
@@ -70,6 +70,14 @@ export function AuthPage() {
     setFormError(null);
   };
 
+  const goBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate("/", { replace: true });
+  };
+
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const normalizedEmail = email.trim() || null;
@@ -123,9 +131,13 @@ export function AuthPage() {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-paper px-5 py-12">
       <section className="w-full max-w-md rounded-3xl border border-line bg-card p-6 shadow-[var(--shadow-soft)] sm:p-8">
-        <Link to="/" className="text-sm text-ink-soft transition hover:text-ink">
-          ← {t(language, "back")}
-        </Link>
+        <button
+          type="button"
+          onClick={goBack}
+          className="text-sm text-ink-soft transition hover:text-ink"
+        >
+          {t(language, "back")}
+        </button>
         <h1 className="mt-4 font-display text-3xl text-ink">
           {mode === "login" ? t(language, "authLoginTab") : t(language, "authRegisterTab")}
         </h1>
