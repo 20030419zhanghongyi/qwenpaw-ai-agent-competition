@@ -1,0 +1,244 @@
+{
+  "_comment": "POI expansion candidates for Macau cultural knowledge graph. These records are review queues, not canonical POIs. Merge into data/pois.json only after geocoding and source verification.",
+  "last_reviewed": "2026-08-22",
+  "sources": [
+    {
+      "id": "mgto_world_heritage",
+      "name": "Macao Government Tourism Office - Macao World Heritage",
+      "url": "https://www.macaotourism.gov.mo/en/sightseeing/macao-world-heritage"
+    },
+    {
+      "id": "mgto_sightseeing",
+      "name": "Macao Government Tourism Office - Sightseeing",
+      "url": "https://www.macaotourism.gov.mo/en/sightseeing"
+    },
+    {
+      "id": "icm_heritage",
+      "name": "Cultural Affairs Bureau - Macao World Heritage",
+      "url": "https://www.wh.mo/en/site"
+    },
+    {
+      "id": "macau_museums",
+      "name": "Macao Museum information portal",
+      "url": "https://www.museums.gov.mo"
+    }
+  ],
+  "candidates": [
+    {
+      "candidate_id": "poi_cand_mandarin_house",
+      "name_zh": "郑家大屋",
+      "name_en": "Mandarin's House",
+      "area": "澳门半岛",
+      "district": "风顺堂区",
+      "category": "historic_building",
+      "graph_tags": ["world_heritage", "merchant_family", "lingnan_architecture"],
+      "priority": "high",
+      "merge_strategy": "enrich_if_exists",
+      "source_ids": ["mgto_world_heritage", "icm_heritage"]
+    },
+    {
+      "candidate_id": "poi_cand_moorish_barracks",
+      "name_zh": "港务局大楼",
+      "name_en": "Moorish Barracks",
+      "area": "澳门半岛",
+      "district": "风顺堂区",
+      "category": "historic_building",
+      "graph_tags": ["world_heritage", "maritime", "colonial_administration"],
+      "priority": "high",
+      "merge_strategy": "enrich_if_exists",
+      "source_ids": ["mgto_world_heritage", "icm_heritage"]
+    },
+    {
+      "candidate_id": "poi_cand_dom_pedro_v_theatre",
+      "name_zh": "岗顶剧院",
+      "name_en": "Dom Pedro V Theatre",
+      "area": "澳门半岛",
+      "district": "风顺堂区",
+      "category": "theatre",
+      "graph_tags": ["world_heritage", "performing_arts", "neoclassical"],
+      "priority": "high",
+      "merge_strategy": "enrich_if_exists",
+      "source_ids": ["mgto_world_heritage", "icm_heritage"]
+    },
+    {
+      "candidate_id": "poi_cand_sir_robert_ho_tung_library",
+      "name_zh": "何东图书馆大楼",
+      "name_en": "Sir Robert Ho Tung Library",
+      "area": "澳门半岛",
+      "district": "风顺堂区",
+      "category": "library",
+      "graph_tags": ["world_heritage", "garden_house", "public_library"],
+      "priority": "high",
+      "merge_strategy": "enrich_if_exists",
+      "source_ids": ["mgto_world_heritage", "icm_heritage"]
+    },
+    {
+      "candidate_id": "poi_cand_st_joseph_seminary",
+      "name_zh": "圣若瑟修院及圣堂",
+      "name_en": "St. Joseph's Seminary and Church",
+      "area": "澳门半岛",
+      "district": "风顺堂区",
+      "category": "church",
+      "graph_tags": ["world_heritage", "religion", "education_history"],
+      "priority": "high",
+      "merge_strategy": "enrich_if_exists",
+      "source_ids": ["mgto_world_heritage", "icm_heritage"]
+    },
+    {
+      "candidate_id": "poi_cand_leal_senado_building",
+      "name_zh": "民政总署大楼",
+      "name_en": "Leal Senado Building",
+      "area": "澳门半岛",
+      "district": "大堂区",
+      "category": "historic_building",
+      "graph_tags": ["world_heritage", "civic_governance", "senado_square"],
+      "priority": "high",
+      "merge_strategy": "enrich_if_exists",
+      "source_ids": ["mgto_world_heritage", "icm_heritage"]
+    },
+    {
+      "candidate_id": "poi_cand_sam_kai_vui_kun",
+      "name_zh": "三街会馆（关帝庙）",
+      "name_en": "Sam Kai Vui Kun",
+      "area": "澳门半岛",
+      "district": "大堂区",
+      "category": "temple",
+      "graph_tags": ["world_heritage", "merchant_association", "folk_religion"],
+      "priority": "high",
+      "merge_strategy": "enrich_if_exists",
+      "source_ids": ["mgto_world_heritage", "icm_heritage"]
+    },
+    {
+      "candidate_id": "poi_cand_lou_kau_mansion",
+      "name_zh": "卢家大屋",
+      "name_en": "Lou Kau Mansion",
+      "area": "澳门半岛",
+      "district": "大堂区",
+      "category": "historic_residence",
+      "graph_tags": ["world_heritage", "merchant_family", "chinese_mansion"],
+      "priority": "high",
+      "merge_strategy": "enrich_if_exists",
+      "source_ids": ["mgto_world_heritage", "icm_heritage"]
+    },
+    {
+      "candidate_id": "poi_cand_st_dominic_church",
+      "name_zh": "玫瑰堂",
+      "name_en": "St. Dominic's Church",
+      "area": "澳门半岛",
+      "district": "大堂区",
+      "category": "church",
+      "graph_tags": ["world_heritage", "baroque", "religion"],
+      "priority": "high",
+      "merge_strategy": "enrich_if_exists",
+      "source_ids": ["mgto_world_heritage", "icm_heritage"]
+    },
+    {
+      "candidate_id": "poi_cand_na_tcha_temple",
+      "name_zh": "哪吒庙",
+      "name_en": "Na Tcha Temple",
+      "area": "澳门半岛",
+      "district": "花王堂区",
+      "category": "temple",
+      "graph_tags": ["world_heritage", "folk_religion", "st_pauls_context"],
+      "priority": "high",
+      "merge_strategy": "enrich_if_exists",
+      "source_ids": ["mgto_world_heritage", "icm_heritage"]
+    },
+    {
+      "candidate_id": "poi_cand_old_city_walls",
+      "name_zh": "旧城墙遗址",
+      "name_en": "Section of the Old City Walls",
+      "area": "澳门半岛",
+      "district": "花王堂区",
+      "category": "heritage_remains",
+      "graph_tags": ["world_heritage", "defence", "urban_boundary"],
+      "priority": "high",
+      "merge_strategy": "enrich_if_exists",
+      "source_ids": ["mgto_world_heritage", "icm_heritage"]
+    },
+    {
+      "candidate_id": "poi_cand_guia_fortress",
+      "name_zh": "东望洋炮台、灯塔及圣母雪地殿圣堂",
+      "name_en": "Guia Fortress, Lighthouse and Chapel",
+      "area": "澳门半岛",
+      "district": "望德堂区",
+      "category": "fortress",
+      "graph_tags": ["world_heritage", "defence", "lighthouse", "typhoon_signal"],
+      "priority": "high",
+      "merge_strategy": "enrich_if_exists",
+      "source_ids": ["mgto_world_heritage", "icm_heritage"]
+    },
+    {
+      "candidate_id": "poi_cand_taipa_houses",
+      "name_zh": "龙环葡韵住宅式博物馆",
+      "name_en": "Taipa Houses",
+      "area": "氹仔",
+      "district": "嘉模堂区",
+      "category": "museum_cluster",
+      "graph_tags": ["macanese_culture", "museum", "taipa"],
+      "priority": "high",
+      "merge_strategy": "enrich_if_exists",
+      "source_ids": ["mgto_sightseeing", "macau_museums"]
+    },
+    {
+      "candidate_id": "poi_cand_our_lady_carmel_church",
+      "name_zh": "嘉模圣母堂",
+      "name_en": "Our Lady of Carmel Church",
+      "area": "氹仔",
+      "district": "嘉模堂区",
+      "category": "church",
+      "graph_tags": ["taipa", "religion", "photo_spot"],
+      "priority": "medium",
+      "merge_strategy": "enrich_if_exists",
+      "source_ids": ["mgto_sightseeing"]
+    },
+    {
+      "candidate_id": "poi_cand_taipa_village",
+      "name_zh": "氹仔旧城区",
+      "name_en": "Taipa Village",
+      "area": "氹仔",
+      "district": "嘉模堂区",
+      "category": "historic_neighbourhood",
+      "graph_tags": ["street_food", "macanese_culture", "slow_walk"],
+      "priority": "high",
+      "merge_strategy": "create_or_enrich_cluster",
+      "source_ids": ["mgto_sightseeing"]
+    },
+    {
+      "candidate_id": "poi_cand_lai_chi_vun_shipyards",
+      "name_zh": "荔枝碗船厂片区",
+      "name_en": "Lai Chi Vun Shipyards",
+      "area": "路环",
+      "district": "圣方济各堂区",
+      "category": "industrial_heritage",
+      "graph_tags": ["shipbuilding", "industrial_heritage", "coloane"],
+      "priority": "high",
+      "merge_strategy": "enrich_if_exists",
+      "source_ids": ["mgto_sightseeing"]
+    },
+    {
+      "candidate_id": "poi_cand_st_francis_xavier_church",
+      "name_zh": "圣方济各圣堂",
+      "name_en": "Chapel of St. Francis Xavier",
+      "area": "路环",
+      "district": "圣方济各堂区",
+      "category": "church",
+      "graph_tags": ["coloane", "religion", "village_square"],
+      "priority": "medium",
+      "merge_strategy": "enrich_if_exists",
+      "source_ids": ["mgto_sightseeing"]
+    },
+    {
+      "candidate_id": "poi_cand_coloane_village",
+      "name_zh": "路环市区",
+      "name_en": "Coloane Village",
+      "area": "路环",
+      "district": "圣方济各堂区",
+      "category": "historic_neighbourhood",
+      "graph_tags": ["coloane", "slow_walk", "food", "waterfront"],
+      "priority": "high",
+      "merge_strategy": "create_or_enrich_cluster",
+      "source_ids": ["mgto_sightseeing"]
+    }
+  ]
+}

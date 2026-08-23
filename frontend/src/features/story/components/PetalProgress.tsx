@@ -9,8 +9,10 @@ export function PetalProgress({
   collected,
   total = 5,
   compact = false,
-  label = "花瓣进度",
+  label,
 }: PetalProgressProps) {
+  const st = useStoryMessages();
+  const resolvedLabel = label ?? st("secretNotes");
   const safeTotal = Math.max(1, total);
   const safeCollected = Math.min(Math.max(0, collected), safeTotal);
 
@@ -18,7 +20,7 @@ export function PetalProgress({
     <div
       className="inline-flex items-center gap-2"
       role="img"
-      aria-label={`${label}：${safeCollected}/${safeTotal}`}
+      aria-label={`${resolvedLabel}: ${safeCollected}/${safeTotal}`}
     >
       <span className="flex gap-1" aria-hidden>
         {Array.from({ length: safeTotal }, (_, index) => (
@@ -40,3 +42,4 @@ export function PetalProgress({
     </div>
   );
 }
+import { useStoryMessages } from "../storyI18n";

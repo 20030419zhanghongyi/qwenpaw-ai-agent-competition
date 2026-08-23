@@ -11,6 +11,7 @@ import { StoryBottomAction } from "@/features/story/components/StoryBottomAction
 import { StoryComicReader } from "@/features/story/components/StoryComicReader";
 import { StoryImageViewer } from "@/features/story/components/StoryImageViewer";
 import { StoryTopBar } from "@/features/story/components/StoryTopBar";
+import { useStoryMessages } from "@/features/story/storyI18n";
 import { useAuth } from "@/state/AuthContext";
 import { useStory, useStoryRestore } from "@/state/StoryContext";
 import type {
@@ -92,6 +93,7 @@ export function StoryScenePage() {
     clearError,
   } = useStory();
   const { sessionId: effectiveId } = useStoryRestore(sessionId);
+  const st = useStoryMessages();
 
   const [comicIndex, setComicIndex] = useState(0);
   const [comicDone, setComicDone] = useState(false);
@@ -233,7 +235,7 @@ export function StoryScenePage() {
   };
 
   if ((loading || isRestoring) && !session) {
-    return <LoadingState label="正在恢复当前章节…" />;
+    return <LoadingState label={st("loadingChapter")} />;
   }
 
   if (!session || !displayChapter) {
@@ -244,8 +246,8 @@ export function StoryScenePage() {
           <ErrorState
             message={
               invalidSession
-                ? "这段旅程已经失效或不属于当前账号。你可以返回故事封面重新载入自己的进度。"
-                : error ?? "无法加载当前章节"
+                ? st("storyUnavailable")
+                : error ?? st("loadingChapter")
             }
             onRetry={
               effectiveId && !invalidSession
@@ -258,7 +260,7 @@ export function StoryScenePage() {
             onClick={() => navigate("/stories/lotus_city_double_map")}
             className="mt-4 min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper"
           >
-            返回故事封面
+            {st("back")}
           </button>
         </div>
       </main>
@@ -280,10 +282,10 @@ export function StoryScenePage() {
   const petalCount = chapterPetalCount(session.state.rewards);
   const chapterNumber =
     displayChapter.order === 0
-      ? "序章"
+      ? st("prologue")
       : displayChapter.order <= 6
-        ? `第 ${displayChapter.order} 站 / 6`
-        : "故事章节";
+        ? st("chapter", { order: displayChapter.order })
+        : st("loadingChapterTitle");
   const lastResultForChapter =
     lastActionResult && submittedChapterSnapshot?.id === displayChapter.id
       ? lastActionResult
@@ -310,7 +312,7 @@ export function StoryScenePage() {
 
       <div className="flex-1 px-4 pb-32 pt-4">
         <div className="landscape-story-hint mb-4 hidden rounded-xl border border-ochre/30 bg-ochre/5 p-3 text-center text-sm text-ink-soft">
-          建议旋转回竖屏，获得更完整的故事体验。
+          {st("landscapeHint")}
         </div>
 
         <header className="mb-4">
@@ -322,7 +324,7 @@ export function StoryScenePage() {
           </h1>
           {displayChapter.location_name && (
             <p className="mt-2 text-base text-sage-deep">
-              地点：{displayChapter.location_name}
+              {st("location", { name: displayChapter.location_name })}
             </p>
           )}
         </header>
@@ -339,16 +341,15 @@ export function StoryScenePage() {
             ) : (
               <StoryImage
                 assetId={displayChapter.presentation?.assets[0] ?? "V4-PROP-03"}
-                alt={`${displayChapter.location_name ?? displayChapter.title}到达场景`}
+                alt={displayChapter.location_name ?? displayChapter.title}
                 eager
                 onOpen={(assetId) => setViewer({ assetId })}
               />
             )}
             <div className="mt-4 rounded-2xl border border-line bg-card p-4">
-              <h2 className="font-serif text-lg font-semibold">到达确认</h2>
+              <h2 className="font-serif text-lg font-semibold">{st("arrivalCheck")}</h2>
               <p className="mt-2 text-base leading-7 text-ink-soft">
-                请只在开放、安全的区域确认到达。不需要进入封闭区域，
-                不需要触碰文物，也不强制使用 GPS。
+                {st("arrivalSafety")}
               </p>
               {error && (
                 <p role="alert" className="mt-3 text-sm text-clay">
@@ -362,16 +363,16 @@ export function StoryScenePage() {
             <div className="rounded-3xl border border-sage-deep/30 bg-sage-deep/5 p-5 text-center">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sage-deep">
                 {session.state.skipped_chapter_ids.includes(displayChapter.id)
-                  ? "谜题已跳过"
+                  ? st("skipped")
                   : displayChapter.kind === "prologue"
-                    ? "路线已开启"
-                    : "章节完成"}
+                    ? st("routeOpened")
+                    : st("chapterCompleted")}
               </p>
               <h2 className="mt-2 font-serif text-xl font-semibold">
-                {lastActionResult?.message ?? "进度已经保存"}
+                {lastActionResult?.message ?? st("progressSaved")}
               </h2>
               <p className="mt-2 text-base leading-7 text-ink-soft">
-                当前章节内容会保持到你主动查看下一站，不会被新的章节瞬间替换。
+                {st("progressKeeps")}
               </p>
             </div>
           </section>
@@ -380,7 +381,7 @@ export function StoryScenePage() {
             {displayChapter.scene && (
               <section className="rounded-2xl border border-line bg-card p-4">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sage-deep">
-                  场景
+                  {st("scene")}
                 </p>
                 <p className="mt-2 text-base leading-7 text-ink-soft">
                   {displayChapter.scene}
@@ -423,13 +424,13 @@ export function StoryScenePage() {
               <>
                 {clueAssets.length > 0 && (
                   <section className="mt-5">
-                    <h2 className="font-serif text-xl font-semibold">现场观察与线索</h2>
+                    <h2 className="font-serif text-xl font-semibold">{st("observations")}</h2>
                     <div className="mt-3 grid gap-3">
                       {clueAssets.map((assetId) => (
                         <StoryImage
                           key={assetId}
                           assetId={assetId}
-                          alt={`${displayChapter.location_name ?? "本章"}线索`}
+                          alt={displayChapter.location_name ?? displayChapter.title}
                           onOpen={(openedAssetId) =>
                             setViewer({ assetId: openedAssetId })
                           }
@@ -442,7 +443,7 @@ export function StoryScenePage() {
                 {displayChapter.knowledge_cards &&
                   displayChapter.knowledge_cards.length > 0 && (
                     <section className="mt-5">
-                      <h2 className="font-serif text-xl font-semibold">知识卡</h2>
+                      <h2 className="font-serif text-xl font-semibold">{st("knowledgeCards")}</h2>
                       <div className="mt-3 space-y-3">
                         {displayChapter.knowledge_cards.map((card) => (
                           <KnowledgeCard
@@ -465,7 +466,7 @@ export function StoryScenePage() {
                 {isPuzzleChapter && displayChapter.puzzle && (
                   <section className="mt-6" aria-labelledby="chapter-puzzle-title">
                     <h2 id="chapter-puzzle-title" className="font-serif text-xl font-semibold">
-                      阿澜留下的问题
+                      {st("puzzleQuestion")}
                     </h2>
                     <div className="mt-3">
                       <PuzzlePanel
@@ -485,15 +486,14 @@ export function StoryScenePage() {
                 {isEndingChapter && (
                   <>
                     <section className="mt-6 rounded-2xl border border-line bg-card p-4">
-                      <h2 className="font-serif text-xl font-semibold">让两张图互相说明</h2>
+                      <h2 className="font-serif text-xl font-semibold">{st("combineMaps")}</h2>
                       <p className="mt-2 text-base leading-7 text-ink-soft">
-                        调整透明度，让城市双图与今天的澳门叠在一起。
-                        这个动作只承担叙事体验，不作为接口答案。
+                        {st("combineMapsBody")}
                       </p>
                       <div className="relative mt-4 overflow-hidden rounded-2xl border border-line bg-paper-warm">
                         <StoryImage
                           assetId="V4-PROP-03"
-                          alt="城市双图"
+                          alt={st("cityMaps")}
                           className="rounded-none border-0"
                         />
                         <div
@@ -502,13 +502,13 @@ export function StoryScenePage() {
                         >
                           <StoryImage
                             assetId="V4-FOR-03"
-                            alt="双图覆盖今天的城市"
+                            alt={st("cityMaps")}
                             className="rounded-none border-0"
                           />
                         </div>
                       </div>
                       <label htmlFor="map-overlay" className="mt-4 block text-sm font-medium text-sage-deep">
-                        双图透明度：{overlayOpacity}%
+                        {st("opacity", { value: overlayOpacity })}
                       </label>
                       <input
                         id="map-overlay"
@@ -526,18 +526,18 @@ export function StoryScenePage() {
                         onPointerCancel={() => setOverlayOpacity(70)}
                         className="mt-3 min-h-12 w-full rounded-full border border-sage-deep/30 bg-sage-deep/5 px-5 text-base font-medium text-sage-deep"
                       >
-                        按住让双图重合
+                        {st("holdOverlay")}
                       </button>
                       <div className="mt-4 border-t border-line pt-4">
                         <StoryImage
                           assetId="V4-FOR-08"
-                          alt="五站花瓣组成完整澳门市花"
+                          alt={st("petalsComplete")}
                           onOpen={(assetId) => setViewer({ assetId })}
                           className="mx-auto max-w-64"
                           imageClassName="object-contain"
                         />
                         <p className="mt-2 text-center text-sm leading-6 text-ink-soft">
-                          五站留下的纹理彼此补全，组成同一朵市花。
+                          {st("petalsComplete")}
                         </p>
                       </div>
                     </section>
@@ -586,11 +586,11 @@ export function StoryScenePage() {
 
       {needsArrival && (
         <StoryBottomAction
-          label="我已到达"
+          label={st("arrived")}
           busy={actionPending}
-          busyLabel="正在确认到达…"
+          busyLabel={st("confirmingArrival")}
           onClick={() => void handleArrive()}
-          hint="请先确认周围环境安全"
+          hint={st("arrivalHint")}
         />
       )}
 
@@ -599,9 +599,9 @@ export function StoryScenePage() {
         narrativeReady &&
         displayChapter.kind === "prologue" && (
           <StoryBottomAction
-            label="去第一站：妈阁庙"
+            label={st("goToAmaze")}
             busy={actionPending}
-            busyLabel="正在开启路线…"
+            busyLabel={st("preparing")}
             onClick={() => void handleContinue()}
           />
         )}
@@ -612,7 +612,7 @@ export function StoryScenePage() {
         isEndingChapter &&
         (!hasDialogue || dialogueDone) && (
           <StoryBottomAction
-            label="写下今日补记"
+            label={st("writeNote")}
             onClick={() =>
               navigate(`/story-sessions/${session.session_id}/ending`)
             }

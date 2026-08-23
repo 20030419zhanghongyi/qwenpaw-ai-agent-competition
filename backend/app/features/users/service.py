@@ -71,6 +71,9 @@ class UserService:
     def get(self, user_id: str) -> UserProfile | None:
         return self._repository.get(user_id)
 
+    def get_preference_memory(self, user_id: str) -> dict:
+        return self._repository.get_preference_memory(user_id)
+
     def update_preference(self, user_id: str, preference: Preference) -> UserProfile:
         if preference.language not in SUPPORTED_LANGS:
             raise InvalidLanguageError(f"language must be one of {SUPPORTED_LANGS}")

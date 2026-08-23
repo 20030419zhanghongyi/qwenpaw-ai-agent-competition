@@ -10,7 +10,12 @@ from sqlalchemy import delete, select
 from app.db.models import Checkin, StorySession as StorySessionRecord
 from app.db.models import Trip, TripStop, User
 from app.db.session import SessionLocal
-from app.features.stories.content import load_story, public_story, story_nodes
+from app.features.stories.content import (
+    load_story,
+    localize_story,
+    public_story,
+    story_nodes,
+)
 from app.features.stories.engine import apply_action
 from app.features.stories.models import (
     StoryAction,
@@ -162,6 +167,33 @@ def test_story_content_endpoint_never_exposes_puzzle_solutions():
     assert response.json()["version"] == 4
     assert response.json()["title"] == "莲城双图：未尽之图"
     assert response.json()["presentation"]["default_orientation"] == "portrait"
+    assert "solution" not in response.text
+
+
+@pytest.mark.parametrize(
+    ("language", "expected_title", "expected_first_stop"),
+    [
+        ("zh-TW", "蓮城雙圖：未竟之圖", "媽閣廟"),
+        ("en", "Lotus City, Two Maps: The Map Still Unfinished", "A-Ma Temple"),
+        ("pt", "Cidade de Lótus, Dois Mapas: O Mapa Inacabado", "Templo de A-Má"),
+    ],
+)
+def test_story_locale_overlay_changes_display_text_but_preserves_puzzle_solution(
+    language: str, expected_title: str, expected_first_stop: str
+):
+    story = load_story(STORY_ID)
+    localized = localize_story(story, language)
+
+    assert localized["title"] == expected_title
+    assert story_nodes(localized)[1]["location_name"] == expected_first_stop
+    assert story_nodes(localized)[1]["puzzle"]["solution"] == story_nodes(story)[1]["puzzle"]["solution"]
+
+
+def test_story_content_endpoint_returns_requested_locale_without_solutions():
+    response = TestClient(app).get(f"/api/v1/stories/{STORY_ID}?language=en")
+
+    assert response.status_code == 200
+    assert response.json()["title"] == "Lotus City, Two Maps: The Map Still Unfinished"
     assert "solution" not in response.text
 
 

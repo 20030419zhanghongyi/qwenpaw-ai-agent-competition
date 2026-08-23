@@ -10,7 +10,7 @@ import { StoryBottomAction } from "@/features/story/components/StoryBottomAction
 import { StoryImageViewer } from "@/features/story/components/StoryImageViewer";
 import { PetalProgress } from "@/features/story/components/PetalProgress";
 import { StoryTopBar } from "@/features/story/components/StoryTopBar";
-import { storyStationName } from "@/features/story/storyStations";
+import { useStoryMessages } from "@/features/story/storyI18n";
 import { useAuth } from "@/state/AuthContext";
 import { useStory, useStoryRestore } from "@/state/StoryContext";
 import type { RoutePoi } from "@/types/routes";
@@ -33,6 +33,7 @@ export function StoryMapPage() {
     loadStory,
   } = useStory();
   const { sessionId: effectiveId } = useStoryRestore(sessionId);
+  const st = useStoryMessages();
   const [pois, setPois] = useState<RoutePoi[]>([]);
   const [agentOpen, setAgentOpen] = useState(false);
   const [viewerAssetId, setViewerAssetId] = useState<string | null>(null);
@@ -73,7 +74,7 @@ export function StoryMapPage() {
       Object.fromEntries(
         story?.nodes.flatMap((node) =>
           node.poi_id
-            ? [[node.poi_id, storyStationName(node.id) ?? node.title]]
+            ? [[node.poi_id, node.title]]
             : [],
         ) ?? [],
       ),
@@ -120,7 +121,7 @@ export function StoryMapPage() {
   };
 
   if ((loading || isRestoring) && (!session || !story)) {
-    return <LoadingState label="正在恢复莲城路线…" />;
+    return <LoadingState label={st("loadingRoute")} />;
   }
 
   if (!session || !story) {
@@ -131,8 +132,8 @@ export function StoryMapPage() {
           <ErrorState
             message={
               invalidSession
-                ? "这段旅程已经失效或不属于当前账号。你可以返回故事封面重新载入自己的进度。"
-                : error ?? "未找到故事会话"
+                ? st("storyUnavailable")
+                : error ?? st("loadingRoute")
             }
             onRetry={
               effectiveId && !invalidSession
@@ -145,7 +146,7 @@ export function StoryMapPage() {
             onClick={() => navigate("/stories/lotus_city_double_map")}
             className="mt-4 min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper"
           >
-            返回故事封面
+            {st("back")}
           </button>
         </div>
       </main>
@@ -165,7 +166,7 @@ export function StoryMapPage() {
     <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-paper text-ink shadow-[var(--shadow-soft)]">
       <StoryTopBar
         title={story.title}
-        eyebrow="莲城路线"
+        eyebrow={st("routeEyebrow")}
         petals={petalCount}
         onBack={() => navigate(`/stories/${story.id}`)}
         onAskAgent={agentContext ? () => setAgentOpen(true) : undefined}
@@ -174,15 +175,15 @@ export function StoryMapPage() {
       <div className="flex-1 px-4 pb-28 pt-4">
         <section className="rounded-2xl border border-sage-deep/25 bg-sage-deep/5 p-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sage-deep">
-            当前任务
+            {st("currentMission")}
           </p>
           <h1 className="mt-1 font-serif text-xl font-semibold">
-            {currentChapter?.title ?? "载入当前章节"}
+            {currentChapter?.title ?? st("loadingChapterTitle")}
           </h1>
           <p className="mt-2 text-base leading-7 text-ink-soft">
             {currentChapter?.location_name ??
               currentPoi?.poi_name ??
-              "先完成序章，开启六站路线"}
+              st("unlockRoute")}
             {currentChapter?.story_time ? ` · ${currentChapter.story_time}` : ""}
           </p>
         </section>
@@ -190,9 +191,9 @@ export function StoryMapPage() {
         <section className="mt-4 rounded-2xl border border-line bg-card p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="font-serif text-lg font-semibold">五张密笺</h2>
+              <h2 className="font-serif text-lg font-semibold">{st("secretNotes")}</h2>
               <p className="mt-1 text-sm text-ink-soft">
-                花瓣仅在服务端发放奖励后点亮
+                {st("petalsServer")}
               </p>
             </div>
             <PetalProgress collected={petalCount} />
@@ -200,13 +201,13 @@ export function StoryMapPage() {
           <div className="mt-3 grid grid-cols-2 gap-2">
             <StoryImage
               assetId="V4-PROP-03"
-              alt="城市双图"
+              alt={st("cityMaps")}
               onOpen={setViewerAssetId}
               className="rounded-xl"
             />
             <StoryImage
               assetId={petalCount === 5 ? "V4-PROP-05" : "V4-PROP-04"}
-              alt={petalCount === 5 ? "五张密笺重合" : "尚未集齐的密笺"}
+              alt={petalCount === 5 ? st("secretNotes") : st("incompleteNotes")}
               onOpen={setViewerAssetId}
               className="rounded-xl"
             />
@@ -217,10 +218,10 @@ export function StoryMapPage() {
           <div className="flex items-end justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ochre">
-                一日六站
+                {st("sixStops")}
               </p>
               <h2 id="story-timeline-title" className="font-serif text-xl font-semibold">
-                章节时间线
+                {st("timeline")}
               </h2>
             </div>
             <span className="text-sm text-ink-soft">
@@ -245,7 +246,7 @@ export function StoryMapPage() {
                       } else if (status === "completed") {
                         setSummaryNode(node);
                       } else {
-                        setNotice("完成前一站后解锁");
+                        setNotice(st("finishPrevious"));
                       }
                     }}
                     className={`flex min-h-20 w-full items-center gap-3 rounded-2xl border p-3 text-left ${
@@ -269,16 +270,16 @@ export function StoryMapPage() {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-base font-medium">
-                        {storyStationName(node.id) ?? poi?.poi_name ?? node.title}
+                          {node.title ?? poi?.poi_name}
                       </span>
                       <span className="mt-1 block text-sm text-ink-soft">
                         {status === "current"
-                          ? "当前站 · 点击进入"
+                          ? st("currentStop")
                           : skipped
-                            ? "已完成 · 谜题已跳过"
+                            ? st("skipped")
                             : status === "completed"
-                              ? "已完成 · 查看回顾"
-                              : "尚未解锁"}
+                              ? st("completed")
+                              : st("locked")}
                       </span>
                     </span>
                     <span aria-hidden>{status === "locked" ? "锁" : "→"}</span>
@@ -291,7 +292,7 @@ export function StoryMapPage() {
 
         <details className="mt-5 overflow-hidden rounded-2xl border border-line bg-card">
           <summary className="flex min-h-12 cursor-pointer items-center justify-between px-4 text-base font-medium">
-            查看六站地图
+            {st("viewMap")}
             <span aria-hidden>⌄</span>
           </summary>
           <div className="relative isolate h-72 overflow-hidden border-t border-line">
@@ -306,7 +307,7 @@ export function StoryMapPage() {
                   navigate(`/story-sessions/${session.session_id}/nodes/${node.id}`);
                 } else {
                   setSummaryNode(statusFor(node) === "completed" ? node : null);
-                  if (statusFor(node) === "locked") setNotice("完成前一站后解锁");
+                  if (statusFor(node) === "locked") setNotice(st("finishPrevious"));
                 }
               }}
             />
@@ -335,7 +336,7 @@ export function StoryMapPage() {
 
       {currentChapter && (
         <StoryBottomAction
-          label="进入当前章节"
+          label={st("enterChapter")}
           onClick={enterCurrentChapter}
         />
       )}
@@ -344,7 +345,7 @@ export function StoryMapPage() {
         node={summaryNode}
         poiName={
           summaryNode
-            ? storyStationName(summaryNode.id) ??
+            ? summaryNode.title ??
               pois.find((poi) => poi.poi_id === summaryNode.poi_id)?.poi_name
             : undefined
         }

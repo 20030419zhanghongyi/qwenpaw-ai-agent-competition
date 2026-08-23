@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { StoryKnowledgeCardData } from "../types";
 import { ConfidenceBadge } from "./ConfidenceBadge";
 import { SourceBadge } from "./SourceBadge";
+import { useStoryMessages } from "../storyI18n";
 
 const KIND_LABELS: Record<string, string> = {
   historical_fact: "史实",
@@ -20,6 +21,7 @@ export function KnowledgeCard({
   card,
   defaultOpen = false,
 }: KnowledgeCardProps) {
+  const st = useStoryMessages();
   const [open, setOpen] = useState(defaultOpen);
   const body = card.text ?? card.content ?? "";
   const panelId = `story-knowledge-${card.id ?? card.title.replace(/\s+/g, "-")}`;
@@ -53,7 +55,7 @@ export function KnowledgeCard({
           )}
         </span>
         <span className="shrink-0 text-[13px] text-sage-deep">
-          {open ? "收起" : "展开了解"}
+          {open ? st("hideHistory") : st("knowledgeCards")}
         </span>
       </button>
       {open && (

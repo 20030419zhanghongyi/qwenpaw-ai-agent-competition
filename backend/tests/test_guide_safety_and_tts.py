@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from app.agents.photo_agent import PhotoRecognition
 from app.features.guide import api as guide_api
+from app.features.guide import tts as guide_tts
 from app.features.intent import api as intent_api
 from app.guardrails.runtime import rate_limiter
 from app.main import app
@@ -105,6 +106,25 @@ def test_tts_rejects_unsupported_language_and_reports_unavailable(monkeypatch):
     )
     response = client.post("/api/v1/guide/tts", json={"text": "hello", "language": "en"})
     assert response.status_code == 503
+
+
+def test_tts_uses_qwenpaw_tool_before_direct_provider(monkeypatch):
+    monkeypatch.setattr(guide_tts.settings, "qwenpaw_tts_enabled", True)
+    monkeypatch.setattr(guide_tts.settings, "qwenpaw_tts_direct_fallback_enabled", False)
+    monkeypatch.setattr(guide_tts, "_require_oss_config", lambda: None)
+    monkeypatch.setattr(guide_tts, "upload_audio", lambda *_args, **_kwargs: ("https://oss.example/qwenpaw.mp3", "tts/qwenpaw.mp3"))
+    calls: list[tuple[str, str]] = []
+    monkeypatch.setattr(
+        guide_tts,
+        "synthesize_audio_via_qwenpaw",
+        lambda text, language: calls.append((text, language)) or (b"audio", "Cherry"),
+    )
+
+    result = guide_tts.synthesize_to_oss("hello", "en")
+
+    assert calls == [("hello", "en")]
+    assert result["audio_url"] == "https://oss.example/qwenpaw.mp3"
+    assert result["voice"] == "Cherry"
 
 
 def test_intent_rate_limit_returns_retry_after(monkeypatch):

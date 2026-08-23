@@ -17,6 +17,8 @@ import {
   startStorySession,
 } from "@/api/stories";
 import { useAuth } from "@/state/AuthContext";
+import { useWalk } from "@/state/WalkContext";
+import type { LanguageCode } from "@/types";
 import type {
   StoryActionRequest,
   StoryActionResponse,
@@ -108,17 +110,19 @@ const StoryContext = createContext<StoryContextValue | null>(null);
 
 export function StoryProvider({ children }: { children: ReactNode }) {
   const { token, userId } = useAuth();
+  const { language } = useWalk();
   const identityKey = userId
-    ? `user:${userId}`
+    ? `user:${userId}:${language}`
     : token
-      ? "restoring-user"
-      : "guest";
+      ? `restoring-user:${language}`
+      : `guest:${language}`;
 
   return (
     <StoryStateProvider
       key={identityKey}
       token={token}
       userId={userId}
+      language={language}
     >
       {children}
     </StoryStateProvider>
@@ -129,10 +133,12 @@ function StoryStateProvider({
   children,
   token,
   userId,
+  language,
 }: {
   children: ReactNode;
   token: string | null;
   userId: string | null;
+  language: LanguageCode;
 }) {
   const [story, setStory] = useState<StoryOverview | null>(null);
   const [session, setSessionState] = useState<StorySessionResponse | null>(null);
@@ -206,7 +212,7 @@ function StoryStateProvider({
       beginLoading();
       clearError();
       try {
-        const data = await fetchStory(storyId);
+        const data = await fetchStory(storyId, language);
         setStory(data);
         return data;
       } catch (requestError) {
@@ -216,7 +222,7 @@ function StoryStateProvider({
         endLoading();
       }
     },
-    [beginLoading, clearError, endLoading, recordError],
+    [beginLoading, clearError, endLoading, language, recordError],
   );
 
   const startStory = useCallback(
@@ -228,7 +234,7 @@ function StoryStateProvider({
       const operation = (async () => {
         try {
           const authToken = requireToken();
-          const startedSession = await startStorySession(storyId, authToken);
+          const startedSession = await startStorySession(storyId, authToken, language);
           setCurrentSession(startedSession);
           writeSessionId(userId, startedSession.session_id);
           setLatestRewards([]);
@@ -262,6 +268,7 @@ function StoryStateProvider({
       requireToken,
       setCurrentSession,
       userId,
+      language,
     ],
   );
 
@@ -285,7 +292,7 @@ function StoryStateProvider({
       const operation = (async () => {
         try {
           const authToken = requireToken();
-          const restoredSession = await fetchStorySession(sessionId, authToken);
+          const restoredSession = await fetchStorySession(sessionId, authToken, language);
           if (restoreGenerationRef.current !== generation) return restoredSession;
 
           const isDifferentSession =
@@ -328,6 +335,7 @@ function StoryStateProvider({
       requireToken,
       setCurrentSession,
       userId,
+      language,
     ],
   );
 
@@ -344,6 +352,7 @@ function StoryStateProvider({
         const refreshedSession = await fetchStorySession(
           current.session_id,
           authToken,
+          language,
         );
         if (sessionRef.current?.session_id === current.session_id) {
           setCurrentSession(refreshedSession);
@@ -373,6 +382,7 @@ function StoryStateProvider({
     recordError,
     requireToken,
     setCurrentSession,
+    language,
   ]);
 
   const submitAction = useCallback(
@@ -395,6 +405,7 @@ function StoryStateProvider({
           current.session_id,
           request,
           authToken,
+          language,
         );
         setCurrentSession(response.session);
         writeSessionId(userId, response.session.session_id);
@@ -427,6 +438,7 @@ function StoryStateProvider({
       requireToken,
       setCurrentSession,
       userId,
+      language,
     ],
   );
 
