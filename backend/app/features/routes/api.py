@@ -14,6 +14,7 @@ from app.models.user import Preference
 from app.observability.trace import record_trace
 
 from .adjuster import RouteAdjustRequest, adjust_route
+from .live_context import get_live_travel_advice, get_weather_advice
 from .models import (
     RouteAdjustResponse,
     RouteMatchResponse,
@@ -62,6 +63,35 @@ def match(pref: Preference) -> dict:
     """
     matches = route_service.match(pref)
     return {"preference": pref.model_dump(), "matches": matches}
+
+
+@router.get(
+    "/weather-advice",
+    summary="Get Macau weather advice for a travel date",
+    description="Return source-attributed Macau forecast and packing/walking reminders.",
+)
+def weather_advice(
+    travel_date: str | None = None,
+    trip_days: int | None = None,
+    language: str = "zh-CN",
+) -> dict:
+    return get_weather_advice(travel_date, trip_days=trip_days, language=language)
+
+
+@router.get(
+    "/live-advice",
+    summary="Get live travel advice for route planning",
+    description=(
+        "Return weather, event/holiday crowd estimates, and official source links "
+        "for transport and opening-hours checks."
+    ),
+)
+def live_advice(
+    travel_date: str | None = None,
+    trip_days: int | None = None,
+    language: str = "zh-CN",
+) -> dict:
+    return get_live_travel_advice(travel_date, trip_days=trip_days, language=language)
 
 
 @router.post(

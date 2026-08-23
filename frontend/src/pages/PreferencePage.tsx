@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { listPois, matchRoutes, parseIntent } from "@/api/client";
+import {
+  fetchLiveTravelAdvice,
+  listPois,
+  matchRoutes,
+  parseIntent,
+  type LiveTravelAdviceResponse,
+} from "@/api/client";
 import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { PreferenceGuideChat } from "@/components/preference/PreferenceGuideChat";
@@ -11,6 +17,7 @@ import {
   applyPreferenceToForm,
   changedFormKeys,
   durationLabelKey,
+  todayIso,
   toPreference,
   TRIP_DAYS_DEFAULT,
   type PreferenceFormState,
@@ -86,9 +93,13 @@ export function PreferencePage() {
   const [walkTags, setWalkTags] = useState<WalkTag[]>([]);
   const [entryPort, setEntryPort] = useState<string | null>(null);
   const [exitPort, setExitPort] = useState<string | null>(null);
+  const [travelDate, setTravelDate] = useState(() => todayIso());
   const [customNote, setCustomNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [liveAdvice, setLiveAdvice] = useState<LiveTravelAdviceResponse | null>(null);
+  const [liveAdviceLoading, setLiveAdviceLoading] = useState(false);
+  const [liveAdviceError, setLiveAdviceError] = useState<string | null>(null);
   const [storyInvitation, setStoryInvitation] = useState<StoryMatchResult | null>(null);
   const [flash, setFlash] = useState<Set<string>>(new Set());
   const [showAdjusters, setShowAdjusters] = useState(false);
@@ -105,7 +116,7 @@ export function PreferencePage() {
     language,
     entryPort: null,
     exitPort: null,
-    travelDate: null,
+    travelDate,
   });
 
   useEffect(() => {
@@ -120,7 +131,7 @@ export function PreferencePage() {
       language,
       entryPort,
       exitPort,
-      travelDate: formRef.current.travelDate,
+      travelDate,
     };
   }, [
     duration,
@@ -133,7 +144,36 @@ export function PreferencePage() {
     language,
     entryPort,
     exitPort,
+    travelDate,
   ]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLiveAdviceLoading(true);
+    setLiveAdviceError(null);
+    void fetchLiveTravelAdvice({
+      travelDate,
+      tripDays: duration === "multi" ? tripDays : 1,
+      language,
+    })
+      .then((advice) => {
+        if (!cancelled) setLiveAdvice(advice);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : t(language, "weatherUnavailable");
+        setLiveAdvice(null);
+        setLiveAdviceError(
+          message.includes("Failed to fetch") ? t(language, "backendDown") : message,
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setLiveAdviceLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [duration, language, travelDate, tripDays]);
 
   useEffect(() => {
     if (flash.size === 0) return;
@@ -172,6 +212,7 @@ export function PreferencePage() {
     setWalkTags([...snapshot.walkTags]);
     setEntryPort(snapshot.entryPort);
     setExitPort(snapshot.exitPort);
+    setTravelDate(snapshot.travelDate || todayIso());
     adjustersRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [showAdjusters]);
 
@@ -184,6 +225,7 @@ export function PreferencePage() {
     // Prefer ref (updated synchronously on chip click) so generate never drops ports.
     entryPort: formRef.current.entryPort ?? entryPort,
     exitPort: formRef.current.exitPort ?? exitPort,
+    travelDate: formRef.current.travelDate ?? travelDate,
   });
 
   const applyFromChat = (pref: Preference) => {
@@ -201,6 +243,7 @@ export function PreferencePage() {
     setWalkTags(next.walkTags);
     setEntryPort(next.entryPort);
     setExitPort(next.exitPort);
+    setTravelDate(next.travelDate || travelDate);
   };
 
   const flashClass = (key: string, active: boolean) =>
@@ -219,6 +262,12 @@ export function PreferencePage() {
   const selectTripDays = (n: number) => {
     formRef.current = { ...formRef.current, tripDays: n };
     setTripDays(n);
+  };
+
+  const selectTravelDate = (value: string) => {
+    const next = value || todayIso();
+    formRef.current = { ...formRef.current, travelDate: next };
+    setTravelDate(next);
   };
 
   const selectCompanion = (id: PreferenceFormState["companion"]) => {
@@ -399,6 +448,16 @@ export function PreferencePage() {
         </p>
 
         <AzulejoBand className="mb-10" />
+
+        <TravelDateLiveAdvice
+          travelDate={travelDate}
+          disabled={loading}
+          onChange={selectTravelDate}
+          advice={liveAdvice}
+          loading={liveAdviceLoading}
+          error={liveAdviceError}
+          language={language}
+        />
 
         <PreferenceGuideChat
           language={language}
@@ -708,6 +767,197 @@ export function PreferencePage() {
     </main>
 
     </>
+  );
+}
+
+function TravelDateLiveAdvice({
+  travelDate,
+  disabled,
+  onChange,
+  advice,
+  loading,
+  error,
+  language,
+}: {
+  travelDate: string;
+  disabled: boolean;
+  onChange: (value: string) => void;
+  advice: LiveTravelAdviceResponse | null;
+  loading: boolean;
+  error: string | null;
+  language: PreferenceFormState["language"];
+}) {
+  return (
+    <section className="mb-10">
+      <div className="mb-4 flex items-baseline justify-between">
+        <h2 className="font-display text-xl text-ink">{t(language, "weatherTitle")}</h2>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-soft">
+          {t(language, "weatherCaption")}
+        </span>
+      </div>
+      <div className="rounded-2xl border border-line bg-card p-5">
+        <label className="block">
+          <span className="mb-2 block text-xs font-medium text-ink">
+            {t(language, "travelDateLabel")}
+          </span>
+          <input
+            type="date"
+            value={travelDate}
+            min={todayIso()}
+            disabled={disabled}
+            onChange={(event) => onChange(event.target.value)}
+            className="h-11 w-full rounded-xl border border-line bg-paper px-4 text-sm text-ink outline-none focus:border-sage-deep sm:max-w-xs"
+          />
+        </label>
+        <p className="mt-2 text-xs text-ink-soft">{t(language, "travelDateHint")}</p>
+        <LiveAdvicePanel advice={advice} loading={loading} error={error} language={language} />
+      </div>
+    </section>
+  );
+}
+
+function LiveAdvicePanel({
+  advice,
+  loading,
+  error,
+  language,
+}: {
+  advice: LiveTravelAdviceResponse | null;
+  loading: boolean;
+  error: string | null;
+  language: PreferenceFormState["language"];
+}) {
+  if (loading) {
+    return (
+      <div className="mt-4 rounded-xl border border-line bg-paper-warm px-4 py-3 text-sm text-ink-soft">
+        {t(language, "liveAdviceLoading")}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mt-4 rounded-xl border border-clay/30 bg-clay/5 px-4 py-3 text-sm text-clay">
+        {t(language, "weatherUnavailable")} · {error}
+      </div>
+    );
+  }
+
+  if (!advice) return null;
+
+  const firstDay = advice.weather.days[0];
+  const temp =
+    firstDay?.temperature_min_c != null && firstDay.temperature_max_c != null
+      ? `${Math.round(firstDay.temperature_min_c)}-${Math.round(firstDay.temperature_max_c)}°C`
+      : null;
+  const rain =
+    firstDay?.precipitation_probability_percent != null
+      ? `${Math.round(firstDay.precipitation_probability_percent)}%`
+      : null;
+
+  return (
+    <div className="mt-4 rounded-2xl border border-sage/30 bg-sage/5 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-medium text-ink">{advice.weather.summary}</p>
+          <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-ink-soft">
+            {temp ? (
+              <span className="rounded-full bg-paper px-3 py-1">
+                {t(language, "weatherTempRange")}: {temp}
+              </span>
+            ) : null}
+            {rain ? (
+              <span className="rounded-full bg-paper px-3 py-1">
+                {t(language, "weatherRainChance")}: {rain}
+              </span>
+            ) : null}
+            {firstDay?.condition ? (
+              <span className="rounded-full bg-paper px-3 py-1">
+                {t(language, "weatherForecast")}: {firstDay.condition}
+              </span>
+            ) : null}
+          </div>
+        </div>
+        <div className="flex gap-2 text-lg" aria-hidden>
+          {advice.weather.flags.umbrella ? <span>☂</span> : null}
+          {advice.weather.flags.sunscreen ? <span>☀</span> : null}
+          {advice.weather.flags.indoor_backup ? <span>⌂</span> : null}
+        </div>
+      </div>
+
+      {advice.weather.advice.length ? (
+        <ul className="mt-3 space-y-1.5 text-xs leading-relaxed text-ink">
+          {advice.weather.advice.map((item) => (
+            <li key={item}>• {item}</li>
+          ))}
+        </ul>
+      ) : null}
+
+      {advice.weather.source?.name ? (
+        <p className="mt-3 text-[10px] text-ink-soft">
+          {t(language, "weatherSource")}: {advice.weather.source.name}
+        </p>
+      ) : null}
+
+      {advice.crowd.level !== "low" ? (
+        <div className="mt-4 border-t border-sage/20 pt-4">
+          <p className="text-sm font-medium text-ink">
+            {t(language, "crowdForecastTitle")} · {t(language, crowdLevelKey(advice.crowd.level))}
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-ink-soft">
+            {t(language, "crowdForecastNotice")}
+          </p>
+        </div>
+      ) : null}
+
+      <div className="mt-4 grid gap-3 border-t border-sage/20 pt-4 sm:grid-cols-2">
+        <OfficialLinkPanel
+          title={t(language, "transportTitle")}
+          note={advice.transport.notes[0]}
+          language={language}
+        />
+        <OfficialLinkPanel
+          title={t(language, "openingHoursTitle")}
+          note={advice.opening_hours.notes[0]}
+          language={language}
+        />
+      </div>
+    </div>
+  );
+}
+
+function crowdLevelKey(level: string): "crowdMedium" | "crowdHigh" | "crowdVeryHigh" {
+  if (level === "very_high") return "crowdVeryHigh";
+  if (level === "high") return "crowdHigh";
+  return "crowdMedium";
+}
+
+function OfficialLinkPanel({
+  title,
+  note,
+  source,
+  language,
+}: {
+  title: string;
+  note?: string;
+  source?: { name: string; url: string };
+  language: PreferenceFormState["language"];
+}) {
+  return (
+    <div className="rounded-xl border border-line/80 bg-paper/70 p-3">
+      <p className="text-xs font-medium text-ink">{title}</p>
+      {note ? <p className="mt-1 text-[11px] leading-relaxed text-ink-soft">{note}</p> : null}
+      {source ? (
+        <a
+          href={source.url}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-2 inline-flex text-[11px] font-medium text-sage-deep underline underline-offset-2"
+        >
+          {t(language, "officialSource")}: {source.name}
+        </a>
+      ) : null}
+    </div>
   );
 }
 
