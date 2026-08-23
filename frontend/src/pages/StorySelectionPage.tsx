@@ -14,9 +14,9 @@ const REGION_LABELS: Record<string, string> = {
 };
 
 const STORY_NOTES: Record<string, string> = {
-  lotus_city_double_map: "原有故事模式一",
-  taipa_letters: "故事模式二占位",
-  coloane_after_tide: "故事模式三占位开发版",
+  lotus_city_double_map: "城市时间层",
+  taipa_letters: "生活史与家书",
+  coloane_after_tide: "海、手艺与社区",
 };
 
 export function StorySelectionPage() {

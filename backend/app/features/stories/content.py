@@ -71,7 +71,15 @@ def story_overview(story: dict[str, Any]) -> dict[str, Any]:
     overview["nodes"] = [
         {
             key: deepcopy(chapter[key])
-            for key in ("id", "order", "kind", "title", "story_time", "poi_id")
+            for key in (
+                "id",
+                "order",
+                "kind",
+                "title",
+                "story_time",
+                "location_name",
+                "poi_id",
+            )
             if key in chapter
         }
         for chapter in story_nodes(story)

@@ -100,11 +100,17 @@ export function StoryMapPage() {
       ]),
     [session?.state.completed_chapter_ids, session?.state.skipped_chapter_ids],
   );
+  const isLotusStory = story?.id === "lotus_city_double_map";
   const petalCount =
     session?.state.rewards.filter((reward) => reward.kind === "note_petal").length ?? 0;
   const stationNodes = story?.nodes.filter((node) => node.poi_id) ?? [];
-  const petalRewards =
-    session?.state.rewards.filter((reward) => reward.kind === "note_petal") ?? [];
+  const chapterRewards =
+    session?.state.rewards.filter(
+      (reward) =>
+        reward.kind !== "story_prop" &&
+        reward.kind !== "collection" &&
+        reward.kind !== "reflection",
+    ) ?? [];
 
   const statusFor = (node: StoryNodeOverview): NodeStatus => {
     if (node.id === session?.current_chapter_id) return "current";
@@ -120,7 +126,7 @@ export function StoryMapPage() {
   };
 
   if ((loading || isRestoring) && (!session || !story)) {
-    return <LoadingState label="正在恢复莲城路线…" />;
+    return <LoadingState label="正在恢复故事路线…" />;
   }
 
   if (!session || !story) {
@@ -142,7 +148,7 @@ export function StoryMapPage() {
           />
           <button
             type="button"
-            onClick={() => navigate("/stories/lotus_city_double_map")}
+            onClick={() => navigate("/stories")}
             className="mt-4 min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper"
           >
             返回故事封面
@@ -165,8 +171,8 @@ export function StoryMapPage() {
     <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-paper text-ink shadow-[var(--shadow-soft)]">
       <StoryTopBar
         title={story.title}
-        eyebrow="莲城路线"
-        petals={petalCount}
+        eyebrow="故事路线"
+        petals={isLotusStory ? petalCount : undefined}
         onBack={() => navigate(`/stories/${story.id}`)}
         onAskAgent={agentContext ? () => setAgentOpen(true) : undefined}
       />
@@ -182,49 +188,82 @@ export function StoryMapPage() {
           <p className="mt-2 text-base leading-7 text-ink-soft">
             {currentChapter?.location_name ??
               currentPoi?.poi_name ??
-              "先完成序章，开启六站路线"}
+              `先完成序章，开启 ${stationNodes.length} 站路线`}
             {currentChapter?.story_time ? ` · ${currentChapter.story_time}` : ""}
           </p>
         </section>
 
-        <section className="mt-4 rounded-2xl border border-line bg-card p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="font-serif text-lg font-semibold">五张密笺</h2>
-              <p className="mt-1 text-sm text-ink-soft">
-                花瓣仅在服务端发放奖励后点亮
-              </p>
+        {isLotusStory ? (
+          <section className="mt-4 rounded-2xl border border-line bg-card p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="font-serif text-lg font-semibold">五张密笺</h2>
+                <p className="mt-1 text-sm text-ink-soft">
+                  花瓣仅在服务端发放奖励后点亮
+                </p>
+              </div>
+              <PetalProgress collected={petalCount} />
             </div>
-            <PetalProgress collected={petalCount} />
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <StoryImage
-              assetId="V4-PROP-03"
-              alt="城市双图"
-              onOpen={setViewerAssetId}
-              className="rounded-xl"
-            />
-            <StoryImage
-              assetId={petalCount === 5 ? "V4-PROP-05" : "V4-PROP-04"}
-              alt={petalCount === 5 ? "五张密笺重合" : "尚未集齐的密笺"}
-              onOpen={setViewerAssetId}
-              className="rounded-xl"
-            />
-          </div>
-        </section>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <StoryImage
+                assetId="V4-PROP-03"
+                alt="城市双图"
+                onOpen={setViewerAssetId}
+                className="rounded-xl"
+              />
+              <StoryImage
+                assetId={petalCount === 5 ? "V4-PROP-05" : "V4-PROP-04"}
+                alt={petalCount === 5 ? "五张密笺重合" : "尚未集齐的密笺"}
+                onOpen={setViewerAssetId}
+                className="rounded-xl"
+              />
+            </div>
+          </section>
+        ) : (
+          <section className="mt-4 rounded-2xl border border-line bg-card p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="font-serif text-lg font-semibold">已收集的故事线索</h2>
+                <p className="mt-1 text-sm text-ink-soft">
+                  完成现场任务后，收获会由服务端保存
+                </p>
+              </div>
+              <span className="rounded-full border border-ochre/30 bg-ochre/10 px-3 py-1 text-sm font-semibold text-ochre">
+                {chapterRewards.length}/{session.progress.total_puzzles}
+              </span>
+            </div>
+            {chapterRewards.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {chapterRewards.map((reward) => (
+                  <span
+                    key={reward.id}
+                    className="rounded-full border border-line bg-paper-warm px-3 py-2 text-sm text-ink"
+                  >
+                    {reward.name ?? reward.id}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 rounded-xl border border-dashed border-line bg-paper-warm p-3 text-sm text-ink-soft">
+                第一份线索会在完成首个现场任务后出现。
+              </p>
+            )}
+          </section>
+        )}
 
         <section className="mt-5" aria-labelledby="story-timeline-title">
           <div className="flex items-end justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ochre">
-                一日六站
+                {story.estimated_hours >= 6 ? "一日故事游" : "半日故事游"}
               </p>
               <h2 id="story-timeline-title" className="font-serif text-xl font-semibold">
                 章节时间线
               </h2>
             </div>
             <span className="text-sm text-ink-soft">
-              {session.progress.solved_puzzles + session.progress.skipped_puzzles}/5
+              {session.progress.solved_puzzles + session.progress.skipped_puzzles}/
+              {session.progress.total_puzzles}
             </span>
           </div>
 
@@ -291,7 +330,7 @@ export function StoryMapPage() {
 
         <details className="mt-5 overflow-hidden rounded-2xl border border-line bg-card">
           <summary className="flex min-h-12 cursor-pointer items-center justify-between px-4 text-base font-medium">
-            查看六站地图
+            查看 {stationNodes.length} 站地图
             <span aria-hidden>⌄</span>
           </summary>
           <div className="relative isolate h-72 overflow-hidden border-t border-line">
@@ -350,7 +389,7 @@ export function StoryMapPage() {
         }
         reward={
           summaryNode
-            ? petalRewards[stationNodes.findIndex((node) => node.id === summaryNode.id)]
+            ? chapterRewards[stationNodes.findIndex((node) => node.id === summaryNode.id)]
             : undefined
         }
         skipped={

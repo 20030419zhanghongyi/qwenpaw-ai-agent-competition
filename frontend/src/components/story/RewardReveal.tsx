@@ -18,6 +18,8 @@ const KIND_LABELS: Record<string, { label: string; icon: string }> = {
   note_petal: { label: "密笺花瓣", icon: "✦" },
   collection: { label: "完整收藏", icon: "❀" },
   reflection: { label: "今日补记", icon: "◇" },
+  letter: { label: "退信盒来信", icon: "✉" },
+  record: { label: "工作簿记录", icon: "▧" },
 };
 
 function rewardLabel(kind: string): { label: string; icon: string } {

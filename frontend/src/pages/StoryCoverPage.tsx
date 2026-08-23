@@ -11,7 +11,7 @@ function sessionDestination(session: StorySessionResponse): string {
   if (session.status === "completed") {
     return `/story-sessions/${session.session_id}/ending`;
   }
-  if (session.current_chapter_id === "prologue_old_book") {
+  if (session.current_chapter?.kind === "prologue") {
     return `/story-sessions/${session.session_id}/nodes/${session.current_chapter_id}`;
   }
   return `/story-sessions/${session.session_id}/map`;
@@ -89,7 +89,7 @@ export function StoryCoverPage() {
   };
 
   if ((loading || isRestoring) && !story) {
-    return <LoadingState label="正在展开旧地图…" />;
+    return <LoadingState label="正在打开故事…" />;
   }
 
   if (!story && error) {
@@ -114,10 +114,10 @@ export function StoryCoverPage() {
       <div className="flex-1 px-4 pb-32 pt-[max(1rem,env(safe-area-inset-top))]">
         <button
           type="button"
-          onClick={() => navigate("/preferences")}
+          onClick={() => navigate("/stories")}
           className="mb-3 inline-flex min-h-11 items-center rounded-full px-2 text-sm text-ink-soft"
         >
-          ← 返回偏好页
+          ← 返回故事选择
         </button>
 
         <StoryImage
@@ -144,9 +144,9 @@ export function StoryCoverPage() {
           <div className="mt-5 grid grid-cols-2 gap-2 text-sm text-ink-soft">
             {[
               `约 ${story.estimated_hours} 小时`,
-              "六个真实地点",
-              "五个现场谜题",
-              "谜题均可跳过",
+              `${story.nodes.filter((node) => node.poi_id).length} 个真实地点`,
+              `${story.nodes.filter((node) => node.kind === "puzzle").length} 个现场任务`,
+              "任务均可跳过",
             ].map((label) => (
               <span
                 key={label}

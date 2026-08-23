@@ -11,6 +11,7 @@ import { StoryBottomAction } from "@/features/story/components/StoryBottomAction
 import { StoryComicReader } from "@/features/story/components/StoryComicReader";
 import { StoryImageViewer } from "@/features/story/components/StoryImageViewer";
 import { StoryTopBar } from "@/features/story/components/StoryTopBar";
+import { storyStationName } from "@/features/story/storyStations";
 import { useAuth } from "@/state/AuthContext";
 import { useStory, useStoryRestore } from "@/state/StoryContext";
 import type {
@@ -40,7 +41,7 @@ function isRewardAsset(assetId: string): boolean {
 
 const ENDING_PAGE_ONLY_ASSETS = new Set(["V4-FOR-07", "V4-FOR-09"]);
 
-const PROLOGUE_AGENT_CONTEXT: StoryAgentContext = {
+const LOTUS_PROLOGUE_AGENT_CONTEXT: StoryAgentContext = {
   persona: "阿莲",
   poi_name: "旧书与城市双图",
   chapter_goal: "帮助玩家理解旧书、双图和第一张密笺的用途",
@@ -76,6 +77,7 @@ export function StoryScenePage() {
   const location = useLocation();
   const { token, isRestoring } = useAuth();
   const {
+    story,
     session,
     latestRewards,
     submittedChapterSnapshot,
@@ -85,6 +87,7 @@ export function StoryScenePage() {
     error,
     errorStatus,
     restoreSession,
+    loadStory,
     refreshSession,
     submitAction,
     clearLatestRewards,
@@ -122,6 +125,12 @@ export function StoryScenePage() {
       void restoreSession(effectiveId);
     }
   }, [effectiveId, restoreSession, session?.session_id, token]);
+
+  useEffect(() => {
+    if (session && story?.id !== session.story_id) {
+      void loadStory(session.story_id);
+    }
+  }, [loadStory, session, story?.id]);
 
   useEffect(() => {
     if (!session || !nodeId) return;
@@ -255,7 +264,7 @@ export function StoryScenePage() {
           />
           <button
             type="button"
-            onClick={() => navigate("/stories/lotus_city_double_map")}
+            onClick={() => navigate("/stories")}
             className="mt-4 min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper"
           >
             返回故事封面
@@ -277,12 +286,18 @@ export function StoryScenePage() {
     (!hasDialogue || dialogueDone || isEndingChapter);
   const isPuzzleChapter =
     displayChapter.kind === "puzzle" && Boolean(displayChapter.puzzle);
+  const isLotusStory = session.story_id === "lotus_city_double_map";
   const petalCount = chapterPetalCount(session.state.rewards);
+  const stationNodes = story?.nodes.filter((node) => node.poi_id) ?? [];
+  const stationIndex = stationNodes.findIndex(
+    (node) => node.id === displayChapter.id,
+  );
+  const firstStation = stationNodes[0];
   const chapterNumber =
     displayChapter.order === 0
       ? "序章"
-      : displayChapter.order <= 6
-        ? `第 ${displayChapter.order} 站 / 6`
+      : stationIndex >= 0
+        ? `第 ${stationIndex + 1} 站 / ${stationNodes.length}`
         : "故事章节";
   const lastResultForChapter =
     lastActionResult && submittedChapterSnapshot?.id === displayChapter.id
@@ -290,7 +305,9 @@ export function StoryScenePage() {
       : null;
   const sourceAgentContext =
     displayChapter.agent_context ??
-    (displayChapter.kind === "prologue" ? PROLOGUE_AGENT_CONTEXT : undefined);
+    (displayChapter.id === "prologue_old_book"
+      ? LOTUS_PROLOGUE_AGENT_CONTEXT
+      : undefined);
   const agentContext = sourceAgentContext
     ? {
         ...sourceAgentContext,
@@ -303,7 +320,7 @@ export function StoryScenePage() {
       <StoryTopBar
         title={displayChapter.location_name ?? displayChapter.title}
         eyebrow={chapterNumber}
-        petals={petalCount}
+        petals={isLotusStory ? petalCount : undefined}
         onBack={() => navigate(`/story-sessions/${session.session_id}/map`)}
         onAskAgent={agentContext ? () => setAgentOpen(true) : undefined}
       />
@@ -315,7 +332,7 @@ export function StoryScenePage() {
 
         <header className="mb-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ochre">
-            {displayChapter.story_time ?? "莲城双图"}
+            {displayChapter.story_time ?? story?.title ?? "StoryWalk"}
           </p>
           <h1 className="mt-1 font-display text-2xl leading-tight">
             {displayChapter.title}
@@ -338,7 +355,11 @@ export function StoryScenePage() {
               />
             ) : (
               <StoryImage
-                assetId={displayChapter.presentation?.assets[0] ?? "V4-PROP-03"}
+                assetId={
+                  displayChapter.presentation?.assets[0] ??
+                  story?.presentation.cover_asset_id ??
+                  "V4-PROP-03"
+                }
                 alt={`${displayChapter.location_name ?? displayChapter.title}到达场景`}
                 eager
                 onOpen={(assetId) => setViewer({ assetId })}
@@ -465,7 +486,7 @@ export function StoryScenePage() {
                 {isPuzzleChapter && displayChapter.puzzle && (
                   <section className="mt-6" aria-labelledby="chapter-puzzle-title">
                     <h2 id="chapter-puzzle-title" className="font-serif text-xl font-semibold">
-                      阿澜留下的问题
+                      完成本章任务
                     </h2>
                     <div className="mt-3">
                       <PuzzlePanel
@@ -484,7 +505,8 @@ export function StoryScenePage() {
 
                 {isEndingChapter && (
                   <>
-                    <section className="mt-6 rounded-2xl border border-line bg-card p-4">
+                    {isLotusStory && (
+                      <section className="mt-6 rounded-2xl border border-line bg-card p-4">
                       <h2 className="font-serif text-xl font-semibold">让两张图互相说明</h2>
                       <p className="mt-2 text-base leading-7 text-ink-soft">
                         调整透明度，让城市双图与今天的澳门叠在一起。
@@ -540,7 +562,8 @@ export function StoryScenePage() {
                           五站留下的纹理彼此补全，组成同一朵市花。
                         </p>
                       </div>
-                    </section>
+                      </section>
+                    )}
 
                     {!dialogueDone &&
                       displayChapter.dialogue &&
@@ -599,7 +622,11 @@ export function StoryScenePage() {
         narrativeReady &&
         displayChapter.kind === "prologue" && (
           <StoryBottomAction
-            label="去第一站：妈阁庙"
+            label={`去第一站：${
+              firstStation?.location_name ??
+              (firstStation ? storyStationName(firstStation.id) : undefined) ??
+              "开启路线"
+            }`}
             busy={actionPending}
             busyLabel="正在开启路线…"
             onClick={() => void handleContinue()}
@@ -612,7 +639,7 @@ export function StoryScenePage() {
         isEndingChapter &&
         (!hasDialogue || dialogueDone) && (
           <StoryBottomAction
-            label="写下今日补记"
+            label="完成故事留言"
             onClick={() =>
               navigate(`/story-sessions/${session.session_id}/ending`)
             }

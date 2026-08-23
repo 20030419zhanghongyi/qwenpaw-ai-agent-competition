@@ -12,6 +12,7 @@ export interface StoryAssetManifestItem {
   aspectRatio: StoryAssetAspectRatio;
   objectPosition?: string;
   fallbackLabel: string;
+  creditLabel?: string;
 }
 
 const BASE = "/story/v4";
@@ -30,6 +31,16 @@ function asset(
     fallbackLabel,
     objectPosition,
   };
+}
+
+function publicAsset(
+  id: string,
+  src: string,
+  aspectRatio: StoryAssetAspectRatio,
+  fallbackLabel: string,
+  creditLabel?: string,
+): StoryAssetManifestItem {
+  return { id, src, aspectRatio, fallbackLabel, creditLabel };
 }
 
 const items: StoryAssetManifestItem[] = [
@@ -370,6 +381,112 @@ items.push(
     "lou-kau/pieces/V4-LOU-P08_stone-lattice.png",
     "1/1",
     "石花格",
+  ),
+);
+
+items.push(
+  publicAsset(
+    "CAT-COVER-01",
+    "/story/coloane-after-tide/cover.jpg",
+    "9/16",
+    "《潮退之后》故事封面",
+  ),
+  publicAsset(
+    "CAT-PROP-01",
+    "/story/coloane-after-tide/tide-workbook.jpg",
+    "4/5",
+    "潮汐工作簿",
+  ),
+  publicAsset(
+    "CAT-SEA-01",
+    "/story/coloane-after-tide/temple.jpg",
+    "3/4",
+    "路环古庙",
+  ),
+  publicAsset(
+    "CAT-BOAT-01",
+    "/story/coloane-after-tide/tam-kung.jpg",
+    "3/4",
+    "谭公庙",
+  ),
+  publicAsset(
+    "CAT-VILLAGE-01",
+    "/story/coloane-after-tide/chapel-square.jpg",
+    "3/4",
+    "圣方济各圣堂及广场",
+  ),
+  publicAsset(
+    "CAT-CRAFT-01",
+    "/story/coloane-after-tide/shipyards.jpg",
+    "3/4",
+    "荔枝碗船厂片区",
+  ),
+  publicAsset(
+    "CAT-SOIL-01",
+    "/story/coloane-after-tide/hac-sa.jpg",
+    "3/4",
+    "黑沙",
+  ),
+  publicAsset(
+    "CAT-END-01",
+    "/story/coloane-after-tide/sound-postcard.jpg",
+    "4/5",
+    "路环声音明信片",
+  ),
+  publicAsset(
+    "TAI-COVER-01",
+    "/story/taipa-letters/TAI-COVER-01_story-cover.jpg",
+    "4/3",
+    "氹仔旧城与龙环葡韵景观",
+    "照片：Rene / CC BY-SA 4.0",
+  ),
+  publicAsset(
+    "TAI-PROP-01",
+    "/story/taipa-letters/TAI-PROP-01_returned-letter-box.svg",
+    "4/5",
+    "退信盒剧情道具",
+  ),
+  publicAsset(
+    "TAI-SEA-01",
+    "/story/taipa-letters/TAI-SEA-01_pak-tai-temple.jpg",
+    "4/3",
+    "氹仔北帝庙外观",
+    "照片：LN9267 / CC BY-SA 4.0",
+  ),
+  publicAsset(
+    "TAI-BELL-01",
+    "/story/taipa-letters/TAI-BELL-01_carmel-church.jpg",
+    "4/3",
+    "嘉模圣母堂外观",
+    "照片：LN9267 / CC BY-SA 4.0",
+  ),
+  publicAsset(
+    "TAI-HOME-01",
+    "/story/taipa-letters/TAI-HOME-01_taipa-houses.jpg",
+    "4/3",
+    "龙环葡韵住宅式博物馆建筑群",
+    "照片：LN9267 / CC BY-SA 4.0",
+  ),
+  publicAsset(
+    "TAI-WORK-01",
+    "/story/taipa-letters/TAI-WORK-01_iec-long-firecracker-factory.jpg",
+    "4/3",
+    "益隆炮竹厂旧址",
+    "照片：LN9267 / CC BY-SA 4.0",
+  ),
+  publicAsset(
+    "TAI-STREET-01",
+    "/story/taipa-letters/TAI-STREET-01_rua-do-cunha.jpg",
+    "4/3",
+    "氹仔官也街街景",
+    "照片：travel oriented / CC BY-SA 2.0",
+  ),
+  publicAsset(
+    "TAI-END-01",
+    "/story/taipa-letters/TAI-END-01_largo-dos-bombeiros.jpg",
+    "4/3",
+    "氹仔消防局前地街景",
+    "照片：LN9267 / CC BY-SA 4.0",
   ),
 );
 

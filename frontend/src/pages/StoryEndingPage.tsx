@@ -89,27 +89,34 @@ export function StoryEndingPage() {
     [finalChapter?.ending_options],
   );
   const isCompleted = session?.status === "completed";
+  const isLotusStory = session?.story_id === "lotus_city_double_map";
   const petalCount =
     session?.state.rewards.filter((reward) => reward.kind === "note_petal").length ?? 0;
   const completionAgentContext = useMemo(
     () => ({
       persona: "阿莲",
-      poi_name: "澳门历史城区",
-      chapter_title: "完成结果：城由人共写",
-      chapter_goal: "回顾莲城双图六站旅程，并区分史实、地方记忆与剧情演绎。",
+      poi_name: story?.title ?? "澳门故事路线",
+      chapter_title: `完成结果：${session?.ending?.title ?? story?.title ?? "故事游"}`,
+      chapter_goal: "回顾这段故事旅程，并区分史实、地方记忆与剧情演绎。",
       known_facts: [
         story?.summary,
         session?.ending?.text,
       ].filter((value): value is string => Boolean(value)),
       fiction_boundaries: story?.content_notice ? [story.content_notice] : [],
       suggested_questions: [
-        "六站线索怎样共同说明澳门城市的变化？",
-        "两张地图分别适合记录哪些内容？",
+        "沿途线索怎样共同说明地方生活的变化？",
+        "哪些现场观察最值得继续记录？",
         "哪些内容属于史实，哪些属于剧情演绎？",
       ],
       do_not_reveal: [],
     }),
-    [session?.ending?.text, story?.content_notice, story?.summary],
+    [
+      session?.ending?.text,
+      session?.ending?.title,
+      story?.content_notice,
+      story?.summary,
+      story?.title,
+    ],
   );
 
   const completeTodayNote = async () => {
@@ -127,7 +134,7 @@ export function StoryEndingPage() {
   };
 
   if ((loading || isRestoring) && !session) {
-    return <LoadingState label="正在打开今日补记…" />;
+    return <LoadingState label="正在打开故事结局…" />;
   }
 
   if (!session) {
@@ -149,7 +156,7 @@ export function StoryEndingPage() {
           />
           <button
             type="button"
-            onClick={() => navigate("/stories/lotus_city_double_map")}
+            onClick={() => navigate("/stories")}
             className="mt-4 min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper"
           >
             返回故事封面
@@ -169,8 +176,11 @@ export function StoryEndingPage() {
         ? completionAgentContext
         : undefined;
   const stationNodes = story?.nodes.filter((node) => node.poi_id) ?? [];
-  const petalRewards = session.state.rewards.filter(
-    (reward) => reward.kind === "note_petal",
+  const chapterRewards = session.state.rewards.filter(
+    (reward) =>
+      reward.kind !== "story_prop" &&
+      reward.kind !== "collection" &&
+      reward.kind !== "reflection",
   );
   const summaryIndex = summaryNode
     ? stationNodes.findIndex((node) => node.id === summaryNode.id)
@@ -183,24 +193,33 @@ export function StoryEndingPage() {
             reward.kind === "collection",
         )
       : summaryIndex >= 0
-        ? petalRewards[summaryIndex]
+        ? chapterRewards[summaryIndex]
         : undefined;
+  const endingAssets = finalChapter?.presentation?.assets ?? [];
+  const activeEndingAsset =
+    endingAssets[endingAssets.length - 1] ??
+    story?.presentation.cover_asset_id ??
+    "V4-FOR-07";
 
   if (isCompleted) {
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-paper text-ink shadow-[var(--shadow-soft)]">
         <StoryTopBar
-          title={story?.title ?? "莲城双图：未尽之图"}
+          title={story?.title ?? "StoryWalk"}
           eyebrow="旅程完成"
-          petals={petalCount}
-          onBack={() => navigate("/preferences")}
+          petals={isLotusStory ? petalCount : undefined}
+          onBack={() => navigate("/stories")}
           onAskAgent={agentContext ? () => setAgentOpen(true) : undefined}
         />
 
         <div className="flex-1 px-4 pb-28 pt-4">
           <StoryImage
-            assetId="V4-FOR-09"
-            alt="日落后的大炮台与澳门城市"
+            assetId={
+              isLotusStory
+                ? "V4-FOR-09"
+                : story?.presentation.cover_asset_id ?? activeEndingAsset
+            }
+            alt={`${story?.title ?? "故事游"}完成画面`}
             eager
             onOpen={setViewerAssetId}
             imageClassName="object-contain"
@@ -208,34 +227,37 @@ export function StoryEndingPage() {
 
           <section className="relative mt-4 rounded-3xl border border-line bg-paper p-5 text-center shadow-[var(--shadow-lift)]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ochre">
-              城由人共写
+              {story?.identity.name ?? "旅程完成"}
             </p>
             <h1 className="mt-2 font-display text-3xl">
-              {session.ending?.title ?? "今日补记已保存"}
+              {session.ending?.title ?? "故事留言已保存"}
             </h1>
             <p className="mt-3 text-base leading-7 text-ink-soft">
-              {session.ending?.text ??
-                "地图会变旧，城市仍在继续。你为今天的澳门补上了一笔。"}
+              {session.ending?.text ?? "地方仍在变化，你为今天留下了一笔。"}
             </p>
           </section>
 
-          <section className="mt-4 grid grid-cols-2 gap-3">
-            <StoryImage
-              assetId="V4-FOR-08"
-              alt="完整五瓣澳门市花"
-              onOpen={setViewerAssetId}
-            />
-            <StoryImage
-              assetId="V4-PROP-05"
-              alt="五张密笺迎光重合"
-              onOpen={setViewerAssetId}
-            />
-          </section>
+          {isLotusStory && (
+            <section className="mt-4 grid grid-cols-2 gap-3">
+              <StoryImage
+                assetId="V4-FOR-08"
+                alt="完整五瓣澳门市花"
+                onOpen={setViewerAssetId}
+              />
+              <StoryImage
+                assetId="V4-PROP-05"
+                alt="五张密笺迎光重合"
+                onOpen={setViewerAssetId}
+              />
+            </section>
+          )}
 
           <section className="mt-4 rounded-2xl border border-line bg-card p-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-serif text-lg font-semibold">五瓣密笺</h2>
-              <PetalProgress collected={petalCount} />
+              <h2 className="font-serif text-lg font-semibold">
+                {isLotusStory ? "五瓣密笺" : "旅程收获"}
+              </h2>
+              {isLotusStory && <PetalProgress collected={petalCount} />}
             </div>
             <div className="mt-3 space-y-2">
               {session.state.rewards.map((reward) => (
@@ -253,7 +275,7 @@ export function StoryEndingPage() {
           </section>
 
           <section className="mt-4 rounded-2xl border border-ochre/30 bg-ochre/5 p-4">
-            <h2 className="font-serif text-lg font-semibold">你的今日补记</h2>
+            <h2 className="font-serif text-lg font-semibold">你的故事留言</h2>
             <p className="mt-2 whitespace-pre-wrap text-base italic leading-7 text-ink-soft">
               {session.state.ending_reflection?.trim() ||
                 "今天仍留有一处空白，交给下一位来到这里的人。"}
@@ -261,7 +283,9 @@ export function StoryEndingPage() {
           </section>
 
           <section className="mt-5">
-            <h2 className="font-serif text-xl font-semibold">六站路线回顾</h2>
+            <h2 className="font-serif text-xl font-semibold">
+              {stationNodes.length} 站路线回顾
+            </h2>
             <ol className="mt-3 space-y-2">
               {stationNodes.map((node, index) => (
                   <li
@@ -292,8 +316,8 @@ export function StoryEndingPage() {
         </div>
 
         <StoryBottomAction
-          label="返回普通旅行规划"
-          onClick={() => navigate("/preferences")}
+          label="返回故事选择"
+          onClick={() => navigate("/stories")}
         />
         <StoryAgentDrawer
           open={agentOpen}
@@ -335,35 +359,38 @@ export function StoryEndingPage() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-paper text-ink shadow-[var(--shadow-soft)]">
       <StoryTopBar
-        title="今日补记"
+        title={endingChoice?.title ?? finalChapter.title}
         eyebrow="最终章"
-        petals={petalCount}
+        petals={isLotusStory ? petalCount : undefined}
         onBack={() => navigate(`/story-sessions/${session.session_id}/map`)}
         onAskAgent={agentContext ? () => setAgentOpen(true) : undefined}
       />
 
       <div className="flex-1 px-4 pb-32 pt-4">
         <StoryImage
-          assetId="V4-FOR-07"
-          alt="等待玩家书写的今日补记"
+          assetId={activeEndingAsset}
+          alt={`${endingChoice?.title ?? finalChapter.title}故事结局`}
           eager
           onOpen={setViewerAssetId}
         />
 
         <section className="mt-4 rounded-2xl border border-line bg-card p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ochre">
-            留给下一位读者
+            留给未来的读者
           </p>
           <h1 className="mt-2 font-display text-2xl leading-tight">
-            把今天看到的澳门，留给下一位读者
+            {isLotusStory
+              ? "把今天看到的澳门，留给下一位读者"
+              : endingChoice?.choice_text ?? "为这段旅程写下最后一句话"}
           </h1>
           <p className="mt-3 text-base leading-7 text-ink-soft">
-            不必重画整座城市。写下你在什么时间来到这里、看见了什么，
-            以及今天仍值得继续查证的部分。
+            {isLotusStory
+              ? "不必重画整座城市。写下你在什么时间来到这里、看见了什么，以及今天仍值得继续查证的部分。"
+              : "写下你在沿途看见、听见或想到的一件事。它会与本次旅程的收获一起保存。"}
           </p>
 
           <label htmlFor="today-note" className="mt-5 block text-sm font-semibold text-sage-deep">
-            今日补记（可选）
+            故事留言（可选）
           </label>
           <textarea
             id="today-note"
@@ -371,7 +398,11 @@ export function StoryEndingPage() {
             onChange={(event) => setReflection(event.target.value)}
             maxLength={2000}
             rows={6}
-            placeholder="例如：今天的城市仍然不是澳门的全部……"
+            placeholder={
+              isLotusStory
+                ? "例如：今天的城市仍然不是澳门的全部……"
+                : "例如：我想把今天仍能看见的生活，留给后来的人……"
+            }
             className="mt-2 w-full resize-y rounded-2xl border border-line bg-paper px-4 py-3 text-base leading-7 text-ink outline-none placeholder:text-ink-soft/55 focus:border-sage focus:ring-2 focus:ring-sage/25"
           />
           <p className="mt-1 text-right text-xs text-ink-soft">
@@ -403,10 +434,10 @@ export function StoryEndingPage() {
       </div>
 
       <StoryBottomAction
-        label={endingChoice?.choice_text ?? "完成今日补记"}
+        label={endingChoice?.choice_text ?? "完成故事"}
         onClick={() => void completeTodayNote()}
         busy={actionPending}
-        busyLabel="正在保存补记…"
+        busyLabel="正在保存故事留言…"
         disabled={!endingChoice}
         tone="accent"
         hint="服务端保存成功后才会完成故事"
