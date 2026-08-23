@@ -90,27 +90,35 @@ export function StoryEndingPage() {
     [finalChapter?.ending_options],
   );
   const isCompleted = session?.status === "completed";
+  const isLotusStory = session?.story_id === "lotus_city_double_map";
   const petalCount =
     session?.state.rewards.filter((reward) => reward.kind === "note_petal").length ?? 0;
   const completionAgentContext = useMemo(
     () => ({
       persona: "阿莲",
-      poi_name: "澳门历史城区",
-      chapter_title: "完成结果：城由人共写",
-      chapter_goal: "回顾莲城双图六站旅程，并区分史实、地方记忆与剧情演绎。",
+      poi_name: isLotusStory ? "澳门历史城区" : "路环",
+      chapter_title: story?.title ?? st("journeyComplete"),
+      chapter_goal: isLotusStory
+        ? "回顾莲城双图六站旅程，并区分史实、地方记忆与剧情演绎。"
+        : "回顾海、船、村、工、土五项记录，整理潮退之后的路环记忆。",
       known_facts: [
         story?.summary,
         session?.ending?.text,
       ].filter((value): value is string => Boolean(value)),
       fiction_boundaries: story?.content_notice ? [story.content_notice] : [],
-      suggested_questions: [
-        "六站线索怎样共同说明澳门城市的变化？",
-        "两张地图分别适合记录哪些内容？",
-        "哪些内容属于史实，哪些属于剧情演绎？",
-      ],
+      suggested_questions: isLotusStory
+        ? [
+            "六站线索怎样共同说明澳门城市的变化？",
+            "两张地图分别适合记录哪些内容？",
+            "哪些内容属于史实，哪些属于剧情演绎？",
+          ]
+        : [
+            "五枚记录章怎样串成路环的故事？",
+            "哪些内容属于史实，哪些属于剧情演绎？",
+          ],
       do_not_reveal: [],
     }),
-    [session?.ending?.text, story?.content_notice, story?.summary],
+    [isLotusStory, session?.ending?.text, st, story?.content_notice, story?.summary, story?.title],
   );
 
   const completeTodayNote = async () => {
@@ -170,8 +178,8 @@ export function StoryEndingPage() {
         ? completionAgentContext
         : undefined;
   const stationNodes = story?.nodes.filter((node) => node.poi_id) ?? [];
-  const petalRewards = session.state.rewards.filter(
-    (reward) => reward.kind === "note_petal",
+  const collectibleRewards = session.state.rewards.filter((reward) =>
+    isLotusStory ? reward.kind === "note_petal" : reward.kind === "stamp",
   );
   const summaryIndex = summaryNode
     ? stationNodes.findIndex((node) => node.id === summaryNode.id)
@@ -184,7 +192,7 @@ export function StoryEndingPage() {
             reward.kind === "collection",
         )
       : summaryIndex >= 0
-        ? petalRewards[summaryIndex]
+        ? collectibleRewards[summaryIndex]
         : undefined;
 
   if (isCompleted) {
@@ -193,15 +201,15 @@ export function StoryEndingPage() {
         <StoryTopBar
           title={story?.title ?? st("journeyComplete")}
           eyebrow={st("journeyComplete")}
-          petals={petalCount}
+          petals={isLotusStory ? petalCount : undefined}
           onBack={() => navigate("/preferences")}
           onAskAgent={agentContext ? () => setAgentOpen(true) : undefined}
         />
 
         <div className="flex-1 px-4 pb-28 pt-4">
           <StoryImage
-            assetId="V4-FOR-09"
-            alt="日落后的大炮台与澳门城市"
+            assetId={isLotusStory ? "V4-FOR-09" : "CAT-END-01"}
+            alt={isLotusStory ? "日落后的大炮台与澳门城市" : "路环声音明信片"}
             eager
             onOpen={setViewerAssetId}
             imageClassName="object-contain"
@@ -222,21 +230,23 @@ export function StoryEndingPage() {
 
           <section className="mt-4 grid grid-cols-2 gap-3">
             <StoryImage
-              assetId="V4-FOR-08"
-              alt={st("petalsComplete")}
+              assetId={isLotusStory ? "V4-FOR-08" : "CAT-END-01"}
+              alt={isLotusStory ? st("petalsComplete") : "路环声音明信片"}
               onOpen={setViewerAssetId}
             />
             <StoryImage
-              assetId="V4-PROP-05"
-              alt={st("secretNotes")}
+              assetId={isLotusStory ? "V4-PROP-05" : "CAT-PROP-01"}
+              alt={isLotusStory ? st("secretNotes") : "潮汐工作簿"}
               onOpen={setViewerAssetId}
             />
           </section>
 
           <section className="mt-4 rounded-2xl border border-line bg-card p-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-serif text-lg font-semibold">{st("secretNotes")}</h2>
-              <PetalProgress collected={petalCount} />
+              <h2 className="font-serif text-lg font-semibold">
+                {isLotusStory ? st("secretNotes") : "路环记录章"}
+              </h2>
+              {isLotusStory && <PetalProgress collected={petalCount} />}
             </div>
             <div className="mt-3 space-y-2">
               {session.state.rewards.map((reward) => (
@@ -338,28 +348,30 @@ export function StoryEndingPage() {
       <StoryTopBar
         title={st("noteToday")}
         eyebrow={st("ending")}
-        petals={petalCount}
+        petals={isLotusStory ? petalCount : undefined}
         onBack={() => navigate(`/story-sessions/${session.session_id}/map`)}
         onAskAgent={agentContext ? () => setAgentOpen(true) : undefined}
       />
 
       <div className="flex-1 px-4 pb-32 pt-4">
         <StoryImage
-          assetId="V4-FOR-07"
-          alt={st("noteToday")}
+          assetId={isLotusStory ? "V4-FOR-07" : "CAT-END-01"}
+          alt={isLotusStory ? st("noteToday") : "完成路环声音明信片"}
           eager
           onOpen={setViewerAssetId}
         />
 
         <section className="mt-4 rounded-2xl border border-line bg-card p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ochre">
-            {st("leaveReader")}
+            {isLotusStory ? st("leaveReader") : "完成潮汐工作簿"}
           </p>
           <h1 className="mt-2 font-display text-2xl leading-tight">
-            {st("noteHeading")}
+            {isLotusStory ? st("noteHeading") : "把路环的声音留在最后一页"}
           </h1>
           <p className="mt-3 text-base leading-7 text-ink-soft">
-            {st("noteBody")}
+            {isLotusStory
+              ? st("noteBody")
+              : "回顾海、船、村、工、土五项记录，写下你此刻最想保留的一段路环记忆。"}
           </p>
 
           <label htmlFor="today-note" className="mt-5 block text-sm font-semibold text-sage-deep">

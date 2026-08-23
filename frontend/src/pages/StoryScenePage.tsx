@@ -77,6 +77,7 @@ export function StoryScenePage() {
   const location = useLocation();
   const { token, isRestoring } = useAuth();
   const {
+    story,
     session,
     latestRewards,
     submittedChapterSnapshot,
@@ -279,6 +280,7 @@ export function StoryScenePage() {
     (!hasDialogue || dialogueDone || isEndingChapter);
   const isPuzzleChapter =
     displayChapter.kind === "puzzle" && Boolean(displayChapter.puzzle);
+  const isLotusStory = session.story_id === "lotus_city_double_map";
   const petalCount = chapterPetalCount(session.state.rewards);
   const chapterNumber =
     displayChapter.order === 0
@@ -305,7 +307,7 @@ export function StoryScenePage() {
       <StoryTopBar
         title={displayChapter.location_name ?? displayChapter.title}
         eyebrow={chapterNumber}
-        petals={petalCount}
+        petals={isLotusStory ? petalCount : undefined}
         onBack={() => navigate(`/story-sessions/${session.session_id}/map`)}
         onAskAgent={agentContext ? () => setAgentOpen(true) : undefined}
       />
@@ -317,7 +319,7 @@ export function StoryScenePage() {
 
         <header className="mb-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ochre">
-            {displayChapter.story_time ?? "莲城双图"}
+            {displayChapter.story_time ?? story?.title ?? displayChapter.title}
           </p>
           <h1 className="mt-1 font-display text-2xl leading-tight">
             {displayChapter.title}
@@ -483,7 +485,7 @@ export function StoryScenePage() {
                   </section>
                 )}
 
-                {isEndingChapter && (
+                {isEndingChapter && isLotusStory && (
                   <>
                     <section className="mt-6 rounded-2xl border border-line bg-card p-4">
                       <h2 className="font-serif text-xl font-semibold">{st("combineMaps")}</h2>
@@ -599,7 +601,7 @@ export function StoryScenePage() {
         narrativeReady &&
         displayChapter.kind === "prologue" && (
           <StoryBottomAction
-            label={st("goToAmaze")}
+            label={isLotusStory ? st("goToAmaze") : "开启路环故事路线"}
             busy={actionPending}
             busyLabel={st("preparing")}
             onClick={() => void handleContinue()}

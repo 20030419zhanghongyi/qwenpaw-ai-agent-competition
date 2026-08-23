@@ -17,7 +17,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field, field_validator
 
 from app.agents import intent_agent, preference_guide_agent
-from app.agents.qwenpaw_client import QwenPawClient, QwenPawError
+from app.agents.qwenpaw_client import QwenPawError
 from app.core.config import settings
 from app.guardrails.runtime import rate_limit, sanitize_untrusted_text
 from app.models.user import SUPPORTED_LANGS, Preference, clamp_trip_days
@@ -267,20 +267,22 @@ def parse_intent_rules(text: str) -> Preference:
 
 _OPENERS: dict[str, str] = {
     "zh-CN": (
-        "你好，我是澳迹同行的漫游助手。先从最重要的开始——"
-        "今天你想逛多久？半日、一日，还是夜间小走？"
+        "您好，欢迎使用澳迹同行。为了替您安排更合适的行程，"
+        "想先请问您这次预计在澳门游览多久呢？可以选择半日、一日、多日，或夜间漫游。"
     ),
     "zh-TW": (
-        "你好，我是澳跡同行的漫遊助手。先從最重要的開始——"
-        "今天你想逛多久？半日、一日，還是夜間小走？"
+        "您好，歡迎使用澳跡同行。為了替您安排更合適的行程，"
+        "想先請問您這次預計在澳門遊覽多久呢？可以選擇半日、一日、多日，或夜間漫遊。"
     ),
     "en": (
-        "Hi — I’m your Macau StoryWalk guide. Let’s start simple: "
-        "how long do you want to wander — half day, full day, multi-day, or an evening stroll?"
+        "Welcome to Macau StoryWalk. To help us plan a trip that suits you, may I ask "
+        "how long you would like to explore Macau this time: half a day, one day, "
+        "multiple days, or an evening stroll?"
     ),
     "pt": (
-        "Olá — sou o guia do Macau StoryWalk. Vamos começar pelo essencial: "
-        "quanto tempo quer passear hoje — meio dia, dia inteiro, ou um passeio noturno?"
+        "Bem-vindo ao Macau StoryWalk. Para prepararmos um roteiro mais adequado, "
+        "poderia dizer quanto tempo pretende explorar Macau desta vez: meio dia, um dia, "
+        "vários dias ou um passeio noturno?"
     ),
 }
 

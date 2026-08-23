@@ -12,7 +12,7 @@ function sessionDestination(session: StorySessionResponse): string {
   if (session.status === "completed") {
     return `/story-sessions/${session.session_id}/ending`;
   }
-  if (session.current_chapter_id === "prologue_old_book") {
+  if (session.current_chapter?.kind === "prologue") {
     return `/story-sessions/${session.session_id}/nodes/${session.current_chapter_id}`;
   }
   return `/story-sessions/${session.session_id}/map`;

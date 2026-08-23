@@ -32,6 +32,22 @@ export const STORY_CATALOG: StoryCatalogEntry[] = [
     },
   },
 
+  {
+    storyId: "coloane_after_tide",
+    status: "playable",
+    title: "潮退之後",
+    subtitle: "沿路環村、古廟、船廠與黑沙，補完一本沒有寫完的潮汐工作簿",
+    region: "coloane",
+    estimatedHours: 4,
+    invitationType: "audio_recording",
+    matchRule: {
+      durationAnyOf: ["half", "full"],
+      interestAnyOf: ["history", "culture", "relax"],
+      themeAnyOf: ["heritage", "leisure"],
+      minScore: 1,
+    },
+  },
+
   // ── Planned (not yet playable) ─────────────────────────────────────────
   {
     storyId: "taipa_letters",
@@ -41,21 +57,6 @@ export const STORY_CATALOG: StoryCatalogEntry[] = [
     region: "taipa",
     estimatedHours: 0,
     invitationType: "letter",
-    matchRule: {
-      durationAnyOf: [],
-      interestAnyOf: [],
-      themeAnyOf: [],
-      minScore: 0,
-    },
-  },
-  {
-    storyId: "coloane_after_tide",
-    status: "planned",
-    title: "路环退潮后",
-    subtitle: "",
-    region: "coloane",
-    estimatedHours: 0,
-    invitationType: "audio_recording",
     matchRule: {
       durationAnyOf: [],
       interestAnyOf: [],

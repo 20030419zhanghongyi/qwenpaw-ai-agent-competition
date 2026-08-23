@@ -140,6 +140,39 @@ def test_live_travel_advice_returns_realtime_bundle(monkeypatch):
     assert advice["opening_hours"]["status"] == "advice-only"
 
 
+@pytest.mark.parametrize(
+    ("language", "transport_text", "opening_text"),
+    [
+        ("zh-CN", "巴士报站", "景点开放时间"),
+        ("zh-TW", "巴士報站", "景點開放時間"),
+        ("en", "Bus Reporting", "Opening hours"),
+        ("pt", "autocarros", "horários de funcionamento"),
+    ],
+)
+def test_live_travel_advice_localizes_operational_notes(
+    monkeypatch,
+    language,
+    transport_text,
+    opening_text,
+):
+    monkeypatch.setattr(live_context, "_fetch_json", lambda _url, _params: None)
+    monkeypatch.setattr(
+        live_context,
+        "_events",
+        lambda _target: {"status": "ok", "events": [], "source": {"name": "events"}},
+    )
+    live_context._cache.clear()
+
+    advice = live_context.get_live_travel_advice(
+        "2026-08-24",
+        trip_days=1,
+        language=language,
+    )
+
+    assert transport_text in advice["transport"]["notes"][0]
+    assert opening_text in advice["opening_hours"]["notes"][0]
+
+
 def test_distance_meters_supports_gps_checkin_thresholds():
     assert distance_meters(22.1987, 113.5439, 22.1987, 113.5439) == 0
     assert distance_meters(22.1987, 113.5439, 22.1992, 113.5439) == pytest.approx(56, abs=3)
