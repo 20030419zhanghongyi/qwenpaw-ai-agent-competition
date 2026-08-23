@@ -8,6 +8,7 @@ Phase 1 最小数据集。团队按 `plan/开发计划与清单.md` Phase 1 扩�
 | 文件 | 内容 | 对应模型 |
 |------|------|----------|
 | `pois.json` | 文化节点（POI） | `backend/app/models/poi.py` → `POI` |
+| `poi_expansion_candidates.json` | 待核验 POI 扩展候选池（不可直接视为 canonical） | 人工核验后再合并 |
 | `routes.json` | 预设路线库 | `backend/app/models/route.py` → `Route` |
 | `weights.json` | （Phase 1 末生成）离线调研权重表 | `scripts/clean_xhs.py` 产出 |
 
