@@ -1,5 +1,8 @@
 """Preset guide narration returns immersive companion + legacy sections."""
 
+import json
+import re
+
 from app.features.guide.preset_script import _load_pois, build_preset_narration
 
 
@@ -48,6 +51,57 @@ def test_immersive_schema_mapped_from_poi_fields():
     assert result["text"] == imm["audio_script"]
     # photo interest → photo-flavored interactive
     assert "拍" in imm["interactive_suggestion"] or "角度" in imm["interactive_suggestion"]
+
+
+def test_english_preset_never_splices_chinese_source_text():
+    result = build_preset_narration("大三巴牌坊", language="en")
+    assert result is not None
+    assert result["poi_name"] == "Ruins of St. Paul's"
+    public_text = json.dumps(
+        {
+            "text": result["text"],
+            "audio_script": result["audio_script"],
+            "immersive": result["immersive"],
+            "sections": result["sections"],
+        },
+        ensure_ascii=False,
+    )
+    assert re.search(r"[\u3400-\u9fff]", public_text) is None
+    assert "History" in result["immersive"]["subtitle"]
+
+
+def test_portuguese_preset_uses_portuguese_name_and_no_chinese_source_text():
+    result = build_preset_narration("大三巴牌坊", language="pt")
+    assert result is not None
+    assert result["poi_name"] == "Ruínas de S. Paulo"
+    public_text = json.dumps(
+        {
+            "text": result["text"],
+            "audio_script": result["audio_script"],
+            "immersive": result["immersive"],
+            "sections": result["sections"],
+        },
+        ensure_ascii=False,
+    )
+    assert re.search(r"[\u3400-\u9fff]", public_text) is None
+    assert "História" in result["immersive"]["subtitle"]
+
+
+def test_foreign_presets_sound_conversational_and_avoid_mechanical_bridges():
+    english = build_preset_narration("大三巴牌坊", language="en")
+    portuguese = build_preset_narration("大三巴牌坊", language="pt")
+
+    assert english is not None and portuguese is not None
+    assert english["immersive"]["hook"].startswith("Here we are at")
+    assert "So, why is this place worth stopping for?" in english["immersive"][
+        "why_it_matters"
+    ]
+    assert "In Macau’s urban memory" not in english["text"]
+    assert "In the past," not in english["text"]
+    assert "1835" in english["immersive"]["historical_story"]
+    assert "Aqui estamos" in portuguese["immersive"]["hook"]
+    assert "No passado," not in portuguese["text"]
+    assert "1835" in portuguese["immersive"]["historical_story"]
 
 
 def test_history_interest_prefixes_history_section():

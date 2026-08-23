@@ -16,11 +16,13 @@ Ask 追问（``/ask``）为 **web-first**：短超时联网为主，``_gather_ma
 from __future__ import annotations
 
 import logging
+import json
 import re
 import time
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
@@ -34,10 +36,10 @@ from app.guardrails.runtime import rate_limit, record_audit, sanitize_untrusted_
 from app.observability.trace import record_trace
 from app.tools.scrub import scrub
 
-from .preset_script import build_preset_narration
+from .preset_script import build_preset_narration, poi_names_for
 from .trigger_state import trigger_state
-from .tts import TTSUnavailableError, VOICE_BY_LANGUAGE, synthesize_to_oss
-from .web_search import format_web_material, search_web_multi
+from .tts import TTSUnavailableError, VOICE_BY_LANGUAGE, local_audio_path, synthesize_to_oss
+from .web_search import filter_relevant_hits, format_web_material, search_web_multi
 
 # rag/ 在仓库根（不在 backend/app 内）；config.py 导入时已把仓库根加进 sys.path
 from rag.retrieve import get_poi_material, retrieve
@@ -148,6 +150,19 @@ def _apply_review(text: str, *, path: str) -> tuple[str, dict]:
     return out, review
 
 
+def _guide_language_matches(explanation: object, language: str) -> bool:
+    """Reject an enhanced foreign-language result that leaks Chinese source text."""
+    if language not in {"en", "pt"}:
+        return True
+    if getattr(explanation, "language", None) != language:
+        return False
+    text = str(getattr(explanation, "text", "") or "")
+    immersive = getattr(explanation, "immersive", None)
+    if immersive is not None:
+        text += json.dumps(immersive.to_public_dict(), ensure_ascii=False)
+    return re.search(r"[\u3400-\u9fff]", text) is None
+
+
 def _gather_material(candidate_poi: str | None, description: str) -> tuple[str, str]:
     """讲解素材：优先精确取 candidate_poi 整 POI 资料；否则向量检索 description 找相关 POI。
 
@@ -169,10 +184,13 @@ def _gather_material(candidate_poi: str | None, description: str) -> tuple[str, 
 
 def _gather_material_fast(poi: str, *, language: str, interests: list[str] | None) -> tuple[str, str]:
     """Ask 用的轻量本地取料：精确 POI / 预设话术，不跑向量检索（避免拖慢 web-first）。"""
+    preset = build_preset_narration(poi, language=language, interests=interests)
+    if language in {"en", "pt"} and preset and preset.get("text"):
+        name = str(preset.get("poi_name") or poi)
+        return name, str(preset["text"])
     got = get_poi_material(poi)
     if got and got[1]:
         return got
-    preset = build_preset_narration(poi, language=language, interests=interests)
     if preset and preset.get("text"):
         name = str(preset.get("poi_name") or poi)
         return name, str(preset["text"])
@@ -392,14 +410,35 @@ def _web_snippet_answer(
 ) -> str:
     if not hits:
         return _ASK_EMPTY.get(language, _ASK_EMPTY["zh-CN"])
-    body = " ".join(str(h.get("snippet") or "") for h in hits[:2]).strip()
+    usable_hits = hits[:2]
+    if language in {"en", "pt"}:
+        usable_hits = [
+            h
+            for h in usable_hits
+            if re.search(
+                r"[\u3400-\u9fff]",
+                f"{h.get('title') or ''} {h.get('snippet') or ''}",
+            )
+            is None
+        ]
+    if not usable_hits:
+        return _ASK_EMPTY.get(language, _ASK_EMPTY["zh-CN"])
+    body = " ".join(str(h.get("snippet") or "") for h in usable_hits).strip()
     # 压成较短口语段
     body = re.sub(r"\s+", " ", body)
     if len(body) > 420:
         body = body[:420].rstrip() + "…"
-    cite = "；".join(
-        f"{h.get('title') or '资料'}（{h.get('source') or 'web'}）" for h in hits[:2]
-    )
+    source_label = {"en": "Source", "pt": "Fonte"}.get(language, "资料")
+    if language in {"en", "pt"}:
+        cite = "; ".join(
+            f"{h.get('title') or source_label} ({h.get('source') or 'web'})"
+            for h in usable_hits
+        )
+    else:
+        cite = "；".join(
+            f"{h.get('title') or source_label}（{h.get('source') or 'web'}）"
+            for h in usable_hits
+        )
     templates = {
         "zh-CN": f"关于「{poi_name}」与你的问题，结合公开资料可以这样理解：{body} 参考：{cite}。",
         "zh-TW": f"關於「{poi_name}」與你的問題，結合公開資料可以這樣理解：{body} 參考：{cite}。",
@@ -669,9 +708,13 @@ def ask(
     # ── 主路径：联网检索（短预算并行；agent 仅 enhance）──
     if web:
         queries = _web_search_queries(display_name, req.question, limit=2)
-        web_hits = search_web_multi(
+        raw_web_hits = search_web_multi(
             queries, language=req.language, k=2, max_queries=2, budget_s=2.5
         )
+        relevance_names = poi_names_for(req.poi)
+        if display_name not in relevance_names:
+            relevance_names.append(display_name)
+        web_hits = filter_relevant_hits(relevance_names, raw_web_hits)
         if web_hits:
             used_web = True
             web_material = format_web_material(web_hits, language=req.language)
@@ -698,6 +741,7 @@ def ask(
                     expl
                     and expl.text.strip()
                     and not _looks_like_refusal(expl.text)
+                    and _guide_language_matches(expl, req.language)
                 ):
                     answer_text = expl.text
                     confidence = max(float(expl.confidence or 0.7), 0.7)
@@ -734,6 +778,7 @@ def ask(
                     expl
                     and expl.text.strip()
                     and not _looks_like_refusal(expl.text)
+                    and _guide_language_matches(expl, req.language)
                 ):
                     answer_text = expl.text
                     confidence = expl.confidence
@@ -751,6 +796,17 @@ def ask(
         answer_text = _ASK_EMPTY.get(req.language, _ASK_EMPTY["zh-CN"])
         confidence = min(confidence, 0.3)
         source = "empty"
+
+    if req.language in {"en", "pt"} and re.search(r"[\u3400-\u9fff]", answer_text):
+        if local_answer and not re.search(r"[\u3400-\u9fff]", local_answer):
+            answer_text = local_answer
+            source = "rules"
+            confidence = 0.55
+        else:
+            answer_text = _ASK_EMPTY[req.language]
+            source = "empty"
+            confidence = 0.25
+        error = "language mismatch in upstream answer; served language-safe fallback"
 
     out_text, review = _apply_review(answer_text, path="ask")
     latency_ms = int((time.perf_counter() - t0) * 1000)
@@ -876,6 +932,9 @@ def generate(
         travel_type=req.travel_type,
         next_stop=req.next_stop,
     )
+    if expl is not None and not _guide_language_matches(expl, req.language):
+        logger.info("guide agent language mismatch; served language-safe preset")
+        expl = None
     latency_ms = int((time.perf_counter() - t0) * 1000)
 
     if expl is None or not expl.text.strip():
@@ -952,7 +1011,7 @@ def generate(
 
 @router.post("/tts", response_model=TTSResponse, dependencies=[Depends(rate_limit("expensive"))])
 def tts(req: TTSRequest) -> TTSResponse:
-    """Text-to-speech with fixed four-language voices and private OSS delivery."""
+    """Text-to-speech with fixed voices and OSS or development-local delivery."""
     try:
         result = synthesize_to_oss(req.text, req.language)
     except TTSUnavailableError as exc:
@@ -975,4 +1034,18 @@ def tts(req: TTSRequest) -> TTSResponse:
         content_type=str(result["content_type"]),
         language=req.language,
         voice=str(result["voice"]),
+    )
+
+
+@router.get("/tts/audio/{filename}", response_class=FileResponse)
+def tts_audio(filename: str) -> FileResponse:
+    """Serve a temporary MP3 generated during local development."""
+    path = local_audio_path(filename)
+    if path is None:
+        raise HTTPException(status_code=404, detail="Audio not found or expired")
+    return FileResponse(
+        path,
+        media_type="audio/mpeg",
+        filename="macau-storywalk-guide.mp3",
+        headers={"Cache-Control": "private, max-age=3600"},
     )
