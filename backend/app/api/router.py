@@ -4,6 +4,7 @@ from app.agents import api as agents_api
 from app.api import health
 from app.features.guide import api as guide_api
 from app.features.intent import api as intent_api
+from app.features.memoirs import api as memoirs_api
 from app.features.pois import api as pois_api
 from app.features.postcards import api as postcards_api
 from app.features.profile import api as profile_api
@@ -29,5 +30,6 @@ api_router.include_router(review_api.router)
 api_router.include_router(guide_api.router)
 api_router.include_router(pois_api.router)
 api_router.include_router(postcards_api.router)
+api_router.include_router(memoirs_api.router)
 api_router.include_router(agents_api.router)
 api_router.include_router(orchestrator_api.router)

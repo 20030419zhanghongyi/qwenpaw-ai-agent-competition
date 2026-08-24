@@ -3,6 +3,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { AuthPage } from "@/pages/AuthPage";
 import { GuidePage } from "@/pages/GuidePage";
 import { LanguagePage } from "@/pages/LanguagePage";
+import { MemoirEditorPage } from "@/pages/MemoirEditorPage";
 import { PostcardCreatePage } from "@/pages/PostcardCreatePage";
 import { PostcardGalleryPage } from "@/pages/PostcardGalleryPage";
 import { PostcardViewPage } from "@/pages/PostcardViewPage";
@@ -14,6 +15,7 @@ import { StorySelectionPage } from "@/pages/StorySelectionPage";
 import { StoryMapPage } from "@/pages/StoryMapPage";
 import { StoryScenePage } from "@/pages/StoryScenePage";
 import { StoryEndingPage } from "@/pages/StoryEndingPage";
+import { SharedMemoirPage } from "@/pages/SharedMemoirPage";
 import { AuthProvider } from "@/state/AuthContext";
 import { StoryProvider } from "@/state/StoryContext";
 import { TripProvider } from "@/state/TripContext";
@@ -37,6 +39,7 @@ export default function App() {
                     <Route path="/postcards/new" element={<PostcardCreatePage />} />
                     <Route path="/postcards/:postcardId" element={<PostcardViewPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/profile/memoirs/:memoirId" element={<MemoirEditorPage />} />
                     <Route path="/preferences" element={<PreferencePage />} />
                   </Route>
                   {/* StoryWalk — independent product mode */}
@@ -45,6 +48,7 @@ export default function App() {
                   <Route path="/story-sessions/:sessionId/map" element={<StoryMapPage />} />
                   <Route path="/story-sessions/:sessionId/nodes/:nodeId" element={<StoryScenePage />} />
                   <Route path="/story-sessions/:sessionId/ending" element={<StoryEndingPage />} />
+                  <Route path="/shared/memoirs/:shareToken" element={<SharedMemoirPage />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </BrowserRouter>
