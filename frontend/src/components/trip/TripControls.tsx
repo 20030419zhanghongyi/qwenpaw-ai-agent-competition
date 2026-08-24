@@ -36,7 +36,6 @@ export function TripControls({
     error,
     startTrip,
     loadCurrentTrip,
-    simulateArrive,
   } = useTrip();
 
   useEffect(() => {
@@ -48,25 +47,13 @@ export function TripControls({
 
   const isCurrentRoute = trip?.route_id === routeId;
   const isCompleted = isCurrentRoute && trip?.status === "completed";
-  const currentPoiChecked =
-    Boolean(currentPoiId) &&
-    Boolean(trip?.checked_in_poi_ids.includes(currentPoiId ?? ""));
-  const currentPoiBelongsToTrip =
-    Boolean(currentPoiId) &&
-    Boolean(trip?.stop_poi_ids.includes(currentPoiId ?? ""));
+  const currentPoiChecked = Boolean(
+    currentPoiId && trip?.checked_in_poi_ids.includes(currentPoiId),
+  );
 
   const handleStart = async () => {
     try {
       await startTrip(userId, routeId, stopPoiIds);
-    } catch {
-      // The context exposes the backend error for display.
-    }
-  };
-
-  const handleSimulateArrive = async () => {
-    if (!currentPoiId) return;
-    try {
-      await simulateArrive(userId, routeId, currentPoiId, stopPoiIds);
     } catch {
       // The context exposes the backend error for display.
     }
@@ -119,7 +106,7 @@ export function TripControls({
       ) : null}
 
       <p className="mt-3 text-[11px] leading-relaxed text-ink-soft">
-        {t(language, "tripDemoHint")}
+        {t(language, "tripCompletePerStopHint")}
       </p>
 
       {error ? (
@@ -136,14 +123,6 @@ export function TripControls({
             ) : null}
             <button
               type="button"
-              disabled={loading || !userId || !routeId || !currentPoiId}
-              onClick={() => void handleSimulateArrive()}
-              className="h-11 w-full rounded-full bg-sage-deep text-sm font-medium text-paper hover:bg-moss disabled:opacity-60"
-            >
-              {loading ? t(language, "tripBusy") : t(language, "tripSimulateArrive")}
-            </button>
-            <button
-              type="button"
               disabled={loading || !userId || !routeId}
               onClick={() => void handleStart()}
               className="h-11 w-full rounded-full border border-line bg-paper text-sm font-medium text-ink transition hover:border-sage disabled:opacity-60"
@@ -155,24 +134,7 @@ export function TripControls({
           <p className="rounded-xl bg-sage-deep/10 px-4 py-3 text-center text-sm font-medium text-sage-deep">
             {t(language, "tripDone")}
           </p>
-        ) : (
-          <button
-            type="button"
-            disabled={loading || !currentPoiId || currentPoiChecked}
-            onClick={() => void handleSimulateArrive()}
-            className="h-11 w-full rounded-full bg-sage-deep text-sm font-medium text-paper hover:bg-moss disabled:opacity-60"
-          >
-            {loading
-              ? t(language, "tripBusy")
-              : currentPoiChecked
-                ? t(language, "tripStopDone")
-                : !currentPoiId
-                  ? t(language, "tripPickStop")
-                  : !currentPoiBelongsToTrip
-                    ? t(language, "tripSimulateArrive")
-                    : t(language, "tripSimulateArrive")}
-          </button>
-        )}
+        ) : null}
 
         {isCurrentRoute && trip ? (
           <Link

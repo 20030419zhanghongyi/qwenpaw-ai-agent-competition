@@ -1,8 +1,15 @@
 import { load } from "@amap/amap-jsapi-loader";
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { fetchRoutePois, fetchRouteWalkPath } from "@/api/routes";
 import { useWalk } from "@/state/WalkContext";
 import type { LanguageCode } from "@/types";
+import type { RoutePoi } from "@/types/routes";
+
+const LeafletRouteFallback = lazy(() =>
+  import("@/components/map/LeafletRouteFallback").then((module) => ({
+    default: module.LeafletRouteFallback,
+  })),
+);
 
 export interface MapUserLocation {
   latitude: number;
@@ -83,6 +90,8 @@ const COPY: Record<
     loading: string;
     missingKey: string;
     loadFailed: string;
+    dataFailed: string;
+    fallbackActive: string;
     pathFailed: string;
     noStops: string;
   }
@@ -91,6 +100,8 @@ const COPY: Record<
     loading: "正在加载真实地图…",
     missingKey: "地图尚未配置，请设置高德 Web 端 Key。",
     loadFailed: "地图暂时无法加载，行程列表仍可正常使用。",
+    dataFailed: "地图地点数据暂时无法读取，请稍后重试。",
+    fallbackActive: "高德地图连接失败，已切换至备用地图。",
     pathFailed: "步行路线暂不可用，已保留真实地点标记。",
     noStops: "当前路线没有可显示的地点。",
   },
@@ -98,6 +109,8 @@ const COPY: Record<
     loading: "正在載入真實地圖…",
     missingKey: "地圖尚未設定，請配置高德 Web 端 Key。",
     loadFailed: "地圖暫時無法載入，行程列表仍可正常使用。",
+    dataFailed: "地圖地點資料暫時無法讀取，請稍後再試。",
+    fallbackActive: "高德地圖連線失敗，已切換至備用地圖。",
     pathFailed: "步行路線暫不可用，已保留真實地點標記。",
     noStops: "目前路線沒有可顯示的地點。",
   },
@@ -105,6 +118,8 @@ const COPY: Record<
     loading: "Loading the live map…",
     missingKey: "Map key is not configured.",
     loadFailed: "Map unavailable. The itinerary remains available.",
+    dataFailed: "Map stop data is temporarily unavailable. Please try again shortly.",
+    fallbackActive: "AMap could not connect; the backup map is now in use.",
     pathFailed: "Walking path unavailable; real stop markers are still shown.",
     noStops: "This route has no mappable stops.",
   },
@@ -112,6 +127,8 @@ const COPY: Record<
     loading: "A carregar o mapa real…",
     missingKey: "A chave do mapa não está configurada.",
     loadFailed: "Mapa indisponível. O itinerário continua acessível.",
+    dataFailed: "Os dados das paragens estão temporariamente indisponíveis.",
+    fallbackActive: "Não foi possível ligar ao AMap; está a ser usado o mapa alternativo.",
     pathFailed: "Percurso indisponível; os marcadores reais continuam visíveis.",
     noStops: "Este percurso não tem paragens para mostrar.",
   },
@@ -172,6 +189,11 @@ export function MapRouteView({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
+  const [fallbackMap, setFallbackMap] = useState<{
+    pois: RoutePoi[];
+    path: Array<[number, number]>;
+  } | null>(null);
+  const [preferFallback, setPreferFallback] = useState(false);
   const [mapReadyTick, setMapReadyTick] = useState(0);
   const poiKey = poiIds.join("|");
   const poiLabelKey = JSON.stringify(poiLabels ?? {});
@@ -191,6 +213,12 @@ export function MapRouteView({
       entry.marker.setContent(markerContent(entry.order, poiId === currentPoiId));
     }
   }, [currentPoiId]);
+
+  useEffect(() => {
+    if (mapReadyTick > 0 || fallbackMap) return;
+    const timer = window.setTimeout(() => setPreferFallback(true), 7000);
+    return () => window.clearTimeout(timer);
+  }, [fallbackMap, mapReadyTick]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -254,30 +282,72 @@ export function MapRouteView({
     setLoading(true);
     setError(null);
     setWarning(null);
+    setFallbackMap(null);
+    setMapReadyTick(0);
     markersRef.current.clear();
     userMarkerRef.current = null;
     amapRef.current = null;
 
-    if (!key) {
-      setLoading(false);
-      setError(copy.missingKey);
-      return () => controller.abort();
-    }
     if (securityCode) {
       window._AMapSecurityConfig = { securityJsCode: securityCode };
     }
 
     void (async () => {
+      let pois: RoutePoi[];
       try {
-        const [namespace, pois] = await Promise.all([
-          load({ key, version: "2.0", plugins: [] }) as Promise<AMapNamespace>,
-          fetchRoutePois(stablePoiIds, controller.signal),
-        ]);
-        if (cancelled) return;
-        if (pois.length === 0) {
-          setError(copy.noStops);
-          return;
+        pois = await fetchRoutePois(stablePoiIds, controller.signal);
+      } catch {
+        if (!cancelled && !controller.signal.aborted) setError(copy.dataFailed);
+        if (!cancelled) setLoading(false);
+        return;
+      }
+      if (cancelled) return;
+      if (pois.length === 0) {
+        setError(copy.noStops);
+        setLoading(false);
+        return;
+      }
+
+      const activateFallback = (notice: string) => {
+        setFallbackMap({ pois, path: [] });
+        setWarning(notice);
+        setLoading(false);
+
+        if (stablePoiIds.length >= 2) {
+          void fetchRouteWalkPath(stablePoiIds).then(
+            (result) => {
+              if (!cancelled) {
+                setFallbackMap({ pois, path: parsePolyline(result.polyline) });
+              }
+            },
+            () => {
+              if (!cancelled) setWarning(copy.pathFailed);
+            },
+          );
         }
+      };
+
+      if (!key || preferFallback) {
+        activateFallback(key ? copy.fallbackActive : copy.missingKey);
+        return;
+      }
+
+      let namespace: AMapNamespace;
+      try {
+        namespace = await Promise.race([
+          load({ key, version: "2.0", plugins: [] }) as Promise<AMapNamespace>,
+          new Promise<never>((_, reject) =>
+            window.setTimeout(() => reject(new Error("AMap load timeout")), 7000),
+          ),
+        ]);
+      } catch {
+        if (cancelled) return;
+        activateFallback(copy.fallbackActive);
+        return;
+      }
+
+      try {
+        if (cancelled) return;
 
         createdMap = new namespace.Map(container, {
           center: [pois[0].longitude, pois[0].latitude],
@@ -320,23 +390,28 @@ export function MapRouteView({
           overlays.push(marker);
         }
 
+        if (cancelled) return;
+        createdMap.add(overlays);
+        createdMap.setFitView(overlays, false, [64, 64, 92, 64], 17);
+        setLoading(false);
+
         if (stablePoiIds.length >= 2) {
           try {
             const pathResult = await fetchRouteWalkPath(stablePoiIds);
             if (!cancelled) {
               const path = parsePolyline(pathResult.polyline);
               if (path.length >= 2) {
-                overlays.unshift(
-                  new namespace.Polyline({
-                    path,
-                    strokeColor: "#526454",
-                    strokeWeight: 6,
-                    strokeOpacity: 0.9,
-                    lineJoin: "round",
-                    lineCap: "round",
-                    zIndex: 110,
-                  }),
-                );
+                const routeLine = new namespace.Polyline({
+                  path,
+                  strokeColor: "#526454",
+                  strokeWeight: 6,
+                  strokeOpacity: 0.9,
+                  lineJoin: "round",
+                  lineCap: "round",
+                  zIndex: 110,
+                });
+                createdMap.add(routeLine);
+                createdMap.setFitView([routeLine, ...overlays], false, [64, 64, 92, 64], 17);
               } else {
                 setWarning(copy.pathFailed);
               }
@@ -346,9 +421,6 @@ export function MapRouteView({
           }
         }
 
-        if (cancelled) return;
-        createdMap.add(overlays);
-        createdMap.setFitView(overlays, false, [64, 64, 92, 64], 17);
       } catch (reason) {
         if (cancelled || controller.signal.aborted) return;
         const message =
@@ -372,9 +444,12 @@ export function MapRouteView({
     };
   }, [
     copy.loadFailed,
+    copy.dataFailed,
+    copy.fallbackActive,
     copy.missingKey,
     copy.noStops,
     copy.pathFailed,
+    preferFallback,
     poiKey,
     poiLabelKey,
   ]);
@@ -382,7 +457,21 @@ export function MapRouteView({
   return (
     <div className="map-route-view absolute inset-0 z-0 overflow-hidden bg-paper-warm [contain:paint]">
       <style>{`@keyframes map-user-pulse{0%{transform:scale(.7);opacity:.55}70%{transform:scale(1.35);opacity:0}100%{transform:scale(1.35);opacity:0}}`}</style>
-      <div ref={containerRef} className="h-full w-full" aria-label="route map" />
+      {fallbackMap ? (
+        <Suspense fallback={null}>
+          <LeafletRouteFallback
+            pois={fallbackMap.pois}
+            path={fallbackMap.path}
+            currentPoiId={currentPoiId}
+            poiLabels={poiLabels}
+            userLocation={userLocation}
+            recenterToken={recenterToken}
+            onSelectPoi={onSelectPoi}
+          />
+        </Suspense>
+      ) : (
+        <div ref={containerRef} className="h-full w-full" aria-label="route map" />
+      )}
       {loading ? (
         <div className="pointer-events-none absolute inset-0 grid place-items-center bg-paper-warm/90">
           <p className="rounded-full border border-line bg-paper px-4 py-2 text-sm text-ink-soft shadow-[var(--shadow-soft)]">

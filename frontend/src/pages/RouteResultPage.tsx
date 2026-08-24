@@ -8,6 +8,7 @@ import {
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { triggerGuide, type GuideTriggerResponse } from "@/api/guide-trigger";
+import { prewarmPostcardScene } from "@/api/postcards";
 import {
   adjustRoute,
   fetchRoutePois,
@@ -23,15 +24,23 @@ import {
 } from "@/components/route/RouteNodeList";
 import { TripControls } from "@/components/trip/TripControls";
 import { t } from "@/i18n";
+import { getLastTripId } from "@/lib/lastTrip";
 import { resolveTripUserId } from "@/lib/guestUser";
 import { routeHasGamblingVenue } from "@/lib/gamblingEthics";
 import { formatWalkMeta } from "@/lib/preference";
+import {
+  localizedPoiIdName,
+  localizedPoiMeta,
+  localizedPoiName,
+  toTraditionalText,
+} from "@/lib/poiLocalization";
 import { ensurePreferencePortAnchors, portLabel } from "@/lib/ports";
 import { buildRouteAdjustmentDraft } from "@/lib/route-adjustment";
+import { localizedRoute, localizedRouteReasons } from "@/lib/routeLocalization";
 import { useAuth } from "@/state/AuthContext";
 import { useTrip } from "@/state/TripContext";
 import { useWalk } from "@/state/WalkContext";
-import type { POI } from "@/types";
+import type { LanguageCode, POI } from "@/types";
 import type { RouteAdjustmentDraft, RoutePoi } from "@/types/routes";
 
 type SheetSnap = "peek" | "half" | "full";
@@ -80,7 +89,11 @@ function haversineMeters(
   return 2 * r * Math.asin(Math.sqrt(a));
 }
 
-function estimateWalkLegs(poiIds: string[], poisById: Record<string, POI>): WalkLeg[] {
+function estimateWalkLegs(
+  poiIds: string[],
+  poisById: Record<string, POI>,
+  language: LanguageCode,
+): WalkLeg[] {
   const legs: WalkLeg[] = [];
   for (let i = 0; i < poiIds.length - 1; i += 1) {
     const from = poisById[poiIds[i]];
@@ -101,12 +114,33 @@ function estimateWalkLegs(poiIds: string[], poisById: Record<string, POI>): Walk
       ...(preferBus
         ? {
             preferredMode: "bus" as const,
-            busLines: ["建议乘巴士（勿步行）"],
+            busLines: [t(language, "busRecommendedNoWalk")],
           }
         : {}),
     });
   }
   return legs;
+}
+
+const HAN_TEXT = /[\u3400-\u9fff]/;
+
+function localizedTransitLines(lines: string[], language: LanguageCode): string[] {
+  if (language === "zh-CN") return lines.filter(Boolean);
+  if (language === "zh-TW") return lines.filter(Boolean).map(toTraditionalText);
+
+  const routeNumbers = lines.flatMap((line) => line.match(/\b\d+[A-Za-z]?\b/g) ?? []);
+  return [...new Set(routeNumbers)];
+}
+
+function localizedTransitStop(
+  value: string | null | undefined,
+  language: LanguageCode,
+): string | null {
+  const text = value?.trim() || "";
+  if (!text) return null;
+  if (language === "zh-TW") return toTraditionalText(text);
+  if (language !== "zh-CN" && HAN_TEXT.test(text)) return null;
+  return text;
 }
 
 const TRIM_NOTE_RE = /(?:\s*已按约束缩短末端节点。)+/g;
@@ -140,11 +174,42 @@ function readGuideSessionId(): string {
   }
 }
 
+function requestPosition(options: PositionOptions): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, options);
+  });
+}
+
+async function requestFastPosition(): Promise<GeolocationPosition> {
+  try {
+    return await requestPosition({
+      enableHighAccuracy: false,
+      maximumAge: 60_000,
+      timeout: 4_000,
+    });
+  } catch (error) {
+    const geoError = error as Partial<GeolocationPositionError>;
+    if (geoError.code === 1) {
+      throw error;
+    }
+    return requestPosition({
+      enableHighAccuracy: true,
+      maximumAge: 30_000,
+      timeout: 8_000,
+    });
+  }
+}
+
 export function RouteResultPage() {
   const navigate = useNavigate();
   const { session, language, setSession } = useWalk();
   const { userId: authUserId } = useAuth();
-  const { trip, loading: tripLoading, checkInAtLocation } = useTrip();
+  const {
+    trip,
+    loading: tripLoading,
+    checkInAtLocation,
+    simulateArrive,
+  } = useTrip();
   const tripUserId = resolveTripUserId(authUserId);
   const [sheetOpen, setSheetOpen] = useState<SheetSnap>("half");
   const [sheetDragHeight, setSheetDragHeight] = useState<number | null>(null);
@@ -154,6 +219,7 @@ export function RouteResultPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [guiding, setGuiding] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [completingPoiId, setCompletingPoiId] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [userLocation, setUserLocation] = useState<{
     latitude: number;
@@ -178,6 +244,7 @@ export function RouteResultPage() {
   const generatingRef = useRef(false);
   const checkingRef = useRef(false);
   const lastGpsCheckRef = useRef(0);
+  const lastGpsPositionRef = useRef<GeolocationPosition | null>(null);
   const nodesRef = useRef<DisplayNode[]>([]);
   const sheetDragRef = useRef<{
     pointerId: number;
@@ -269,9 +336,16 @@ export function RouteResultPage() {
       return {
         poiId: node.poi_id,
         order: node.order,
-        name: poi?.poi_name || portLabel(node.poi_id, language) || node.poi_id,
-        subtitle: portSubtitle ?? poi?.alias ?? poi?.category,
-        note: node.note || poi?.address || t(language, "nodeNoteFallback"),
+        name: poi
+          ? localizedPoiName(poi, language)
+          : localizedPoiIdName(node.poi_id, language) || portLabel(node.poi_id, language),
+        subtitle: portSubtitle ?? (poi ? localizedPoiMeta(poi, language) : undefined),
+        note:
+          anchor
+            ? node.note || t(language, "nodeNoteFallback")
+            : language === "zh-CN"
+            ? node.note || poi?.address || t(language, "nodeNoteFallback")
+            : t(language, "nodeNoteFallback"),
         stayMin: node.suggested_stay_min,
         state:
           index === currentIndex ? "current" : index === currentIndex + 1 ? "next" : "upcoming",
@@ -293,21 +367,29 @@ export function RouteResultPage() {
       return;
     }
     const expectedLegs = nodePoiIds.length - 1;
-    const fallback = estimateWalkLegs(nodePoiIds, poisById);
+    const fallback = estimateWalkLegs(nodePoiIds, poisById, language);
     setWalkLegs(fallback);
     setWalkLegsLoading(true);
     let active = true;
     const applyLegs = (res: Awaited<ReturnType<typeof fetchRouteWalkPath>>) => {
-      const legs = (res.segments ?? []).map((seg) => ({
-        walkM: seg.walk_m,
-        walkMin: seg.walk_min,
-        busLines: seg.bus_lines ?? [],
-        busFromStop: seg.bus_from_stop ?? null,
-        busToStop: seg.bus_to_stop ?? null,
-        preferredMode:
-          seg.preferred_mode ??
-          (seg.walk_min >= 15 && (seg.bus_lines?.length ?? 0) > 0 ? "bus" : "walk"),
-      }));
+      const legs = (res.segments ?? []).map((seg) => {
+        const busLines = localizedTransitLines(seg.bus_lines ?? [], language);
+        const shouldPreferBus =
+          seg.preferred_mode === "bus" ||
+          (seg.walk_min >= 15 && (seg.bus_lines?.length ?? 0) > 0);
+        if (shouldPreferBus && busLines.length === 0) {
+          busLines.push(t(language, "busRecommendedNoWalk"));
+        }
+        return {
+          walkM: seg.walk_m,
+          walkMin: seg.walk_min,
+          busLines,
+          busFromStop: localizedTransitStop(seg.bus_from_stop, language),
+          busToStop: localizedTransitStop(seg.bus_to_stop, language),
+          preferredMode:
+            seg.preferred_mode ?? (shouldPreferBus ? "bus" : "walk"),
+        };
+      });
       if (legs.length === expectedLegs) setWalkLegs(legs);
     };
     fetchRouteWalkPath(nodePoiIds)
@@ -331,7 +413,7 @@ export function RouteResultPage() {
     };
     // poisById used for fallback only when ids change
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodePoiKey]);
+  }, [nodePoiKey, language]);
 
   useEffect(() => {
     triggerOpenRef.current = triggerOpen;
@@ -357,6 +439,7 @@ export function RouteResultPage() {
 
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
+        lastGpsPositionRef.current = pos;
         const { longitude, latitude } = pos.coords;
         setUserLocation({ latitude, longitude });
 
@@ -403,8 +486,8 @@ export function RouteResultPage() {
       },
       {
         enableHighAccuracy: true,
-        maximumAge: 5000,
-        timeout: 20_000,
+        maximumAge: 30_000,
+        timeout: 12_000,
       },
     );
 
@@ -416,13 +499,13 @@ export function RouteResultPage() {
   const adjustmentPoiNames = useMemo(() => {
     const names: Record<string, string> = {};
     for (const [poiId, poi] of Object.entries(poisById)) {
-      names[poiId] = poi.poi_name;
+      names[poiId] = localizedPoiName(poi, language);
     }
     for (const poi of adjustmentPois) {
-      names[poi.poi_id] = poi.poi_name;
+      names[poi.poi_id] = localizedPoiName(poi, language);
     }
     return names;
-  }, [poisById, adjustmentPois]);
+  }, [poisById, adjustmentPois, language]);
 
   if (!session || !match || !route || !preference) {
     return (
@@ -463,11 +546,16 @@ export function RouteResultPage() {
     meta.push(t(language, "gamblingRiskReminder"));
   }
 
-  const explanation = cleanRouteBlurb(
-    typeof match.explanation?.summary === "string"
-      ? match.explanation.summary
-      : route.description,
-  );
+  const localizedRouteCopy = localizedRoute(route, language);
+  const localizedReasons = localizedRouteReasons(route, match.reasons, language);
+  const explanation =
+    language === "zh-CN"
+      ? cleanRouteBlurb(
+          typeof match.explanation?.summary === "string"
+            ? match.explanation.summary
+            : route.description,
+        )
+      : localizedRouteCopy.summary;
   const currentNode = nodes[currentIndex] ?? nodes[0];
   const triggerPoiName =
     triggerPayload?.poi?.poi_name ??
@@ -612,16 +700,20 @@ export function RouteResultPage() {
       setError(t(language, "gpsUnsupported"));
       return;
     }
+    setChecking(true);
     setError(null);
     setStatusNote(t(language, "tripSimulateArriveBusy"));
     try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 12_000,
-          maximumAge: 10_000,
-        }),
-      );
+      const cachedPosition = lastGpsPositionRef.current;
+      const position =
+        cachedPosition && Date.now() - cachedPosition.timestamp <= 30_000
+          ? cachedPosition
+          : await requestFastPosition();
+      lastGpsPositionRef.current = position;
+      setUserLocation({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      });
       await checkInAtLocation(
         tripUserId,
         route.id,
@@ -644,6 +736,46 @@ export function RouteResultPage() {
             ? t(language, "tripPoiMismatch")
             : raw || t(language, "tripSimulateArriveError"),
       );
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  async function completeVisitAtStop(poiId: string, index: number) {
+    setCurrentIndex(index);
+    setCompletingPoiId(poiId);
+    setError(null);
+    setStatusNote(t(language, "tripVisitCompleting"));
+    try {
+      await simulateArrive(
+        tripUserId,
+        route.id,
+        poiId,
+        nodePoiIds,
+      );
+      setStatusNote(t(language, "tripVisitCompleted"));
+      const activeTripId = trip?.trip_id || getLastTripId();
+      if (activeTripId) {
+        void prewarmPostcardScene({
+          tripId: activeTripId,
+          poiId,
+          language,
+        }).catch(() => {
+          // Prewarming is opportunistic; postcard creation retains its normal fallback.
+        });
+      }
+    } catch (err) {
+      setStatusNote(null);
+      const raw = err instanceof Error ? err.message : "";
+      setError(
+        raw === "TRIP_BACKEND_STALE"
+          ? t(language, "tripBackendStale")
+          : raw === "TRIP_POI_MISMATCH" || /not part of trip/i.test(raw)
+            ? t(language, "tripPoiMismatch")
+            : raw || t(language, "tripVisitError"),
+      );
+    } finally {
+      setCompletingPoiId(null);
     }
   }
 
@@ -662,6 +794,20 @@ export function RouteResultPage() {
     setTriggerOpen(false);
     setNarration(null);
     setStatusNote(t(language, "gpsWatching"));
+  }
+
+  function handlePrimaryAction() {
+    if (currentPoiChecked && trip && currentNode) {
+      navigate(
+        `/postcards/new?trip=${encodeURIComponent(trip.trip_id)}&poi=${encodeURIComponent(currentNode.poiId)}`,
+      );
+      return;
+    }
+    if (guiding) {
+      handleNextStop();
+      return;
+    }
+    handleStartGuide();
   }
 
   function handleSelectStop(index: number) {
@@ -759,6 +905,7 @@ export function RouteResultPage() {
               }
               navigator.geolocation.getCurrentPosition(
                 (pos) => {
+                  lastGpsPositionRef.current = pos;
                   setUserLocation({
                     latitude: pos.coords.latitude,
                     longitude: pos.coords.longitude,
@@ -825,10 +972,10 @@ export function RouteResultPage() {
 
         <aside className="relative z-10 hidden border-l border-line/70 bg-paper lg:sticky lg:top-[7.25rem] lg:block lg:max-h-[calc(100dvh-7.25rem)] lg:overflow-y-auto lg:overscroll-contain">
           <RouteInfoPanel
-            title={route.name}
-            theme={route.theme}
+            title={localizedRouteCopy.name}
+            theme={localizedRouteCopy.theme}
             meta={meta}
-            reasons={match.reasons}
+            reasons={localizedReasons}
             explanation={explanation}
             adjustmentPanel={adjustmentPanel}
             tripPanel={tripPanel}
@@ -839,11 +986,24 @@ export function RouteResultPage() {
             chapterLabel={t(language, "chapterIII")}
             itineraryLabel={t(language, "itinerary")}
             simulateLabel={t(language, "simulateNear")}
-            simulateArriveLabel={t(language, "tripSimulateArrive")}
+            simulateArriveLabel={
+              currentPoiChecked
+                ? t(language, "tripStopDone")
+                : checking
+                ? t(language, "tripSimulateArriveBusy")
+                : t(language, "tripSimulateArrive")
+            }
             simulateArriveDone={currentPoiChecked}
-            simulateArriveDisabled={tripLoading || !currentNode}
+            simulateArriveDisabled={checking || tripLoading || !currentNode}
+            completedPoiIds={trip?.checked_in_poi_ids ?? []}
+            completingPoiId={completingPoiId}
+            completeVisitLabel={t(language, "tripCheckIn")}
+            visitCompletedLabel={t(language, "tripVisitCompleted")}
+            visitCompletingLabel={t(language, "tripVisitCompleting")}
             startGuideLabel={
-              checking
+              currentPoiChecked
+                ? t(language, "postcardCreateForStop")
+                : checking
                 ? t(language, "checkingNear")
                 : guiding
                   ? t(language, "nextStopGuide")
@@ -852,7 +1012,8 @@ export function RouteResultPage() {
             startDisabled={checking || generating}
             onSimulate={() => void simulateNearCurrentStop()}
             onSimulateArrive={() => void checkInCurrentStop()}
-            onStartGuide={() => (guiding ? handleNextStop() : handleStartGuide())}
+            onCompletePoi={(poiId, index) => void completeVisitAtStop(poiId, index)}
+            onStartGuide={handlePrimaryAction}
             onSelectStop={handleSelectStop}
             curatorSuffix={t(language, "curatorSuffix")}
             stayLabel={t(language, "stayMinutes")}
@@ -895,10 +1056,10 @@ export function RouteResultPage() {
         </button>
         <div className="min-h-0 flex-1">
           <RouteInfoPanel
-            title={route.name}
-            theme={route.theme}
+            title={localizedRouteCopy.name}
+            theme={localizedRouteCopy.theme}
             meta={meta}
-            reasons={match.reasons}
+            reasons={localizedReasons}
             explanation={explanation}
             adjustmentPanel={adjustmentPanel}
             tripPanel={tripPanel}
@@ -910,11 +1071,24 @@ export function RouteResultPage() {
             chapterLabel={t(language, "chapterIII")}
             itineraryLabel={t(language, "itinerary")}
             simulateLabel={t(language, "simulateNear")}
-            simulateArriveLabel={t(language, "tripSimulateArrive")}
+            simulateArriveLabel={
+              currentPoiChecked
+                ? t(language, "tripStopDone")
+                : checking
+                ? t(language, "tripSimulateArriveBusy")
+                : t(language, "tripSimulateArrive")
+            }
             simulateArriveDone={currentPoiChecked}
-            simulateArriveDisabled={tripLoading || !currentNode}
+            simulateArriveDisabled={checking || tripLoading || !currentNode}
+            completedPoiIds={trip?.checked_in_poi_ids ?? []}
+            completingPoiId={completingPoiId}
+            completeVisitLabel={t(language, "tripCheckIn")}
+            visitCompletedLabel={t(language, "tripVisitCompleted")}
+            visitCompletingLabel={t(language, "tripVisitCompleting")}
             startGuideLabel={
-              checking
+              currentPoiChecked
+                ? t(language, "postcardCreateForStop")
+                : checking
                 ? t(language, "checkingNear")
                 : guiding
                   ? t(language, "nextStopGuide")
@@ -923,7 +1097,8 @@ export function RouteResultPage() {
             startDisabled={checking || generating}
             onSimulate={() => void simulateNearCurrentStop()}
             onSimulateArrive={() => void checkInCurrentStop()}
-            onStartGuide={() => (guiding ? handleNextStop() : handleStartGuide())}
+            onCompletePoi={(poiId, index) => void completeVisitAtStop(poiId, index)}
+            onStartGuide={handlePrimaryAction}
             onSelectStop={handleSelectStop}
             curatorSuffix={t(language, "curatorSuffix")}
             stayLabel={t(language, "stayMinutes")}
@@ -1074,10 +1249,16 @@ function RouteInfoPanel({
   simulateArriveLabel,
   simulateArriveDone,
   simulateArriveDisabled,
+  completedPoiIds,
+  completingPoiId,
+  completeVisitLabel,
+  visitCompletedLabel,
+  visitCompletingLabel,
   startGuideLabel,
   startDisabled,
   onSimulate,
   onSimulateArrive,
+  onCompletePoi,
   onStartGuide,
   onSelectStop,
   curatorSuffix,
@@ -1107,10 +1288,16 @@ function RouteInfoPanel({
   simulateArriveLabel: string;
   simulateArriveDone?: boolean;
   simulateArriveDisabled?: boolean;
+  completedPoiIds?: string[];
+  completingPoiId?: string | null;
+  completeVisitLabel: string;
+  visitCompletedLabel: string;
+  visitCompletingLabel: string;
   startGuideLabel: string;
   startDisabled?: boolean;
   onSimulate: () => void;
   onSimulateArrive: () => void;
+  onCompletePoi: (poiId: string, index: number) => void;
   onStartGuide: () => void;
   onSelectStop?: (index: number) => void;
   curatorSuffix: string;
@@ -1204,6 +1391,12 @@ function RouteInfoPanel({
               busStopLegLabel={busStopLegLabel}
               legsLoadingLabel={legsLoadingLabel}
               onSelectIndex={onSelectStop}
+              completedPoiIds={completedPoiIds}
+              completingPoiId={completingPoiId}
+              completeVisitLabel={completeVisitLabel}
+              visitCompletedLabel={visitCompletedLabel}
+              visitCompletingLabel={visitCompletingLabel}
+              onCompletePoi={onCompletePoi}
             />
           </div>
         ) : null}
@@ -1222,7 +1415,7 @@ function RouteInfoPanel({
               type="button"
               disabled={simulateArriveDisabled || simulateArriveDone}
               onClick={onSimulateArrive}
-              className="h-11 min-w-0 flex-1 rounded-full border border-sage-deep bg-sage-deep/10 px-3 text-xs font-medium text-sage-deep hover:bg-sage-deep hover:text-paper disabled:pointer-events-none disabled:opacity-50 sm:h-12 sm:px-4 sm:text-sm"
+              className="min-h-11 min-w-0 flex-1 rounded-full border border-sage-deep bg-sage-deep/10 px-3 py-2 text-xs font-medium text-sage-deep hover:bg-sage-deep hover:text-paper disabled:pointer-events-none disabled:opacity-50 sm:min-h-12 sm:px-4 sm:text-sm"
             >
               {simulateArriveDone ? "✓ " : ""}
               {simulateArriveLabel}
@@ -1231,7 +1424,7 @@ function RouteInfoPanel({
               type="button"
               disabled={startDisabled}
               onClick={onSimulate}
-              className="h-11 min-w-0 flex-1 rounded-full border border-line bg-paper px-3 text-xs text-ink hover:bg-paper-warm disabled:pointer-events-none disabled:opacity-50 sm:h-12 sm:px-4 sm:text-sm"
+              className="min-h-11 min-w-0 flex-1 rounded-full border border-line bg-paper px-3 py-2 text-xs text-ink hover:bg-paper-warm disabled:pointer-events-none disabled:opacity-50 sm:min-h-12 sm:px-4 sm:text-sm"
             >
               {simulateLabel}
             </button>
@@ -1240,7 +1433,7 @@ function RouteInfoPanel({
             type="button"
             disabled={startDisabled}
             onClick={onStartGuide}
-            className="h-12 w-full rounded-full bg-sage-deep text-center font-medium text-paper shadow-[var(--shadow-soft)] hover:bg-moss disabled:pointer-events-none disabled:opacity-60"
+            className="min-h-12 w-full rounded-full bg-sage-deep px-3 py-2 text-center font-medium text-paper shadow-[var(--shadow-soft)] hover:bg-moss disabled:pointer-events-none disabled:opacity-60"
           >
             {startGuideLabel}
           </button>

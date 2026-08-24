@@ -824,8 +824,8 @@ def _anchor_ports(route: dict, pref: Preference) -> tuple[dict, list[str]]:
         for node in sorted(route.get("nodes", []), key=lambda item: item["order"])
         if not _is_port_anchor(node)
     ]
-    entry = (pref.entry_port or "").strip() or None
-    exit_port = (pref.exit_port or "").strip() or None
+    entry = (getattr(pref, "entry_port", None) or "").strip() or None
+    exit_port = (getattr(pref, "exit_port", None) or "").strip() or None
 
     if entry:
         nodes = [node for node in nodes if node.get("poi_id") != entry]

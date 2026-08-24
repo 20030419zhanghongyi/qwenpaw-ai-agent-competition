@@ -28,6 +28,12 @@ export function RouteNodeList({
   busStopLegLabel = "{from} → {to}",
   legsLoadingLabel = "正在查询步行与巴士…",
   onSelectIndex,
+  completedPoiIds = [],
+  completingPoiId,
+  completeVisitLabel = "完成此站参观",
+  visitCompletedLabel = "已完成参观",
+  visitCompletingLabel = "正在记录…",
+  onCompletePoi,
 }: {
   nodes: DisplayNode[];
   /** Legs[i] connects nodes[i] → nodes[i + 1]. */
@@ -39,7 +45,14 @@ export function RouteNodeList({
   busStopLegLabel?: string;
   legsLoadingLabel?: string;
   onSelectIndex?: (index: number) => void;
+  completedPoiIds?: string[];
+  completingPoiId?: string | null;
+  completeVisitLabel?: string;
+  visitCompletedLabel?: string;
+  visitCompletingLabel?: string;
+  onCompletePoi?: (poiId: string, index: number) => void;
 }) {
+  const completed = new Set(completedPoiIds);
   return (
     <ol className="relative space-y-0">
       {legsLoading ? (
@@ -48,6 +61,8 @@ export function RouteNodeList({
       <span className="absolute bottom-2 left-[15px] top-2 w-px bg-line" aria-hidden />
       {nodes.map((p, index) => {
         const selectable = Boolean(onSelectIndex);
+        const isCompleted = completed.has(p.poiId);
+        const isCompleting = completingPoiId === p.poiId;
         const markerClass = [
           "relative z-10 grid size-8 shrink-0 place-items-center rounded-full font-serif text-xs font-bold transition",
           p.state === "current"
@@ -93,6 +108,21 @@ export function RouteNodeList({
                 ) : (
                   <NodeCopy node={p} stayLabel={stayLabel} />
                 )}
+                {onCompletePoi ? (
+                  <button
+                    type="button"
+                    disabled={isCompleted || Boolean(completingPoiId)}
+                    onClick={() => onCompletePoi(p.poiId, index)}
+                    className="mt-2 inline-flex min-h-8 items-center rounded-full border border-sage-deep px-3 py-1 text-[11px] font-medium text-sage-deep transition hover:bg-sage-deep hover:text-paper disabled:pointer-events-none disabled:border-sage/40 disabled:bg-sage-deep/[0.06] disabled:text-sage-deep/70"
+                  >
+                    {isCompleted ? "✓ " : ""}
+                    {isCompleted
+                      ? visitCompletedLabel
+                      : isCompleting
+                        ? visitCompletingLabel
+                        : completeVisitLabel}
+                  </button>
+                ) : null}
               </div>
             </div>
             {leg && index < nodes.length - 1 ? (
