@@ -3,25 +3,12 @@ import { StoryImage } from "@/features/story/assets";
 import { CompleteFlowerReveal } from "@/features/story/components/CompleteFlowerReveal";
 import { PetalProgress } from "@/features/story/components/PetalProgress";
 import type { StoryReward } from "@/types/stories";
+import { useStoryMessages } from "@/features/story/storyI18n";
 
 interface RewardRevealProps {
   rewards: StoryReward[];
   onDismiss: () => void;
   dismissLabel?: string;
-}
-
-const KIND_LABELS: Record<string, { label: string; icon: string }> = {
-  stamp: { label: "印记", icon: "🦭" },
-  capability: { label: "能力", icon: "🔍" },
-  coordinate: { label: "坐标", icon: "📍" },
-  story_prop: { label: "故事道具", icon: "⌑" },
-  note_petal: { label: "密笺花瓣", icon: "✦" },
-  collection: { label: "完整收藏", icon: "❀" },
-  reflection: { label: "今日补记", icon: "◇" },
-};
-
-function rewardLabel(kind: string): { label: string; icon: string } {
-  return KIND_LABELS[kind] ?? { label: kind, icon: "✦" };
 }
 
 function petalNumber(id: string): number {
@@ -50,8 +37,20 @@ function rewardAssetId(reward: StoryReward): string | null {
 export function RewardReveal({
   rewards,
   onDismiss,
-  dismissLabel = "收下并查看下一站",
+  dismissLabel,
 }: RewardRevealProps) {
+  const st = useStoryMessages();
+  const kindLabels: Record<string, { label: string; icon: string }> = {
+    stamp: { label: st("rewardStamp"), icon: "🦭" },
+    capability: { label: st("rewardCapability"), icon: "🔍" },
+    coordinate: { label: st("rewardCoordinate"), icon: "📍" },
+    story_prop: { label: st("rewardStoryProp"), icon: "⌑" },
+    note_petal: { label: st("rewardPetal"), icon: "✦" },
+    collection: { label: st("rewardCollection"), icon: "❀" },
+    reflection: { label: st("rewardReflection"), icon: "◇" },
+  };
+  const rewardLabel = (kind: string) =>
+    kindLabels[kind] ?? { label: kind, icon: "✦" };
   const dismissRef = useRef<HTMLButtonElement>(null);
   const [stage, setStage] = useState<"rewards" | "flower">("rewards");
   const rewardSignature = rewards.map((reward) => reward.id).join("|");
@@ -102,10 +101,10 @@ export function RewardReveal({
       <div className="flex max-h-full w-full max-w-sm flex-col overflow-hidden rounded-3xl border border-line bg-paper shadow-[var(--shadow-lift)] motion-safe:animate-[fadeIn_.3s_ease-out]">
         <div className="shrink-0 px-6 pt-6">
           <p className="text-center text-xs font-semibold uppercase tracking-[0.22em] text-sage-deep">
-            {showingFlower ? "五瓣成花" : "章节收获"}
+            {showingFlower ? st("petalsBecomeFlower") : st("chapterRewards")}
           </p>
           <h2 id="story-reward-title" className="sr-only">
-            {showingFlower ? "五张密笺组成完整市花" : "获得故事奖励"}
+            {showingFlower ? st("flowerRewardAria") : st("storyRewardAria")}
           </h2>
         </div>
 
@@ -176,12 +175,12 @@ export function RewardReveal({
             className="min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper shadow-[var(--shadow-soft)] transition active:scale-[0.99]"
           >
             {completesFlower && stage === "rewards"
-              ? "收下第五瓣密笺"
-              : dismissLabel}
+              ? st("acceptFifthPetal")
+              : (dismissLabel ?? st("acceptAndNext"))}
           </button>
           {completesFlower && stage === "rewards" ? (
             <p className="mt-2 text-center text-xs leading-5 text-ink-soft">
-              确认收下后，将集齐所有五瓣密笺。
+              {st("fifthPetalHint")}
             </p>
           ) : null}
         </div>

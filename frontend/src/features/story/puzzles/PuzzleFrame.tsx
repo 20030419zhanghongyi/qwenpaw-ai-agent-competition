@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useStoryMessages } from "../storyI18n";
 
 interface PuzzleFrameProps {
   prompt: string;
@@ -17,11 +18,12 @@ export function PuzzleFrame({
   disabled = false,
   onSubmit,
 }: PuzzleFrameProps) {
+  const st = useStoryMessages();
   return (
     <section className="space-y-4" aria-labelledby="story-puzzle-prompt">
       <div className="rounded-2xl border border-line bg-card p-4 shadow-[var(--shadow-soft)]">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sage-deep">
-          谜题
+          {st("puzzle")}
         </p>
         <h3
           id="story-puzzle-prompt"
@@ -42,7 +44,7 @@ export function PuzzleFrame({
         onClick={onSubmit}
         className="min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper shadow-[var(--shadow-soft)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {disabled ? "提交中…" : "提交答案"}
+        {disabled ? st("submitting") : st("submitAnswer")}
       </button>
     </section>
   );

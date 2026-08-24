@@ -3,6 +3,7 @@ import { StoryImage } from "../assets";
 import type { AssemblyPuzzleData, StoryPuzzleOption } from "../types";
 import { PuzzleFrame } from "./PuzzleFrame";
 import { usePointerDrag } from "./usePointerDrag";
+import { useStoryMessages } from "../storyI18n";
 
 interface AssemblyPuzzleProps {
   puzzle: AssemblyPuzzleData;
@@ -28,6 +29,7 @@ function PieceVisual({
   piece: StoryPuzzleOption;
   fallbackIndex: number;
 }) {
+  const st = useStoryMessages();
   const assetId = piece.asset_id ?? DEFAULT_PIECE_ASSET_IDS[piece.id];
 
   return (
@@ -42,7 +44,7 @@ function PieceVisual({
       ) : (
         <span className="mx-auto mb-2 flex size-14 flex-col items-center justify-center rounded-lg border border-line bg-[url('/story/v4/_placeholder.svg')] bg-cover px-1 text-center text-[10px] leading-3 text-ink-soft">
           <span>
-            {import.meta.env.DEV ? "构件图片未映射" : "构件图片暂未提供"}
+            {import.meta.env.DEV ? st("pieceImageMissing") : st("pieceImageUnavailable")}
           </span>
           {import.meta.env.DEV ? (
             <span className="mt-0.5 max-w-full break-all font-mono text-[8px] leading-[10px] text-ink-soft/70">
@@ -61,6 +63,7 @@ export function AssemblyPuzzle({
   disabled = false,
   onSubmit,
 }: AssemblyPuzzleProps) {
+  const st = useStoryMessages();
   const slotCount = Math.max(
     1,
     Math.min(puzzle.slot_count ?? 4, puzzle.options.length),
@@ -116,13 +119,13 @@ export function AssemblyPuzzle({
     <>
       <PuzzleFrame
         prompt={puzzle.prompt}
-        selectionHint={`点选构件再点槽位，或按住“拖动”把构件放入槽位。需要填满 ${slotCount} 个槽位。`}
+        selectionHint={st("assemblyHint", { count: slotCount })}
         canSubmit={slots.every(Boolean)}
         disabled={disabled}
         onSubmit={() => onSubmit(slots.filter((id): id is string => Boolean(id)))}
       >
         <div className="rounded-xl border border-dashed border-sage/50 bg-sage/5 p-3">
-          <p className="text-[13px] font-medium text-ink-soft">目标轮廓</p>
+          <p className="text-[13px] font-medium text-ink-soft">{st("targetOutline")}</p>
           <div className="mt-2 grid grid-cols-2 gap-2">
             {slots.map((pieceId, index) => {
               const piece = puzzle.options.find((item) => item.id === pieceId);
@@ -153,8 +156,11 @@ export function AssemblyPuzzle({
                   }`}
                   aria-label={
                     piece
-                      ? `槽位 ${index + 1}：${piece.text}，点击移回托盘`
-                      : `空槽位 ${index + 1}${activePiece ? "，点击放置已选构件" : ""}`
+                      ? st("filledSlotAria", { index: index + 1, item: piece.text })
+                      : st("emptySlotAria", {
+                          index: index + 1,
+                          action: activePiece ? st("placeSelectedPiece") : "",
+                        })
                   }
                 >
                   <span className="absolute left-2 top-2 grid size-6 place-items-center rounded-full bg-paper text-xs text-ink-soft">
@@ -170,8 +176,8 @@ export function AssemblyPuzzle({
                   ) : (
                     <span className="text-[13px] text-ink-soft">
                       {hoveredSlot === index
-                        ? "松开放入这里"
-                        : puzzle.slots?.[index]?.label ?? "点击或拖入构件"}
+                        ? st("releaseToPlace")
+                        : puzzle.slots?.[index]?.label ?? st("placePiece")}
                     </span>
                   )}
                 </button>
@@ -181,7 +187,7 @@ export function AssemblyPuzzle({
         </div>
 
         <div className="mt-5">
-          <p className="text-[13px] font-medium text-ink-soft">构件托盘</p>
+          <p className="text-[13px] font-medium text-ink-soft">{st("pieceTray")}</p>
           <div className="mt-2 flex snap-x gap-2 overflow-x-auto pb-2">
             {puzzle.options.map((piece, index) => {
               const placed = pieceInSlot(piece.id);
@@ -214,10 +220,10 @@ export function AssemblyPuzzle({
                     disabled={disabled || placed}
                     {...handleProps(piece.id)}
                     className="inline-flex min-h-11 w-full touch-none select-none items-center justify-center gap-1 border-t border-line bg-card/80 text-[13px] text-ink-soft disabled:opacity-35"
-                    aria-label={`按住拖动${piece.text}`}
+                    aria-label={st("holdToDrag", { item: piece.text })}
                   >
                     <span aria-hidden>⠿</span>
-                    {placed ? "已放置" : "拖动"}
+                    {placed ? st("placed") : st("drag")}
                   </button>
                 </div>
               );

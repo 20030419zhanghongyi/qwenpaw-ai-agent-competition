@@ -20,6 +20,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useStoryMessages } from "@/features/story/storyI18n";
 
 export interface MapLayerSceneProps {
   leftLabel: string;
@@ -63,6 +64,7 @@ export function MapLayerScene({
   onComplete,
   hint,
 }: MapLayerSceneProps) {
+  const st = useStoryMessages();
   const [stageIndex, setStageIndex] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -129,7 +131,7 @@ export function MapLayerScene({
     <div
       ref={containerRef}
       role="region"
-      aria-label="地图演绎"
+      aria-label={st("mapPerformance")}
       tabIndex={0}
       onClick={handleClick}
       onKeyDown={handleKeyDown}

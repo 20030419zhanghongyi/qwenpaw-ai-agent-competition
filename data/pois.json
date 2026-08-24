@@ -1851,9 +1851,9 @@
     {
       "id": "poi_0048",
       "name_zh": "杏香园甜品",
-      "name_en": "",
-      "name_pt": "",
-      "alias": "",
+      "name_en": "Hang Heong Un Dessert",
+      "name_pt": "Hang Heong Un Dessert",
+      "alias": "Hang Heong Un Dessert",
       "district": "风顺堂区",
       "theme": [
         "美食"
@@ -11665,8 +11665,8 @@
     {
       "id": "poi_port_hzmb",
       "name_zh": "港珠澳大桥澳门口岸",
-      "name_en": "HZMB Macao Port",
-      "name_pt": "",
+      "name_en": "Hong Kong-Zhuhai-Macao Bridge Macao Port",
+      "name_pt": "Posto Fronteiriço da Ponte Hong Kong-Zhuhai-Macau",
       "alias": "港珠澳大桥口岸",
       "district": "路氹填海区",
       "theme": [
@@ -11689,13 +11689,24 @@
         "type": "交通设施服务;过境口岸;口岸",
         "typecode": ""
       },
-      "intro": "港珠澳大桥澳门口岸是进出澳门的常用口岸／码头节点，可作为行程起终点锚定。",
-      "history": "",
+      "intro": "港珠澳大桥澳门口岸位于珠澳口岸人工岛，是港珠澳大桥连接澳门的出入境口岸，也是访澳行程常用的交通起终点。",
+      "intro_en": "The Hong Kong-Zhuhai-Macao Bridge Macao Port stands on the Zhuhai-Macao boundary-crossing island. It is the bridge's Macao immigration facility and a common arrival or departure point for visitors.",
+      "intro_pt": "O Posto Fronteiriço da Ponte Hong Kong-Zhuhai-Macau situa-se na ilha artificial das fronteiras Zhuhai-Macau. É o posto de imigração de Macau da ponte e um ponto frequente de chegada ou partida.",
+      "history": "澳门口岸管理区上部建筑工程于2016年12月开展，2017年12月底基本完工，2018年3月15日正式交付澳门特别行政区使用，并于2018年10月24日上午9时随港珠澳大桥正式开通。",
+      "history_en": "Construction of the upper structures in the Macao Port Administration Area began in December 2016 and was substantially completed by the end of December 2017. The area was handed over to the Macao SAR on 15 March 2018 and the port officially opened with the bridge at 09:00 on 24 October 2018.",
+      "history_pt": "A construção das estruturas superiores da Zona de Administração do Posto Fronteiriço de Macau começou em dezembro de 2016 e ficou substancialmente concluída no fim de dezembro de 2017. A zona foi entregue à RAEM em 15 de março de 2018 e o posto abriu oficialmente com a ponte às 9h00 de 24 de outubro de 2018.",
       "architecture": "",
       "story": "",
       "observation_tips": "过关排队因节假日与大型活动而波动，请以现场指引为准。",
-      "source_type": "manual",
-      "verify_status": "人工录入·口岸锚点",
+      "observation_tips_en": "Border queues vary during holidays and major events; follow current signs and official notices.",
+      "observation_tips_pt": "As filas de fronteira variam em feriados e grandes eventos; siga a sinalização e os avisos oficiais.",
+      "source_type": "official",
+      "source_urls": [
+        "https://www.gov.mo/zh-hans/news/223176/",
+        "https://www.gcs.gov.mo/news/detail/zh-hans/N18COz2rEU",
+        "https://www.gcs.gov.mo/news/detail/zh-hans/N18JXIUrZt"
+      ],
+      "verify_status": "澳门政府公开资料核验",
       "region_bias": "cotai"
     },
     {

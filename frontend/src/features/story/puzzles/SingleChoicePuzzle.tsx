@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { LegacySingleChoicePuzzleData } from "../types";
 import { PuzzleFrame } from "./PuzzleFrame";
+import { useStoryMessages } from "../storyI18n";
 
 interface SingleChoicePuzzleProps {
   puzzle: LegacySingleChoicePuzzleData;
@@ -13,6 +14,7 @@ export function SingleChoicePuzzle({
   disabled = false,
   onSubmit,
 }: SingleChoicePuzzleProps) {
+  const st = useStoryMessages();
   const [selected, setSelected] = useState<string | null>(null);
   useEffect(() => setSelected(null), [puzzle.id]);
 
@@ -23,7 +25,7 @@ export function SingleChoicePuzzle({
       disabled={disabled}
       onSubmit={() => selected && onSubmit(selected)}
     >
-      <div className="space-y-2" role="radiogroup" aria-label="单选题选项">
+      <div className="space-y-2" role="radiogroup" aria-label={st("singleChoiceOptions")}>
         {puzzle.options.map((option) => (
           <button
             key={option.id}

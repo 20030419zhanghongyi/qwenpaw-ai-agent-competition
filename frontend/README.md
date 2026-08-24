@@ -49,7 +49,7 @@ npm run dev
 ```
 
 - 前端：`http://localhost:5173`
-- 后端：`http://localhost:8000`（`vite.config.ts` 将 `/api` 代理到后端）
+- Compose 后端：`http://localhost:8001`（`vite.config.ts` 默认将 `/api` 代理到该端口；本机 Uvicorn 可通过 `VITE_BACKEND_PROXY_TARGET` 覆盖）
 - 仓库根 `.env` 的 `VITE_*` 由 `envDir: ".."` 读取
 
 ```bash

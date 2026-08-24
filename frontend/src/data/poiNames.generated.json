@@ -1,0 +1,1421 @@
+{
+  "_meta": {
+    "generated": true,
+    "sources": [
+      "data/pois.json",
+      "Macao Statistics and Census Service ArcGIS street-name layer",
+      "OpenStreetMap contributors"
+    ],
+    "policy": "Exact normalized Chinese-name matches use official or OSM names; GCJ-02 coordinates resolve duplicates. Remaining proper names use tone-free Hanyu Pinyin rather than exposing internal IDs or inventing translations."
+  },
+  "names": {
+    "poi_senado": {
+      "en": "Senado Square",
+      "pt": "Largo do Senado"
+    },
+    "poi_paixao": {
+      "en": "Travessa da Paixão",
+      "pt": "Travessa da Paixão"
+    },
+    "poi_fatong": {
+      "en": "Calçada da Igreja de S. Lázaro",
+      "pt": "Calçada da Igreja de S. Lázaro"
+    },
+    "poi_sv_lazaro": {
+      "en": "St. Lazarus Church",
+      "pt": "Igreja de São Lázaro"
+    },
+    "poi_florindo": {
+      "en": "Rua da Felicidade",
+      "pt": "Rua da Felicidade"
+    },
+    "poi_xiahuan": {
+      "en": "S. Lourenço Market",
+      "pt": "Mercado de S. Lourenço"
+    },
+    "poi_ama": {
+      "en": "A-Ma Temple",
+      "pt": "Templo de A-Ma"
+    },
+    "poi_lilau": {
+      "en": "Lilau Square",
+      "pt": "Largo do Lilau"
+    },
+    "poi_rua_cunha": {
+      "en": "Rua do Cunha",
+      "pt": "Rua do Cunha"
+    },
+    "poi_carmo": {
+      "en": "Our Lady of Carmel Church",
+      "pt": "Igreja de Nossa Senhora do Carmo"
+    },
+    "poi_taipa_houses": {
+      "en": "Taipa Houses",
+      "pt": "Casas da Taipa"
+    },
+    "poi_coloane_chapel": {
+      "en": "Chapel of St. Francis Xavier",
+      "pt": "Capela de São Francisco Xavier"
+    },
+    "poi_coloane_pier": {
+      "en": "Coloane Pier",
+      "pt": "Cais de Coloane"
+    },
+    "poi_eanes_square": {
+      "en": "Largo do Presidente António Ramalho Eanes",
+      "pt": "Largo do Presidente António Ramalho Eanes"
+    },
+    "poi_0001": {
+      "en": "Ruins of St. Paul's",
+      "pt": "Ruínas de S. Paulo"
+    },
+    "poi_0003": {
+      "en": "Macao Museum",
+      "pt": "Museu de Macau"
+    },
+    "poi_0005": {
+      "en": "St. Dominic's Church",
+      "pt": "Igreja de São Domingos"
+    },
+    "poi_0006": {
+      "en": "Tap Seac Square",
+      "pt": "Praça do Tap Siac"
+    },
+    "poi_0007": {
+      "en": "Guia Lighthouse",
+      "pt": "Farol da Guia"
+    },
+    "poi_0009": {
+      "en": "Mei Gui Tang",
+      "pt": "Mei Gui Tang"
+    },
+    "poi_0010": {
+      "en": "Pao Bing Xiang Lai Wang Da Pao Tai Sheng Jiang Ji",
+      "pt": "Pao Bing Xiang Lai Wang Da Pao Tai Sheng Jiang Ji"
+    },
+    "poi_0013": {
+      "en": "wood house",
+      "pt": "wood house"
+    },
+    "poi_0014": {
+      "en": "St.Dominic's Priory and Chapel( Sheng Dao Ming Hui Yuan",
+      "pt": "St.Dominic's Priory and Chapel( Sheng Dao Ming Hui Yuan"
+    },
+    "poi_0015": {
+      "en": "Zheng Jia Da Wu",
+      "pt": "Zheng Jia Da Wu"
+    },
+    "poi_0019": {
+      "en": "Taipa Jiu Cheng Qu Yi Shu Kong Jian",
+      "pt": "Taipa Jiu Cheng Qu Yi Shu Kong Jian"
+    },
+    "poi_0020": {
+      "en": "The Venetian Macao",
+      "pt": "The Venetian Macau"
+    },
+    "poi_0021": {
+      "en": "The Parisian Macau",
+      "pt": "O Parisiense Macau"
+    },
+    "poi_0022": {
+      "en": "Macau Tower",
+      "pt": "Torre de Macau"
+    },
+    "poi_0023": {
+      "en": "Coloane Shi Qu Wei Sheng Zhan Gong Jiao Zhan",
+      "pt": "Coloane Shi Qu Wei Sheng Zhan Gong Jiao Zhan"
+    },
+    "poi_0024": {
+      "en": "Hei Sha Hai Tan",
+      "pt": "Hei Sha Hai Tan"
+    },
+    "poi_0025": {
+      "en": "Fisherman's Wharf of Macau",
+      "pt": "Doca dos Pescadores de Macau"
+    },
+    "poi_0026": {
+      "en": "Nam Van Lake",
+      "pt": "Lago Nam Van"
+    },
+    "poi_0027": {
+      "en": "Wynn Palace",
+      "pt": "Palácio Wynn"
+    },
+    "poi_0028": {
+      "en": "Macau Cultural Centre",
+      "pt": "Centro Cultural de Macau"
+    },
+    "poi_0029": {
+      "en": "Rua dos Ervanarios",
+      "pt": "Rua dos Ervanários"
+    },
+    "poi_0030": {
+      "en": "Calcada da Igreja de S. Lazaro",
+      "pt": "Calçada da Igreja de S. Lázaro"
+    },
+    "poi_0031": {
+      "en": "Rotunda de Carlos da Maia",
+      "pt": "Rotunda de Carlos da Maia"
+    },
+    "poi_0032": {
+      "en": "Calcada da Praia",
+      "pt": "Calçada da Praia"
+    },
+    "poi_0033": {
+      "en": "R. Campo / Edf. Admin. Pública",
+      "pt": "R. Campo / Edf. Admin. Pública"
+    },
+    "poi_0034": {
+      "en": "Rua Nova a Guia",
+      "pt": "Rua Nova à Guia"
+    },
+    "poi_0035": {
+      "en": "Macao Mo Cha MatchaMacau( Zong Dian",
+      "pt": "Macao Mo Cha MatchaMacau( Zong Dian"
+    },
+    "poi_0036": {
+      "en": "Shan Hai Tang",
+      "pt": "Shan Hai Tang"
+    },
+    "poi_0037": {
+      "en": "Po Zai Wu Zhan Lan Ting",
+      "pt": "Po Zai Wu Zhan Lan Ting"
+    },
+    "poi_0038": {
+      "en": "Galaxy Arena",
+      "pt": "Galaxy Arena"
+    },
+    "poi_0039": {
+      "en": "The Venetian Arena",
+      "pt": "The Venetian Arena"
+    },
+    "poi_0040": {
+      "en": "Lun Dun Ren Zong Yi Guan",
+      "pt": "Lun Dun Ren Zong Yi Guan"
+    },
+    "poi_0041": {
+      "en": "Macau East Asian Games Dome",
+      "pt": "Nave Desportiva dos Jogos da Ásia Oriental de Macau"
+    },
+    "poi_0042": {
+      "en": "Pavilhão Polidesportivo da Universidade Politécnica de Macau",
+      "pt": "Pavilhão Polidesportivo da Universidade Politécnica de Macau"
+    },
+    "poi_0044": {
+      "en": "Macau Museum of Art",
+      "pt": "Museu de Arte de Macau"
+    },
+    "poi_0045": {
+      "en": "Palácio Grande Lisboa",
+      "pt": "Palácio Grande Lisboa"
+    },
+    "poi_0046": {
+      "en": "Pastelaria Chui Heong",
+      "pt": "Pastelaria Chui Heong"
+    },
+    "poi_0047": {
+      "en": "Nan Ping Ya Xu",
+      "pt": "Nan Ping Ya Xu"
+    },
+    "poi_0048": {
+      "en": "Xing Xiang Yuan Tian Pin",
+      "pt": "Xing Xiang Yuan Tian Pin"
+    },
+    "poi_0049": {
+      "en": "Na Tcha Temple",
+      "pt": "Templo de Na Tcha"
+    },
+    "poi_0050": {
+      "en": "St. Lawrence's Church",
+      "pt": "Igreja de S. Lourenço"
+    },
+    "poi_0051": {
+      "en": "Dom Pedro V Theatre",
+      "pt": "Teatro D. Pedro V"
+    },
+    "poi_0052": {
+      "en": "St. Joseph's Seminary and Church",
+      "pt": "Seminário e Igreja de S. José"
+    },
+    "poi_0053": {
+      "en": "St. Augustine's Church",
+      "pt": "Igreja de Santo Agostinho"
+    },
+    "poi_0054": {
+      "en": "Cathedral",
+      "pt": "Igreja da Sé Catedral"
+    },
+    "poi_0055": {
+      "en": "Holy House of Mercy",
+      "pt": "Santa Casa da Misericórdia de Macau"
+    },
+    "poi_0056": {
+      "en": "Min Zheng Zong Shu Shi Min Shi Wu Ban Gong Shi",
+      "pt": "Min Zheng Zong Shu Shi Min Shi Wu Ban Gong Shi"
+    },
+    "poi_0057": {
+      "en": "Lou Kau Mansion",
+      "pt": "Casa de Lou Kau"
+    },
+    "poi_0058": {
+      "en": "Rua do Volong",
+      "pt": "Rua do Volong"
+    },
+    "poi_0059": {
+      "en": "Guia Fortress",
+      "pt": "Fortaleza da Guia"
+    },
+    "poi_0060": {
+      "en": "Macao Science Center",
+      "pt": "Centro de Ciência de Macau"
+    },
+    "poi_0061": {
+      "en": "Golden Lotus Square",
+      "pt": "A Praça Flor de Lótus"
+    },
+    "poi_0062": {
+      "en": "Guan Yin Lian Hua Yuan",
+      "pt": "Guan Yin Lian Hua Yuan"
+    },
+    "poi_0063": {
+      "en": "Sai Van Lake",
+      "pt": "Lago Sai Van"
+    },
+    "poi_0064": {
+      "en": "R. Cinco Outubro",
+      "pt": "R. Cinco Outubro"
+    },
+    "poi_0065": {
+      "en": "Rua dos Mercadores",
+      "pt": "Rua dos Mercadores"
+    },
+    "poi_0066": {
+      "en": "Rua das Estalagens",
+      "pt": "Rua das Estalagens"
+    },
+    "poi_0067": {
+      "en": "Xin Ma Lu",
+      "pt": "Xin Ma Lu"
+    },
+    "poi_0068": {
+      "en": "Bai Ma Xing",
+      "pt": "Bai Ma Xing"
+    },
+    "poi_0069": {
+      "en": "Rua do Tap Siac",
+      "pt": "Rua do Tap Siac"
+    },
+    "poi_0070": {
+      "en": "Patane",
+      "pt": "Patane"
+    },
+    "poi_0071": {
+      "en": "Inner Harbour Ferry Terminal",
+      "pt": "Terminal Marítimo do Porto Interior"
+    },
+    "poi_0072": {
+      "en": "Rua da Praia do Manduco",
+      "pt": "Rua da Praia do Manduco"
+    },
+    "poi_0073": {
+      "en": "Praia do Manduco",
+      "pt": "Praia do Manduco"
+    },
+    "poi_0074": {
+      "en": "Mercado da Horta da Mitra",
+      "pt": "Mercado da Horta da Mitra"
+    },
+    "poi_0075": {
+      "en": "San Zhan Deng",
+      "pt": "San Zhan Deng"
+    },
+    "poi_0076": {
+      "en": "Hong Jie Shi",
+      "pt": "Hong Jie Shi"
+    },
+    "poi_0077": {
+      "en": "You Han Jie Shi",
+      "pt": "You Han Jie Shi"
+    },
+    "poi_0078": {
+      "en": "Ti Du Ma Lu",
+      "pt": "Ti Du Ma Lu"
+    },
+    "poi_0079": {
+      "en": "Rua da Barca",
+      "pt": "Rua da Barca"
+    },
+    "poi_0080": {
+      "en": "Ming Ji Niu Za",
+      "pt": "Ming Ji Niu Za"
+    },
+    "poi_0081": {
+      "en": "Rua de S. Domingos",
+      "pt": "Rua de S. Domingos"
+    },
+    "poi_0082": {
+      "en": "Rua da Palha",
+      "pt": "Rua da Palha"
+    },
+    "poi_0083": {
+      "en": "Rua da Tercena",
+      "pt": "Rua da Tercena"
+    },
+    "poi_0084": {
+      "en": "Xin Ying Ji Xiang Zai Ka Fei Mian Shi",
+      "pt": "Xin Ying Ji Xiang Zai Ka Fei Mian Shi"
+    },
+    "poi_0085": {
+      "en": "Da Li Lai Ji Zhu Ba Bao",
+      "pt": "Da Li Lai Ji Zhu Ba Bao"
+    },
+    "poi_0086": {
+      "en": "Yi Shun Niu Nai",
+      "pt": "Yi Shun Niu Nai"
+    },
+    "poi_0087": {
+      "en": "Ma Jia Lie Dan Ta Jin Li Lai Da Sha Dian",
+      "pt": "Ma Jia Lie Dan Ta Jin Li Lai Da Sha Dian"
+    },
+    "poi_0088": {
+      "en": "An De Lu Bing Dian Guan Ye Jie Dian",
+      "pt": "An De Lu Bing Dian Guan Ye Jie Dian"
+    },
+    "poi_0089": {
+      "en": "Huang Zhi Ji Jia Fu Shang Ye Zhong Xin Dian",
+      "pt": "Huang Zhi Ji Jia Fu Shang Ye Zhong Xin Dian"
+    },
+    "poi_0090": {
+      "en": "Tian Fa Wan Zai Chi Mei Shi",
+      "pt": "Tian Fa Wan Zai Chi Mei Shi"
+    },
+    "poi_0091": {
+      "en": "Ming Ji Niu Za",
+      "pt": "Ming Ji Niu Za"
+    },
+    "poi_0092": {
+      "en": "Rong Ji Dou Fu Mian Shi",
+      "pt": "Rong Ji Dou Fu Mian Shi"
+    },
+    "poi_0093": {
+      "en": "Sei Kee Cafe",
+      "pt": "Sei Kee Cafe"
+    },
+    "poi_0094": {
+      "en": "Xin Ma Lu Cheng Ji Zhou Pin",
+      "pt": "Xin Ma Lu Cheng Ji Zhou Pin"
+    },
+    "poi_0095": {
+      "en": "Long Hua Cha Lou",
+      "pt": "Long Hua Cha Lou"
+    },
+    "poi_0096": {
+      "en": "Lok Kei",
+      "pt": "Lok Kei"
+    },
+    "poi_0097": {
+      "en": "Sheng Li Cha Can Shi",
+      "pt": "Sheng Li Cha Can Shi"
+    },
+    "poi_0099": {
+      "en": "Feira do Carmo",
+      "pt": "Feira do Carmo"
+    },
+    "poi_0100": {
+      "en": "Bei Di Miao",
+      "pt": "Bei Di Miao"
+    },
+    "poi_0101": {
+      "en": "Taipa Jie Shi",
+      "pt": "Taipa Jie Shi"
+    },
+    "poi_0102": {
+      "en": "Rua do Regedor",
+      "pt": "Rua do Regedor"
+    },
+    "poi_0103": {
+      "en": "Rua de Fernao Mendes Pinto",
+      "pt": "Rua Fernão Mendes Pinto"
+    },
+    "poi_0104": {
+      "en": "Largo dos Bombeiros",
+      "pt": "Largo dos Bombeiros"
+    },
+    "poi_0105": {
+      "en": "Museum of Taipa and Coloane History",
+      "pt": "Museu da Historia da Taipa e Coloane"
+    },
+    "poi_0106": {
+      "en": "Shoppes at Venetian",
+      "pt": "Shoppes at Venetian"
+    },
+    "poi_0107": {
+      "en": "The Londoner Macao",
+      "pt": "The Londoner Macau"
+    },
+    "poi_0108": {
+      "en": "Macao Lun Dun Ren Gou Wu Zhong Xin",
+      "pt": "Macao Lun Dun Ren Gou Wu Zhong Xin"
+    },
+    "poi_0109": {
+      "en": "City of Dreams",
+      "pt": "Cidade dos Sonhos"
+    },
+    "poi_0110": {
+      "en": "Studio City Macao",
+      "pt": "Studio City Macao"
+    },
+    "poi_0111": {
+      "en": "Ying Hui Zhi Xing 8 Zi Xing Mo Tian Lun",
+      "pt": "Ying Hui Zhi Xing 8 Zi Xing Mo Tian Lun"
+    },
+    "poi_0112": {
+      "en": "Galaxy Hotel",
+      "pt": "Hotel Galáxia"
+    },
+    "poi_0113": {
+      "en": "Macao Mei Shi Mei Gao Mei Jiu Dian",
+      "pt": "Macao Mei Shi Mei Gao Mei Jiu Dian"
+    },
+    "poi_0114": {
+      "en": "teamLab SuperNature",
+      "pt": "teamLab SuperNature"
+    },
+    "poi_0115": {
+      "en": "Macao Grand Prix Museum",
+      "pt": "Museu do Grande Prémio de Macau"
+    },
+    "poi_0116": {
+      "en": "Macau Forum",
+      "pt": "Forum de Macau"
+    },
+    "poi_0117": {
+      "en": "Tap Seac Multisport Pavilion",
+      "pt": "Pavilhão Polidesportivo Tap Seac"
+    },
+    "poi_0118": {
+      "en": "Former Iec Long Firecracker Factory",
+      "pt": "Antiga Fábrica de Panchões Iec Long"
+    },
+    "poi_0119": {
+      "en": "Yi Long Pao Zhu Chang Jiu Zhi Ting Che Dian",
+      "pt": "Yi Long Pao Zhu Chang Jiu Zhi Ting Che Dian"
+    },
+    "poi_0120": {
+      "en": "Macao Mei Gao Mei Jiu Dian",
+      "pt": "Macao Mei Gao Mei Jiu Dian"
+    },
+    "poi_0121": {
+      "en": "M8 Ao Men 8 Hao",
+      "pt": "M8 Ao Men 8 Hao"
+    },
+    "poi_0122": {
+      "en": "Macao Shang Pu Jing Zong He Du Jia Cun",
+      "pt": "Macao Shang Pu Jing Zong He Du Jia Cun"
+    },
+    "poi_0123": {
+      "en": "Lisboeta Macau",
+      "pt": "Lisboeta Macau"
+    },
+    "poi_0124": {
+      "en": "Macau Convertion Centre",
+      "pt": "Centro de Convenções de Macau"
+    },
+    "poi_0125": {
+      "en": "Hui Yi Zhan Lan Zhong Xin",
+      "pt": "Hui Yi Zhan Lan Zhong Xin"
+    },
+    "poi_0126": {
+      "en": "St. Anthony's Church",
+      "pt": "Igreja de Santo António"
+    },
+    "poi_0127": {
+      "en": "Chapel of Our Lady of the Snows",
+      "pt": "Capela de Nossa Senhora das Neves"
+    },
+    "poi_0128": {
+      "en": "St. Augustine's Square",
+      "pt": "Largo de Santo Agostinho"
+    },
+    "poi_0129": {
+      "en": "Sir Robert Ho Tung Library Building",
+      "pt": "Edifício da Biblioteca Sir Robert Ho Tung"
+    },
+    "poi_0130": {
+      "en": "Luis de Camoes Park",
+      "pt": "Jardim Luís de Camões"
+    },
+    "poi_0131": {
+      "en": "Bai Ge Chao Gong Yuan Dong Fang Ji Jin Hui Hui Zhi",
+      "pt": "Bai Ge Chao Gong Yuan Dong Fang Ji Jin Hui Hui Zhi"
+    },
+    "poi_0132": {
+      "en": "Protestant Cemetery",
+      "pt": "Cemitério Protestante"
+    },
+    "poi_0133": {
+      "en": "Old City Walls",
+      "pt": "Antigas Muralhas da Cidade"
+    },
+    "poi_0134": {
+      "en": "Cathedral Square",
+      "pt": "Largo da Sé"
+    },
+    "poi_0135": {
+      "en": "St. Dominic's Square",
+      "pt": "Largo de S. Domingos"
+    },
+    "poi_0136": {
+      "en": "Sam Kai Vui Kun (Kuan Tai Temple)",
+      "pt": "Sam Kai Vui Kun (Templo de Kuan Tai)"
+    },
+    "poi_0137": {
+      "en": "Templo de Kuan Tai",
+      "pt": "Templo de Kuan Tai"
+    },
+    "poi_0138": {
+      "en": "Bao Gong Miao",
+      "pt": "Bao Gong Miao"
+    },
+    "poi_0139": {
+      "en": "Largo do Pagode do Bazar",
+      "pt": "Largo do Pagode do Bazar"
+    },
+    "poi_0140": {
+      "en": "Kang Gong Miao",
+      "pt": "Kang Gong Miao"
+    },
+    "poi_0141": {
+      "en": "Nü Wa Miao",
+      "pt": "Nü Wa Miao"
+    },
+    "poi_0142": {
+      "en": "Templo Lin Fung",
+      "pt": "Templo Lin Fung"
+    },
+    "poi_0143": {
+      "en": "Pu Ji Chan Yuan Ting Che Chang",
+      "pt": "Pu Ji Chan Yuan Ting Che Chang"
+    },
+    "poi_0144": {
+      "en": "Guan Yin Tang Mei Fu Jiang Da Ma Lu",
+      "pt": "Guan Yin Tang Mei Fu Jiang Da Ma Lu"
+    },
+    "poi_0145": {
+      "en": "Lin Zexu Memorial Museum of Macao",
+      "pt": "Museu Memorial Lin Zexu de Macau"
+    },
+    "poi_0146": {
+      "en": "Heritage Exhibition of a Traditional Pawnshop Business",
+      "pt": "Espaço Patrimonial - Uma Casa de Penhores Tradicional"
+    },
+    "poi_0147": {
+      "en": "Macao Tea Museum",
+      "pt": "Casa Cultural de Chá de Macau"
+    },
+    "poi_0148": {
+      "en": "Maritime Museum",
+      "pt": "Museu Marítimo"
+    },
+    "poi_0149": {
+      "en": "Fire Services Museum",
+      "pt": "Museu dos Bombeiros"
+    },
+    "poi_0150": {
+      "en": "Communications Museum",
+      "pt": "Museu das Comunicações"
+    },
+    "poi_0151": {
+      "en": "Calcada de S. Paulo",
+      "pt": "Calçada de S. Paulo"
+    },
+    "poi_0152": {
+      "en": "Rua de S. Roque",
+      "pt": "Rua de S. Roque"
+    },
+    "poi_0153": {
+      "en": "Edifício Vai Yee",
+      "pt": "Edifício Vai Yee"
+    },
+    "poi_0154": {
+      "en": "Praça de Ponte e Horta",
+      "pt": "Praça de Ponte e Horta"
+    },
+    "poi_0155": {
+      "en": "Rua de Santo Antonio",
+      "pt": "Rua de Santo Antonio"
+    },
+    "poi_0156": {
+      "en": "Patio da Eterna Felicidade",
+      "pt": "Pátio da Eterna Felicidade"
+    },
+    "poi_0157": {
+      "en": "Da Lan Xiang",
+      "pt": "Da Lan Xiang"
+    },
+    "poi_0158": {
+      "en": "Lu Shi Tang",
+      "pt": "Lu Shi Tang"
+    },
+    "poi_0159": {
+      "en": "Family Inn (Hong Kung Temple)",
+      "pt": "Pensão Família (Templo de Hong Kung)"
+    },
+    "poi_0160": {
+      "en": "Rua Central",
+      "pt": "Rua da Central"
+    },
+    "poi_0161": {
+      "en": "Long Song San Chun",
+      "pt": "Long Song San Chun"
+    },
+    "poi_0162": {
+      "en": "Estrada do Cemiterio",
+      "pt": "Estrada do Cemitério"
+    },
+    "poi_0163": {
+      "en": "Rua Nova de S. Lazaro",
+      "pt": "Rua Nova de S. Lázaro"
+    },
+    "poi_0164": {
+      "en": "Rua da Baía de Nossa Senhora de Esperanca",
+      "pt": "Rua da Baía de Nossa Senhora de Esperança"
+    },
+    "poi_0165": {
+      "en": "He Lan Yuan Da Ma Lu",
+      "pt": "He Lan Yuan Da Ma Lu"
+    },
+    "poi_0166": {
+      "en": "Rua de D. Belchior Carneiro",
+      "pt": "Rua de D. Belchior Carneiro"
+    },
+    "poi_0167": {
+      "en": "Rua do Padre Antonio",
+      "pt": "Rua do Padre António"
+    },
+    "poi_0169": {
+      "en": "Rua do Almirante Sergio",
+      "pt": "Rua do Almirante Sérgio"
+    },
+    "poi_0170": {
+      "en": "Rua S. Tiagoda Barra",
+      "pt": "Rua S. Tiagoda Barra"
+    },
+    "poi_0171": {
+      "en": "Calcada da Barra",
+      "pt": "Calçada da Barra"
+    },
+    "poi_0172": {
+      "en": "Rua de S. Lourenco",
+      "pt": "Rua S. Lourenço"
+    },
+    "poi_0173": {
+      "en": "Rua do Gamboa",
+      "pt": "Rua do Gamboa"
+    },
+    "poi_0174": {
+      "en": "Shao Hui Lu Jie",
+      "pt": "Shao Hui Lu Jie"
+    },
+    "poi_0175": {
+      "en": "Jia Si Lan Hua Yuan",
+      "pt": "Jia Si Lan Hua Yuan"
+    },
+    "poi_0176": {
+      "en": "Avenida da Praia Grande",
+      "pt": "Avenida da Praia Grande"
+    },
+    "poi_0177": {
+      "en": "Avenida Panorâmica do Lago Nam Van",
+      "pt": "Avenida Panorâmica do Lago Nam Van"
+    },
+    "poi_0178": {
+      "en": "Xi Wang Yang Liao Wang Tai",
+      "pt": "Xi Wang Yang Liao Wang Tai"
+    },
+    "poi_0179": {
+      "en": "Ponte Governador Nobre de Carvalho",
+      "pt": "Ponte Governador Nobre de Carvalho"
+    },
+    "poi_0180": {
+      "en": "Observatory of the Penha Hill",
+      "pt": "Miradouro da Penha"
+    },
+    "poi_0181": {
+      "en": "Penha Hill",
+      "pt": "Colina da Penha"
+    },
+    "poi_0182": {
+      "en": "Sha Lan Zai Xie Lu",
+      "pt": "Sha Lan Zai Xie Lu"
+    },
+    "poi_0183": {
+      "en": "Rua do Campo",
+      "pt": "Rua do Campo"
+    },
+    "poi_0184": {
+      "en": "Avenida do Dr. Rodrigo Rodrigues",
+      "pt": "Avenida do Dr. Rodrigo Rodrigues"
+    },
+    "poi_0185": {
+      "en": "Alameda Dr. Carlos d'Assumpção",
+      "pt": "Alameda Dr. Carlos d'Assumpção"
+    },
+    "poi_0186": {
+      "en": "Avenida do Coronel Mesquita",
+      "pt": "Avenida do Coronel Mesquita"
+    },
+    "poi_0187": {
+      "en": "Avenida do Ouvidor Arriaga",
+      "pt": "Avenida do Ouvidor Arriaga"
+    },
+    "poi_0188": {
+      "en": "Estrada do Repouso",
+      "pt": "Estrada do Repouso"
+    },
+    "poi_0189": {
+      "en": "Camoes Square",
+      "pt": "Praça de Luís de Camões"
+    },
+    "poi_0190": {
+      "en": "Lian Ai Dian Ying Guan",
+      "pt": "Lian Ai Dian Ying Guan"
+    },
+    "poi_0191": {
+      "en": "Sheng Ji Bai Zhou Xin Ma Lu Dian",
+      "pt": "Sheng Ji Bai Zhou Xin Ma Lu Dian"
+    },
+    "poi_0192": {
+      "en": "Lao Ji Zhou Mian",
+      "pt": "Lao Ji Zhou Mian"
+    },
+    "poi_0193": {
+      "en": "Xiang Ji Mian Jia",
+      "pt": "Xiang Ji Mian Jia"
+    },
+    "poi_0194": {
+      "en": "Niu Ji Ka Li Mei Shi",
+      "pt": "Niu Ji Ka Li Mei Shi"
+    },
+    "poi_0195": {
+      "en": "Xin Hong Fa Ka Fei Mei Shi Fu Ming Lou Dian",
+      "pt": "Xin Hong Fa Ka Fei Mei Shi Fu Ming Lou Dian"
+    },
+    "poi_0196": {
+      "en": "Dong Hu Hai Xian Huo Guo Jiu Jia Pu Jing Dian",
+      "pt": "Dong Hu Hai Xian Huo Guo Jiu Jia Pu Jing Dian"
+    },
+    "poi_0197": {
+      "en": "Chen Guang Ji",
+      "pt": "Chen Guang Ji"
+    },
+    "poi_0198": {
+      "en": "Huang Guan Xiao Guan",
+      "pt": "Huang Guan Xiao Guan"
+    },
+    "poi_0199": {
+      "en": "Fo Xiao Lou Fu Long Xin Jie Dian",
+      "pt": "Fo Xiao Lou Fu Long Xin Jie Dian"
+    },
+    "poi_0200": {
+      "en": "Ya Xin Mian Dian Can Ting San Zhan Deng Dian Ye Zhi Ji Mian Zhuan Mai Dian",
+      "pt": "Ya Xin Mian Dian Can Ting San Zhan Deng Dian Ye Zhi Ji Mian Zhuan Mai Dian"
+    },
+    "poi_0201": {
+      "en": "Li Ji Xue Gao Ao Men Huai Jiu Bing Shi Yuan Jing Da Sha Dian",
+      "pt": "Li Ji Xue Gao Ao Men Huai Jiu Bing Shi Yuan Jing Da Sha Dian"
+    },
+    "poi_0202": {
+      "en": "Cheng Chang Fan Dian",
+      "pt": "Cheng Chang Fan Dian"
+    },
+    "poi_0203": {
+      "en": "Ming Ji Niu Za Mei Shi",
+      "pt": "Ming Ji Niu Za Mei Shi"
+    },
+    "poi_0204": {
+      "en": "Rong Ji Niu Za Di Bao Jie Dian",
+      "pt": "Rong Ji Niu Za Di Bao Jie Dian"
+    },
+    "poi_0205": {
+      "en": "Xin Hao Li Ka Fei Bing Dian Mian Shi",
+      "pt": "Xin Hao Li Ka Fei Bing Dian Mian Shi"
+    },
+    "poi_0206": {
+      "en": "Huang Ji Bing Jia Cui Lin Hua Yuan Dian",
+      "pt": "Huang Ji Bing Jia Cui Lin Hua Yuan Dian"
+    },
+    "poi_0207": {
+      "en": "Ju Ji Shou Xin",
+      "pt": "Ju Ji Shou Xin"
+    },
+    "poi_0208": {
+      "en": "Pastalaria de Tsui Heung Yuen",
+      "pt": "Pastalaria de Tsui Heung Yuen"
+    },
+    "poi_0209": {
+      "en": "Ying Ji Bing Jia",
+      "pt": "Ying Ji Bing Jia"
+    },
+    "poi_0210": {
+      "en": "Largo da Ponte",
+      "pt": "Largo da Ponte"
+    },
+    "poi_0211": {
+      "en": "Carmo Hall",
+      "pt": "Auditório do Carmo"
+    },
+    "poi_0212": {
+      "en": "Piscinas do Carmo",
+      "pt": "Piscinas do Carmo"
+    },
+    "poi_0213": {
+      "en": "Calcada do Quartel",
+      "pt": "Calçada do Quartel"
+    },
+    "poi_0214": {
+      "en": "Rua Direita Carlos Eugenio",
+      "pt": "Rua Direita Carlos Eugénio"
+    },
+    "poi_0215": {
+      "en": "Quarter Square( Cui Lin Hua Yuan Dian",
+      "pt": "Quarter Square( Cui Lin Hua Yuan Dian"
+    },
+    "poi_0216": {
+      "en": "Rua Correia da Silva",
+      "pt": "Rua Correia da Silva"
+    },
+    "poi_0217": {
+      "en": "Largo Governador Tamagnini Barbosa",
+      "pt": "Largo Governador Tamagnini Barbosa"
+    },
+    "poi_0218": {
+      "en": "Taipa Central Park",
+      "pt": "Parque Central da Taipa"
+    },
+    "poi_0219": {
+      "en": "Garden of Flower City",
+      "pt": "Jardim da Cidade das Flores"
+    },
+    "poi_0220": {
+      "en": "Hu Pan Da Sha",
+      "pt": "Hu Pan Da Sha"
+    },
+    "poi_0221": {
+      "en": "Macao Yun Dong Chang Shi Nei Guan",
+      "pt": "Macao Yun Dong Chang Shi Nei Guan"
+    },
+    "poi_0222": {
+      "en": "Macau Jockey Club",
+      "pt": "Jockey Clube de Macau"
+    },
+    "poi_0223": {
+      "en": "Olympic Sports Centre",
+      "pt": "Centro Desportivo Olímpico"
+    },
+    "poi_0224": {
+      "en": "The Affiliated School of the University of Macau",
+      "pt": "Escola de Aplicação Anexa à Universidade de Macau"
+    },
+    "poi_0225": {
+      "en": "Zhong Guo Ao Men",
+      "pt": "Zhong Guo Ao Men"
+    },
+    "poi_0226": {
+      "en": "COVA Ao Men Si Ji Ming Dian",
+      "pt": "COVA Ao Men Si Ji Ming Dian"
+    },
+    "poi_0227": {
+      "en": "Bai Lao Hui Wu Tai",
+      "pt": "Bai Lao Hui Wu Tai"
+    },
+    "poi_0228": {
+      "en": "Bai Nian Ling Ao Men Yin He Shi Shang Hui Gou Wu Zhong Xin Dian",
+      "pt": "Bai Nian Ling Ao Men Yin He Shi Shang Hui Gou Wu Zhong Xin Dian"
+    },
+    "poi_0229": {
+      "en": "Macao Yin He Zuan Shi Da Tang",
+      "pt": "Macao Yin He Zuan Shi Da Tang"
+    },
+    "poi_0230": {
+      "en": "Yong Li Huang Gong Lan Che Zhan",
+      "pt": "Yong Li Huang Gong Lan Che Zhan"
+    },
+    "poi_0231": {
+      "en": "Yong Li Huang Gong Biao Yan Hu",
+      "pt": "Yong Li Huang Gong Biao Yan Hu"
+    },
+    "poi_0232": {
+      "en": "Da Yun He Gou Wu Zhong Xin",
+      "pt": "Da Yun He Gou Wu Zhong Xin"
+    },
+    "poi_0233": {
+      "en": "Coloane Library",
+      "pt": "Biblioteca de Coloane"
+    },
+    "poi_0234": {
+      "en": "Mercado Municipal de Coloane",
+      "pt": "Mercado Municipal de Coloane"
+    },
+    "poi_0236": {
+      "en": "Tian Hou Gu Miao",
+      "pt": "Tian Hou Gu Miao"
+    },
+    "poi_0237": {
+      "en": "Guan Yin Gu Miao",
+      "pt": "Guan Yin Gu Miao"
+    },
+    "poi_0238": {
+      "en": "Largo do Cais",
+      "pt": "Largo do Cais"
+    },
+    "poi_0239": {
+      "en": "Hai Bin Yuan Xing Di Xi Di Ma Lu Gong Jiao Zhan",
+      "pt": "Hai Bin Yuan Xing Di Xi Di Ma Lu Gong Jiao Zhan"
+    },
+    "poi_0240": {
+      "en": "C8 Lu Huan Tan Gong Miao Gong Ce",
+      "pt": "C8 Lu Huan Tan Gong Miao Gong Ce"
+    },
+    "poi_0242": {
+      "en": "Coloane Zhong Pu Xue Xiao",
+      "pt": "Coloane Zhong Pu Xue Xiao"
+    },
+    "poi_0243": {
+      "en": "Hei Sha Shui Ku",
+      "pt": "Hei Sha Shui Ku"
+    },
+    "poi_0244": {
+      "en": "Hei Sha Shui Ku Jiao Ye Gong Yuan",
+      "pt": "Hei Sha Shui Ku Jiao Ye Gong Yuan"
+    },
+    "poi_0245": {
+      "en": "Coloane Long Zhua Jiao Hai An Jing Zan Ting Kai Fang",
+      "pt": "Coloane Long Zhua Jiao Hai An Jing Zan Ting Kai Fang"
+    },
+    "poi_0246": {
+      "en": "Coloane Long Zhua Jiao Hai An Jing Ting Hai Xuan",
+      "pt": "Coloane Long Zhua Jiao Hai An Jing Ting Hai Xuan"
+    },
+    "poi_0247": {
+      "en": "Zhu Wan Shao Kao Gong Yuan",
+      "pt": "Zhu Wan Shao Kao Gong Yuan"
+    },
+    "poi_0248": {
+      "en": "Cheoc Van Swimming Pool",
+      "pt": "Piscina de Cheoc Van"
+    },
+    "poi_0249": {
+      "en": "Seac Pai Van Park",
+      "pt": "Parque de Seac Pai Van"
+    },
+    "poi_0250": {
+      "en": "Shi Pai Wan Jiao Ye Gong Yuan Xiong Mao Guan",
+      "pt": "Shi Pai Wan Jiao Ye Gong Yuan Xiong Mao Guan"
+    },
+    "poi_0251": {
+      "en": "Xiao Xiong Mao",
+      "pt": "Xiao Xiong Mao"
+    },
+    "poi_0252": {
+      "en": "Jiu Ao Shui Ku",
+      "pt": "Jiu Ao Shui Ku"
+    },
+    "poi_0253": {
+      "en": "Estrada do Altinho de Ka Ho",
+      "pt": "Estrada do Altinho de Ká Hó"
+    },
+    "poi_0254": {
+      "en": "Church of Our Lady of Sorrows",
+      "pt": "Igreja de Nossa Senhora das Dores"
+    },
+    "poi_0255": {
+      "en": "Coloane Bu Xing Jing",
+      "pt": "Coloane Bu Xing Jing"
+    },
+    "poi_0256": {
+      "en": "New Yaohan",
+      "pt": "Yaohan Nova"
+    },
+    "poi_0257": {
+      "en": "Du Jia Ban Na Ao Men Yi Hao Guang Chang Dian",
+      "pt": "Du Jia Ban Na Ao Men Yi Hao Guang Chang Dian"
+    },
+    "poi_0258": {
+      "en": "Ka Di Ya Yi Hao Guang Chang Dian",
+      "pt": "Ka Di Ya Yi Hao Guang Chang Dian"
+    },
+    "poi_0259": {
+      "en": "Xin Li Hua Gou Wu Zhong Xin",
+      "pt": "Xin Li Hua Gou Wu Zhong Xin"
+    },
+    "poi_0260": {
+      "en": "iSPORT Shui Keng Wei Dian",
+      "pt": "iSPORT Shui Keng Wei Dian"
+    },
+    "poi_0261": {
+      "en": "The Shoppes at Four Seasons",
+      "pt": "The Shoppes at Four Seasons"
+    },
+    "poi_0262": {
+      "en": "Macao Si Ji Ming Hui",
+      "pt": "Macao Si Ji Ming Hui"
+    },
+    "poi_0263": {
+      "en": "Zhu Li Kou Jin Sha Guang Chang",
+      "pt": "Zhu Li Kou Jin Sha Guang Chang"
+    },
+    "poi_0264": {
+      "en": "Sands Macao Hotel",
+      "pt": "Sands Macao Hotel"
+    },
+    "poi_0265": {
+      "en": "Yong Li Ao Men Jiu Dian",
+      "pt": "Yong Li Ao Men Jiu Dian"
+    },
+    "poi_0267": {
+      "en": "Hotel Lisboa",
+      "pt": "Hotel Lisboa"
+    },
+    "poi_0268": {
+      "en": "Grand Lisboa Hotel",
+      "pt": "Hotel Grand Lisboa"
+    },
+    "poi_0269": {
+      "en": "Macao Shi Liu Pu Suo Fei Te Da Jiu Dian",
+      "pt": "Macao Shi Liu Pu Suo Fei Te Da Jiu Dian"
+    },
+    "poi_0270": {
+      "en": "Macao Zhi Di Guang Chang Jiu Dian Di Xia Ting Che Chang",
+      "pt": "Macao Zhi Di Guang Chang Jiu Dian Di Xia Ting Che Chang"
+    },
+    "poi_0271": {
+      "en": "ARTYZEN Grand Lapa Macau",
+      "pt": "ARTYZEN Grand Lapa Macau"
+    },
+    "poi_0272": {
+      "en": "Macao Yu Ren Ma Tou Luo Ma Guang Chang",
+      "pt": "Macao Yu Ren Ma Tou Luo Ma Guang Chang"
+    },
+    "poi_0273": {
+      "en": "Lu Lian Ruo Gong Yuan",
+      "pt": "Lu Lian Ruo Gong Yuan"
+    },
+    "poi_0274": {
+      "en": "Flora Garden",
+      "pt": "Jardim da Flora"
+    },
+    "poi_0275": {
+      "en": "Luo Si Shan Gong Yuan",
+      "pt": "Luo Si Shan Gong Yuan"
+    },
+    "poi_0276": {
+      "en": "Guia Hill Municipal Park",
+      "pt": "Parque Municipal da Colina da Guia"
+    },
+    "poi_0277": {
+      "en": "Victory Garden",
+      "pt": "Jardim da Vitória"
+    },
+    "poi_0278": {
+      "en": "Jardim Vasco da Gama",
+      "pt": "Jardim Vasco da Gama"
+    },
+    "poi_0279": {
+      "en": "Nan Wan Hu Shui Shang Huo Dong Zhong Xin",
+      "pt": "Nan Wan Hu Shui Shang Huo Dong Zhong Xin"
+    },
+    "poi_0280": {
+      "en": "Areia Preta Urban Park",
+      "pt": "Parque Urbano da Areia Preta"
+    },
+    "poi_0281": {
+      "en": "Mong Há Hill Municipal Park",
+      "pt": "Parque Municipal da Colina de Mong Há"
+    },
+    "poi_0282": {
+      "en": "Commander Ho Yin Park;Ho Yin Park",
+      "pt": "Jardim Comendador Ho Yin"
+    },
+    "poi_0283": {
+      "en": "Dr. Sun Yat Sen Municipal Park",
+      "pt": "Parque Municipal Dr. Sun Yat Sen"
+    },
+    "poi_0284": {
+      "en": "Dr. Carlos D'Assumpcao Park",
+      "pt": "Parque Dr. Carlos D'Assumpção"
+    },
+    "poi_0285": {
+      "en": "Long Huan Pu Yun Shi Di Ke Pu Yuan Di",
+      "pt": "Long Huan Pu Yun Shi Di Ke Pu Yuan Di"
+    },
+    "poi_0286": {
+      "en": "Hac Sa Park",
+      "pt": "Parque de Hac-Sá"
+    },
+    "poi_0287": {
+      "en": "Shi Yue Chu Wu Jie Xiao Shi",
+      "pt": "Shi Yue Chu Wu Jie Xiao Shi"
+    },
+    "poi_0288": {
+      "en": "Calçada da Penha",
+      "pt": "Calçada da Penha"
+    },
+    "poi_0289": {
+      "en": "Lun Ji Ruan Hua Chang Fen",
+      "pt": "Lun Ji Ruan Hua Chang Fen"
+    },
+    "poi_0290": {
+      "en": "Macao Te Bie Xing Zheng Qu Hua Di Ma Tang Qu Wu Er Tang Bao",
+      "pt": "Macao Te Bie Xing Zheng Qu Hua Di Ma Tang Qu Wu Er Tang Bao"
+    },
+    "poi_0291": {
+      "en": "An De Lu Ka Fei Dian",
+      "pt": "An De Lu Ka Fei Dian"
+    },
+    "poi_0292": {
+      "en": "Loyal Health & Care",
+      "pt": "Loyal Health & Care"
+    },
+    "poi_0293": {
+      "en": "Lok Kei",
+      "pt": "Lok Kei"
+    },
+    "poi_0294": {
+      "en": "Xin Ma Lu Cheng Ji Zhou Pin Bai Lao Hui Dian",
+      "pt": "Xin Ma Lu Cheng Ji Zhou Pin Bai Lao Hui Dian"
+    },
+    "poi_0295": {
+      "en": "Rong Ji Niu Za Shi Yue Yi Ri Qian Dian",
+      "pt": "Rong Ji Niu Za Shi Yue Yi Ri Qian Dian"
+    },
+    "poi_0296": {
+      "en": "LemonCello Gelato",
+      "pt": "LemonCello Gelato"
+    },
+    "poi_0297": {
+      "en": "LemonCello Gelato",
+      "pt": "LemonCello Gelato"
+    },
+    "poi_0298": {
+      "en": "Pastalaria de Tsui Heung Yuen",
+      "pt": "Pastalaria de Tsui Heung Yuen"
+    },
+    "poi_0299": {
+      "en": "Pastalaria de Tsui Heung Yuen",
+      "pt": "Pastalaria de Tsui Heung Yuen"
+    },
+    "poi_0300": {
+      "en": "Ju Ji Shou Xin Xing Hua Lou Dian",
+      "pt": "Ju Ji Shou Xin Xing Hua Lou Dian"
+    },
+    "poi_0301": {
+      "en": "Qu Qi Ya",
+      "pt": "Qu Qi Ya"
+    },
+    "poi_0302": {
+      "en": "Bamu Bakery",
+      "pt": "Bamu Bakery"
+    },
+    "poi_0303": {
+      "en": "Mei Hao Nian Dai Ao Men Dian",
+      "pt": "Mei Hao Nian Dai Ao Men Dian"
+    },
+    "poi_0305": {
+      "en": "Da Li Lai Ji Zhu Ba Bao Shi Du Xian Zheng Jie Dian",
+      "pt": "Da Li Lai Ji Zhu Ba Bao Shi Du Xian Zheng Jie Dian"
+    },
+    "poi_0306": {
+      "en": "A Bo De Jin Qian Bing",
+      "pt": "A Bo De Jin Qian Bing"
+    },
+    "poi_0307": {
+      "en": "Jin Rong Xiao Shi",
+      "pt": "Jin Rong Xiao Shi"
+    },
+    "poi_0308": {
+      "en": "Che Zai Ji Zhuan Men Dian Kuai Zi Ji Fen Dian",
+      "pt": "Che Zai Ji Zhuan Men Dian Kuai Zi Ji Fen Dian"
+    },
+    "poi_0309": {
+      "en": "Che Zai Mian",
+      "pt": "Che Zai Mian"
+    },
+    "poi_0310": {
+      "en": "Yao Ji Mei Shi",
+      "pt": "Yao Ji Mei Shi"
+    },
+    "poi_0311": {
+      "en": "Fei Zai Ji Hua Sheng Tang",
+      "pt": "Fei Zai Ji Hua Sheng Tang"
+    },
+    "poi_0312": {
+      "en": "Quan Chang Xin Shun Fa Hai Xian Huo Guo Fan Dian Mei Fu Jiang Dian",
+      "pt": "Quan Chang Xin Shun Fa Hai Xian Huo Guo Fan Dian Mei Fu Jiang Dian"
+    },
+    "poi_0313": {
+      "en": "Xin Ming Men Hai Xian Huo Guo Jiu Jia",
+      "pt": "Xin Ming Men Hai Xian Huo Guo Jiu Jia"
+    },
+    "poi_0314": {
+      "en": "Nobel House Restaurant",
+      "pt": "Nobel House Restaurant"
+    },
+    "poi_0315": {
+      "en": "Cafe de Novo Tomato",
+      "pt": "Cafe de Novo Tomato"
+    },
+    "poi_0316": {
+      "en": "ALBERGUE 1601 Po Zai Wu Pu Guo Can Ting",
+      "pt": "ALBERGUE 1601 Po Zai Wu Pu Guo Can Ting"
+    },
+    "poi_0317": {
+      "en": "Chuan Wu Pu Guo Can Ting",
+      "pt": "Chuan Wu Pu Guo Can Ting"
+    },
+    "poi_0318": {
+      "en": "Xiao Fei Xiang Pu Guo Can Xi Lai Deng Guang Chang Dian",
+      "pt": "Xiao Fei Xiang Pu Guo Can Xi Lai Deng Guang Chang Dian"
+    },
+    "poi_0319": {
+      "en": "Mu Ou Pu Guo Can Ting Shi Du Xian Zheng Jie",
+      "pt": "Mu Ou Pu Guo Can Ting Shi Du Xian Zheng Jie"
+    },
+    "poi_0320": {
+      "en": "Fa Lan Du Can Ting",
+      "pt": "Fa Lan Du Can Ting"
+    },
+    "poi_0321": {
+      "en": "Xiong Mao Can Ting Guan Ye Jie Dian",
+      "pt": "Xiong Mao Can Ting Guan Ye Jie Dian"
+    },
+    "poi_0322": {
+      "en": "Da Li Lai Ji Guan Ye Jie Dian 2)",
+      "pt": "Da Li Lai Ji Guan Ye Jie Dian 2)"
+    },
+    "poi_0323": {
+      "en": "Shi Ji Ka Fei Dang Zai Nei Yong Dian",
+      "pt": "Shi Ji Ka Fei Dang Zai Nei Yong Dian"
+    },
+    "poi_0324": {
+      "en": "Cunha Bazaar",
+      "pt": "Cunha Bazaar"
+    },
+    "poi_0325": {
+      "en": "Macao Li Shi Jie Qu",
+      "pt": "Macao Li Shi Jie Qu"
+    },
+    "poi_0326": {
+      "en": "Da Rong Yu Chi Tang Mian Cai Yuan Lu You Li Hua Yuan Fen Dian",
+      "pt": "Da Rong Yu Chi Tang Mian Cai Yuan Lu You Li Hua Yuan Fen Dian"
+    },
+    "poi_0327": {
+      "en": "Rong Ji Niu Za Bai Hong Da Sha Dian",
+      "pt": "Rong Ji Niu Za Bai Hong Da Sha Dian"
+    },
+    "poi_0328": {
+      "en": "Macao An De Lu Bing Dian",
+      "pt": "Macao An De Lu Bing Dian"
+    },
+    "poi_0329": {
+      "en": "Coloane Ma Tou Mian Guan",
+      "pt": "Coloane Ma Tou Mian Guan"
+    },
+    "poi_0330": {
+      "en": "Han Ji Shou Da Ka Fei",
+      "pt": "Han Ji Shou Da Ka Fei"
+    },
+    "poi_0331": {
+      "en": "Fei Zai Wen Mei Shi Dang Zai Dian",
+      "pt": "Fei Zai Wen Mei Shi Dang Zai Dian"
+    },
+    "poi_0332": {
+      "en": "Macao Jie Tou Xiao Shi",
+      "pt": "Macao Jie Tou Xiao Shi"
+    },
+    "poi_0333": {
+      "en": "Hai Bin Fan Dian",
+      "pt": "Hai Bin Fan Dian"
+    },
+    "poi_0334": {
+      "en": "Feng Tang Shi Hao Chuang Yi Yuan",
+      "pt": "Feng Tang Shi Hao Chuang Yi Yuan"
+    },
+    "poi_0335": {
+      "en": "Single origin cafe",
+      "pt": "Single origin cafe"
+    },
+    "poi_0336": {
+      "en": "Common Table Macau",
+      "pt": "Common Table Macau"
+    },
+    "poi_0337": {
+      "en": "Blooom Coffee House",
+      "pt": "Blooom Coffee House"
+    },
+    "poi_0338": {
+      "en": "EV Dian Tang Dian Dong Che Zhuan Mai Dian",
+      "pt": "EV Dian Tang Dian Dong Che Zhuan Mai Dian"
+    },
+    "poi_0339": {
+      "en": "Blooom Coffee House Pin Ka Fei Que Zai Yuan Dian",
+      "pt": "Blooom Coffee House Pin Ka Fei Que Zai Yuan Dian"
+    },
+    "poi_0340": {
+      "en": "He Lan Yuan Da Sha",
+      "pt": "He Lan Yuan Da Sha"
+    },
+    "poi_port_guanja": {
+      "en": "Portas do Cerco",
+      "pt": "Posto Fronteiriço das Portas do Cerco"
+    },
+    "poi_port_qingmao": {
+      "en": "Qingmao Port",
+      "pt": "Posto Fronteiriço Qingmao"
+    },
+    "poi_port_hengqin": {
+      "en": "Hengqin Port",
+      "pt": "Posto Fronteiriço de Hengqin"
+    },
+    "poi_port_hzmb": {
+      "en": "HZMB Macao Port",
+      "pt": "Posto Fronteiriço da Ponte Hong Kong-Zhuhai-Macau"
+    },
+    "poi_cultural_xian_xinghai": {
+      "en": "Xian Xinghai Memorial Museum",
+      "pt": "Museu Memorial de Xian Xinghai"
+    },
+    "poi_cultural_fire_services_museum": {
+      "en": "Fire Services Museum",
+      "pt": "Museu dos Bombeiros"
+    },
+    "poi_cultural_jao_tsung_i_academy": {
+      "en": "Jao Tsung-I Academy",
+      "pt": "Academia Jao Tsung-I"
+    },
+    "poi_cultural_ox_warehouse": {
+      "en": "Ox Warehouse",
+      "pt": "Armazem do Boi"
+    },
+    "poi_cultural_navy_yard_1": {
+      "en": "Macao Contemporary Art Center - Navy Yard No.1",
+      "pt": "Centro de Arte Contemporanea de Macau - Oficinas Navais No. 1"
+    },
+    "poi_cultural_navy_yard_2": {
+      "en": "Macao Contemporary Art Center - Navy Yard No.2",
+      "pt": "Centro de Arte Contemporanea de Macau - Oficinas Navais No. 2"
+    },
+    "poi_cultural_a_ma_cultural_village": {
+      "en": "A-Ma Cultural Village",
+      "pt": "Aldeia Cultural de A-Ma de Coloane"
+    },
+    "poi_cultural_tam_kong_temple": {
+      "en": "Tam Kung Temple",
+      "pt": "Templo de Tam Kong"
+    },
+    "poi_port_outer_harbor": {
+      "en": "Outer Harbour Ferry Terminal",
+      "pt": "Terminal Marítimo do Porto Exterior"
+    }
+  }
+}

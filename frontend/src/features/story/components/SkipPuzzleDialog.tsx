@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useStoryMessages } from "../storyI18n";
 
 interface SkipPuzzleDialogProps {
   open: boolean;
@@ -10,11 +11,12 @@ interface SkipPuzzleDialogProps {
 
 export function SkipPuzzleDialog({
   open,
-  message = "跳过后仍可继续故事，但本章会记录为“已跳过”。",
+  message,
   busy = false,
   onCancel,
   onConfirm,
 }: SkipPuzzleDialogProps) {
+  const st = useStoryMessages();
   const cancelRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -40,9 +42,11 @@ export function SkipPuzzleDialog({
         style={{ paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))" }}
       >
         <h2 id="story-skip-title" className="font-serif text-xl text-ink">
-          确认跳过这道谜题？
+          {st("confirmSkipTitle")}
         </h2>
-        <p className="mt-2 text-base leading-7 text-ink-soft">{message}</p>
+        <p className="mt-2 text-base leading-7 text-ink-soft">
+          {message ?? st("skipDefaultBody")}
+        </p>
         <div className="mt-5 grid grid-cols-2 gap-3">
           <button
             ref={cancelRef}
@@ -51,7 +55,7 @@ export function SkipPuzzleDialog({
             onClick={onCancel}
             className="min-h-12 rounded-full border border-line bg-card px-4 text-base text-ink disabled:opacity-45"
           >
-            继续解谜
+            {st("keepSolving")}
           </button>
           <button
             type="button"
@@ -59,7 +63,7 @@ export function SkipPuzzleDialog({
             onClick={onConfirm}
             className="min-h-12 rounded-full bg-clay px-4 text-base font-medium text-paper disabled:opacity-45"
           >
-            {busy ? "处理中…" : "确认跳过"}
+            {busy ? st("processing") : st("confirmSkip")}
           </button>
         </div>
       </div>

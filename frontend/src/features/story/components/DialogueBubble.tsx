@@ -1,4 +1,5 @@
 import type { StoryDialogueLine } from "../types";
+import { useStoryMessages } from "../storyI18n";
 
 interface DialogueBubbleProps {
   line: StoryDialogueLine;
@@ -15,6 +16,8 @@ export function DialogueBubble({
   onAdvance,
   className = "",
 }: DialogueBubbleProps) {
+  const st = useStoryMessages();
+  const speaker = isPlayer ? st("you") : line.speaker;
   const content = (
     <>
       <p
@@ -22,12 +25,12 @@ export function DialogueBubble({
           isPlayer ? "text-ochre" : "text-sage-deep"
         }`}
       >
-        {isPlayer ? "你" : line.speaker}
+        {speaker}
       </p>
       <p className="mt-1 text-base leading-7 text-ink">{line.text}</p>
       {isCurrent && onAdvance && (
         <span className="mt-2 block text-right text-[13px] text-ink-soft">
-          轻触继续 <span aria-hidden>→</span>
+          {st("tapToContinue")} <span aria-hidden>→</span>
         </span>
       )}
     </>
@@ -45,7 +48,7 @@ export function DialogueBubble({
       onClick={onAdvance}
       data-story-dialogue-bubble="current"
       className={`${classes} min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage`}
-      aria-label={`${isPlayer ? "你" : line.speaker}说：${line.text}。轻触继续`}
+      aria-label={st("dialogueAria", { speaker, text: line.text })}
     >
       {content}
     </button>

@@ -55,6 +55,36 @@ def test_every_poi_accepts_a_result_named_for_that_place() -> None:
             assert filter_relevant_hits(name, [hit]) == [hit], poi["id"]
 
 
+def test_hzmb_rejects_pages_about_constituent_cities_only() -> None:
+    hits = [
+        {
+            "title": "Zhuhai",
+            "snippet": "Zhuhai is near Macau and Hong Kong in the Pearl River Delta.",
+            "url": "https://example.com/zhuhai",
+            "source": "test",
+        },
+        {
+            "title": "Hong Kong",
+            "snippet": "Hong Kong is linked with Zhuhai and Macau.",
+            "url": "https://example.com/hong-kong",
+            "source": "test",
+        },
+    ]
+
+    assert filter_relevant_hits("Hong Kong-Zhuhai-Macau Bridge", hits) == []
+
+
+def test_hzmb_rejects_city_page_even_when_snippet_mentions_bridge() -> None:
+    hit = {
+        "title": "Zhuhai",
+        "snippet": "Zhuhai is one endpoint of the Hong Kong-Zhuhai-Macau Bridge.",
+        "url": "https://example.com/zhuhai",
+        "source": "test",
+    }
+
+    assert filter_relevant_hits("Hong Kong-Zhuhai-Macau Bridge", [hit]) == []
+
+
 def test_every_poi_foreign_preset_is_free_of_chinese_source_text() -> None:
     _load_pois.cache_clear()
     for poi in _pois():

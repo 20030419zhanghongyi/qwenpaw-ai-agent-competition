@@ -4,7 +4,6 @@ import {
   askGuide,
   generateGuide,
   listPois,
-  synthesizeTts,
   type GuideGenerateResponse,
 } from "@/api/client";
 import heroImg from "@/assets/hero-ruins.jpg";
@@ -13,9 +12,11 @@ import {
   GuideNarrationSections,
   sectionsFromText,
 } from "@/components/guide/GuideNarrationSections";
+import { LocalSpeechPlayer } from "@/components/guide/LocalSpeechPlayer";
 import { PhotoRecognitionPanel } from "@/components/guide/PhotoRecognitionPanel";
 import { t } from "@/i18n";
 import { resolvePoiImage, curatedPoiImage } from "@/lib/poiImage";
+import { localizedPoiMeta, localizedPoiName, localizedPoiSearchText } from "@/lib/poiLocalization";
 import { useWalk } from "@/state/WalkContext";
 import type { POI } from "@/types";
 
@@ -68,15 +69,18 @@ export function GuidePage() {
   const [selected, setSelected] = useState<POI | null>(null);
   const [generating, setGenerating] = useState(false);
   const [narration, setNarration] = useState<GuideGenerateResponse | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [ttsFailed, setTtsFailed] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
 
   const [chat, setChat] = useState<ChatTurn[]>([]);
   const [question, setQuestion] = useState("");
   const [asking, setAsking] = useState(false);
+  const [askProgressStep, setAskProgressStep] = useState(0);
 
-  const [sceneUrl, setSceneUrl] = useState<string>(heroImg);
+  const [resolvedScene, setResolvedScene] = useState<{ key: string; url: string }>({
+    key: "",
+    url: heroImg,
+  });
+  const [failedCuratedSceneKey, setFailedCuratedSceneKey] = useState("");
   const [sceneLoading, setSceneLoading] = useState(false);
   const deepLoaded = useRef<string | null>(null);
 
@@ -110,24 +114,33 @@ export function GuidePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listReloadKey]);
 
+  useEffect(() => {
+    if (!asking) {
+      setAskProgressStep(0);
+      return;
+    }
+    const timer = window.setInterval(() => {
+      setAskProgressStep((step) => Math.min(step + 1, 3));
+    }, 1400);
+    return () => window.clearInterval(timer);
+  }, [asking]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return pois.slice(0, 24);
     return pois
       .filter((p) => {
-        const hay = `${p.poi_name} ${p.alias ?? ""} ${p.address} ${p.category}`.toLowerCase();
+        const hay = localizedPoiSearchText(p, language).toLowerCase();
         return hay.includes(q);
       })
       .slice(0, 40);
-  }, [pois, query]);
+  }, [pois, query, language]);
 
   async function loadNarration(poi: POI, displayName?: string) {
     setSelected(poi);
     setGenerating(true);
     setGenError(null);
     setNarration(null);
-    setAudioUrl(null);
-    setTtsFailed(false);
     setChat([]);
     try {
       const gen = await generateGuide({
@@ -142,23 +155,6 @@ export function GuidePage() {
         return;
       }
       setNarration(gen);
-      void (async () => {
-        try {
-          const script =
-            gen.audio_script ||
-            gen.immersive?.audio_script ||
-            gen.text ||
-            "";
-          if (!script.trim()) {
-            setTtsFailed(true);
-            return;
-          }
-          const tts = await synthesizeTts({ text: script, language });
-          setAudioUrl(tts.audio_url);
-        } catch {
-          setTtsFailed(true);
-        }
-      })();
     } catch (err) {
       setGenError(err instanceof Error ? err.message : t(language, "guideError"));
     } finally {
@@ -208,10 +204,11 @@ export function GuidePage() {
     void loadNarration(poi);
   }
 
-  async function submitQuestion() {
-    const q = question.trim();
-    const poiKey = selected?.poi_name || deepName || deepPoi;
+  async function submitQuestion(suggestedQuestion?: string) {
+    const q = suggestedQuestion?.trim() || question.trim();
+    const poiKey = selected?.poi_id || deepPoi || title || selected?.poi_name || deepName;
     if (!q || !poiKey || asking) return;
+    setAskProgressStep(0);
     setAsking(true);
     setChat((prev) => [...prev, { role: "user", text: q }]);
     setQuestion("");
@@ -267,11 +264,27 @@ export function GuidePage() {
     });
   }
 
+  const sceneName = selected?.poi_name || deepName || narration?.poi_name || "";
+  const scenePoiId = selected?.poi_id || deepPoi || narration?.poi_id || "";
+  const sceneKey = `${scenePoiId}|${sceneName}`;
+  const curatedSceneUrl = curatedPoiImage(scenePoiId, sceneName);
+  const sceneUrl =
+    curatedSceneUrl && failedCuratedSceneKey !== sceneKey
+      ? curatedSceneUrl
+      : resolvedScene.key === sceneKey
+        ? resolvedScene.url
+        : heroImg;
+
   useEffect(() => {
-    const name = selected?.poi_name || deepName || narration?.poi_name || "";
-    const poiId = selected?.poi_id || deepPoi || "";
+    const name = sceneName;
+    const poiId = scenePoiId;
     if (!name && !poiId) {
-      setSceneUrl(heroImg);
+      setResolvedScene({ key: "", url: heroImg });
+      setSceneLoading(false);
+      return;
+    }
+    if (curatedPoiImage(poiId, name)) {
+      setSceneLoading(false);
       return;
     }
     let cancelled = false;
@@ -284,7 +297,7 @@ export function GuidePage() {
       longitude: selected?.longitude,
     }).then((url) => {
       if (!cancelled) {
-        setSceneUrl(url);
+        setResolvedScene({ key: sceneKey, url });
         setSceneLoading(false);
       }
     });
@@ -292,27 +305,44 @@ export function GuidePage() {
       cancelled = true;
     };
   }, [
-    selected?.poi_id,
-    selected?.poi_name,
     selected?.alias,
     selected?.latitude,
     selected?.longitude,
-    deepPoi,
-    deepName,
-    narration?.poi_name,
+    sceneKey,
+    sceneName,
+    scenePoiId,
   ]);
 
   function clearGuideSelection() {
     setSelected(null);
     setNarration(null);
-    setAudioUrl(null);
     setChat([]);
     setSearchParams({});
     deepLoaded.current = null;
   }
 
-  const title =
-    narration?.poi_name || selected?.poi_name || deepName || t(language, "guidePageTitle");
+  const deepLinkName = deepPoi
+    ? localizedPoiName(
+        { poi_id: deepPoi, poi_name: deepName || deepPoi, alias: null },
+        language,
+      )
+    : "";
+  const title = selected
+    ? localizedPoiName(selected, language)
+    : deepLinkName || narration?.poi_name || t(language, "guidePageTitle");
+  const formatPlace = (key: Parameters<typeof t>[1]) =>
+    t(language, key).split("{place}").join(title);
+  const guideQuestionSuggestions = [
+    formatPlace("guideAskSuggestionHistory"),
+    formatPlace("guideAskSuggestionDetails"),
+    formatPlace("guideAskSuggestionView"),
+  ];
+  const guideAskProgressSteps = [
+    t(language, "guideAskProgressUnderstand"),
+    t(language, "guideAskProgressWeb"),
+    t(language, "guideAskProgressLocal"),
+    t(language, "guideAskProgressCompose"),
+  ];
   const showingDetail = Boolean(selected || deepPoi);
   const narrationSections = useMemo(() => {
     const script =
@@ -410,9 +440,11 @@ export function GuidePage() {
                       onClick={() => selectPoi(poi)}
                       className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-left transition hover:border-sage hover:bg-paper-warm"
                     >
-                      <p className="font-serif text-[15px] text-ink">{poi.poi_name}</p>
+                      <p className="font-serif text-[15px] text-ink">
+                        {localizedPoiName(poi, language)}
+                      </p>
                       <p className="mt-0.5 truncate text-xs text-ink-soft">
-                        {[poi.category, poi.address].filter(Boolean).join(" · ")}
+                        {localizedPoiMeta(poi, language)}
                       </p>
                     </button>
                   </li>
@@ -433,7 +465,11 @@ export function GuidePage() {
                     className={`h-full w-full object-cover transition duration-500 ${
                       sceneLoading ? "opacity-60 scale-105" : "opacity-95"
                     }`}
-                    onError={() => setSceneUrl(heroImg)}
+                    onError={() => {
+                      if (curatedSceneUrl) setFailedCuratedSceneKey(sceneKey);
+                      setResolvedScene({ key: sceneKey, url: heroImg });
+                      setSceneLoading(false);
+                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-moss/90 via-moss/20 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 p-5 text-paper">
@@ -441,8 +477,10 @@ export function GuidePage() {
                       {t(language, "guideVisualLabel")}
                     </p>
                     <h2 className="mt-1 font-display text-2xl">{title}</h2>
-                    {selected?.address ? (
-                      <p className="mt-1 text-xs opacity-80">{selected.address}</p>
+                    {selected ? (
+                      <p className="mt-1 text-xs opacity-80">
+                        {localizedPoiMeta(selected, language)}
+                      </p>
                     ) : null}
                   </div>
                 </div>
@@ -475,11 +513,15 @@ export function GuidePage() {
                       imageAlt={title}
                       showImage
                     />
-                    {audioUrl ? (
-                      <audio controls src={audioUrl} className="mt-4 w-full" />
-                    ) : ttsFailed ? (
-                      <p className="mt-3 text-xs text-ink-soft">{t(language, "ttsUnavailable")}</p>
-                    ) : null}
+                    <LocalSpeechPlayer
+                      text={
+                        narration.audio_script ||
+                        narration.immersive?.audio_script ||
+                        narration.text ||
+                        ""
+                      }
+                      language={language}
+                    />
                     {resolvedNextName ? (
                       <Link
                         to={`/guide?${new URLSearchParams({
@@ -496,7 +538,11 @@ export function GuidePage() {
                           <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-sage-deep">
                             {t(language, "guideNextStopLabel")}
                           </span>
-                          <span className="font-serif text-base">{resolvedNextName}</span>
+                          <span className="font-serif text-base">
+                            {resolvedNextId && session?.poisById[resolvedNextId]
+                              ? localizedPoiName(session.poisById[resolvedNextId], language)
+                              : resolvedNextName}
+                          </span>
                         </span>
                         <span aria-hidden className="text-sage-deep">
                           →
@@ -518,17 +564,40 @@ export function GuidePage() {
             </section>
 
             <section className="flex min-h-[28rem] flex-col overflow-hidden rounded-[1.75rem] border border-line bg-card shadow-[var(--shadow-soft)]">
-              <div className="border-b border-line/80 bg-sage-deep/[0.06] px-5 py-4">
+              <div className="border-b border-line/80 bg-sage-deep/[0.06] px-5 py-5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sage-deep">
                   {t(language, "guideAskTitle")}
                 </p>
-                <p className="mt-1 text-sm text-ink-soft">{t(language, "guideAskLead")}</p>
+                <h2 className="mt-1 font-serif text-lg leading-snug text-ink">
+                  {formatPlace("guideAskLead")}
+                </h2>
               </div>
-              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4">
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-5">
                 {chat.length === 0 ? (
-                  <p className="text-sm leading-relaxed text-ink-soft">
-                    {t(language, "guideAskHint")}
-                  </p>
+                  <div className="py-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-soft">
+                      {t(language, "guideAskSuggestionLabel")}
+                    </p>
+                    <div className="mt-3 grid gap-2">
+                      {guideQuestionSuggestions.map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          type="button"
+                          disabled={asking}
+                          onClick={() => void submitQuestion(suggestion)}
+                          className="group flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-line bg-paper-warm/55 px-4 py-3 text-left text-sm leading-relaxed text-ink transition hover:border-sage hover:bg-paper-warm disabled:opacity-50"
+                        >
+                          <span>{suggestion}</span>
+                          <span
+                            aria-hidden
+                            className="shrink-0 text-sage-deep transition group-hover:translate-x-0.5"
+                          >
+                            →
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ) : (
                   chat.map((turn, i) => (
                     <div
@@ -550,7 +619,47 @@ export function GuidePage() {
                   ))
                 )}
                 {asking ? (
-                  <p className="text-xs text-ink-soft">{t(language, "guideAskThinking")}</p>
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="rounded-xl border border-line bg-paper-warm/65 px-4 py-3.5"
+                  >
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-sage-deep">
+                      {t(language, "guideAskProgressLabel")}
+                    </p>
+                    <ol className="mt-3 grid gap-2 sm:grid-cols-2">
+                      {guideAskProgressSteps.map((step, index) => {
+                        const complete = index < askProgressStep;
+                        const active = index === askProgressStep;
+                        return (
+                          <li
+                            key={step}
+                            className={`flex min-h-7 items-center gap-2 text-xs leading-snug ${
+                              active || complete ? "text-ink" : "text-ink-soft/55"
+                            }`}
+                          >
+                            <span
+                              aria-hidden
+                              className={`flex size-4 shrink-0 items-center justify-center rounded-full border ${
+                                complete
+                                  ? "border-sage-deep bg-sage-deep text-paper"
+                                  : active
+                                    ? "border-sage-deep bg-card"
+                                    : "border-line bg-transparent"
+                              }`}
+                            >
+                              {complete ? (
+                                <span className="text-[9px] leading-none">✓</span>
+                              ) : active ? (
+                                <span className="size-1.5 animate-pulse rounded-full bg-sage-deep" />
+                              ) : null}
+                            </span>
+                            <span>{step}</span>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </div>
                 ) : null}
               </div>
               <form
