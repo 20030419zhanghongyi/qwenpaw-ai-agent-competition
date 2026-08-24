@@ -5,6 +5,7 @@ import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { PostcardCreateForm } from "@/components/postcard/PostcardCreateForm";
 import { t } from "@/i18n";
 import { resolveTripUserId } from "@/lib/guestUser";
+import { localizedPoiName } from "@/lib/poiLocalization";
 import { useAuth } from "@/state/AuthContext";
 import { useTrip } from "@/state/TripContext";
 import { useWalk } from "@/state/WalkContext";
@@ -41,8 +42,9 @@ export function PostcardCreatePage() {
 
   const poiName = useMemo(() => {
     if (!poiId) return undefined;
-    return session?.poisById[poiId]?.poi_name;
-  }, [poiId, session]);
+    const poi = session?.poisById[poiId];
+    return poi ? localizedPoiName(poi, language) : undefined;
+  }, [poiId, session, language]);
 
   const checkedIn = Boolean(trip && poiId && trip.checked_in_poi_ids.includes(poiId));
 

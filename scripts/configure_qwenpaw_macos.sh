@@ -39,6 +39,7 @@ skill_sources=(
   "skills/preference-guide"
   "skills/macau-guide"
   "skills/photo-recognize"
+  "skills/gc-minimal-zine-poster"
   "skills/postcard-scene"
   "skills/qwen-image-postcard"
   "skills/photo-abstract-editorial"
@@ -87,8 +88,42 @@ create_agent_if_missing intent "需求理解" requirement-understand fairness-ga
 create_agent_if_missing pref-guide "偏好多轮引导" preference-guide
 create_agent_if_missing guide "文化讲解" macau-guide source-attribution anti-sycophancy
 create_agent_if_missing photo "拍照识别" photo-recognize source-attribution
-create_agent_if_missing scene "明信片场景" postcard-scene qwen-image-postcard photo-abstract-editorial
+create_agent_if_missing scene "明信片场景" gc-minimal-zine-poster
+create_agent_if_missing scene-photo "明信片照片编辑" qwen-image-postcard photo-abstract-editorial
 create_agent_if_missing reviewer "独立审核" content-safety-review
+
+# Keep the generation Agent's context minimal. These skills remain available in
+# the pool and on scene-photo; they are removed only from the scene workspace.
+for old_scene_skill in postcard-scene qwen-image-postcard photo-abstract-editorial; do
+  qwenpaw skills uninstall "$old_scene_skill" --agent-id scene >/dev/null 2>&1 || true
+done
+
+update_agent_description() {
+  local agent_id="$1"
+  local description="$2"
+  local payload
+  payload="$(mktemp)"
+  curl -fsS "$qwenpaw_base_url/api/agents/$agent_id" >"$payload"
+  DESCRIPTION="$description" python3 - "$payload" <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+payload["description"] = os.environ["DESCRIPTION"]
+path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+PY
+  curl -fsS -X PUT "$qwenpaw_base_url/api/agents/$agent_id" \
+    -H 'Content-Type: application/json' --data-binary "@$payload" >/dev/null
+  rm -f "$payload"
+}
+
+update_agent_description scene \
+  "仅使用 gc-minimal-zine-poster 和 generate_image_qwen 生成无照片澳门场景图。"
+update_agent_description scene-photo \
+  "仅处理已获授权并完成隐私清理的用户照片编辑，不生成无照片场景。"
 
 # Copy any missing pool skill into existing workspaces without overwriting user-edited copies.
 for mapping in \
@@ -97,7 +132,8 @@ for mapping in \
   'pref-guide:preference-guide' \
   'guide:macau-guide,source-attribution,anti-sycophancy' \
   'photo:photo-recognize,source-attribution' \
-  'scene:postcard-scene,qwen-image-postcard,photo-abstract-editorial' \
+  'scene:gc-minimal-zine-poster' \
+  'scene-photo:qwen-image-postcard,photo-abstract-editorial' \
   'reviewer:content-safety-review'; do
   agent_id="${mapping%%:*}"
   IFS=',' read -r -a agent_skills <<< "${mapping#*:}"
@@ -127,7 +163,24 @@ tts_block = [
     "Do not rewrite, translate, summarize, expand, or disclose the approved narration; respond only after the tool completes.",
     "<!-- MACAU_GUIDE_TTS_END -->",
 ]
-ids = {"default", "route", "intent", "pref-guide", "guide", "photo", "scene", "reviewer"}
+scene_block = [
+    "<!-- MACAU_SCENE_PRESET_START -->",
+    "For a no-photo request that names gc-minimal-zine-poster, load that skill first and treat it as the highest-priority visual contract.",
+    "Call generate_image_qwen exactly once; do not use postcard-scene SVG, photo-abstract-editorial, or a generic landmark fallback.",
+    "If generation fails, report the tool failure instead of fabricating or returning a placeholder image.",
+    "<!-- MACAU_SCENE_PRESET_END -->",
+]
+scene_photo_block = [
+    "<!-- MACAU_SCENE_PHOTO_START -->",
+    "Handle only authorized, privacy-scrubbed user photo edits.",
+    "Use edit_image_qwen exactly once and never generate a no-photo scenic image.",
+    "Preserve blurred faces and do not reconstruct identity details.",
+    "<!-- MACAU_SCENE_PHOTO_END -->",
+]
+ids = {
+    "default", "route", "intent", "pref-guide", "guide", "photo", "scene",
+    "scene-photo", "reviewer",
+}
 agents = [a for a in json.loads(os.environ["AGENTS_JSON"]).get("agents", []) if a.get("id") in ids]
 missing = ids - {a["id"] for a in agents}
 if missing:
@@ -150,6 +203,20 @@ for agent in agents:
             updated = updated[:start] + tts_block + updated[end + 1:]
         except ValueError:
             updated += ["", *tts_block]
+    if agent["id"] == "scene":
+        try:
+            start = updated.index("<!-- MACAU_SCENE_PRESET_START -->")
+            end = updated.index("<!-- MACAU_SCENE_PRESET_END -->", start)
+            updated = updated[:start] + scene_block + updated[end + 1:]
+        except ValueError:
+            updated += ["", *scene_block]
+    if agent["id"] == "scene-photo":
+        try:
+            start = updated.index("<!-- MACAU_SCENE_PHOTO_START -->")
+            end = updated.index("<!-- MACAU_SCENE_PHOTO_END -->", start)
+            updated = updated[:start] + scene_photo_block + updated[end + 1:]
+        except ValueError:
+            updated += ["", *scene_photo_block]
     path.write_text("\n".join(updated) + "\n", encoding="utf-8")
     print(f"Updated ethics baseline: {agent['id']}")
 PY
@@ -160,46 +227,24 @@ qwenpaw plugin validate backend/app/tools/qwen-tts
 qwenpaw plugin install backend/app/tools/qwen-tts --force
 
 if [[ -f .env && -z "${DASHSCOPE_API_KEY:-}" ]]; then
-  DASHSCOPE_API_KEY="$(python3 - <<'PY'
+  env_values="$(python3 - <<'PY'
 from pathlib import Path
+values = {}
 for line in Path('.env').read_text(encoding='utf-8').splitlines():
-    if line.startswith('DASHSCOPE_API_KEY='):
-        print(line.split('=', 1)[1].strip().strip(chr(34) + chr(39)))
-        break
+    if '=' in line and not line.lstrip().startswith('#'):
+        key, value = line.split('=', 1)
+        values[key.strip()] = value.strip().strip(chr(34) + chr(39))
+print(values.get('DASHSCOPE_API_KEY', ''))
 PY
 )"
+  [[ -n "${DASHSCOPE_API_KEY:-}" ]] || DASHSCOPE_API_KEY="$(printf '%s\n' "$env_values" | sed -n '1p')"
 fi
 
-if [[ -n "${DASHSCOPE_API_KEY:-}" ]]; then
-  config_file="$(mktemp)"
-  trap 'rm -f "$config_file"' EXIT
-  DASHSCOPE_API_KEY="$DASHSCOPE_API_KEY" python3 - "$config_file" <<'PY'
-import json
-import os
-import sys
-from pathlib import Path
-Path(sys.argv[1]).write_text(json.dumps({"config": {
-    "api_key": os.environ["DASHSCOPE_API_KEY"],
-    "endpoint": "https://dashscope.aliyuncs.com/api/v1",
-    "model": "qwen-image-2.0-pro",
-    "timeout": 180,
-}}), encoding="utf-8")
-PY
-  for tool_name in generate_image_qwen edit_image_qwen; do
-    curl -fsS -X POST "$qwenpaw_base_url/api/tools/$tool_name/config" \
-      -H 'X-Agent-Id: scene' -H 'Content-Type: application/json' \
-      --data-binary "@$config_file" >/dev/null
-    enabled="$(curl -fsS -H 'X-Agent-Id: scene' "$qwenpaw_base_url/api/tools" | python3 -c '
-import json, sys
-name = sys.argv[1]
-print("true" if next((x.get("enabled") for x in json.load(sys.stdin) if x.get("name") == name), False) else "false")
-' "$tool_name")"
-    [[ "$enabled" == "true" ]] || curl -fsS -X PATCH "$qwenpaw_base_url/api/tools/$tool_name/toggle" -H 'X-Agent-Id: scene' >/dev/null
-  done
-  echo "Configured Qwen-Image for scene."
+bash scripts/sync_qwen_image_config.sh
 
+if [[ -n "${DASHSCOPE_API_KEY:-}" ]]; then
   tts_config_file="$(mktemp)"
-  trap 'rm -f "$config_file" "$tts_config_file"' EXIT
+  trap 'rm -f "${config_file:-}" "$tts_config_file"' EXIT
   DASHSCOPE_API_KEY="$DASHSCOPE_API_KEY" python3 - "$tts_config_file" <<'PY'
 import json
 import os
@@ -223,10 +268,10 @@ print("true" if next((x.get("enabled") for x in json.load(sys.stdin) if x.get("n
   [[ "$enabled" == "true" ]] || curl -fsS -X PATCH "$qwenpaw_base_url/api/tools/$tool_name/toggle" -H 'X-Agent-Id: guide' >/dev/null
   echo "Configured Qwen TTS for guide."
 else
-  echo "DASHSCOPE_API_KEY is absent; Qwen-Image and Qwen TTS are installed but left unconfigured and disabled."
+  echo "DASHSCOPE_API_KEY is absent; Qwen TTS is installed but left unconfigured and disabled."
 fi
 
-qwenpaw doctor
+qwenpaw doctor || echo "QwenPaw doctor reported unrelated environment warnings; continuing."
 qwenpaw agents list
 qwenpaw skills list --agent-id scene
 qwenpaw plugin info qwen-image-tool

@@ -46,11 +46,12 @@ services:
       # 与 QwenPaw / 百炼同源：从宿主机 .env 或 shell 注入（TTS / embedding / 明信片 AI 场景图）
       DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
       QWEN_EMBEDDING_API_KEY: ${QWEN_EMBEDDING_API_KEY:-}
+      QWEN_IMAGE_API_KEY: ${QWEN_IMAGE_API_KEY:-}
+      QWEN_IMAGE_ENDPOINT: ${QWEN_IMAGE_ENDPOINT:-}
       TTS_API_KEY: ${TTS_API_KEY:-}
       POSTCARD_AI_IMAGE_ENABLED: ${POSTCARD_AI_IMAGE_ENABLED:-true}
-      QWEN_IMAGE_MODEL: ${QWEN_IMAGE_MODEL:-wanx2.1-t2i-turbo}
     ports:
-      - "8000:8000"
+      - "${BACKEND_PUBLISHED_PORT:-8001}:8000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
 

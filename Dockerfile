@@ -11,7 +11,7 @@ ENV PYTHONUNBUFFERED=1 \
 # opencv-python-headless（被 app.tools.scrub 顶层 import → 启动链会强 import cv2）
 # 在 slim 上缺 libglib2.0-0 会 ImportError，故装上。psycopg[binary] 自带 libpq，无需额外系统库。
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libglib2.0-0 \
+    && apt-get install -y --no-install-recommends libglib2.0-0 fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

@@ -128,11 +128,11 @@ npm run dev
 打开以下地址：
 
 - 前端：<http://localhost:5173>
-- 后端 OpenAPI：<http://localhost:8000/docs>
+- 后端 OpenAPI：<http://localhost:8001/docs>
 - QwenPaw Console：<http://127.0.0.1:8088>
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:8000/api/v1/health
+Invoke-RestMethod http://127.0.0.1:8001/api/v1/health
 Invoke-RestMethod http://127.0.0.1:8088/api/version
 ```
 
@@ -158,7 +158,7 @@ npm run dev
 ```
 
 ```zsh
-curl -fsS http://127.0.0.1:8000/api/v1/health
+curl -fsS http://127.0.0.1:8001/api/v1/health
 curl -fsS http://127.0.0.1:8088/api/version
 ```
 
@@ -286,12 +286,18 @@ bash scripts/configure_qwenpaw_macos.sh
 ```
 
 脚本会校验并导入本地 Skills，创建缺失的项目 Agents（已有 Agent 不会被删除），
-注入统一伦理基线，安装 Qwen-Image Plugin，并在根目录 `.env` 已配置
-部署者自行提供的 `DASHSCOPE_API_KEY` 时为 `scene` 配置和启用两项图片工具。
+注入统一伦理基线，安装 Qwen-Image Plugin，并从根目录 `.env` 读取部署者自行提供的
+`QWEN_IMAGE_API_KEY` 与北京原生 `QWEN_IMAGE_ENDPOINT`，同步到 QwenPaw 图片工具。
 仓库与赛委会环境不会提供图像生成 Key；相关用量、额度与费用由部署账号承担。
 脚本不会在终端显示密钥；无 Key 时会保留插件已安装、工具未启用的状态。可用
 `QWENPAW_BASE_URL=http://127.0.0.1:8088 bash scripts/configure_qwenpaw_macos.sh`
 覆盖默认地址。
+
+以后只修改图片密钥或端点时，无需重新导入全部 Agent 和 Skill；保持 QwenPaw 运行并执行：
+
+```zsh
+bash scripts/sync_qwen_image_config.sh
+```
 
 ### 1. 导入全部本地 Skills
 

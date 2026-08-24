@@ -68,11 +68,18 @@ class Settings(BaseSettings):
     # 文化讲解 agent 开关：默认 False（讲解字段 explanation 留空）。
     # 需在 QwenPaw 建 guide agent（挂 macau-guide 技能）+ RAG 已 ingest 后置 true。
     guide_agent_enabled: bool = False
+    # Guide enhancement is optional. Cap the complete SSE turn so a slow model
+    # never holds the user-facing request for the global QwenPaw timeout.
+    guide_agent_max_duration: float = 8.0
+    guide_query_translation_max_duration: float = 4.0
+    guide_agent_failure_cooldown: float = 30.0
+    guide_agent_cache_ttl: float = 3600.0
     # 独立审核 agent 开关：默认 False（规则版 fallback，零意外 LLM 调用）；
     # 在 QwenPaw 建好 reviewer agent（挂 content-safety-review 技能）后置 true。
     reviewer_agent_enabled: bool = False
-    # 明信片场景插画 agent id（批量脚本默认调用；需多模态 + view_image + postcard-scene）。
+    # 无照片场景与用户照片编辑分属两个 Agent，减少各自加载的技能上下文。
     scene_agent_id: str = "scene"
+    postcard_photo_agent_id: str = "scene-photo"
     qwen_vision_model: str = "qwen-vl-max"
     qwen_embedding_model: str = "text-embedding-v3"
     qwen_tts_model: str = "qwen3-tts-flash"
@@ -105,9 +112,8 @@ class Settings(BaseSettings):
     tts_api_key: str = ""
 
     postcard_ai_image_enabled: bool = True
-    qwen_image_model: str = "wanx2.1-t2i-turbo"
     postcard_ai_image_size: str = "2368*1728"
-    # Slightly above the Qwen-Image tool timeout; then fall back to local scenic.
+    # Slightly above the Qwen-Image tool timeout; cached scenes stay instant.
     postcard_ai_scene_timeout: float = 210.0
     # Optional AI caption via guide agent (off by default — keeps create snappy).
     postcard_ai_caption_enabled: bool = False

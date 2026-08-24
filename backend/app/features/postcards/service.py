@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 from datetime import datetime, timezone
 from html import escape
+from io import BytesIO
 import logging
 import re
 from uuid import uuid4
@@ -25,16 +26,146 @@ from app.tools.scrub import scrub
 
 from .models import PostcardResponse
 from .repository import PostcardRepository, postcard_repository
-from .scene_image import SUPPORTED_PHOTO_STYLES, generate_ai_scene, stylize_photo_via_qwenpaw
+from .scene_image import (
+    SceneGenerationError,
+    SUPPORTED_PHOTO_STYLES,
+    generate_ai_scene,
+    generate_ai_scene_via_qwenpaw,
+    stylize_photo_via_qwenpaw,
+)
 
 logger = logging.getLogger("macau_storywalk.postcards")
 
 SUPPORTED_LANGUAGES = {"zh-CN", "zh-TW", "en", "pt"}
 MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 MACAU_TZ = ZoneInfo("Asia/Macau")
+HAN_RE = re.compile(r"[\u3400-\u9fff]")
+
+DISTRICT_NAMES = {
+    "花王堂区": {
+        "zh-CN": "花王堂区",
+        "zh-TW": "花王堂區",
+        "en": "St. Anthony Parish",
+        "pt": "Freguesia de Santo António",
+    },
+    "望德堂区": {
+        "zh-CN": "望德堂区",
+        "zh-TW": "望德堂區",
+        "en": "St. Lazarus Parish",
+        "pt": "Freguesia de São Lázaro",
+    },
+    "大堂区": {
+        "zh-CN": "大堂区",
+        "zh-TW": "大堂區",
+        "en": "Cathedral Parish",
+        "pt": "Freguesia da Sé",
+    },
+    "风顺堂区": {
+        "zh-CN": "风顺堂区",
+        "zh-TW": "風順堂區",
+        "en": "St. Lawrence Parish",
+        "pt": "Freguesia de São Lourenço",
+    },
+    "圣安多尼堂区": {
+        "zh-CN": "圣安多尼堂区",
+        "zh-TW": "聖安多尼堂區",
+        "en": "St. Anthony Parish",
+        "pt": "Freguesia de Santo António",
+    },
+    "嘉模堂区": {
+        "zh-CN": "嘉模堂区",
+        "zh-TW": "嘉模堂區",
+        "en": "Our Lady of Carmel Parish",
+        "pt": "Freguesia de Nossa Senhora do Carmo",
+    },
+    "圣方济各堂区": {
+        "zh-CN": "圣方济各堂区",
+        "zh-TW": "聖方濟各堂區",
+        "en": "St. Francis Xavier Parish",
+        "pt": "Freguesia de São Francisco Xavier",
+    },
+    "路环": {"zh-CN": "路环", "zh-TW": "路環", "en": "Coloane", "pt": "Coloane"},
+    "氹仔": {"zh-CN": "氹仔", "zh-TW": "氹仔", "en": "Taipa", "pt": "Taipa"},
+}
+TRADITIONAL_CHARACTERS = str.maketrans(
+    {
+        "门": "門",
+        "园": "園",
+        "题": "題",
+        "线": "線",
+        "区": "區",
+        "场": "場",
+        "馆": "館",
+        "圣": "聖",
+        "东": "東",
+        "灯": "燈",
+        "妈": "媽",
+        "阁": "閣",
+        "龙": "龍",
+        "环": "環",
+        "韵": "韻",
+        "旧": "舊",
+        "艺": "藝",
+        "术": "術",
+        "游": "遊",
+        "渔": "漁",
+        "码": "碼",
+        "头": "頭",
+        "湾": "灣",
+        "关": "關",
+        "书": "書",
+        "楼": "樓",
+        "墙": "牆",
+        "遗": "遺",
+        "会": "會",
+        "纪": "紀",
+        "当": "當",
+        "业": "業",
+        "厂": "廠",
+        "赛": "賽",
+        "车": "車",
+        "广": "廣",
+        "马": "馬",
+        "桥": "橋",
+        "风": "風",
+        "顺": "順",
+        "岗": "崗",
+        "顶": "頂",
+        "铺": "鋪",
+        "炉": "爐",
+        "凤": "鳳",
+        "饮": "飲",
+        "历": "歷",
+        "史": "史",
+        "认": "認",
+        "知": "知",
+        "无": "無",
+        "脑": "腦",
+        "托": "託",
+        "觉": "覺",
+        "观": "觀",
+        "摄": "攝",
+        "颜": "顏",
+        "开": "開",
+        "发": "發",
+        "后": "後",
+        "复": "復",
+        "杂": "雜",
+        "图": "圖",
+        "与": "與",
+    }
+)
+
+
+def _to_traditional(value: str) -> str:
+    return value.translate(TRADITIONAL_CHARACTERS)
 
 
 class PostcardError(ValueError):
+    pass
+
+
+class PostcardSceneUnavailableError(PostcardError):
     pass
 
 
@@ -118,7 +249,15 @@ def _format_geo_label(
         lng_hem = "E" if longitude >= 0 else "W"
         parts.append(f"{abs(latitude):.3f}°{lat_hem} {abs(longitude):.3f}°{lng_hem}")
     if district:
-        parts.append(district)
+        localized_district = DISTRICT_NAMES.get(district, {}).get(language)
+        if localized_district:
+            parts.append(localized_district)
+        elif language == "zh-TW":
+            parts.append(_to_traditional(district))
+        elif language in {"en", "pt"} and HAN_RE.search(district):
+            parts.append("Macau")
+        else:
+            parts.append(district)
     if not parts:
         return "Macau" if language in {"en", "pt"} else "澳门"
     return " · ".join(parts)
@@ -153,79 +292,6 @@ def _format_task_label(
     return stop_part
 
 
-def _placeholder_photo(poi_name: str, language: str) -> bytes:
-    """Scenic souvenir illustration when AI scene is unavailable — no EXIF."""
-    from io import BytesIO
-
-    from PIL import Image, ImageDraw, ImageFont
-
-    width, height = 960, 720
-    image = Image.new("RGB", (width, height), "#7eb6c9")
-    draw = ImageDraw.Draw(image)
-
-    # Soft afternoon sky → harbor water (Macau postcard feel).
-    for y in range(height):
-        t = y / max(height - 1, 1)
-        if t < 0.55:
-            u = t / 0.55
-            r = int(126 + (244 - 126) * u * 0.35)
-            g = int(182 + (210 - 182) * u)
-            b = int(201 + (180 - 201) * u)
-        else:
-            u = (t - 0.55) / 0.45
-            r = int(62 + (34 - 62) * u)
-            g = int(118 + (86 - 118) * u)
-            b = int(132 + (110 - 132) * u)
-        draw.line([(0, y), (width, y)], fill=(r, g, b))
-
-    # Distant skyline / port terminal silhouette.
-    horizon = int(height * 0.58)
-    draw.polygon(
-        [
-            (80, horizon),
-            (140, horizon - 90),
-            (210, horizon - 70),
-            (260, horizon - 140),
-            (340, horizon - 100),
-            (420, horizon - 160),
-            (520, horizon - 90),
-            (610, horizon - 130),
-            (700, horizon - 70),
-            (780, horizon - 110),
-            (880, horizon - 60),
-            (920, horizon),
-        ],
-        fill="#2b3937",
-    )
-    # Modern port hall block.
-    draw.rectangle((360, horizon - 120, 620, horizon), fill="#3d4f4c")
-    draw.rectangle((380, horizon - 100, 600, horizon - 20), fill="#cfe3e0")
-    for x in range(400, 590, 36):
-        draw.rectangle((x, horizon - 92, x + 18, horizon - 28), fill="#7aa8a2")
-
-    # Warm paper frame + azulejo accent strip.
-    draw.rectangle((28, 28, width - 28, height - 28), outline="#fffaf2", width=10)
-    tile_y = height - 78
-    for i, x in enumerate(range(48, width - 48, 28)):
-        fill = "#2f6f6a" if i % 2 == 0 else "#a5573f"
-        draw.rectangle((x, tile_y, x + 24, tile_y + 24), fill=fill)
-
-    font = ImageFont.load_default()
-    title = {
-        "zh-CN": "澳门印记",
-        "zh-TW": "澳門印記",
-        "en": "Macau imprint",
-        "pt": "Marca de Macau",
-    }.get(language, "澳门印记")
-    label = (poi_name or "Macau")[:28]
-    draw.text((56, 52), title, fill="#fffaf2", font=font)
-    draw.text((56, 84), label, fill="#fffaf2", font=font)
-
-    buffer = BytesIO()
-    image.save(buffer, format="JPEG", quality=88)
-    return buffer.getvalue()
-
-
 def _render_svg(
     *,
     photo_jpeg: bytes | None,
@@ -257,8 +323,7 @@ def _render_svg(
             )
         else:
             inner = (
-                f'<svg x="78" y="78" width="658" height="644" viewBox="0 0 960 720">'
-                f"{inner}</svg>"
+                f'<svg x="78" y="78" width="658" height="644" viewBox="0 0 960 720">{inner}</svg>'
             )
         photo_layer = inner
     else:
@@ -269,22 +334,199 @@ def _render_svg(
             f'href="data:image/jpeg;base64,{photo_base64}"/>'
         )
     source_attr = escape(scene_source or "placeholder", quote=True)
-    style_attr = (
-        f' data-photo-style="{escape(photo_style, quote=True)}"' if photo_style else ""
-    )
+    style_attr = f' data-photo-style="{escape(photo_style, quote=True)}"' if photo_style else ""
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-label="Postcard from {escape(poi_name)}" data-scene-source="{source_attr}"{style_attr}>
   <rect width="1200" height="800" fill="#f4eadb"/>
   <rect x="44" y="44" width="1112" height="712" rx="24" fill="#fffaf2" stroke="#a5573f" stroke-width="6"/>
   {photo_layer}
   <line x1="788" y1="106" x2="788" y2="694" stroke="#d9c0a8" stroke-width="3"/>
   <text x="842" y="150" fill="#a5573f" font-family="Noto Serif CJK SC, Songti SC, serif" font-size="48" font-weight="700">MACAU</text>
-  <text x="842" y="198" fill="#806f63" font-family="Arial, sans-serif" font-size="18">{escape(task_label)}</text>
-  <text x="842" y="268" fill="#2b3937" font-family="Noto Serif CJK SC, Songti SC, serif" font-size="34">{escape(poi_name)}</text>
-  <foreignObject x="842" y="300" width="254" height="200"><div xmlns="http://www.w3.org/1999/xhtml" style="font: 28px 'Noto Serif CJK SC', serif; color:#39413d; line-height:1.45;">{escape(caption)}</div></foreignObject>
+  <foreignObject x="842" y="176" width="270" height="42"><div xmlns="http://www.w3.org/1999/xhtml" style="font: 15px Arial, sans-serif; color:#806f63; line-height:1.25; overflow-wrap:anywhere;">{escape(task_label)}</div></foreignObject>
+  <foreignObject x="842" y="228" width="270" height="132"><div xmlns="http://www.w3.org/1999/xhtml" style="font: 24px 'Noto Serif CJK SC', 'Songti SC', serif; color:#2b3937; line-height:1.12; overflow-wrap:break-word; word-break:normal; hyphens:none;">{escape(poi_name)}</div></foreignObject>
+  <foreignObject x="842" y="374" width="270" height="152"><div xmlns="http://www.w3.org/1999/xhtml" style="font: 21px 'Noto Serif CJK SC', serif; color:#39413d; line-height:1.35; overflow-wrap:anywhere;">{escape(caption)}</div></foreignObject>
   <line x1="842" y1="540" x2="1096" y2="540" stroke="#d9c0a8" stroke-width="2"/>
   <text x="842" y="585" fill="#806f63" font-family="Arial, sans-serif" font-size="20">{escape(timestamp_label)}</text>
-  <text x="842" y="640" fill="#806f63" font-family="Arial, sans-serif" font-size="18">{escape(geo_label)}</text>
+  <foreignObject x="842" y="615" width="270" height="58"><div xmlns="http://www.w3.org/1999/xhtml" style="font: 15px Arial, sans-serif; color:#806f63; line-height:1.35; overflow-wrap:anywhere;">{escape(geo_label)}</div></foreignObject>
 </svg>'''.encode("utf-8")
+
+
+def _normalize_postcard_svg_layout(svg: bytes) -> bytes:
+    """Upgrade stored postcards created before the expanded text layout."""
+    replacements = {
+        b'<foreignObject x="842" y="228" width="270" height="70">': (
+            b'<foreignObject x="842" y="228" width="270" height="132">'
+        ),
+        b'<foreignObject x="842" y="228" width="270" height="104">': (
+            b'<foreignObject x="842" y="228" width="270" height="132">'
+        ),
+        b"font: 28px 'Noto Serif CJK SC', 'Songti SC', serif": (
+            b"font: 24px 'Noto Serif CJK SC', 'Songti SC', serif"
+        ),
+        b"line-height:1.08": b"line-height:1.12",
+        b"line-height:1.12; overflow-wrap:anywhere;": (
+            b"line-height:1.12; overflow-wrap:break-word; word-break:normal; hyphens:none;"
+        ),
+        b'<foreignObject x="842" y="318" width="270" height="200">': (
+            b'<foreignObject x="842" y="374" width="270" height="152">'
+        ),
+        b'<foreignObject x="842" y="350" width="270" height="168">': (
+            b'<foreignObject x="842" y="374" width="270" height="152">'
+        ),
+        b"font: 27px 'Noto Serif CJK SC', serif": (
+            b"font: 21px 'Noto Serif CJK SC', serif"
+        ),
+        b"font: 23px 'Noto Serif CJK SC', serif": (
+            b"font: 21px 'Noto Serif CJK SC', serif"
+        ),
+        b'line-height:1.4; overflow-wrap:anywhere;">': (
+            b'line-height:1.35; overflow-wrap:anywhere;">'
+        ),
+    }
+    for old, new in replacements.items():
+        svg = svg.replace(old, new)
+    return svg
+
+
+def _draw_wrapped_text(
+    draw,
+    text: str,
+    *,
+    xy: tuple[int, int],
+    font,
+    fill: str,
+    max_width: int,
+    max_lines: int,
+    line_height: int,
+) -> None:
+    """Draw bounded multilingual text without relying on SVG foreignObject."""
+    source = text.strip()
+    units = re.findall(r"\S+\s*", source) if re.search(r"\s", source) else list(source)
+    lines: list[str] = []
+    current = ""
+    truncated = False
+    for index, unit in enumerate(units):
+        candidate = current + unit
+        if current and draw.textlength(candidate, font=font) > max_width:
+            lines.append(current.rstrip())
+            current = unit.lstrip()
+            if len(lines) == max_lines:
+                truncated = True
+                break
+        else:
+            current = candidate
+        if draw.textlength(current, font=font) > max_width:
+            word = current
+            current = ""
+            for character in word:
+                candidate = current + character
+                if current and draw.textlength(candidate, font=font) > max_width:
+                    lines.append(current.rstrip())
+                    current = character
+                    if len(lines) == max_lines:
+                        truncated = True
+                        break
+                else:
+                    current = candidate
+            if truncated:
+                break
+        if index < len(units) - 1 and len(lines) == max_lines:
+            truncated = True
+            break
+    if len(lines) < max_lines and current:
+        lines.append(current.rstrip())
+    elif current:
+        truncated = True
+    if truncated and lines:
+        last = lines[-1]
+        while last and draw.textlength(last + "…", font=font) > max_width:
+            last = last[:-1]
+        lines[-1] = last.rstrip() + "…"
+    x, y = xy
+    for index, line in enumerate(lines):
+        draw.text((x, y + index * line_height), line, font=font, fill=fill)
+
+
+def _render_png(*, record: PostcardRecord, postcard: PostcardResponse) -> bytes:
+    """Render a downloadable postcard bitmap from persisted scene and metadata."""
+    from PIL import Image, ImageDraw, ImageFont, ImageOps
+
+    match = re.search(rb'href="data:image/jpeg;base64,([^\"]+)"', record.image_svg or b"")
+    if not match:
+        raise PostcardError("postcard bitmap source is unavailable")
+    try:
+        scene = Image.open(BytesIO(base64.b64decode(match.group(1)))).convert("RGB")
+    except Exception as exc:  # noqa: BLE001
+        raise PostcardError("postcard bitmap source is invalid") from exc
+
+    canvas = Image.new("RGB", (1200, 800), "#f4eadb")
+    draw = ImageDraw.Draw(canvas)
+    draw.rounded_rectangle(
+        (44, 44, 1156, 756), radius=24, fill="#fffaf2", outline="#a5573f", width=6
+    )
+    canvas.paste(ImageOps.fit(scene, (658, 644), method=Image.Resampling.LANCZOS), (78, 78))
+    draw.line((788, 106, 788, 694), fill="#d9c0a8", width=3)
+    draw.line((842, 540, 1096, 540), fill="#d9c0a8", width=2)
+
+    serif_path = "/usr/share/fonts/opentype/noto/NotoSerifCJK-Regular.ttc"
+    sans_path = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
+
+    def font(path: str, size: int):
+        try:
+            return ImageFont.truetype(path, size)
+        except OSError:
+            return ImageFont.load_default(size=size)
+
+    serif_48 = font(serif_path, 48)
+    serif_24 = font(serif_path, 24)
+    serif_21 = font(serif_path, 21)
+    sans_20 = font(sans_path, 20)
+    sans_15 = font(sans_path, 15)
+
+    draw.text((842, 105), "MACAU", font=serif_48, fill="#a5573f")
+    _draw_wrapped_text(
+        draw,
+        postcard.task_label or "",
+        xy=(842, 176),
+        font=sans_15,
+        fill="#806f63",
+        max_width=270,
+        max_lines=2,
+        line_height=19,
+    )
+    _draw_wrapped_text(
+        draw,
+        postcard.poi_name,
+        xy=(842, 228),
+        font=serif_24,
+        fill="#2b3937",
+        max_width=270,
+        max_lines=4,
+        line_height=29,
+    )
+    _draw_wrapped_text(
+        draw,
+        postcard.caption,
+        xy=(842, 374),
+        font=serif_21,
+        fill="#39413d",
+        max_width=270,
+        max_lines=5,
+        line_height=28,
+    )
+    draw.text((842, 562), postcard.timestamp_label, font=sans_20, fill="#806f63")
+    _draw_wrapped_text(
+        draw,
+        postcard.geo_label or "",
+        xy=(842, 615),
+        font=sans_15,
+        fill="#806f63",
+        max_width=270,
+        max_lines=3,
+        line_height=20,
+    )
+    output = BytesIO()
+    canvas.save(output, format="PNG", optimize=True)
+    return output.getvalue()
 
 
 def _scene_source_from_record(record: PostcardRecord) -> str:
@@ -312,7 +554,9 @@ class PostcardService:
     def __init__(self, repository: PostcardRepository) -> None:
         self._repository = repository
 
-    def _poi_snapshot(self, poi_id: str) -> tuple[str, float | None, float | None, str | None]:
+    def _poi_snapshot(
+        self, poi_id: str, language: str
+    ) -> tuple[str, float | None, float | None, str | None]:
         """Return poi_name, lat, lng, district. Coordinates are public POI data only."""
         meta = get_poi_metadata(poi_id) or {}
         district = str(meta.get("district") or "") or None
@@ -323,7 +567,17 @@ class PostcardService:
             poi = PoiRepository(session).get_by_id(poi_id)
         if poi is None and not meta:
             raise PostcardError(f"POI not found: {poi_id}")
-        name = (poi.poi_name if poi else None) or str(meta.get("name_zh") or poi_id)
+        fallback_name = (poi.poi_name if poi else None) or str(meta.get("name_zh") or poi_id)
+        if language == "en":
+            name = str(meta.get("name_en") or "").strip()
+            name = name or (fallback_name if not HAN_RE.search(fallback_name) else "Macau stop")
+        elif language == "pt":
+            name = str(meta.get("name_pt") or meta.get("name_en") or "").strip()
+            name = name or (fallback_name if not HAN_RE.search(fallback_name) else "Local de Macau")
+        elif language == "zh-TW":
+            name = _to_traditional(str(meta.get("name_zh") or fallback_name))
+        else:
+            name = str(meta.get("name_zh") or fallback_name)
         latitude = float(poi.latitude) if poi is not None else None
         longitude = float(poi.longitude) if poi is not None else None
         if latitude is None and isinstance(meta_lat, (int, float)):
@@ -332,12 +586,21 @@ class PostcardService:
             longitude = float(meta_lng)
         return name, latitude, longitude, district
 
-    def _route_name(self, route_id: str) -> str | None:
+    def _route_name(self, route_id: str, language: str) -> str | None:
         template = get_template(route_id)
         if not template:
             return None
         name = template.get("name")
-        return str(name) if name else None
+        if not name:
+            return None
+        value = str(name)
+        if language == "en" and HAN_RE.search(value):
+            return "Macau itinerary"
+        if language == "pt" and HAN_RE.search(value):
+            return "Itinerário de Macau"
+        if language == "zh-TW":
+            return _to_traditional(value)
+        return value
 
     def _stamps(
         self,
@@ -348,8 +611,8 @@ class PostcardService:
         language: str,
         visited_at: datetime,
     ) -> dict:
-        poi_name, latitude, longitude, district = self._poi_snapshot(poi_id)
-        route_name = self._route_name(trip.route_id)
+        poi_name, latitude, longitude, district = self._poi_snapshot(poi_id, language)
+        route_name = self._route_name(trip.route_id, language)
         timestamp_label = _format_timestamp(visited_at, language)
         geo_label = _format_geo_label(
             latitude=latitude,
@@ -424,7 +687,7 @@ class PostcardService:
         language: str,
         *,
         replace: bool = False,
-        ai_scene: bool = False,
+        ai_scene: bool = True,
         photo_style: str | None = None,
     ) -> PostcardResponse:
         if language not in SUPPORTED_LANGUAGES:
@@ -448,14 +711,20 @@ class PostcardService:
 
         existing = self._repository.get_for_trip_poi(trip_id, poi_id)
         if existing is not None:
-            if not replace:
+            existing_source = _scene_source_from_record(existing)
+            stale_generated_scene = not raw and existing_source in {"placeholder", "library"}
+            if not replace and not stale_generated_scene:
                 return self._to_response(existing, trip)
             self._repository.delete(existing.id)
             record_audit(
                 kind="postcard.delete",
                 status="replaced",
                 subject=trip_id,
-                metadata={"poi_id": poi_id, "postcard_id": existing.id, "reason": "replace"},
+                metadata={
+                    "poi_id": poi_id,
+                    "postcard_id": existing.id,
+                    "reason": "stale_scene" if stale_generated_scene else "replace",
+                },
             )
 
         created_at = datetime.now(timezone.utc)
@@ -489,21 +758,29 @@ class PostcardService:
                     scene_source = "ai_edit"
                     applied_style = requested_style
         else:
-            _src, ai_photo, ai_svg = generate_ai_scene(
-                poi_id=poi_id,
-                poi_name=stamps["poi_name"],
-                district=stamps.get("district"),
-                language=language,
-                ai_scene=ai_scene,
-                when=created_at,
-            )
-            if ai_photo or ai_svg:
-                cleaned_photo = ai_photo
-                scene_svg = ai_svg if not ai_photo else None
-                scene_source = _src or "ai"
-            else:
-                cleaned_photo = _placeholder_photo(stamps["poi_name"], language)
-                scene_source = "placeholder"
+            try:
+                _src, ai_photo, ai_svg = generate_ai_scene(
+                    poi_id=poi_id,
+                    poi_name=stamps["poi_name"],
+                    district=stamps.get("district"),
+                    language=language,
+                    ai_scene=True,
+                    when=created_at,
+                )
+            except SceneGenerationError as exc:
+                record_audit(
+                    kind="postcard.scene.generate",
+                    status="failed",
+                    subject=trip_id,
+                    agent_id=settings.scene_agent_id or "scene",
+                    metadata={"poi_id": poi_id, "language": language},
+                )
+                raise PostcardSceneUnavailableError("POSTCARD_SCENE_UNAVAILABLE") from exc
+            if not ai_photo and not ai_svg:
+                raise PostcardSceneUnavailableError("POSTCARD_SCENE_UNAVAILABLE")
+            cleaned_photo = ai_photo
+            scene_svg = ai_svg if not ai_photo else None
+            scene_source = _src
             photo_scrubbed = False
             applied_style = None
 
@@ -559,6 +836,45 @@ class PostcardService:
         )
         return self._to_response(saved, trip)
 
+    def validate_scene_prewarm(self, trip_id: str, poi_id: str, language: str) -> None:
+        if language not in SUPPORTED_LANGUAGES:
+            raise PostcardError("unsupported language")
+        trip = trip_repository.get_trip(trip_id)
+        if trip is None:
+            raise PostcardNotFoundError(f"Trip not found: {trip_id}")
+        if poi_id not in trip.stop_poi_ids:
+            raise PostcardError(f"POI is not part of trip {trip_id}: {poi_id}")
+        if poi_id not in trip.checked_in_poi_ids:
+            raise PostcardError(f"POI must be checked in before scene prewarm: {poi_id}")
+
+    def prewarm_scene(self, trip_id: str, poi_id: str, language: str) -> None:
+        try:
+            self.validate_scene_prewarm(trip_id, poi_id, language)
+            trip = trip_repository.get_trip(trip_id)
+            if trip is None:
+                return
+            stamps = self._stamps(
+                trip=trip,
+                poi_id=poi_id,
+                stop_order=trip.stop_poi_ids.index(poi_id),
+                language=language,
+                visited_at=datetime.now(timezone.utc),
+            )
+            jpeg, _svg = generate_ai_scene_via_qwenpaw(
+                poi_name=stamps["poi_name"],
+                district=stamps.get("district"),
+                language=language,
+            )
+            record_audit(
+                kind="postcard.scene.prewarm",
+                status="ok",
+                subject=trip_id,
+                agent_id=settings.scene_agent_id or "scene",
+                metadata={"poi_id": poi_id, "language": language},
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.info("postcard scene prewarm failed: %s", exc)
+
     def delete(self, postcard_id: str) -> None:
         record = self._repository.get(postcard_id)
         if record is None:
@@ -585,7 +901,16 @@ class PostcardService:
         record = self._repository.get(postcard_id)
         if record is None:
             raise PostcardNotFoundError(f"Postcard not found: {postcard_id}")
-        return record.image_svg
+        return _normalize_postcard_svg_layout(record.image_svg)
+
+    def image_png(self, postcard_id: str) -> bytes:
+        record = self._repository.get(postcard_id)
+        if record is None:
+            raise PostcardNotFoundError(f"Postcard not found: {postcard_id}")
+        trip = trip_repository.get_trip(record.trip_id)
+        if trip is None:
+            raise PostcardNotFoundError(f"Trip not found: {record.trip_id}")
+        return _render_png(record=record, postcard=self._to_response(record, trip))
 
 
 postcard_service = PostcardService(postcard_repository)

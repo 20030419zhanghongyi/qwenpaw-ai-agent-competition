@@ -10,7 +10,12 @@ import pytest
 from PIL import Image
 
 from app.agents import qwenpaw_client
-from app.agents.qwenpaw_client import QwenPawClient, _extract_audio_refs, _extract_image_refs
+from app.agents.qwenpaw_client import (
+    QwenPawClient,
+    QwenPawError,
+    _extract_audio_refs,
+    _extract_image_refs,
+)
 from app.features.postcards import scene_image
 
 
@@ -84,6 +89,51 @@ def test_ask_for_audio_stops_after_plugin_audio(monkeypatch):
 
     assert result == "file:///tmp/narration.mp3"
     assert stopped == [("guide-tts-test", "guide")]
+
+
+def test_send_enforces_total_stream_duration(monkeypatch):
+    events = [
+        {"object": "message", "type": "message", "status": "in_progress", "id": "m1"},
+        {
+            "object": "content",
+            "type": "text",
+            "status": "in_progress",
+            "msg_id": "m1",
+            "delta": True,
+            "text": "still generating",
+        },
+    ]
+
+    class FakeResponse:
+        status_code = 200
+        text = ""
+
+        def read(self):
+            return b""
+
+        def iter_lines(self):
+            for event in events:
+                yield f"data: {json.dumps(event)}"
+                yield ""
+
+    class FakeStream:
+        def __enter__(self):
+            return FakeResponse()
+
+        def __exit__(self, *_args):
+            return False
+
+    ticks = iter((10.0, 10.5, 11.1))
+    monkeypatch.setattr(qwenpaw_client.httpx, "stream", lambda *_args, **_kwargs: FakeStream())
+    monkeypatch.setattr(qwenpaw_client.time, "perf_counter", lambda: next(ticks))
+
+    with pytest.raises(QwenPawError, match="total duration"):
+        QwenPawClient(base_url="http://qwenpaw", timeout=60).send(
+            "guide-deadline-test",
+            "generate",
+            agent_id="guide",
+            max_duration=1.0,
+        )
 
 
 def test_ask_for_image_stops_after_plugin_image(monkeypatch):
@@ -172,6 +222,57 @@ def test_download_media_uses_qwenpaw_preview_for_local_file(
     assert seen["url"] == f"http://qwenpaw/api/files/preview/{preview_path}"
 
 
+def test_download_media_retries_external_ssl_failures_without_proxy(monkeypatch):
+    calls: list[dict[str, object]] = []
+
+    class FakeResponse:
+        status_code = 200
+        text = ""
+        content = b"generated-image"
+
+    def fake_get(_url, **kwargs):
+        calls.append(kwargs)
+        if len(calls) < 3:
+            raise qwenpaw_client.httpx.ConnectError("SSL EOF")
+        return FakeResponse()
+
+    monkeypatch.setattr(qwenpaw_client.httpx, "get", fake_get)
+    monkeypatch.setattr(qwenpaw_client.time, "sleep", lambda _seconds: None)
+
+    result = QwenPawClient(base_url="http://qwenpaw").download_media(
+        "https://example.invalid/generated.png"
+    )
+
+    assert result == b"generated-image"
+    assert len(calls) == 3
+    assert all(call["trust_env"] is False for call in calls)
+
+
+def test_download_media_prefers_dashscope_regional_oss_endpoint(monkeypatch):
+    seen: list[str] = []
+
+    class FakeResponse:
+        status_code = 200
+        text = ""
+        content = b"generated-image"
+
+    def fake_get(url, **_kwargs):
+        seen.append(url)
+        return FakeResponse()
+
+    monkeypatch.setattr(qwenpaw_client.httpx, "get", fake_get)
+
+    result = QwenPawClient(base_url="http://qwenpaw").download_media(
+        "https://dashscope-0484.oss-accelerate.aliyuncs.com/image.png?signature=ok"
+    )
+
+    assert result == b"generated-image"
+    assert seen == [
+        "https://dashscope-0484.oss-cn-wulanchabu.aliyuncs.com/"
+        "image.png?signature=ok"
+    ]
+
+
 def test_upload_media_targets_scene_agent(monkeypatch):
     seen: dict[str, object] = {}
 
@@ -217,6 +318,7 @@ def test_qwenpaw_scene_is_normalized_and_cached(monkeypatch, tmp_path):
             calls["ask"] += 1
             assert agent_id == "scene"
             assert "generate_image_qwen" in prompt
+            assert "/gc-minimal-zine-poster" in prompt
             assert session_id.startswith("postcard-scene-")
             return reference
 
@@ -266,11 +368,11 @@ def test_qwenpaw_photo_style_uploads_scrubbed_reference(monkeypatch):
             assert content == b"scrubbed"
             assert filename.startswith("postcard-edit-")
             assert filename.endswith(".jpg")
-            assert agent_id == "scene"
+            assert agent_id == "scene-photo"
             return uploaded
 
         def ask_for_image(self, agent_id, prompt, *, session_id):
-            assert agent_id == "scene"
+            assert agent_id == "scene-photo"
             assert "edit_image_qwen" in prompt
             assert uploaded in prompt
             assert "已模糊人脸必须继续保持模糊" in prompt
@@ -282,7 +384,7 @@ def test_qwenpaw_photo_style_uploads_scrubbed_reference(monkeypatch):
             return output.getvalue()
 
     monkeypatch.setattr(scene_image.settings, "postcard_ai_image_enabled", True)
-    monkeypatch.setattr(scene_image.settings, "scene_agent_id", "scene")
+    monkeypatch.setattr(scene_image.settings, "postcard_photo_agent_id", "scene-photo")
     monkeypatch.setattr(scene_image, "QwenPawClient", FakeClient)
 
     result = scene_image.stylize_photo_via_qwenpaw(
@@ -297,17 +399,12 @@ def test_qwenpaw_photo_style_uploads_scrubbed_reference(monkeypatch):
         assert image.format == "JPEG"
 
 
-def test_explicit_ai_scene_precedes_library(monkeypatch):
+def test_no_photo_scene_uses_scene_agent_only(monkeypatch):
     monkeypatch.setattr(scene_image.settings, "postcard_ai_image_enabled", True)
     monkeypatch.setattr(
         scene_image,
         "generate_ai_scene_via_qwenpaw",
         lambda **_kwargs: (b"generated", None),
-    )
-    monkeypatch.setattr(
-        scene_image,
-        "load_pregenerated_svg",
-        lambda *_args, **_kwargs: ("day", "<svg></svg>"),
     )
 
     source, jpeg, svg = scene_image.generate_ai_scene(
@@ -317,3 +414,14 @@ def test_explicit_ai_scene_precedes_library(monkeypatch):
     )
 
     assert (source, jpeg, svg) == ("ai", b"generated", None)
+
+
+def test_no_photo_scene_fails_when_scene_agent_is_disabled(monkeypatch):
+    monkeypatch.setattr(scene_image.settings, "postcard_ai_image_enabled", False)
+
+    with pytest.raises(scene_image.SceneGenerationError):
+        scene_image.generate_ai_scene(
+            poi_id="poi_0048",
+            poi_name="Hang Heong Un Dessert",
+            language="en",
+        )

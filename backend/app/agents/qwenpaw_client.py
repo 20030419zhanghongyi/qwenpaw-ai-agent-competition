@@ -146,7 +146,14 @@ class QwenPawClient:
 
     # ---- 发消息收回复（LLM 路径）--------------------------------------
 
-    def send(self, session_id: str, text: str, agent_id: str | None = None) -> dict[str, Any]:
+    def send(
+        self,
+        session_id: str,
+        text: str,
+        agent_id: str | None = None,
+        *,
+        max_duration: float | None = None,
+    ) -> dict[str, Any]:
         """发一条消息，消费 SSE 流到结束，返回 {text, tokens, session_id}。
 
         - agent 由 ``X-Agent-Id`` 头指定（默认取 config 的 default agent）
@@ -166,10 +173,20 @@ class QwenPawClient:
         if agent:
             headers["X-Agent-Id"] = agent
 
+        events: list[dict[str, Any]] = []
+        deadline = time.perf_counter() + max_duration if max_duration else None
+        stream_timeout = min(self.timeout, max_duration) if max_duration else self.timeout
         try:
-            with httpx.stream("POST", url, headers=headers, json=payload, timeout=self.timeout) as resp:
+            with httpx.stream(
+                "POST", url, headers=headers, json=payload, timeout=stream_timeout
+            ) as resp:
                 self._raise_for_status(resp, self.send_path)
-                events = list(_iter_sse(resp))
+                for event in _iter_sse(resp):
+                    if deadline is not None and time.perf_counter() >= deadline:
+                        raise QwenPawError(
+                            f"POST {self.send_path} exceeded {max_duration:.1f}s total duration"
+                        )
+                    events.append(event)
         except httpx.HTTPError as exc:
             raise QwenPawError(f"POST {self.send_path} 网络失败：{exc}") from exc
 
@@ -318,6 +335,7 @@ class QwenPawClient:
 
     def download_media(self, reference: str, *, timeout: float = 45.0) -> bytes:
         """Download a QwenPaw-local or HTTP image/audio media reference."""
+        external = False
         if reference.lower().startswith("file://"):
             local_path = unquote(reference[len("file://") :]).replace("\\", "/")
             # Canonical Windows file URIs use ``file:///C:/...`` while the
@@ -330,20 +348,43 @@ class QwenPawClient:
             headers = self._headers()
         elif reference.lower().startswith(("http://", "https://")):
             url = reference
-            headers = self._headers() if reference.startswith(self.base_url) else {}
+            external = not reference.startswith(self.base_url)
+            headers = self._headers() if not external else {}
         else:
             raise QwenPawError("QwenPaw agent 返回了不支持的媒体引用")
 
-        try:
-            response = httpx.get(
-                url,
-                headers=headers,
-                timeout=timeout,
-                follow_redirects=True,
+        download_urls = [url]
+        if external and ".oss-accelerate.aliyuncs.com" in url:
+            download_urls.insert(
+                0,
+                url.replace(
+                    ".oss-accelerate.aliyuncs.com",
+                    ".oss-cn-wulanchabu.aliyuncs.com",
+                ),
             )
-            self._raise_for_status(response, "/api/files/preview")
-        except httpx.HTTPError as exc:
-            raise QwenPawError(f"下载 QwenPaw agent 媒体失败：{exc}") from exc
+
+        last_error: Exception | None = None
+        for download_url in download_urls:
+            for attempt in range(3):
+                try:
+                    response = httpx.get(
+                        download_url,
+                        headers=headers,
+                        timeout=timeout,
+                        follow_redirects=True,
+                        trust_env=not external,
+                    )
+                    self._raise_for_status(response, "/api/files/preview")
+                    break
+                except (httpx.HTTPError, QwenPawError) as exc:
+                    last_error = exc
+                    if attempt < 2:
+                        time.sleep(0.5 * (2**attempt))
+            else:
+                continue
+            break
+        else:
+            raise QwenPawError(f"下载 QwenPaw agent 媒体失败：{last_error}") from last_error
         if len(response.content) > 20 * 1024 * 1024:
             raise QwenPawError("QwenPaw agent 媒体超过 20 MiB 限制")
         return response.content
@@ -418,6 +459,7 @@ class QwenPawClient:
         *,
         session_id: str | None = None,
         session_name: str = "harness",
+        max_duration: float | None = None,
     ) -> str:
         """高层封装：发消息 → 返回 assistant 最终文本。失败抛 QwenPawError。
 
@@ -426,7 +468,7 @@ class QwenPawClient:
         """
         sid = session_id or f"{session_name}-{agent_id}"
         t0 = time.perf_counter()
-        result = self.send(sid, text, agent_id=agent_id)
+        result = self.send(sid, text, agent_id=agent_id, max_duration=max_duration)
         latency_ms = int((time.perf_counter() - t0) * 1000)
         record_trace(
             kind="qwenpaw.ask",

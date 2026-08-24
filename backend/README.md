@@ -275,10 +275,12 @@ Push-Location backend
 Pop-Location
 ```
 
-- Swagger UI：<http://127.0.0.1:8000/docs>
-- ReDoc：<http://127.0.0.1:8000/redoc>
-- OpenAPI JSON：<http://127.0.0.1:8000/openapi.json>
-- 健康检查：<http://127.0.0.1:8000/api/v1/health>
+- Compose Swagger UI：<http://127.0.0.1:8001/docs>
+- Compose ReDoc：<http://127.0.0.1:8001/redoc>
+- Compose OpenAPI JSON：<http://127.0.0.1:8001/openapi.json>
+- Compose 健康检查：<http://127.0.0.1:8001/api/v1/health>
+
+直接运行 Uvicorn 时仍默认使用 `http://127.0.0.1:8000`。
 
 ## 8. 核心 API 列表
 
@@ -431,7 +433,7 @@ cp .env.example .env
 docker compose up -d --build
 
 # 3) 访问
-open http://localhost:8000/docs        # Swagger UI
+open http://localhost:8001/docs        # Compose Swagger UI
 ```
 
 `up` 会自动完成：建库并启用 `postgis`+`vector` 扩展 → alembic 迁移建表
