@@ -41,12 +41,12 @@ def _photo() -> tuple[str, bytes]:
 
 
 def _trip_with_checkin() -> tuple[str, str]:
-    created = client.post(
-        "/api/v1/trips", json={"user_id": USER_ID, "route_id": ROUTE_ID}
-    ).json()
+    created = client.post("/api/v1/trips", json={"user_id": USER_ID, "route_id": ROUTE_ID}).json()
     trip_id = created["trip"]["trip_id"]
     poi_id = created["trip"]["stop_poi_ids"][0]
-    assert client.post(f"/api/v1/trips/{trip_id}/checkins", json={"poi_id": poi_id}).status_code == 200
+    assert (
+        client.post(f"/api/v1/trips/{trip_id}/checkins", json={"poi_id": poi_id}).status_code == 200
+    )
     return trip_id, poi_id
 
 
@@ -82,7 +82,9 @@ def test_create_postcard_for_completed_stop_and_persist_svg(monkeypatch):
     assert data["latitude"] is not None
     assert data["longitude"] is not None
     with SessionLocal() as session:
-        record = session.scalar(select(PostcardRecord).where(PostcardRecord.id == data["postcard_id"]))
+        record = session.scalar(
+            select(PostcardRecord).where(PostcardRecord.id == data["postcard_id"])
+        )
         assert record is not None
         assert b"data:image/jpeg;base64," in record.image_svg
         assert data["timestamp_label"].encode("utf-8") in record.image_svg
@@ -91,13 +93,46 @@ def test_create_postcard_for_completed_stop_and_persist_svg(monkeypatch):
 
 
 def test_postcard_requires_checked_in_trip_stop():
+    created = client.post("/api/v1/trips", json={"user_id": USER_ID, "route_id": ROUTE_ID}).json()
+    trip_id = created["trip"]["trip_id"]
+    poi_id = created["trip"]["stop_poi_ids"][0]
+
+    response = _create_postcard(trip_id, poi_id)
+
+    assert response.status_code == 422
+    assert "checked in" in response.json()["detail"]
+
+
+def test_postcard_scene_prewarm_queues_for_checked_in_stop(monkeypatch):
+    calls: list[dict[str, object]] = []
+    monkeypatch.setattr(
+        "app.features.postcards.service.generate_ai_scene_via_qwenpaw",
+        lambda **kwargs: (calls.append(kwargs) or (b"jpeg", None)),
+    )
+    trip_id, poi_id = _trip_with_checkin()
+
+    response = client.post(
+        f"/api/v1/trips/{trip_id}/postcards/prewarm",
+        data={"poi_id": poi_id, "language": "en"},
+    )
+
+    assert response.status_code == 202
+    assert response.json() == {"status": "queued", "trip_id": trip_id, "poi_id": poi_id}
+    assert len(calls) == 1
+    assert calls[0]["language"] == "en"
+
+
+def test_postcard_scene_prewarm_requires_checked_in_stop():
     created = client.post(
         "/api/v1/trips", json={"user_id": USER_ID, "route_id": ROUTE_ID}
     ).json()
     trip_id = created["trip"]["trip_id"]
     poi_id = created["trip"]["stop_poi_ids"][0]
 
-    response = _create_postcard(trip_id, poi_id)
+    response = client.post(
+        f"/api/v1/trips/{trip_id}/postcards/prewarm",
+        data={"poi_id": poi_id, "language": "en"},
+    )
 
     assert response.status_code == 422
     assert "checked in" in response.json()["detail"]
@@ -120,7 +155,10 @@ def test_list_postcards_follows_route_order(monkeypatch):
     trip_id, first_poi = _trip_with_checkin()
     trip = client.get(f"/api/v1/trips/{trip_id}").json()["trip"]
     second_poi = trip["stop_poi_ids"][1]
-    assert client.post(f"/api/v1/trips/{trip_id}/checkins", json={"poi_id": second_poi}).status_code == 200
+    assert (
+        client.post(f"/api/v1/trips/{trip_id}/checkins", json={"poi_id": second_poi}).status_code
+        == 200
+    )
     assert _create_postcard(trip_id, second_poi).status_code == 201
     assert _create_postcard(trip_id, first_poi).status_code == 201
 
@@ -140,6 +178,60 @@ def test_postcard_image_is_delivered_as_svg(monkeypatch):
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("image/svg+xml")
     assert b"<svg" in response.content
+
+
+def test_postcard_png_is_delivered_as_download(monkeypatch):
+    monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
+    trip_id, poi_id = _trip_with_checkin()
+    postcard = _create_postcard(trip_id, poi_id).json()
+
+    response = client.get(f"/api/v1/postcards/{postcard['postcard_id']}/image.png")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("image/png")
+    assert response.headers["content-disposition"].startswith("attachment;")
+    with Image.open(BytesIO(response.content)) as image:
+        assert image.format == "PNG"
+        assert image.size == (1200, 800)
+
+
+def test_postcard_svg_constrains_long_right_column_text():
+    from app.features.postcards.service import _render_svg
+
+    image = _render_svg(
+        photo_jpeg=b"jpeg",
+        scene_svg=None,
+        poi_name="Hong Kong-Zhuhai-Macao Bridge Macao Port",
+        caption="A long but safe postcard caption for this stop.",
+        timestamp_label="2026-08-24 11:00 · Macau",
+        geo_label="22.192°N 113.542°E · St. Lawrence Parish",
+        task_label="Stop 9 of 9 · Macau cultural discovery itinerary",
+        scene_source="ai",
+    )
+
+    assert image.count(b'<foreignObject x="842"') == 4
+    assert b'width="270"' in image
+    assert image.count(b"overflow-wrap:anywhere") == 3
+    assert b"overflow-wrap:break-word" in image
+    assert b'y="228" width="270" height="132"' in image
+    assert b'y="374" width="270" height="152"' in image
+    assert b"font: 24px 'Noto Serif CJK SC'" in image
+
+
+def test_postcard_image_upgrades_legacy_text_layout():
+    from app.features.postcards.service import _normalize_postcard_svg_layout
+
+    legacy = b'''<svg>
+      <foreignObject x="842" y="228" width="270" height="70"><div style="font: 28px 'Noto Serif CJK SC', 'Songti SC', serif; line-height:1.08">Long title</div></foreignObject>
+      <foreignObject x="842" y="318" width="270" height="200"><div style="font: 27px 'Noto Serif CJK SC', serif">Caption</div></foreignObject>
+    </svg>'''
+
+    upgraded = _normalize_postcard_svg_layout(legacy)
+
+    assert b'y="228" width="270" height="132"' in upgraded
+    assert b'y="374" width="270" height="152"' in upgraded
+    assert b"font: 24px 'Noto Serif CJK SC'" in upgraded
+    assert b"font: 21px 'Noto Serif CJK SC'" in upgraded
 
 
 def test_postcard_rejects_non_image_upload():
@@ -233,15 +325,12 @@ def test_postcard_rejects_unknown_photo_style():
     assert "unsupported photo style" in response.json()["detail"]
 
 
-def test_postcard_default_no_photo_is_instant_local_scene(monkeypatch):
-    """Default create uses local scenic art; AI scene is opt-in."""
+def test_postcard_default_no_photo_requires_scene_agent(monkeypatch):
     seen = {"ai_scene": None}
 
     def _track(**kwargs):
         seen["ai_scene"] = kwargs.get("ai_scene")
-        if not kwargs.get("ai_scene"):
-            return ("", None, None)
-        return ("ai", None, "<svg viewBox='0 0 1 1'></svg>")
+        return ("ai", _photo()[1], None)
 
     monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
     monkeypatch.setattr("app.features.postcards.service.generate_ai_scene", _track)
@@ -254,15 +343,34 @@ def test_postcard_default_no_photo_is_instant_local_scene(monkeypatch):
 
     assert response.status_code == 201
     data = response.json()
-    assert seen["ai_scene"] is False
-    assert data["scene_source"] == "placeholder"
+    assert seen["ai_scene"] is True
+    assert data["scene_source"] == "ai"
     assert data["has_user_photo"] is False
     image = client.get(data["image_url"])
     assert image.status_code == 200
-    assert b'data-scene-source="placeholder"' in image.content
+    assert b'data-scene-source="ai"' in image.content
 
 
-def test_postcard_ai_scene_opt_in(monkeypatch):
+def test_english_postcard_stamps_do_not_leak_chinese(monkeypatch):
+    monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
+    monkeypatch.setattr(
+        "app.features.postcards.service.generate_ai_scene",
+        lambda **_: ("ai", _photo()[1], None),
+    )
+    trip_id, poi_id = _trip_with_checkin()
+
+    response = client.post(
+        f"/api/v1/trips/{trip_id}/postcards",
+        data={"poi_id": poi_id, "language": "en"},
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    for value in (data["poi_name"], data["geo_label"], data["route_name"], data["task_label"]):
+        assert not any("\u3400" <= character <= "\u9fff" for character in (value or ""))
+
+
+def test_postcard_ai_scene_request(monkeypatch):
     monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720">'
@@ -284,6 +392,27 @@ def test_postcard_ai_scene_opt_in(monkeypatch):
 
     assert response.status_code == 201
     assert response.json()["scene_source"] == "ai"
+
+
+def test_postcard_scene_failure_returns_503_without_persisting(monkeypatch):
+    from app.features.postcards.scene_image import SceneGenerationError
+
+    monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
+
+    def _fail(**_kwargs):
+        raise SceneGenerationError("invalid image key")
+
+    monkeypatch.setattr("app.features.postcards.service.generate_ai_scene", _fail)
+    trip_id, poi_id = _trip_with_checkin()
+
+    response = client.post(
+        f"/api/v1/trips/{trip_id}/postcards",
+        data={"poi_id": poi_id, "language": "en"},
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "POSTCARD_SCENE_UNAVAILABLE"
+    assert client.get(f"/api/v1/trips/{trip_id}/postcards").json()["postcards"] == []
 
 
 def test_postcard_uses_ai_scene_when_available(monkeypatch):
@@ -346,7 +475,7 @@ def test_postcard_can_be_deleted(monkeypatch):
     monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
     monkeypatch.setattr(
         "app.features.postcards.service.generate_ai_scene",
-        lambda **_: ("", None, None),
+        lambda **_: ("ai", _photo()[1], None),
     )
     trip_id, poi_id = _trip_with_checkin()
     created = client.post(
@@ -366,7 +495,7 @@ def test_postcard_replace_creates_new_id(monkeypatch):
     monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
     monkeypatch.setattr(
         "app.features.postcards.service.generate_ai_scene",
-        lambda **_: ("", None, None),
+        lambda **_: ("ai", _photo()[1], None),
     )
     trip_id, poi_id = _trip_with_checkin()
     first = client.post(

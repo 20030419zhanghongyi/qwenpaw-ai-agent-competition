@@ -1,7 +1,5 @@
 """Tests for postcard scene research + grounded prompts."""
 
-from pathlib import Path
-
 from app.features.postcards.scene_library import build_slot_prompt
 from app.features.postcards.scene_research import (
     local_landmarks,

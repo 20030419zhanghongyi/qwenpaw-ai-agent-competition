@@ -1624,9 +1624,9 @@
     {
       "id": "poi_0048",
       "name_zh": "杏香园甜品",
-      "name_en": "",
-      "name_pt": "",
-      "alias": "",
+      "name_en": "Hang Heong Un Dessert",
+      "name_pt": "Hang Heong Un Dessert",
+      "alias": "Hang Heong Un Dessert",
       "district": "风顺堂区",
       "theme": [
         "美食"

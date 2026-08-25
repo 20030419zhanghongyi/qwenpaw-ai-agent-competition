@@ -343,6 +343,18 @@ def poi_names_for(query: str) -> list[str]:
     return names
 
 
+def poi_names_by_language(query: str) -> dict[str, str]:
+    """Return canonical display/search names keyed by supported language."""
+    poi = _find_poi(query)
+    if not poi:
+        value = (query or "").strip()
+        return {"zh-CN": value, "zh-TW": value, "en": value, "pt": value} if value else {}
+    zh = str(poi.get("name_zh") or poi.get("name_en") or query).strip()
+    en = str(poi.get("name_en") or zh).strip()
+    pt = str(poi.get("name_pt") or en).strip()
+    return {"zh-CN": zh, "zh-TW": zh, "en": en, "pt": pt}
+
+
 def _join_parts(parts: list[str], lang: str) -> str:
     cleaned = [p.strip() for p in parts if p and str(p).strip()]
     if not cleaned:

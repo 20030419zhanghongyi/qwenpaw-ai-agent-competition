@@ -104,10 +104,13 @@ def filter_relevant_hits(
     if not names:
         return []
 
-    def matches(name: str, haystack: str) -> bool:
+    def matches(name: str, haystack: str, title: str) -> bool:
         normalized_name = _normalize_relevance_text(name)
         if re.search(r"[\u3400-\u9fff]", name or "") is not None:
             return normalized_name in haystack
+        # Multi-city bridge names must not accept a generic page for one city.
+        if "bridge" in normalized_name.split() and "bridge" not in title.split():
+            return False
         distinctive = [
             token
             for token in normalized_name.split()
@@ -120,12 +123,13 @@ def filter_relevant_hits(
 
     relevant: list[dict[str, str]] = []
     for hit in hits:
+        title = _normalize_relevance_text(str(hit.get("title") or ""))
         haystack = _normalize_relevance_text(
             f"{hit.get('title') or ''} {hit.get('snippet') or ''}"
         )
         if not haystack:
             continue
-        if any(matches(name, haystack) for name in names):
+        if any(matches(name, haystack, title) for name in names):
             relevant.append(hit)
     return relevant
 

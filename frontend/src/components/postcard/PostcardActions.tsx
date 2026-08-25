@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { deletePostcard, postcardImageSrc, PostcardApiError } from "@/api/postcards";
+import { deletePostcard, postcardPngSrc, PostcardApiError } from "@/api/postcards";
 import { t } from "@/i18n";
 import type { LanguageCode } from "@/types";
 import type { Postcard } from "@/types/postcards";
@@ -17,25 +17,6 @@ export function PostcardActions({
 }) {
   const [shareNote, setShareNote] = useState<string | null>(null);
   const [busy, setBusy] = useState<"delete" | "regenerate" | null>(null);
-  const src = postcardImageSrc(postcard.image_url);
-
-  async function handleDownload() {
-    setShareNote(null);
-    try {
-      const response = await fetch(src);
-      if (!response.ok) throw new Error("download failed");
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = `macau-postcard-${postcard.poi_id}.svg`;
-      anchor.click();
-      URL.revokeObjectURL(url);
-      setShareNote(t(language, "postcardDownloaded"));
-    } catch {
-      setShareNote(t(language, "postcardDownloadError"));
-    }
-  }
 
   async function handleShare() {
     setShareNote(null);
@@ -89,14 +70,14 @@ export function PostcardActions({
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-3 sm:flex-row">
-        <button
-          type="button"
-          onClick={() => void handleDownload()}
-          disabled={busy !== null}
-          className="h-11 flex-1 rounded-full border border-line bg-card text-sm font-medium text-ink transition hover:border-sage disabled:opacity-50"
+        <a
+          href={postcardPngSrc(postcard.postcard_id)}
+          download={`macau-postcard-${postcard.poi_id}.png`}
+          onClick={() => setShareNote(t(language, "postcardDownloaded"))}
+          className="flex h-11 flex-1 items-center justify-center rounded-full border border-line bg-card text-sm font-medium text-ink transition hover:border-sage"
         >
           {t(language, "postcardDownload")}
-        </button>
+        </a>
         <button
           type="button"
           onClick={() => void handleShare()}

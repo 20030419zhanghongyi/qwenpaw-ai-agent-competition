@@ -6,6 +6,7 @@ import { ErrorState, LoadingState } from "@/components/common/States";
 import { TripDaysStepper } from "@/components/preference/TripDaysStepper";
 import { TravelHistoryPanel } from "@/components/profile/TravelHistoryPanel";
 import { t } from "@/i18n";
+import { getLastTripId } from "@/lib/lastTrip";
 import {
   applyPreferenceToForm,
   toPreference,
@@ -16,6 +17,7 @@ import {
 } from "@/lib/preference";
 import { PORT_OPTIONS, portLabel } from "@/lib/ports";
 import { useAuth } from "@/state/AuthContext";
+import { useTrip } from "@/state/TripContext";
 import { useWalk } from "@/state/WalkContext";
 import type { LanguageCode } from "@/types";
 
@@ -80,7 +82,8 @@ const emptyForm = (language: LanguageCode): PreferenceFormState => ({
 
 export function ProfilePage() {
   const navigate = useNavigate();
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, token, logout } = useAuth();
+  const { trip } = useTrip();
   const { language, setLanguage, preference, session, updatePreference, saveMatch } =
     useWalk();
   const [duration, setDuration] = useState<PreferenceFormState["duration"]>("half");
@@ -95,6 +98,7 @@ export function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const formRef = useRef<PreferenceFormState>(emptyForm(language));
+  const postcardTripId = trip?.trip_id || getLastTripId();
 
   useEffect(() => {
     formRef.current = {
@@ -264,14 +268,18 @@ export function ProfilePage() {
           </p>
           <p className="mt-2 text-sm text-ink-soft">{t(language, "profilePostcardsLead")}</p>
           <Link
-            to="/postcards"
+            to={
+              postcardTripId
+                ? `/postcards?trip=${encodeURIComponent(postcardTripId)}`
+                : "/postcards"
+            }
             className="mt-4 inline-flex h-10 items-center rounded-full border border-sage-deep px-4 text-sm font-medium text-sage-deep transition hover:bg-sage-deep hover:text-paper"
           >
             {t(language, "postcardOpenGallery")}
           </Link>
         </section>
 
-        <TravelHistoryPanel userId={user?.user_id ?? null} language={language} />
+        <TravelHistoryPanel userId={user?.user_id ?? null} token={token} language={language} />
 
         <div className="overflow-hidden rounded-[1.75rem] border border-sage-deep/25 bg-gradient-to-b from-card via-card to-paper-warm shadow-[var(--shadow-soft)]">
           <div className="border-b border-line/80 bg-sage-deep/[0.06] px-5 py-4 sm:px-7">

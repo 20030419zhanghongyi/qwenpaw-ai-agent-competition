@@ -1,13 +1,18 @@
 """HTTP delivery for personalized postcards."""
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import Response
 
 from app.api.contracts import NOT_FOUND_RESPONSE, UNPROCESSABLE_RESPONSE
 from app.guardrails.runtime import rate_limit
 
-from .models import PostcardListResponse, PostcardResponse
-from .service import PostcardError, PostcardNotFoundError, postcard_service
+from .models import PostcardListResponse, PostcardPrewarmResponse, PostcardResponse
+from .service import (
+    PostcardError,
+    PostcardNotFoundError,
+    PostcardSceneUnavailableError,
+    postcard_service,
+)
 
 router = APIRouter(tags=["postcards"])
 
@@ -15,9 +20,13 @@ router = APIRouter(tags=["postcards"])
 def _http_error(exc: Exception) -> None:
     if isinstance(exc, PostcardNotFoundError):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    if isinstance(exc, PostcardSceneUnavailableError):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
+        ) from exc
     if isinstance(exc, PostcardError):
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
         ) from exc
     raise exc
 
@@ -36,7 +45,7 @@ def create_postcard(
     photo: UploadFile | None = File(default=None),
     language: str = Form(default="zh-CN"),
     replace: bool = Form(default=False),
-    ai_scene: bool = Form(default=False),
+    ai_scene: bool = Form(default=True),
     photo_style: str | None = Form(default=None),
 ) -> PostcardResponse:
     try:
@@ -50,6 +59,28 @@ def create_postcard(
             ai_scene=ai_scene,
             photo_style=photo_style,
         )
+    except (PostcardNotFoundError, PostcardError) as exc:
+        _http_error(exc)
+
+
+@router.post(
+    "/api/v1/trips/{trip_id}/postcards/prewarm",
+    response_model=PostcardPrewarmResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    responses={**NOT_FOUND_RESPONSE, **UNPROCESSABLE_RESPONSE},
+    dependencies=[Depends(rate_limit("expensive"))],
+    summary="Pre-generate a Qwen-Image scene after a stop visit is completed",
+)
+def prewarm_postcard_scene(
+    trip_id: str,
+    background_tasks: BackgroundTasks,
+    poi_id: str = Form(min_length=1),
+    language: str = Form(default="zh-CN"),
+) -> PostcardPrewarmResponse:
+    try:
+        postcard_service.validate_scene_prewarm(trip_id, poi_id, language)
+        background_tasks.add_task(postcard_service.prewarm_scene, trip_id, poi_id, language)
+        return PostcardPrewarmResponse(trip_id=trip_id, poi_id=poi_id)
     except (PostcardNotFoundError, PostcardError) as exc:
         _http_error(exc)
 
@@ -83,6 +114,7 @@ def delete_postcard(postcard_id: str) -> Response:
 
 @router.get(
     "/api/v1/postcards/{postcard_id}/image",
+    response_model=bytes,
     responses=NOT_FOUND_RESPONSE,
     summary="Fetch a rendered postcard SVG",
 )
@@ -94,4 +126,24 @@ def postcard_image(postcard_id: str) -> Response:
             headers={"Cache-Control": "private, max-age=86400"},
         )
     except PostcardNotFoundError as exc:
+        _http_error(exc)
+
+
+@router.get(
+    "/api/v1/postcards/{postcard_id}/image.png",
+    response_model=bytes,
+    responses={**NOT_FOUND_RESPONSE, **UNPROCESSABLE_RESPONSE},
+    summary="Download a rendered postcard PNG",
+)
+def postcard_image_png(postcard_id: str) -> Response:
+    try:
+        return Response(
+            content=postcard_service.image_png(postcard_id),
+            media_type="image/png",
+            headers={
+                "Cache-Control": "private, max-age=86400",
+                "Content-Disposition": f'attachment; filename="macau-postcard-{postcard_id}.png"',
+            },
+        )
+    except (PostcardNotFoundError, PostcardError) as exc:
         _http_error(exc)

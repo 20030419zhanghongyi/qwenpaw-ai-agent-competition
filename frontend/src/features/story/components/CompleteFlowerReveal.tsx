@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { StoryImage } from "../assets";
+import { useStoryMessages } from "../storyI18n";
 
 const PETAL_ASSET_IDS = [
   "V4-AMA-05",
@@ -12,12 +13,13 @@ const PETAL_ASSET_IDS = [
 const PETAL_ROTATIONS = [-72, -36, 0, 36, 72];
 
 export function CompleteFlowerReveal() {
+  const st = useStoryMessages();
   return (
     <div>
       <div
         className="story-flower-reveal relative mx-auto aspect-[4/5] w-44"
         role="img"
-        aria-label="五张密笺花瓣依次重合，组成完整澳门市花"
+        aria-label={st("flowerRevealAria")}
       >
         <div className="story-flower-petal-group absolute inset-0" aria-hidden>
           {PETAL_ASSET_IDS.map((assetId, index) => (
@@ -52,7 +54,7 @@ export function CompleteFlowerReveal() {
         </div>
       </div>
       <p className="mt-2 text-sm leading-6 text-sage-deep">
-        五瓣已经集齐，五张密笺迎光组成完整市花。
+        {st("flowerRevealBody")}
       </p>
     </div>
   );

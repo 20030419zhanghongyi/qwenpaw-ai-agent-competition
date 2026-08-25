@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint, func
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, utc_now
@@ -42,6 +42,7 @@ class Trip(Base):
     stops: Mapped[list[TripStop]] = relationship(back_populates="trip")
     checkins: Mapped[list[Checkin]] = relationship(back_populates="trip")
     postcards: Mapped[list[Postcard]] = relationship(back_populates="trip")
+    memoir: Mapped[TravelMemoir | None] = relationship(back_populates="trip", uselist=False)
     feedback: Mapped[TripFeedback | None] = relationship(back_populates="trip", uselist=False)
 
 
@@ -103,3 +104,74 @@ class Postcard(Base):
     )
 
     trip: Mapped[Trip] = relationship(back_populates="postcards")
+
+
+class TravelMemoir(Base):
+    """Editable, private-by-default memoir for one Macau trip."""
+
+    __tablename__ = "travel_memoirs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_string)
+    trip_id: Mapped[str] = mapped_column(
+        ForeignKey("trips.id"), unique=True, index=True, nullable=False
+    )
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    title: Mapped[str] = mapped_column(String(160), nullable=False)
+    style: Mapped[str] = mapped_column(String(32), nullable=False)
+    language: Mapped[str] = mapped_column(String(16), nullable=False)
+    introduction: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    closing: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="draft")
+    chapters: Mapped[list[dict]] = mapped_column(JSON, nullable=False, default=list)
+    cover_photo_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now,
+        server_default=func.now(), nullable=False
+    )
+
+    trip: Mapped[Trip] = relationship(back_populates="memoir")
+    photos: Mapped[list[MemoirPhoto]] = relationship(
+        back_populates="memoir", cascade="all, delete-orphan"
+    )
+    shares: Mapped[list[MemoirShare]] = relationship(
+        back_populates="memoir", cascade="all, delete-orphan"
+    )
+
+
+class MemoirPhoto(Base):
+    __tablename__ = "memoir_photos"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_string)
+    memoir_id: Mapped[str] = mapped_column(
+        ForeignKey("travel_memoirs.id"), index=True, nullable=False
+    )
+    poi_id: Mapped[str | None] = mapped_column(String(128), index=True, nullable=True)
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    content_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    image_data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    has_people: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, server_default=func.now(), nullable=False
+    )
+
+    memoir: Mapped[TravelMemoir] = relationship(back_populates="photos")
+
+
+class MemoirShare(Base):
+    __tablename__ = "memoir_shares"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_string)
+    memoir_id: Mapped[str] = mapped_column(
+        ForeignKey("travel_memoirs.id"), index=True, nullable=False
+    )
+    token: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+    privacy: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, server_default=func.now(), nullable=False
+    )
+
+    memoir: Mapped[TravelMemoir] = relationship(back_populates="shares")

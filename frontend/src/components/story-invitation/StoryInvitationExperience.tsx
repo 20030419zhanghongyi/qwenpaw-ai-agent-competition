@@ -17,6 +17,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CutsceneStage } from "./CutsceneStage";
 import { useSound } from "./useSound";
 import type { CutsceneScene } from "./scenes/lotusTelegram";
+import { useStoryMessages } from "@/features/story/storyI18n";
 
 export interface StoryInvitationExperienceProps {
   /** Authored scene list for this story. */
@@ -38,6 +39,7 @@ export function StoryInvitationExperience({
   onAccept,
   onDecline,
 }: StoryInvitationExperienceProps) {
+  const st = useStoryMessages();
   const [phase, setPhase] = useState<Phase>("loading");
   const [transitionKind, setTransitionKind] = useState<TransitionKind | null>(null);
   const sound = useSound();
@@ -116,10 +118,10 @@ export function StoryInvitationExperience({
         <div
           className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0e0d0c]"
           role="alert"
-          aria-label="正在加载"
+          aria-label={st("loading")}
         >
           <p className="animate-pulse font-serif text-base tracking-[0.08em] text-paper/40">
-            正在整理你的澳门旅程……
+            {st("preparingMacauJourney")}
           </p>
         </div>
       );
@@ -146,7 +148,7 @@ export function StoryInvitationExperience({
           role="button"
           tabIndex={0}
           aria-label={
-            transitionKind === "accept" ? "身份确认中" : "记录封存中"
+            transitionKind === "accept" ? st("confirmingIdentity") : st("sealingRecord")
           }
           onClick={handleTransitionClick}
           onKeyDown={(e) => {
@@ -159,23 +161,23 @@ export function StoryInvitationExperience({
           {transitionKind === "accept" ? (
             <div className="flex flex-col items-center gap-6 animate-[fadeIn_600ms_ease]">
               <p className="font-serif text-lg tracking-[0.08em] text-paper/60">
-                身份确认中……
+                {st("identityPending")}
               </p>
               <p className="font-mono text-xs tracking-[0.3em] text-paper/40"
                 style={{ fontFamily: "'IBM Plex Mono', 'JetBrains Mono', monospace" }}>
-                寻图人 // 已确认
+                {st("mapSeekerConfirmed")}
               </p>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-4 animate-[fadeIn_600ms_ease]">
               <p className="font-serif text-base tracking-[0.06em] text-paper/40">
-                记录已重新封存。
+                {st("recordSealed")}
               </p>
             </div>
           )}
           {/* Click hint */}
           <p className="absolute bottom-20 text-[11px] tracking-[0.22em] text-paper/15 animate-pulse">
-            轻触任意位置继续
+            {st("tapAnywhere")}
           </p>
         </div>
       );

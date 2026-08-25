@@ -20,6 +20,7 @@ import { MapLayerScene } from "./MapLayerScene";
 import { SceneBackground } from "./SceneBackground";
 import type { CutsceneScene } from "./scenes/lotusTelegram";
 import type { SoundAPI } from "./useSound";
+import { useStoryMessages } from "@/features/story/storyI18n";
 
 export interface CutsceneStageProps {
   scenes: CutsceneScene[];
@@ -45,6 +46,7 @@ export function CutsceneStage({
   onDecline,
   sound,
 }: CutsceneStageProps) {
+  const st = useStoryMessages();
   const [sceneIndex, setSceneIndex] = useState(0);
   const [fadeKey, setFadeKey] = useState(0);
   const advancingRef = useRef(false);
@@ -110,7 +112,7 @@ export function CutsceneStage({
       className="fixed inset-0 z-50 flex flex-col bg-[#0e0d0c]"
       role="dialog"
       aria-modal="true"
-      aria-label="剧情演绎"
+      aria-label={st("storyPerformance")}
     >
       {/* ── Background layer ─────────────────────────────────────────── */}
       <SceneBackground background={scene.background} />
@@ -146,9 +148,9 @@ export function CutsceneStage({
             sound.toggleMute();
           }}
           className="rounded-full px-2 py-1.5 text-[11px] tracking-[0.18em] text-paper/20 transition hover:text-paper/45 focus:outline-none focus:ring-1 focus:ring-ochre/40"
-          aria-label={sound.muted ? "开启声音" : "关闭声音"}
+          aria-label={sound.muted ? st("soundOn") : st("soundOff")}
         >
-          {sound.muted ? "声音 ○" : "声音 ◉"}
+          {sound.muted ? st("soundMuted") : st("soundPlaying")}
         </button>
 
         {/* Skip */}
@@ -157,7 +159,7 @@ export function CutsceneStage({
           onClick={handleSkip}
           className="rounded-full px-3 py-1.5 text-[11px] tracking-[0.18em] text-paper/20 transition hover:text-paper/45 focus:outline-none focus:ring-1 focus:ring-ochre/40"
         >
-          略过
+          {st("skipPerformance")}
         </button>
       </div>
 

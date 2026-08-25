@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { MultiSelectPuzzleData } from "../types";
 import { PuzzleFrame } from "./PuzzleFrame";
+import { useStoryMessages } from "../storyI18n";
 
 interface MultiSelectPuzzleProps {
   puzzle: MultiSelectPuzzleData;
@@ -13,6 +14,7 @@ export function MultiSelectPuzzle({
   disabled = false,
   onSubmit,
 }: MultiSelectPuzzleProps) {
+  const st = useStoryMessages();
   const [selected, setSelected] = useState<string[]>([]);
 
   useEffect(() => setSelected([]), [puzzle.id]);
@@ -42,14 +44,14 @@ export function MultiSelectPuzzle({
       prompt={puzzle.prompt}
       selectionHint={
         puzzle.max_selections
-          ? `可多选，最多选择 ${puzzle.max_selections} 项。已选择 ${selected.length} 项。`
-          : `可多选。已选择 ${selected.length} 项。`
+          ? st("multiChoiceMax", { max: puzzle.max_selections, count: selected.length })
+          : st("multiChoiceCount", { count: selected.length })
       }
       canSubmit={enough}
       disabled={disabled}
       onSubmit={() => onSubmit([...selected])}
     >
-      <div className="space-y-2" role="group" aria-label="可多选的观察项">
+      <div className="space-y-2" role="group" aria-label={st("multiChoiceOptions")}>
         {puzzle.options.map((option) => {
           const active = selected.includes(option.id);
           return (

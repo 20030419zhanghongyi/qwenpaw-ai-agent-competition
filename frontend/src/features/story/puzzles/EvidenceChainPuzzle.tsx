@@ -7,6 +7,7 @@ import type {
 } from "../types";
 import { PuzzleFrame } from "./PuzzleFrame";
 import { usePointerDrag } from "./usePointerDrag";
+import { useStoryMessages } from "../storyI18n";
 
 interface EvidenceChainPuzzleProps {
   puzzle: EvidenceChainPuzzleData;
@@ -103,6 +104,7 @@ export function EvidenceChainPuzzle({
   disabled = false,
   onSubmit,
 }: EvidenceChainPuzzleProps) {
+  const st = useStoryMessages();
   const [chain, setChain] = useState<StoryPuzzleOption[]>([]);
   const [viewer, setViewer] = useState<{ assetId: string; alt: string } | null>(
     null,
@@ -160,7 +162,7 @@ export function EvidenceChainPuzzle({
         onSubmit={() => onSubmit(chain.map((item) => item.id))}
       >
         <div>
-          <p className="text-[13px] font-medium text-ink-soft">候选材料</p>
+          <p className="text-[13px] font-medium text-ink-soft">{st("candidates")}</p>
           <div className="mt-2 space-y-3">
             {candidates.map((option) => (
               <div
@@ -174,13 +176,13 @@ export function EvidenceChainPuzzle({
                   onClick={() => setChain((current) => [...current, option])}
                   className="mt-3 min-h-11 w-full rounded-full border border-sage/35 bg-sage/10 px-4 text-sm font-medium text-sage-deep disabled:opacity-45"
                 >
-                  加入证据链
+                  {st("addEvidence")}
                 </button>
               </div>
             ))}
             {candidates.length === 0 && (
               <p className="rounded-xl border border-dashed border-line p-3 text-center text-[13px] text-ink-soft">
-                所有材料都已放入证据链
+                {st("allEvidenceAdded")}
               </p>
             )}
           </div>
@@ -188,9 +190,9 @@ export function EvidenceChainPuzzle({
 
         <div className="mt-5">
           <p className="text-[13px] font-medium text-ink-soft">
-            当前证据链，共 {chain.length} 项
+            {st("evidenceChainCount", { count: chain.length })}
           </p>
-          <ol className="mt-2 space-y-3" aria-label="可排序的证据链">
+          <ol className="mt-2 space-y-3" aria-label={st("sortableEvidence")}>
             {chain.map((option, index) => (
               <li
                 key={option.id}
@@ -207,17 +209,17 @@ export function EvidenceChainPuzzle({
                     {index + 1}
                   </span>
                   <p className="min-w-0 flex-1 text-[13px] font-medium text-sage-deep">
-                    证据链第 {index + 1} 项
+                    {st("evidenceChainItem", { index: index + 1 })}
                   </p>
                   <button
                     type="button"
                     disabled={disabled}
                     {...handleProps(option.id)}
                     className="inline-flex min-h-11 touch-none select-none items-center gap-1 rounded-full border border-line bg-card px-3 text-[13px] text-ink-soft disabled:opacity-35"
-                    aria-label={`长按拖动${option.text}`}
+                    aria-label={st("dragItem", { item: option.text })}
                   >
                     <span aria-hidden>⠿</span>
-                    拖动
+                    {st("drag")}
                   </button>
                 </div>
 
@@ -231,7 +233,7 @@ export function EvidenceChainPuzzle({
                     className="min-h-11 rounded-full border border-line bg-card text-sm text-ink disabled:opacity-35"
                     aria-label={`上移${option.text}`}
                   >
-                    上移
+                    {st("moveUp")}
                   </button>
                   <button
                     type="button"
@@ -240,7 +242,7 @@ export function EvidenceChainPuzzle({
                     className="min-h-11 rounded-full border border-line bg-card text-sm text-ink disabled:opacity-35"
                     aria-label={`下移${option.text}`}
                   >
-                    下移
+                    {st("moveDown")}
                   </button>
                   <button
                     type="button"
@@ -251,9 +253,9 @@ export function EvidenceChainPuzzle({
                       )
                     }
                     className="min-h-11 rounded-full border border-clay/30 bg-card text-sm text-clay disabled:opacity-35"
-                    aria-label={`移除${option.text}`}
+                    aria-label={`${st("remove")} ${option.text}`}
                   >
-                    移除
+                    {st("remove")}
                   </button>
                 </div>
               </li>

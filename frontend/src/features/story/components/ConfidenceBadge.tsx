@@ -1,9 +1,14 @@
-function confidenceLabel(confidence: number | string): string {
+import { useStoryMessages } from "../storyI18n";
+
+function confidenceLabel(
+  confidence: number | string,
+  st: ReturnType<typeof useStoryMessages>,
+): string {
   if (typeof confidence === "string") {
     const labels: Record<string, string> = {
-      high: "高",
-      medium: "中",
-      low: "低",
+      high: st("confidenceHigh"),
+      medium: st("confidenceMedium"),
+      low: st("confidenceLow"),
     };
     return labels[confidence.toLowerCase()] ?? confidence;
   }
@@ -15,10 +20,11 @@ export function ConfidenceBadge({
 }: {
   confidence?: number | string;
 }) {
+  const st = useStoryMessages();
   if (confidence == null) return null;
   return (
     <span className="inline-flex min-h-6 items-center rounded-full border border-sage/30 bg-sage/10 px-2.5 text-[11px] font-medium text-sage-deep">
-      可信度：{confidenceLabel(confidence)}
+      {st("confidence", { value: confidenceLabel(confidence, st) })}
     </span>
   );
 }

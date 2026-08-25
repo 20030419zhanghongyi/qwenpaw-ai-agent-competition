@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { resolveStoryAsset } from "./storyAssetManifest";
+import { useStoryMessages } from "../storyI18n";
 
 const PETAL_ASSET_IDS = new Set([
   "V4-AMA-05",
@@ -36,13 +37,14 @@ export function StoryImage({
   eager = false,
   onOpen,
 }: StoryImageProps) {
+  const st = useStoryMessages();
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [assetId]);
 
   const item = resolveStoryAsset(assetId);
   const ratio = item?.aspectRatio ?? "4/5";
-  const label = alt ?? item?.fallbackLabel ?? "故事图片";
-  const fallbackLabel = item?.fallbackLabel ?? "图片素材";
+  const label = alt ?? item?.fallbackLabel ?? st("storyImage");
+  const fallbackLabel = item?.fallbackLabel ?? st("imageAsset");
   const isInteractive = Boolean(onOpen && item);
   const showFallbackLabel = failed && item;
   const Wrapper = isInteractive ? "button" : "div";
@@ -53,7 +55,7 @@ export function StoryImage({
         ? {
             type: "button" as const,
             onClick: () => onOpen?.(assetId),
-            "aria-label": `查看大图：${label}`,
+            "aria-label": st("viewLargeImageNamed", { label }),
           }
         : {})}
       className={`relative block w-full overflow-hidden rounded-2xl border border-line bg-paper-warm text-left ${className}`}
@@ -74,7 +76,7 @@ export function StoryImage({
       ) : (
         <span className="flex size-full flex-col items-center justify-center bg-[url('/story/v4/_placeholder.svg')] bg-cover px-5 text-center text-sm text-ink-soft">
           <span>
-            {import.meta.env.DEV ? "未登记的图片素材" : "图片素材暂未提供"}
+            {import.meta.env.DEV ? st("unregisteredImage") : st("imageUnavailable")}
           </span>
           {import.meta.env.DEV ? (
             <span className="mt-1 font-mono text-[11px] text-ink-soft/70">
@@ -91,7 +93,7 @@ export function StoryImage({
           <span className="block">
             {import.meta.env.DEV
               ? fallbackLabel
-              : `${fallbackLabel}暂未提供`}
+              : st("namedImageUnavailable", { label: fallbackLabel })}
           </span>
           {import.meta.env.DEV ? (
             <span className="block font-mono text-[10px] text-paper/75">
@@ -103,7 +105,7 @@ export function StoryImage({
       {isInteractive && (
         <span className="absolute right-3 top-3 grid size-11 place-items-center rounded-full border border-paper/70 bg-ink/65 text-paper shadow-[var(--shadow-soft)]">
           <span aria-hidden>⌕</span>
-          <span className="sr-only">查看大图</span>
+          <span className="sr-only">{st("viewLargeImage")}</span>
         </span>
       )}
     </Wrapper>

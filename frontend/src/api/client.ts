@@ -326,6 +326,8 @@ export function triggerGuide(body: {
 export function generateGuide(body: {
   poi: string;
   language: string;
+  /** Translate and rewrite Chinese source material through the guide agent. */
+  enhance?: boolean;
   interests?: string[];
   travel_type?: string[];
   /** 下一站名称；空字符串表示末站；省略则无行程收尾语 */
@@ -333,9 +335,11 @@ export function generateGuide(body: {
   next_distance?: string | null;
   next_walk_time?: string | null;
 }): Promise<GuideGenerateResponse> {
-  return request("/api/v1/guide/generate", {
+  const { enhance = false, ...payload } = body;
+  const query = enhance ? "?enhance=true" : "";
+  return request(`/api/v1/guide/generate${query}`, {
     method: "POST",
-    body: JSON.stringify(body),
+    body: JSON.stringify(payload),
   });
 }
 
@@ -344,6 +348,7 @@ export interface GuideAskResponse {
   question: string;
   text: string;
   language?: string;
+  input_language?: string;
   source?: string;
   confidence?: number;
   ai_generated?: boolean;
