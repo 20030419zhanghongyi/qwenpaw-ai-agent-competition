@@ -2,6 +2,12 @@ import type { LanguageCode } from "@/types";
 import type { PhotoStyle, Postcard, PostcardListResponse } from "@/types/postcards";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const POSTCARD_LAYOUT_VERSION = "3";
+
+function withLayoutVersion(url: string): string {
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}layout=${POSTCARD_LAYOUT_VERSION}`;
+}
 
 export class PostcardApiError extends Error {
   constructor(
@@ -31,9 +37,15 @@ export function postcardImageSrc(imageUrlOrId: string): string {
     return imageUrlOrId;
   }
   if (imageUrlOrId.startsWith("/")) {
-    return `${API_BASE}${imageUrlOrId}`;
+    return withLayoutVersion(`${API_BASE}${imageUrlOrId}`);
   }
-  return `${API_BASE}/api/v1/postcards/${encodeURIComponent(imageUrlOrId)}/image`;
+  return withLayoutVersion(
+    `${API_BASE}/api/v1/postcards/${encodeURIComponent(imageUrlOrId)}/image`,
+  );
+}
+
+export function postcardPngSrc(postcardId: string): string {
+  return `${API_BASE}/api/v1/postcards/${encodeURIComponent(postcardId)}/image.png`;
 }
 
 export async function createPostcard(args: {
@@ -43,7 +55,7 @@ export async function createPostcard(args: {
   language: LanguageCode | string;
   /** When true, replace an existing postcard for the same trip+POI. */
   replace?: boolean;
-  /** Opt-in QwenPaw scenic illustration (slow); default uses instant local art. */
+  /** QwenPaw gc-minimal-zine-poster scene; failure is reported instead of substituted. */
   aiScene?: boolean;
   /** Optional Qwen-Image style transfer for a user-uploaded photo. */
   photoStyle?: PhotoStyle | null;
@@ -72,6 +84,23 @@ export async function createPostcard(args: {
     throw new PostcardApiError(await parseError(response), response.status);
   }
   return response.json() as Promise<Postcard>;
+}
+
+export async function prewarmPostcardScene(args: {
+  tripId: string;
+  poiId: string;
+  language: LanguageCode | string;
+}): Promise<void> {
+  const form = new FormData();
+  form.append("poi_id", args.poiId);
+  form.append("language", args.language);
+  const response = await fetch(
+    `${API_BASE}/api/v1/trips/${encodeURIComponent(args.tripId)}/postcards/prewarm`,
+    { method: "POST", body: form },
+  );
+  if (!response.ok) {
+    throw new PostcardApiError(await parseError(response), response.status);
+  }
 }
 
 export async function deletePostcard(postcardId: string): Promise<void> {

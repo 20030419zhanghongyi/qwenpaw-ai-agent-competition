@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import re
+from types import SimpleNamespace
+
 from fastapi.testclient import TestClient
 
 from app.features.guide import api as guide_api
@@ -31,6 +34,11 @@ def _reset(monkeypatch, tmp_path):
         lambda text, *, path: (text, {"decision": "pass", "source": "skipped"}),
     )
     monkeypatch.setattr(guide_api.settings, "guide_agent_enabled", False)
+    monkeypatch.setattr(
+        guide_api.guide_agent,
+        "translate_search_queries",
+        lambda *_a, **_k: {},
+    )
 
 
 def _stub_local(monkeypatch, name: str, material: str):
@@ -85,7 +93,7 @@ def test_ask_calls_web_even_when_local_is_strong(monkeypatch, tmp_path):
     )
     assert response.status_code == 200
     payload = response.json()
-    assert called["n"] == 1
+    assert called["n"] == 3
     assert payload["web_used"] is True
     assert payload["source"] == "web"
     assert "St. Paul" in payload["text"] or "17th-century" in payload["text"]
@@ -190,7 +198,9 @@ def test_empty_only_when_local_and_web_both_fail(monkeypatch, tmp_path):
     assert response.status_code == 200
     payload = response.json()
     assert payload["web_used"] is False
-    assert "本地和公开网页都没找到" in payload["text"] or "可靠答案" in payload["text"]
+    assert "暂未" in payload["text"]
+    assert "检索到可靠的相关资料" in payload["text"]
+    assert "没有答案" not in payload["text"]
     assert "手头资料里没有" not in payload["text"]
 
 
@@ -309,7 +319,7 @@ def test_web_only_poi_without_local_material(monkeypatch, tmp_path):
     response = client.post(
         "/api/v1/guide/ask",
         json={
-            "poi": "未知地标XYZ",
+            "poi": "Macau Tower",
             "question": "这是什么建筑",
             "language": "zh-CN",
         },
@@ -319,3 +329,319 @@ def test_web_only_poi_without_local_material(monkeypatch, tmp_path):
     assert payload["web_used"] is True
     assert payload["source"] == "web"
     assert "Macau Tower" in payload["text"] or "tower" in payload["text"].lower()
+
+
+def test_english_ask_localizes_chinese_poi_key(monkeypatch, tmp_path):
+    _reset(monkeypatch, tmp_path)
+    seen_queries: list[str] = []
+
+    def _search(queries, **_kwargs):
+        seen_queries.extend(queries)
+        return [
+            {
+                "title": "Ruins of Saint Paul's",
+                "snippet": "The church complex was largely destroyed by fire in 1835.",
+                "url": "https://example.com/stpaul",
+                "source": "wikipedia:en",
+            }
+        ]
+
+    monkeypatch.setattr(guide_api, "search_web_multi", _search)
+    response = client.post(
+        "/api/v1/guide/ask",
+        json={
+            "poi": "大三巴牌坊",
+            "question": "How has it changed over time?",
+            "language": "en",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["poi_name"] == "Ruins of St. Paul's"
+    assert "About Ruins of St. Paul's" in payload["text"]
+    assert re.search(r"[\u3400-\u9fff]", payload["text"]) is None
+    assert "（" not in payload["text"]
+    assert any("Ruins of St. Paul's" in query for query in seen_queries)
+
+
+def test_portuguese_ask_filters_chinese_web_snippet(monkeypatch, tmp_path):
+    _reset(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        guide_api,
+        "search_web_multi",
+        lambda *_args, **_kwargs: [
+            {
+                "title": "大三巴牌坊",
+                "snippet": "大三巴牌坊在1835年的火灾后只留下前壁。",
+                "url": "https://example.com/zh",
+                "source": "web",
+            }
+        ],
+    )
+
+    response = client.post(
+        "/api/v1/guide/ask",
+        json={
+            "poi": "大三巴牌坊",
+            "question": "Como mudou ao longo do tempo?",
+            "language": "pt",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["poi_name"] == "Ruínas de S. Paulo"
+    assert re.search(r"[\u3400-\u9fff]", payload["text"]) is None
+
+
+def test_macao_museum_rejects_unrelated_museum_results(monkeypatch, tmp_path):
+    _reset(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        guide_api,
+        "search_web_multi",
+        lambda *_args, **_kwargs: [
+            {
+                "title": "Hong Kong",
+                "snippet": "Hong Kong is a special administrative region of China.",
+                "url": "https://example.com/hong-kong",
+                "source": "wikipedia:en",
+            },
+            {
+                "title": "Macao Museum",
+                "snippet": "Macao Museum presents the history and cultures of Macau.",
+                "url": "https://example.com/macao-museum",
+                "source": "official",
+            },
+        ],
+    )
+
+    response = client.post(
+        "/api/v1/guide/ask",
+        json={
+            "poi": "Macao Museum",
+            "question": "Which details are worth noticing on site?",
+            "language": "en",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["poi_name"] == "Macao Museum"
+    assert "Macao Museum presents" in payload["text"]
+    assert "Hong Kong" not in payload["text"]
+    assert [source["title"] for source in payload["web_sources"]] == ["Macao Museum"]
+
+
+def test_hzmb_temporal_question_uses_id_aliases_and_cross_language_query(
+    monkeypatch, tmp_path
+):
+    _reset(monkeypatch, tmp_path)
+    seen_queries: list[str] = []
+
+    def _search(queries, **_kwargs):
+        seen_queries.extend(queries)
+        return [
+            {
+                "title": "Hong Kong-Zhuhai-Macau Bridge",
+                "snippet": "The bridge and its Macao Port opened on 24 October 2018.",
+                "url": "https://example.com/hzmb",
+                "source": "official",
+            }
+        ]
+
+    monkeypatch.setattr(guide_api, "search_web_multi", _search)
+    response = client.post(
+        "/api/v1/guide/ask",
+        json={
+            "poi": "poi_port_hzmb",
+            "question": "这是什么时候建立的",
+            "language": "en",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["web_used"] is True
+    assert "24 October 2018" in payload["text"]
+    assert payload["poi_name"] == "Hong Kong-Zhuhai-Macao Bridge Macao Port"
+    assert seen_queries
+    assert any(re.search(r"[\u3400-\u9fff]", query) for query in seen_queries)
+    assert any(
+        "Hong Kong-Zhuhai" in query and "Bridge" in query
+        for query in seen_queries
+    )
+
+
+def test_hzmb_temporal_question_has_verified_local_fallback(monkeypatch, tmp_path):
+    _reset(monkeypatch, tmp_path)
+    monkeypatch.setattr(guide_api, "search_web_multi", lambda *_args, **_kwargs: [])
+
+    response = client.post(
+        "/api/v1/guide/ask",
+        json={
+            "poi": "poi_port_hzmb",
+            "question": "这是什么时候建立的",
+            "language": "en",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["source"] == "rules"
+    assert "2018" in payload["text"]
+    assert "couldn't retrieve" not in payload["text"]
+    assert "Border queues" not in payload["text"]
+    assert "24 October 2018" in payload["text"]
+    assert "。" not in payload["text"]
+
+
+def test_hzmb_temporal_question_rejects_web_snippet_without_a_date(monkeypatch, tmp_path):
+    _reset(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        guide_api,
+        "search_web_multi",
+        lambda *_args, **_kwargs: [
+            {
+                "title": "Hong Kong-Zhuhai-Macau Bridge",
+                "snippet": "The bridge is a major sea crossing in the Pearl River Delta.",
+                "url": "https://example.com/hzmb",
+                "source": "wikipedia:en",
+            }
+        ],
+    )
+
+    response = client.post(
+        "/api/v1/guide/ask",
+        json={
+            "poi": "poi_port_hzmb",
+            "question": "这是什么时候建立的",
+            "language": "en",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["source"] == "rules"
+    assert payload["web_used"] is False
+    assert "2018" in payload["text"]
+
+
+def test_detects_supported_question_languages() -> None:
+    assert guide_api._detect_question_language("这个地方什么时候建立？") == "zh-CN"
+    assert guide_api._detect_question_language("這個地方是甚麼時候開放的？") == "zh-TW"
+    assert guide_api._detect_question_language("When did this place open?") == "en"
+    assert guide_api._detect_question_language("Quando foi construído este local?") == "pt"
+
+
+def test_cross_language_question_searches_all_languages_and_answers_profile_language(
+    monkeypatch, tmp_path
+):
+    _reset(monkeypatch, tmp_path)
+    monkeypatch.setattr(guide_api.settings, "guide_agent_enabled", True)
+    _stub_local(monkeypatch, "Macao Museum", "The museum presents Macao's history.")
+    translated_calls: list[tuple[str, str]] = []
+    monkeypatch.setattr(
+        guide_api.guide_agent,
+        "translate_search_queries",
+        lambda question, *, input_language: translated_calls.append(
+            (question, input_language)
+        )
+        or {
+            "zh-CN": "澳门博物馆 值得看 展品",
+            "en": "Macao Museum notable exhibits",
+            "pt": "Museu de Macau exposições importantes",
+        },
+    )
+    searches: list[tuple[str, list[str]]] = []
+
+    def _search(queries, *, language, **_kwargs):
+        searches.append((language, list(queries)))
+        return [
+            {
+                "title": f"Macao Museum ({language})",
+                "snippet": f"Verified museum material in {language}.",
+                "url": f"https://example.com/museum/{language}",
+                "source": "official",
+            }
+        ]
+
+    monkeypatch.setattr(guide_api, "search_web_multi", _search)
+    monkeypatch.setattr(guide_api, "filter_relevant_hits", lambda _names, hits: hits)
+    agent_calls: list[dict] = []
+
+    def _answer(*_args, **kwargs):
+        agent_calls.append(kwargs)
+        return SimpleNamespace(
+            text="The maritime-trade gallery is a useful place to start.",
+            confidence=0.86,
+            language="en",
+            immersive=None,
+        )
+
+    monkeypatch.setattr(guide_api.guide_agent, "answer", _answer)
+    response = client.post(
+        "/api/v1/guide/ask",
+        json={
+            "poi": "poi_0003",
+            "question": "馆内最值得看的展品是什么？",
+            "language": "en",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["input_language"] == "zh-CN"
+    assert payload["language"] == "en"
+    assert payload["source"] == "agent+web"
+    assert re.search(r"[\u3400-\u9fff]", payload["text"]) is None
+    assert translated_calls == [("馆内最值得看的展品是什么？", "zh-CN")]
+    assert {language for language, _queries in searches} == {"zh-CN", "en", "pt"}
+    assert agent_calls[0]["input_language"] == "zh-CN"
+    assert agent_calls[0]["language"] == "en"
+
+
+def test_cross_language_failure_never_leaks_source_language(monkeypatch, tmp_path):
+    _reset(monkeypatch, tmp_path)
+    monkeypatch.setattr(guide_api.settings, "guide_agent_enabled", True)
+    _stub_local(monkeypatch, "Porto de Macau", "")
+    monkeypatch.setattr(
+        guide_api.guide_agent,
+        "translate_search_queries",
+        lambda *_a, **_k: {
+            "zh-CN": "港珠澳大桥 建成 时间",
+            "en": "bridge completion date",
+            "pt": "ponte data de conclusão",
+        },
+    )
+    monkeypatch.setattr(
+        guide_api,
+        "search_web_multi",
+        lambda _queries, *, language, **_kwargs: [
+            {
+                "title": "Hong Kong-Zhuhai-Macau Bridge",
+                "snippet": "The bridge opened in 2018.",
+                "url": f"https://example.com/bridge/{language}",
+                "source": "official",
+            }
+        ],
+    )
+    monkeypatch.setattr(guide_api, "filter_relevant_hits", lambda _names, hits: hits)
+    monkeypatch.setattr(guide_api.guide_agent, "answer", lambda *_a, **_k: None)
+
+    response = client.post(
+        "/api/v1/guide/ask",
+        json={
+            "poi": "poi_port_hzmb",
+            "question": "When did this bridge open?",
+            "language": "pt",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["input_language"] == "en"
+    assert payload["language"] == "pt"
+    assert payload["source"] == "empty"
+    assert payload["text"].startswith("Não consegui encontrar")
+    assert "opened in 2018" not in payload["text"]

@@ -134,11 +134,11 @@ npm run dev
 Open:
 
 - Frontend: <http://localhost:5173>
-- Backend OpenAPI: <http://localhost:8000/docs>
+- Backend OpenAPI: <http://localhost:8001/docs>
 - QwenPaw Console: <http://127.0.0.1:8088>
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:8000/api/v1/health
+Invoke-RestMethod http://127.0.0.1:8001/api/v1/health
 Invoke-RestMethod http://127.0.0.1:8088/api/version
 ```
 
@@ -164,7 +164,7 @@ npm run dev
 ```
 
 ```zsh
-curl -fsS http://127.0.0.1:8000/api/v1/health
+curl -fsS http://127.0.0.1:8001/api/v1/health
 curl -fsS http://127.0.0.1:8088/api/version
 ```
 
@@ -309,14 +309,21 @@ bash scripts/configure_qwenpaw_macos.sh
 
 The script validates and imports local Skills, creates only missing project
 Agents, injects the shared ethics baseline and the `guide` TTS rendering rule,
-and installs both Tool Plugins. When the root `.env` contains your self-provided
-`DASHSCOPE_API_KEY`, it configures/enables the two Qwen-Image tools for `scene`
-and `synthesize_speech_qwen` for `guide`. This repository and the competition
-environment do not provide a DashScope key; its usage, quota, and charges belong
-to the deploying account. The script never prints the key. Without a key, it
-leaves both Plugins installed while keeping their tools unconfigured and
-disabled.
+and installs both Tool Plugins. It configures the Qwen-Image tools from the root
+`.env` using your self-provided `QWEN_IMAGE_API_KEY` and native Beijing
+`QWEN_IMAGE_ENDPOINT`, while `synthesize_speech_qwen` uses `DASHSCOPE_API_KEY`.
+This repository and the competition environment do not provide either key;
+usage, quota, and charges belong to the deploying account. The script never
+prints the keys. A Plugin remains installed but its tool stays disabled when
+the corresponding key is absent.
 Set `QWENPAW_BASE_URL` before the command to override the default endpoint.
+
+After changing only the image key or endpoint, keep QwenPaw running and synchronize
+the persisted tool configuration without rebuilding every Agent and Skill:
+
+```zsh
+bash scripts/sync_qwen_image_config.sh
+```
 
 ### 1. Import All Local Skills
 

@@ -32,7 +32,7 @@ export function PostcardCreateForm({
   const [phase, setPhase] = useState<Phase>("idle");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [aiScene, setAiScene] = useState(false);
+  const [aiScene, setAiScene] = useState(true);
   const [useAiStyle, setUseAiStyle] = useState(false);
   const [photoStyle, setPhotoStyle] = useState<PhotoStyle>("souvenir");
   const [error, setError] = useState<string | null>(null);
@@ -100,6 +100,8 @@ export function PostcardCreateForm({
       setError(
         message.includes("Failed to fetch")
           ? t(language, "backendDown")
+          : message.includes("POSTCARD_SCENE_UNAVAILABLE")
+            ? t(language, "postcardSceneUnavailable")
           : message.includes("checked in")
             ? t(language, "postcardNeedCheckin")
             : message || t(language, "postcardCreateError"),
@@ -167,7 +169,7 @@ export function PostcardCreateForm({
 
       {error ? (
         <ErrorState
-          title={t(language, "errorTitle")}
+          title={t(language, "postcardCreateErrorTitle")}
           message={error}
           onRetry={
             phase === "error"

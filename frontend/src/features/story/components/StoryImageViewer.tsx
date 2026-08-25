@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { StoryImage } from "../assets";
 import { resolveStoryAsset } from "../assets/storyAssetManifest";
+import { useStoryMessages } from "../storyI18n";
 
 interface StoryImageViewerProps {
   assetId: string | null;
@@ -15,6 +16,7 @@ export function StoryImageViewer({
   caption,
   onClose,
 }: StoryImageViewerProps) {
+  const st = useStoryMessages();
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -52,13 +54,13 @@ export function StoryImageViewer({
 
   if (!assetId) return null;
   const item = resolveStoryAsset(assetId);
-  const label = alt ?? item?.fallbackLabel ?? "故事图片";
+  const label = alt ?? item?.fallbackLabel ?? st("storyImage");
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={`大图：${label}`}
+      aria-label={st("largeImageNamed", { label })}
       className="fixed inset-0 z-[70] flex flex-col bg-ink/95"
       onClick={onClose}
     >
@@ -72,7 +74,7 @@ export function StoryImageViewer({
           type="button"
           onClick={onClose}
           className="grid size-11 shrink-0 place-items-center rounded-full border border-paper/20 bg-paper/10 text-xl"
-          aria-label="关闭大图"
+          aria-label={st("closeLargeImage")}
         >
           ×
         </button>

@@ -16,11 +16,14 @@ Ask 追问（``/ask``）为 **web-first**：短超时联网为主，``_gather_ma
 from __future__ import annotations
 
 import logging
+import json
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
@@ -34,10 +37,10 @@ from app.guardrails.runtime import rate_limit, record_audit, sanitize_untrusted_
 from app.observability.trace import record_trace
 from app.tools.scrub import scrub
 
-from .preset_script import build_preset_narration
+from .preset_script import build_preset_narration, poi_names_by_language, poi_names_for
 from .trigger_state import trigger_state
-from .tts import TTSUnavailableError, VOICE_BY_LANGUAGE, synthesize_to_oss
-from .web_search import format_web_material, search_web_multi
+from .tts import TTSUnavailableError, VOICE_BY_LANGUAGE, local_audio_path, synthesize_to_oss
+from .web_search import filter_relevant_hits, format_web_material, search_web_multi
 
 # rag/ 在仓库根（不在 backend/app 内）；config.py 导入时已把仓库根加进 sys.path
 from rag.retrieve import get_poi_material, retrieve
@@ -61,16 +64,104 @@ _ASK_FALLBACK = {
 }
 # 仅在本地 + 联网都失败时使用（有联网能力时不要过早甩出「手头没有资料」）
 _ASK_EMPTY = {
-    "zh-CN": "本地和公开网页都没找到可靠答案。你可以换个问法，或拍一张现场照片让我辨认。",
-    "zh-TW": "本地和公開網頁都沒找到可靠答案。你可以換個問法，或拍一張現場照片讓我辨認。",
-    "en": "Neither local notes nor public web sources had a solid answer. Try rephrasing, or upload a photo.",
-    "pt": "Nem as notas locais nem a web pública tiveram uma resposta sólida. Reformule, ou envie uma foto.",
+    "zh-CN": "暂未从本地资料或公开网页检索到可靠的相关资料。你可以把问题说得更具体一些，或拍一张现场照片让我辨认。",
+    "zh-TW": "暫未從本地資料或公開網頁檢索到可靠的相關資料。你可以把問題說得更具體一些，或拍一張現場照片讓我辨認。",
+    "en": "I couldn't retrieve reliable, relevant material from the local notes or public sources. Try a more specific question, or upload a photo.",
+    "pt": "Não consegui encontrar material fiável e relevante nas notas locais ou em fontes públicas. Faça uma pergunta mais específica ou envie uma fotografia.",
 }
 _PURPOSE_INTENT = re.compile(
     r"(干什么|做什麼|做什么|用途|原来|原來|原先|前身|功能|用来|用來|作什麼|作什么|what\s+was|used\s+for|original)",
     re.IGNORECASE,
 )
 _PURPOSE_HINTS = ("原为", "原為", "前身", "曾是", "用作", "建成", "历史", "歷史", "教堂", "学院", "學院")
+_TEMPORAL_INTENT = re.compile(
+    r"(什么时候|甚麼時候|何时|何時|哪年|建立|建成|落成|启用|啟用|开放|開放|通车|通車|"
+    r"when\s+(?:was|did)|what\s+year|built|completed|established|opened|inaugurated|"
+    r"quando|constru[íi]d|conclu[íi]d|inaugurad|abert)",
+    re.IGNORECASE,
+)
+_TEMPORAL_HINTS = (
+    "建立",
+    "建成",
+    "落成",
+    "启用",
+    "啟用",
+    "开放",
+    "開放",
+    "通车",
+    "通車",
+    "施工",
+    "built",
+    "completed",
+    "opened",
+    "construction",
+    "inaugurated",
+)
+_TEMPORAL_FACT = re.compile(
+    r"(?:\b(?:18|19|20)\d{2}\b|建成|落成|启用|啟用|开放|開放|通车|通車|"
+    r"built|completed|opened|inaugurated|construction|constru[íi]d|conclu[íi]d)",
+    re.IGNORECASE,
+)
+_TRADITIONAL_MARKERS = set("這麼時為麼開啟麼裡與還體來說請問過於從將會後發現處")
+_PORTUGUESE_MARKERS = {
+    "a",
+    "as",
+    "como",
+    "com",
+    "de",
+    "do",
+    "dos",
+    "em",
+    "esta",
+    "este",
+    "foi",
+    "o",
+    "os",
+    "para",
+    "por",
+    "quando",
+    "que",
+    "qual",
+    "uma",
+}
+_QUERY_INTENT_TERMS: list[tuple[re.Pattern[str], dict[str, str]]] = [
+    (
+        _TEMPORAL_INTENT,
+        {
+            "zh-CN": "建设 建成 启用 开放 时间",
+            "en": "construction completion opening date",
+            "pt": "construção conclusão inauguração data",
+        },
+    ),
+    (
+        _PURPOSE_INTENT,
+        {
+            "zh-CN": "历史 原来用途 功能",
+            "en": "history original purpose function",
+            "pt": "história finalidade original função",
+        },
+    ),
+    (
+        re.compile(r"历史|歷史|沿革|过去|過去|history|historical|história", re.IGNORECASE),
+        {"zh-CN": "历史 沿革", "en": "history development", "pt": "história evolução"},
+    ),
+    (
+        re.compile(r"建筑|建築|设计|設計|风格|風格|architecture|design|arquitetura", re.IGNORECASE),
+        {"zh-CN": "建筑 设计 风格", "en": "architecture design style", "pt": "arquitetura estilo"},
+    ),
+    (
+        re.compile(r"开放时间|開放時間|几点|幾點|hours|opening time|horário", re.IGNORECASE),
+        {"zh-CN": "开放时间 营业时间", "en": "opening hours", "pt": "horário de funcionamento"},
+    ),
+    (
+        re.compile(r"门票|門票|票价|票價|多少钱|多少錢|ticket|price|bilhete|preço", re.IGNORECASE),
+        {"zh-CN": "门票 票价", "en": "ticket admission price", "pt": "bilhete preço entrada"},
+    ),
+    (
+        re.compile(r"交通|怎么去|怎麼去|巴士|公交|transport|bus|como chegar|autocarro", re.IGNORECASE),
+        {"zh-CN": "交通 巴士 如何前往", "en": "transport bus how to get there", "pt": "transporte autocarro como chegar"},
+    ),
+]
 _ASK_STOP = {
     "这个",
     "那个",
@@ -110,8 +201,10 @@ _REFUSAL_MARKERS = (
     "資料裡沒有直接",
     "没有直接答案",
     "沒有直接答案",
-    "本地和公开网页都没找到",
-    "本地和公開網頁都沒找到",
+    "暂未从本地资料或公开网页检索到",
+    "暫未從本地資料或公開網頁檢索到",
+    "couldn't retrieve reliable, relevant material",
+    "não consegui encontrar material fiável e relevante",
     "no direct answer",
     "don't have a direct",
     "do not have a direct",
@@ -148,6 +241,22 @@ def _apply_review(text: str, *, path: str) -> tuple[str, dict]:
     return out, review
 
 
+def _guide_language_matches(explanation: object, language: str) -> bool:
+    """Reject an enhanced foreign-language result that leaks Chinese source text."""
+    if getattr(explanation, "language", None) != language:
+        return False
+    text = str(getattr(explanation, "text", "") or "")
+    immersive = getattr(explanation, "immersive", None)
+    if immersive is not None:
+        text += json.dumps(immersive.to_public_dict(), ensure_ascii=False)
+    if language in {"en", "pt"}:
+        return re.search(r"[\u3400-\u9fff]", text) is None
+    if language == "zh-TW":
+        simplified_only = set("这时为么开启里与还体来说请问过于从将会后发现处")
+        return not any(char in simplified_only for char in text)
+    return True
+
+
 def _gather_material(candidate_poi: str | None, description: str) -> tuple[str, str]:
     """讲解素材：优先精确取 candidate_poi 整 POI 资料；否则向量检索 description 找相关 POI。
 
@@ -169,10 +278,13 @@ def _gather_material(candidate_poi: str | None, description: str) -> tuple[str, 
 
 def _gather_material_fast(poi: str, *, language: str, interests: list[str] | None) -> tuple[str, str]:
     """Ask 用的轻量本地取料：精确 POI / 预设话术，不跑向量检索（避免拖慢 web-first）。"""
+    preset = build_preset_narration(poi, language=language, interests=interests)
+    if language in {"en", "pt"} and preset and preset.get("text"):
+        name = str(preset.get("poi_name") or poi)
+        return name, str(preset["text"])
     got = get_poi_material(poi)
     if got and got[1]:
         return got
-    preset = build_preset_narration(poi, language=language, interests=interests)
     if preset and preset.get("text"):
         name = str(preset.get("poi_name") or poi)
         return name, str(preset["text"])
@@ -279,6 +391,8 @@ def _question_tokens(question: str) -> list[str]:
             tokens.append(part)
     if _PURPOSE_INTENT.search(q):
         tokens.extend(_PURPOSE_HINTS)
+    if _TEMPORAL_INTENT.search(q):
+        tokens.extend(_TEMPORAL_HINTS)
     seen: set[str] = set()
     out: list[str] = []
     for t in tokens:
@@ -287,6 +401,83 @@ def _question_tokens(question: str) -> list[str]:
         seen.add(t)
         out.append(t)
     return out
+
+
+def _search_language(language: str) -> str:
+    if language.startswith("zh"):
+        return "zh-CN"
+    return language if language in {"en", "pt"} else "en"
+
+
+def _detect_question_language(question: str) -> str:
+    text = (question or "").strip()
+    if re.search(r"[\u3400-\u9fff]", text):
+        return "zh-TW" if sum(char in _TRADITIONAL_MARKERS for char in text) >= 2 else "zh-CN"
+    words = set(re.findall(r"[a-zà-ÿ]+", text.lower()))
+    portuguese_score = len(words & _PORTUGUESE_MARKERS)
+    if re.search(r"[ãõçáéíóúâêôà]", text.lower()) or portuguese_score >= 2:
+        return "pt"
+    return "en"
+
+
+def _fallback_query_translations(question: str, input_language: str) -> dict[str, str]:
+    source = _search_language(input_language)
+    translated = {source: question.strip()}
+    for pattern, terms in _QUERY_INTENT_TERMS:
+        if pattern.search(question):
+            for language, value in terms.items():
+                translated.setdefault(language, value)
+            break
+    return translated
+
+
+def _search_query_sets(
+    query_sets: dict[str, list[str]],
+    *,
+    k: int = 2,
+    budget_s: float = 3.5,
+) -> list[dict[str, str]]:
+    """Search translated query sets concurrently while preserving language priority."""
+    ordered = [(language, queries) for language, queries in query_sets.items() if queries]
+    if not ordered:
+        return []
+    by_language: dict[str, list[dict[str, str]]] = {}
+    with ThreadPoolExecutor(max_workers=len(ordered)) as pool:
+        futures = {
+            pool.submit(
+                search_web_multi,
+                queries,
+                language=language,
+                k=k,
+                max_queries=2,
+                budget_s=min(2.5, budget_s),
+            ): language
+            for language, queries in ordered
+        }
+        try:
+            for future in as_completed(futures, timeout=budget_s):
+                language = futures[future]
+                try:
+                    hits = future.result()
+                except Exception as exc:  # noqa: BLE001
+                    logger.info("多语言检索失败（%s）：%s", language, exc)
+                    continue
+                by_language[language] = [
+                    {**hit, "search_language": language} for hit in hits
+                ]
+        except TimeoutError:
+            logger.info("多语言检索预算用尽（%.1fs）", budget_s)
+
+    results: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for language, _queries in ordered:
+        for hit in by_language.get(language, []):
+            key = str(hit.get("url") or hit.get("title") or "")
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            results.append(hit)
+    return results
 
 
 def _looks_like_refusal(text: str) -> bool:
@@ -305,7 +496,10 @@ def _material_snippet_answer(
     tokens = _question_tokens(question)
     sentences = [
         s.strip()
-        for s in re.split(r"[。！？!?\n]+", material)
+        for s in re.split(
+            r"[。！？!?]+|\n+|(?<=[.!?])\s+(?=[A-ZÀ-Þ])",
+            material,
+        )
         if s.strip()
     ]
     scored: list[tuple[int, str]] = []
@@ -345,7 +539,8 @@ def _material_snippet_answer(
                 flags=re.IGNORECASE,
             ).strip()
         )
-    snippet = "。".join(c for c in cleaned if c)
+    separator = " " if language in {"en", "pt"} else "。"
+    snippet = separator.join(c for c in cleaned if c)
     if snippet and not snippet.endswith(("。", ".", "!", "？", "?")):
         snippet += "。"
     if not snippet:
@@ -354,19 +549,69 @@ def _material_snippet_answer(
     return tmpl.format(snippet=snippet), weak
 
 
-def _web_search_queries(poi_name: str, question: str, *, limit: int = 2) -> list[str]:
+def _expanded_search_names(poi_name: str, aliases: list[str] | None = None) -> list[str]:
+    names = [poi_name, *(aliases or [])]
+    expanded: list[str] = []
+    for raw in names:
+        name = (raw or "").strip()
+        if not name:
+            continue
+        if re.search(r"\bHZMB\b", name, re.IGNORECASE):
+            expanded.extend(
+                [
+                    "Hong Kong-Zhuhai-Macau Bridge",
+                    "Hong Kong-Zhuhai-Macao Bridge",
+                    "Hong Kong-Zhuhai-Macao Bridge Macao Port",
+                ]
+            )
+        if "Hong Kong-Zhuhai-Macao Bridge" in name:
+            expanded.extend(
+                [
+                    "Hong Kong-Zhuhai-Macau Bridge",
+                    "Hong Kong-Zhuhai-Macao Bridge",
+                    name.replace("Hong Kong-Zhuhai-Macao", "Hong Kong-Zhuhai-Macau"),
+                ]
+            )
+        expanded.append(name)
+    return list(dict.fromkeys(expanded))
+
+
+def _web_search_queries(
+    poi_name: str,
+    question: str,
+    *,
+    aliases: list[str] | None = None,
+    language: str = "zh-CN",
+    limit: int = 2,
+) -> list[str]:
     """构造联网检索查询（默认最多 2 条，控延迟）。
 
     优先：``POI + 问题``；用途类追问再加 ``POI 历史/原为``；否则 POI 名本身。
     """
+    names = _expanded_search_names(poi_name, aliases)
     poi = (poi_name or "").strip()
     q = (question or "").strip()
     queries: list[str] = []
-    if poi and q:
-        queries.append(f"{poi} {q}")
+    temporal = bool(_TEMPORAL_INTENT.search(q))
+    if temporal and names:
+        suffix = {
+            "en": "built completed opened inauguration date",
+            "pt": "construção conclusão inauguração data",
+        }.get(language, "建设 建成 启用 开放 时间")
+        preferred = [
+            name
+            for name in names
+            if (language.startswith("zh")) == bool(re.search(r"[\u3400-\u9fff]", name))
+        ] or names
+        primary = preferred[0]
+        queries.extend([primary, f"{primary} {suffix}"])
+    elif poi and q:
+        same_script = language.startswith("zh") or not re.search(r"[\u3400-\u9fff]", q)
+        queries.append(f"{poi} {q}" if same_script else poi)
     if poi and _PURPOSE_INTENT.search(q):
-        queries.append(f"{poi} 历史 原为")
-    elif poi:
+        purpose_suffix = "history original use" if language == "en" else "历史 原为"
+        queries.append(f"{poi} {purpose_suffix}")
+    elif poi and not temporal:
         queries.append(poi)
     elif q:
         queries.append(q)
@@ -392,14 +637,59 @@ def _web_snippet_answer(
 ) -> str:
     if not hits:
         return _ASK_EMPTY.get(language, _ASK_EMPTY["zh-CN"])
-    body = " ".join(str(h.get("snippet") or "") for h in hits[:2]).strip()
+    target_search_language = _search_language(language)
+    annotated_hits = [hit for hit in hits if hit.get("search_language")]
+    same_language_hits = [
+        hit
+        for hit in annotated_hits
+        if _search_language(str(hit.get("search_language"))) == target_search_language
+    ]
+    if same_language_hits:
+        usable_hits = same_language_hits[:2]
+    elif annotated_hits:
+        return _ASK_EMPTY.get(language, _ASK_EMPTY["zh-CN"])
+    else:
+        usable_hits = hits[:2]
+    if language in {"en", "pt"}:
+        usable_hits = [
+            h
+            for h in usable_hits
+            if re.search(
+                r"[\u3400-\u9fff]",
+                f"{h.get('title') or ''} {h.get('snippet') or ''}",
+            )
+            is None
+        ]
+    if not usable_hits:
+        return _ASK_EMPTY.get(language, _ASK_EMPTY["zh-CN"])
+    snippets = [str(h.get("snippet") or "").strip() for h in usable_hits]
+    if _TEMPORAL_INTENT.search(question):
+        focused: list[str] = []
+        for snippet in snippets:
+            sentences = [
+                sentence.strip()
+                for sentence in re.split(r"(?<=[。！？.!?])\s+", snippet)
+                if sentence.strip()
+            ]
+            focused.extend(sentence for sentence in sentences if _TEMPORAL_FACT.search(sentence))
+        if focused:
+            snippets = focused[:3]
+    body = " ".join(snippets).strip()
     # 压成较短口语段
     body = re.sub(r"\s+", " ", body)
     if len(body) > 420:
         body = body[:420].rstrip() + "…"
-    cite = "；".join(
-        f"{h.get('title') or '资料'}（{h.get('source') or 'web'}）" for h in hits[:2]
-    )
+    source_label = {"en": "Source", "pt": "Fonte"}.get(language, "资料")
+    if language in {"en", "pt"}:
+        cite = "; ".join(
+            f"{h.get('title') or source_label} ({h.get('source') or 'web'})"
+            for h in usable_hits
+        )
+    else:
+        cite = "；".join(
+            f"{h.get('title') or source_label}（{h.get('source') or 'web'}）"
+            for h in usable_hits
+        )
     templates = {
         "zh-CN": f"关于「{poi_name}」与你的问题，结合公开资料可以这样理解：{body} 参考：{cite}。",
         "zh-TW": f"關於「{poi_name}」與你的問題，結合公開資料可以這樣理解：{body} 參考：{cite}。",
@@ -640,7 +930,8 @@ def ask(
     """就当前 POI 追问。
 
     **Web-first**（本地 KB 偏稀）：默认先短超时联网检索公开百科并合成答案；
-    本地仅轻量取料作点缀/兜底，不挡联网。``enhance=true`` 时才调用 guide agent。
+    本地仅轻量取料作点缀/兜底，不挡联网。跨语言提问会自动调用 guide agent，
+    将多语言检索材料统一合成为个人中心设定的语言；``enhance=true`` 可强制深度回答。
     """
     t0 = time.perf_counter()
     # 轻量本地（无向量检索）；不拖慢 web-first
@@ -648,6 +939,8 @@ def ask(
         req.poi, language=req.language, interests=req.interests
     )
     display_name = poi_name or req.poi
+    input_language = _detect_question_language(req.question)
+    output_search_language = _search_language(req.language)
     # web-first：本地无料仍可用 POI 名去搜；仅 web=false 且无料时 404
     if not material and not web:
         raise HTTPException(status_code=404, detail=f"找不到 POI 资料：{req.poi}")
@@ -665,13 +958,55 @@ def ask(
     error = None
     web_hits: list[dict[str, str]] = []
     used_web = False
+    agent_attempted = False
+    cross_language = _search_language(input_language) != output_search_language
 
     # ── 主路径：联网检索（短预算并行；agent 仅 enhance）──
     if web:
-        queries = _web_search_queries(display_name, req.question, limit=2)
-        web_hits = search_web_multi(
-            queries, language=req.language, k=2, max_queries=2, budget_s=2.5
+        relevance_names = poi_names_for(req.poi)
+        expanded_names = _expanded_search_names(display_name, relevance_names)
+        names_by_language = poi_names_by_language(req.poi)
+        translated_questions = _fallback_query_translations(
+            req.question, input_language
         )
+        if len(translated_questions) < 3 and settings.guide_agent_enabled:
+            translated_questions.update(
+                guide_agent.translate_search_queries(
+                    req.question,
+                    input_language=input_language,
+                )
+            )
+        translated_questions[_search_language(input_language)] = req.question
+
+        language_order = list(
+            dict.fromkeys(
+                [
+                    output_search_language,
+                    _search_language(input_language),
+                    "zh-CN",
+                    "en",
+                    "pt",
+                ]
+            )
+        )
+        query_sets: dict[str, list[str]] = {}
+        for search_language in language_order:
+            place_name = names_by_language.get(search_language) or display_name
+            query_sets[search_language] = _web_search_queries(
+                place_name,
+                translated_questions.get(search_language, ""),
+                aliases=relevance_names,
+                language=search_language,
+                limit=2,
+            )
+        raw_web_hits = _search_query_sets(query_sets, k=2, budget_s=3.5)
+        web_hits = filter_relevant_hits(expanded_names, raw_web_hits)
+        if _TEMPORAL_INTENT.search(req.question):
+            web_hits = [
+                hit
+                for hit in web_hits
+                if _TEMPORAL_FACT.search(str(hit.get("snippet") or ""))
+            ]
         if web_hits:
             used_web = True
             web_material = format_web_material(web_hits, language=req.language)
@@ -686,37 +1021,93 @@ def ask(
                 poi_name=display_name,
             )
 
-            if enhance and settings.guide_agent_enabled:
-                expl = guide_agent.answer(
-                    display_name,
-                    req.question,
-                    material=combined,
-                    language=req.language,
-                    interests=req.interests,
-                )
-                if (
-                    expl
-                    and expl.text.strip()
-                    and not _looks_like_refusal(expl.text)
-                ):
-                    answer_text = expl.text
-                    confidence = max(float(expl.confidence or 0.7), 0.7)
-                    ai_generated = True
-                    source = "agent+web"
+            source_languages = {
+                _search_language(str(hit.get("search_language") or req.language))
+                for hit in web_hits
+            }
+            needs_synthesis = (
+                enhance
+                or cross_language
+                or req.language == "zh-TW"
+                or any(language != output_search_language for language in source_languages)
+            )
+            if needs_synthesis:
+                if settings.guide_agent_enabled:
+                    agent_attempted = True
+                    expl = guide_agent.answer(
+                        display_name,
+                        req.question,
+                        material=combined,
+                        language=req.language,
+                        input_language=input_language,
+                        interests=req.interests,
+                    )
+                    if (
+                        expl
+                        and expl.text.strip()
+                        and not _looks_like_refusal(expl.text)
+                        and _guide_language_matches(expl, req.language)
+                    ):
+                        answer_text = expl.text
+                        confidence = max(float(expl.confidence or 0.7), 0.7)
+                        ai_generated = True
+                        source = "agent+web"
+                    else:
+                        has_target_web = any(
+                            _search_language(str(hit.get("search_language") or ""))
+                            == output_search_language
+                            for hit in web_hits
+                        )
+                        language_safe_web = (
+                            not cross_language
+                            and req.language != "zh-TW"
+                            and has_target_web
+                        )
+                        if language_safe_web and not _looks_like_refusal(web_answer):
+                            answer_text = web_answer
+                            source = "web"
+                            confidence = 0.65
+                        if expl is None:
+                            error = "guide agent unavailable; target-language fallback used"
+                        elif _looks_like_refusal(expl.text):
+                            error = "guide agent refused; target-language fallback used"
+                        else:
+                            error = "guide agent language mismatch; target-language fallback used"
                 else:
-                    answer_text = web_answer
-                    source = "web"
-                    confidence = 0.65
-                    if expl is None:
-                        error = "guide agent unavailable; served web snippets"
-                    elif _looks_like_refusal(expl.text):
-                        error = "guide agent refused; served web snippets"
+                    error = "guide agent disabled; target-language fallback used"
             else:
                 answer_text = web_answer
                 source = "web"
                 confidence = 0.65
 
     # ── 兜底：强相关本地摘录 / enhance 仅本地 / 空答案（不甩「手头没有」）──
+    if not (answer_text or "").strip():
+        if (
+            material.strip()
+            and settings.guide_agent_enabled
+            and (enhance or cross_language)
+            and not agent_attempted
+        ):
+            agent_attempted = True
+            expl = guide_agent.answer(
+                display_name,
+                req.question,
+                material=material,
+                language=req.language,
+                input_language=input_language,
+                interests=req.interests,
+            )
+            if (
+                expl
+                and expl.text.strip()
+                and not _looks_like_refusal(expl.text)
+                and _guide_language_matches(expl, req.language)
+            ):
+                answer_text = expl.text
+                confidence = max(float(expl.confidence or 0.7), 0.7)
+                ai_generated = True
+                source = "agent"
+
     if not (answer_text or "").strip():
         if not weak and (local_answer or "").strip():
             answer_text = local_answer
@@ -728,12 +1119,14 @@ def ask(
                     req.question,
                     material=material,
                     language=req.language,
+                    input_language=input_language,
                     interests=req.interests,
                 )
                 if (
                     expl
                     and expl.text.strip()
                     and not _looks_like_refusal(expl.text)
+                    and _guide_language_matches(expl, req.language)
                 ):
                     answer_text = expl.text
                     confidence = expl.confidence
@@ -752,6 +1145,17 @@ def ask(
         confidence = min(confidence, 0.3)
         source = "empty"
 
+    if req.language in {"en", "pt"} and re.search(r"[\u3400-\u9fff]", answer_text):
+        if local_answer and not re.search(r"[\u3400-\u9fff]", local_answer):
+            answer_text = local_answer
+            source = "rules"
+            confidence = 0.55
+        else:
+            answer_text = _ASK_EMPTY[req.language]
+            source = "empty"
+            confidence = 0.25
+        error = "language mismatch in upstream answer; served language-safe fallback"
+
     out_text, review = _apply_review(answer_text, path="ask")
     latency_ms = int((time.perf_counter() - t0) * 1000)
     record_trace(
@@ -768,6 +1172,8 @@ def ask(
             "weak_local": weak,
             "web_hits": len(web_hits),
             "strategy": "web_first",
+            "input_language": input_language,
+            "output_language": req.language,
         },
     )
     return {
@@ -775,6 +1181,7 @@ def ask(
         "question": req.question,
         "text": out_text,
         "language": req.language,
+        "input_language": input_language,
         "source": source,
         "confidence": confidence,
         "ai_generated": ai_generated,
@@ -876,6 +1283,9 @@ def generate(
         travel_type=req.travel_type,
         next_stop=req.next_stop,
     )
+    if expl is not None and not _guide_language_matches(expl, req.language):
+        logger.info("guide agent language mismatch; served language-safe preset")
+        expl = None
     latency_ms = int((time.perf_counter() - t0) * 1000)
 
     if expl is None or not expl.text.strip():
@@ -952,7 +1362,7 @@ def generate(
 
 @router.post("/tts", response_model=TTSResponse, dependencies=[Depends(rate_limit("expensive"))])
 def tts(req: TTSRequest) -> TTSResponse:
-    """Text-to-speech with fixed four-language voices and private OSS delivery."""
+    """Text-to-speech with fixed voices and OSS or development-local delivery."""
     try:
         result = synthesize_to_oss(req.text, req.language)
     except TTSUnavailableError as exc:
@@ -975,4 +1385,18 @@ def tts(req: TTSRequest) -> TTSResponse:
         content_type=str(result["content_type"]),
         language=req.language,
         voice=str(result["voice"]),
+    )
+
+
+@router.get("/tts/audio/{filename}", response_model=bytes, response_class=FileResponse)
+def tts_audio(filename: str) -> FileResponse:
+    """Serve a temporary MP3 generated during local development."""
+    path = local_audio_path(filename)
+    if path is None:
+        raise HTTPException(status_code=404, detail="Audio not found or expired")
+    return FileResponse(
+        path,
+        media_type="audio/mpeg",
+        filename="macau-storywalk-guide.mp3",
+        headers={"Cache-Control": "private, max-age=3600"},
     )

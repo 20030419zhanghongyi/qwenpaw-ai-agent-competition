@@ -6,8 +6,25 @@ import { ErrorState, LoadingState } from "@/components/common/States";
 import { PostcardActions } from "@/components/postcard/PostcardActions";
 import { photoStyleLabelKey } from "@/components/postcard/photoStyles";
 import { t } from "@/i18n";
+import { rememberLastTripId } from "@/lib/lastTrip";
+import { localizedPoiIdName } from "@/lib/poiLocalization";
 import { useWalk } from "@/state/WalkContext";
 import type { Postcard } from "@/types/postcards";
+
+const HAN_TEXT = /[\u3400-\u9fff]/;
+
+function localizedLegacyValue(
+  value: string | null | undefined,
+  language: "zh-CN" | "zh-TW" | "en" | "pt",
+  fallback: string,
+) {
+  if (!value) return fallback;
+  return language === "en" || language === "pt"
+    ? HAN_TEXT.test(value)
+      ? fallback
+      : value
+    : value;
+}
 
 export function PostcardViewPage() {
   const { postcardId = "" } = useParams();
@@ -23,6 +40,10 @@ export function PostcardViewPage() {
   );
   const [loading, setLoading] = useState(!postcard);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    rememberLastTripId(tripId);
+  }, [tripId]);
 
   useEffect(() => {
     if (postcard || !postcardId) return;
@@ -61,6 +82,46 @@ export function PostcardViewPage() {
   const galleryHref = tripId
     ? `/postcards?trip=${encodeURIComponent(tripId)}`
     : "/postcards";
+  const localizedPoiName = postcard
+    ? localizedPoiIdName(
+        postcard.poi_id,
+        language,
+        language === "en"
+          ? "Macau stop"
+          : language === "pt"
+            ? "Local de Macau"
+            : postcard.poi_name,
+      )
+    : "";
+  const routeFallback = language === "pt" ? "Itinerário de Macau" : "Macau itinerary";
+  const displayedRouteName = postcard
+    ? localizedLegacyValue(postcard.route_name, language, routeFallback)
+    : "";
+  const displayedTaskLabel = postcard
+    ? localizedLegacyValue(
+        postcard.task_label,
+        language,
+        language === "pt"
+          ? `Paragem ${postcard.stop_order + 1} · ${routeFallback}`
+          : `Stop ${postcard.stop_order + 1} · ${routeFallback}`,
+      )
+    : "";
+  const displayedGeoLabel = postcard
+    ? localizedLegacyValue(
+        postcard.geo_label,
+        language,
+        language === "pt" ? "Macau" : "Macau",
+      )
+    : "";
+  const displayedCaption = postcard
+    ? localizedLegacyValue(
+        postcard.caption,
+        language,
+        language === "pt"
+          ? `Um momento de Macau guardado em ${localizedPoiName}.`
+          : `A Macau moment, kept at ${localizedPoiName}.`,
+      )
+    : "";
 
   function goCreateForPoi(poiId: string) {
     if (!tripId) {
@@ -91,7 +152,7 @@ export function PostcardViewPage() {
           {t(language, "postcardEyebrow")}
         </p>
         <h1 className="mb-6 font-display text-3xl text-ink">
-          {postcard?.poi_name ?? t(language, "postcardViewTitle")}
+          {localizedPoiName || t(language, "postcardViewTitle")}
         </h1>
 
         <AzulejoBand className="mb-8" />
@@ -107,7 +168,7 @@ export function PostcardViewPage() {
             <div className="overflow-hidden rounded-[1.75rem] border border-line bg-card shadow-[var(--shadow-lift)]">
               <img
                 src={postcardImageSrc(postcard.image_url)}
-                alt={postcard.poi_name}
+                alt={localizedPoiName}
                 className="w-full bg-paper-warm"
               />
             </div>
@@ -122,14 +183,6 @@ export function PostcardViewPage() {
                 {postcard.photo_scrubbed ? (
                   <span className="rounded-full bg-paper-warm px-2.5 py-0.5 text-[10px] text-ink-soft">
                     {t(language, "postcardScrubbed")}
-                  </span>
-                ) : postcard.scene_source === "ai" || postcard.scene_source === "library" ? (
-                  <span className="rounded-full bg-sage-deep/10 px-2.5 py-0.5 text-[10px] font-semibold text-sage-deep">
-                    {t(language, "postcardAiSceneBadge")}
-                  </span>
-                ) : postcard.has_user_photo === false ? (
-                  <span className="rounded-full bg-paper-warm px-2.5 py-0.5 text-[10px] text-ink-soft">
-                    {t(language, "postcardNoPhotoBadge")}
                   </span>
                 ) : null}
                 {postcard.scene_source === "ai_edit" ? (
@@ -147,13 +200,13 @@ export function PostcardViewPage() {
                   </span>
                 ) : null}
               </div>
-              {postcard.task_label ? (
+              {displayedTaskLabel ? (
                 <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-sage-deep">
-                  {postcard.task_label}
+                  {displayedTaskLabel}
                 </p>
               ) : null}
               <p className="mt-3 font-display text-xl leading-snug text-ink">
-                {postcard.caption}
+                {displayedCaption}
               </p>
               <dl className="mt-4 space-y-2 text-xs text-ink-soft">
                 <div className="flex gap-2">
@@ -165,20 +218,20 @@ export function PostcardViewPage() {
                       `${new Date(postcard.created_at).toLocaleString(language)} · Macau`}
                   </dd>
                 </div>
-                {postcard.geo_label ? (
+                {displayedGeoLabel ? (
                   <div className="flex gap-2">
                     <dt className="shrink-0 font-medium text-ink/70">
                       {t(language, "postcardStampGeo")}
                     </dt>
-                    <dd>{postcard.geo_label}</dd>
+                    <dd>{displayedGeoLabel}</dd>
                   </div>
                 ) : null}
-                {postcard.route_name ? (
+                {displayedRouteName ? (
                   <div className="flex gap-2">
                     <dt className="shrink-0 font-medium text-ink/70">
                       {t(language, "postcardStampRoute")}
                     </dt>
-                    <dd>{postcard.route_name}</dd>
+                    <dd>{displayedRouteName}</dd>
                   </div>
                 ) : null}
               </dl>

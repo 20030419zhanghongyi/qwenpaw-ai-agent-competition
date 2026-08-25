@@ -30,10 +30,10 @@ _INTEREST_SECTION: dict[str, str] = {
 }
 
 _OPENERS = {
-    "zh-CN": "我们现在来到{name}。",
-    "zh-TW": "我們現在來到{name}。",
-    "en": "We've arrived at {name}.",
-    "pt": "Chegámos a {name}.",
+    "zh-CN": "到了，这里就是{name}。",
+    "zh-TW": "到了，這裡就是{name}。",
+    "en": "Here we are at {name}.",
+    "pt": "Aqui estamos, em {name}.",
 }
 
 _FOCUS_HINTS = {
@@ -177,24 +177,24 @@ _CLAUSE_SPLIT = re.compile(r"[；;。！!？?\n]+")
 _SOFT_SPLIT = re.compile(r"[，、,]+")
 
 _HOOK_BRIDGE = {
-    "zh-CN": "先停一下，感受脚下的地面与四周的立面。",
-    "zh-TW": "先停一下，感受腳下的地面與四周的立面。",
-    "en": "Pause for a moment — feel the ground underfoot and the façades around you.",
-    "pt": "Pare um momento — sinta o chão sob os pés e as fachadas em volta.",
+    "zh-CN": "先别急着往前走，抬头看看它和周围街道连在一起的样子。",
+    "zh-TW": "先別急著往前走，抬頭看看它和周圍街道連在一起的樣子。",
+    "en": "Before we get into the story, take a second to look up and take in the whole scene.",
+    "pt": "Antes de começarmos a história, olhe para cima e observe o conjunto por um instante.",
 }
 
 _WHY_BRIDGE = {
-    "zh-CN": "它在澳门城市记忆里的位置，可以这样理解：",
-    "zh-TW": "它在澳門城市記憶裡的位置，可以這樣理解：",
-    "en": "In Macau’s urban memory, it sits like this:",
-    "pt": "Na memória urbana de Macau, situa-se assim:",
+    "zh-CN": "它为什么值得专程停下来？",
+    "zh-TW": "它為什麼值得專程停下來？",
+    "en": "So, why is this place worth stopping for?",
+    "pt": "Então, porque vale a pena parar aqui?",
 }
 
 _STORY_PAST = {
-    "zh-CN": "过去，",
-    "zh-TW": "過去，",
-    "en": "In the past, ",
-    "pt": "No passado, ",
+    "zh-CN": "故事要从这里说起：",
+    "zh-TW": "故事要從這裡說起：",
+    "en": "Here’s the short version: ",
+    "pt": "A história, em poucas palavras, começa assim: ",
 }
 
 _STORY_TODAY = {
@@ -205,18 +205,85 @@ _STORY_TODAY = {
 }
 
 _LOCAL_BRIDGE = {
-    "zh-CN": "本地人与过客共享这片开放空间：",
-    "zh-TW": "本地人與過客共享這片開放空間：",
-    "en": "Locals and visitors share this open space:",
-    "pt": "Locais e visitantes partilham este espaço aberto:",
+    "zh-CN": "这里不只是一个供人拍照的地标，还有一段当地人熟悉的小故事：",
+    "zh-TW": "這裡不只是一個供人拍照的地標，還有一段當地人熟悉的小故事：",
+    "en": "And there’s a local detail that makes the place feel a little more personal:",
+    "pt": "E há um pormenor local que torna este lugar um pouco mais próximo:",
 }
 
 _INTERACTIVE_EXTRA = {
-    "zh-CN": "把眼前最打动你的一处细节，用一句话记下来，离开后也还能想起这里的气质。",
-    "zh-TW": "把眼前最打動你的一處細節，用一句話記下來，離開後也還能想起這裡的氣質。",
-    "en": "Jot one detail that stays with you — a single sentence you’ll still remember later.",
-    "pt": "Anote um detalhe que fique consigo — uma frase que ainda lembre depois.",
+    "zh-CN": "离开前再安静听几秒周围的声音，也许会记住一个照片里没有的澳门。",
+    "zh-TW": "離開前再安靜聽幾秒周圍的聲音，也許會記住一個照片裡沒有的澳門。",
+    "en": "Before moving on, listen to the sounds around you for a few seconds — that often stays with you longer than a photograph.",
+    "pt": "Antes de seguir, ouça os sons à sua volta durante alguns segundos — muitas vezes ficam na memória mais tempo do que uma fotografia.",
 }
+
+_FOREIGN_SOURCE_FALLBACK = {
+    "en": {
+        "intro": (
+            "This landmark makes more sense when you see it as part of the neighbourhood, "
+            "rather than as a monument standing on its own."
+        ),
+        "history": (
+            "Its story is easiest to read in layers: what was built here, what changed over time, "
+            "and what people chose to preserve."
+        ),
+        "architecture": (
+            "First, take in the overall silhouette; Next, look closely at the materials and "
+            "openings; Finally, notice how the details meet the street around you"
+        ),
+        "story": (
+            "The place is still part of everyday Macau, shared by residents and visitors rather "
+            "than kept apart as a backdrop."
+        ),
+        "observation": (
+            "Step back for the full view; Move closer for one detail; Follow all on-site access "
+            "and conservation signs"
+        ),
+    },
+    "pt": {
+        "intro": (
+            "Este monumento compreende-se melhor como parte do bairro, e não como uma peça "
+            "isolada das ruas que o rodeiam."
+        ),
+        "history": (
+            "A sua história lê-se por camadas: o que aqui foi construído, o que mudou ao longo do "
+            "tempo e aquilo que se decidiu preservar."
+        ),
+        "architecture": (
+            "Comece pela silhueta geral; Depois, aproxime-se dos materiais e das aberturas; Por "
+            "fim, repare na forma como os pormenores dialogam com a rua"
+        ),
+        "story": (
+            "O lugar continua a fazer parte do quotidiano de Macau, partilhado por residentes e "
+            "visitantes, e não apenas como cenário."
+        ),
+        "observation": (
+            "Afaste-se para ver o conjunto; Aproxime-se para observar um pormenor; Respeite toda a "
+            "sinalização de acesso e conservação"
+        ),
+    },
+}
+
+_FOREIGN_GENERIC_NAME = {
+    "en": "this Macau landmark",
+    "pt": "este monumento de Macau",
+}
+
+_THEME_LABELS = {
+    "en": {
+        "历史": "History", "建筑": "Architecture", "摄影": "Photography",
+        "文化": "Culture", "美食": "Food", "亲子": "Family",
+    },
+    "pt": {
+        "历史": "História", "建筑": "Arquitetura", "摄影": "Fotografia",
+        "文化": "Cultura", "美食": "Gastronomia", "亲子": "Família",
+    },
+}
+
+
+def _has_han(text: str | None) -> bool:
+    return bool(re.search(r"[\u3400-\u9fff]", text or ""))
 
 
 def _closer(language: str, next_stop: str | None) -> str:
@@ -261,6 +328,31 @@ def _find_poi(query: str) -> dict | None:
         if nz and (name in nz or nz in name):
             return p
     return None
+
+
+def poi_names_for(query: str) -> list[str]:
+    """Return every canonical language name available for relevance checks."""
+    poi = _find_poi(query)
+    if not poi:
+        return [query.strip()] if query and query.strip() else []
+    names: list[str] = []
+    for key in ("name_zh", "name_en", "name_pt", "alias"):
+        value = str(poi.get(key) or "").strip()
+        if value and value not in names:
+            names.append(value)
+    return names
+
+
+def poi_names_by_language(query: str) -> dict[str, str]:
+    """Return canonical display/search names keyed by supported language."""
+    poi = _find_poi(query)
+    if not poi:
+        value = (query or "").strip()
+        return {"zh-CN": value, "zh-TW": value, "en": value, "pt": value} if value else {}
+    zh = str(poi.get("name_zh") or poi.get("name_en") or query).strip()
+    en = str(poi.get("name_en") or zh).strip()
+    pt = str(poi.get("name_pt") or en).strip()
+    return {"zh-CN": zh, "zh-TW": zh, "en": en, "pt": pt}
 
 
 def _join_parts(parts: list[str], lang: str) -> str:
@@ -324,6 +416,8 @@ def _dedupe_keep_order(items: list[str]) -> list[str]:
 def _compose_hook(name: str, intro: str, *, lang: str) -> str:
     opener = _OPENERS[lang].format(name=name)
     bridge = _HOOK_BRIDGE.get(lang, _HOOK_BRIDGE["zh-CN"])
+    if lang in {"en", "pt"}:
+        return _join_parts([opener, bridge], lang)
     lead = _first_sentence(intro, max_len=140) or name
     # Avoid repeating the opener's name-only feel when intro already names the place
     return _join_parts([opener, bridge, lead], lang)
@@ -348,7 +442,7 @@ def _compose_historical_story(
 ) -> str:
     """Past → (light) transformation → today, only from available fields."""
     past = (history or "").strip()
-    today_src = (story or "").strip() or (intro or "").strip()
+    today_src = "" if lang in {"en", "pt"} else (story or "").strip() or (intro or "").strip()
     if not past and not today_src:
         return ""
 
@@ -494,6 +588,15 @@ def _punctuate_join(parts: list[str], lang: str) -> str:
     return out
 
 
+def _spoken_observation(item: ObservationItem, lang: str) -> str:
+    parts = [item.observation.strip(), item.explanation.strip()]
+    if lang in {"en", "pt"}:
+        return " ".join(
+            f"{part.rstrip('.!?')}." for part in parts if part
+        )
+    return _punctuate_join(parts, lang)
+
+
 def _build_observations(
     architecture: str,
     observation_tips: str,
@@ -562,10 +665,11 @@ def _interactive_for(
 def _subtitle_for(poi: dict, lang: str, intro: str) -> str:
     themes = poi.get("theme") or []
     if isinstance(themes, list) and themes:
-        label = " · ".join(str(t) for t in themes[:3] if t)
-        if lang in {"en", "pt"} and poi.get("name_en"):
+        labels = _THEME_LABELS.get(lang, {})
+        translated = [labels.get(str(t), "") for t in themes[:3] if t]
+        label = " · ".join(value for value in translated if value)
+        if label:
             return label
-        return label
     return _first_sentence(intro, max_len=48)
 
 
@@ -652,12 +756,17 @@ def build_preset_narration(
         return None
 
     lang = language if language in _OPENERS else "zh-CN"
-    name = (
-        (poi.get("name_en") if lang in {"en", "pt"} and poi.get("name_en") else None)
-        or poi.get("name_zh")
-        or poi.get("name_en")
-        or poi_query
-    )
+    if lang == "pt":
+        name = poi.get("name_pt") or poi.get("name_en")
+    elif lang == "en":
+        name = poi.get("name_en")
+    else:
+        name = poi.get("name_zh") or poi.get("name_en")
+    name = name or poi_query
+    if lang in {"en", "pt"} and (
+        _has_han(str(name)) or str(name).lower().startswith("poi_")
+    ):
+        name = _FOREIGN_GENERIC_NAME[lang]
 
     interests = [i for i in (interests or []) if i]
     primary = interests[0] if interests else None
@@ -669,6 +778,28 @@ def build_preset_narration(
     architecture = str(poi.get("architecture") or "").strip()
     observation = str(poi.get("observation_tips") or "").strip()
     story = str(poi.get("story") or "").strip()
+
+    localized_suffix = {"en": "en", "pt": "pt"}.get(lang)
+    if localized_suffix:
+        intro = str(poi.get(f"intro_{localized_suffix}") or intro).strip()
+        history = str(poi.get(f"history_{localized_suffix}") or history).strip()
+        architecture = str(poi.get(f"architecture_{localized_suffix}") or architecture).strip()
+        observation = str(poi.get(f"observation_tips_{localized_suffix}") or observation).strip()
+        story = str(poi.get(f"story_{localized_suffix}") or story).strip()
+
+    # Canonical POI notes are primarily Chinese. For English and Portuguese,
+    # never splice those notes into an otherwise translated preset. The guide
+    # agent can translate the full source when enhancement is enabled; this is
+    # the fast, language-pure fallback when that agent is unavailable.
+    if lang in _FOREIGN_SOURCE_FALLBACK and any(
+        _has_han(value) for value in (intro, history, architecture, observation, story)
+    ):
+        fallback = _FOREIGN_SOURCE_FALLBACK[lang]
+        intro = fallback["intro"]
+        history = fallback["history"]
+        architecture = fallback["architecture"]
+        observation = fallback["observation"]
+        story = fallback["story"]
 
     # 历史段：完整 history；若缺失则用 architecture 中的沿革信息作弱补充（仍不编造）
     history_body = history
@@ -728,6 +859,9 @@ def build_preset_narration(
     elif not str(next_stop).strip():
         next_loc = ""
         next_reason = _NEXT_REASON_END.get(lang, _NEXT_REASON_END["zh-CN"])
+    elif lang in {"en", "pt"} and _has_han(str(next_stop)):
+        next_loc = ""
+        next_reason = ""
     else:
         next_loc = str(next_stop).strip()
         next_reason = _NEXT_REASON.get(lang, _NEXT_REASON["zh-CN"])
@@ -740,16 +874,15 @@ def build_preset_narration(
     )
 
     observe_audio = _join_parts(
-        [
-            _join_parts([o.observation, o.explanation], lang)
-            for o in observations
-        ],
+        [_spoken_observation(o, lang) for o in observations],
         lang,
     )
     next_audio = ""
     if next_exploration.location:
         next_audio = _closer(lang, next_exploration.location)
-    elif next_stop is not None:
+    elif next_stop is not None and not (
+        lang in {"en", "pt"} and _has_han(str(next_stop))
+    ):
         next_audio = _closer(lang, next_stop)
 
     audio_parts = [

@@ -3,6 +3,7 @@ import { postcardImageSrc } from "@/api/postcards";
 import { t } from "@/i18n";
 import type { LanguageCode } from "@/types";
 import { photoStyleLabelKey } from "@/components/postcard/photoStyles";
+import { localizedPoiName } from "@/lib/poiLocalization";
 
 export function PostcardCard({
   postcard,
@@ -16,6 +17,7 @@ export function PostcardCard({
   compact?: boolean;
 }) {
   const src = postcardImageSrc(postcard.image_url);
+  const poiName = localizedPoiName(postcard, language);
   const metaBits = [
     postcard.task_label,
     postcard.timestamp_label,
@@ -43,14 +45,14 @@ export function PostcardCard({
         >
           <img
             src={src}
-            alt={postcard.poi_name}
+            alt={poiName}
             className="h-full w-full object-cover"
             loading="lazy"
           />
         </div>
         <div className="px-4 py-3">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="font-display text-lg text-ink">{postcard.poi_name}</p>
+            <p className="font-display text-lg text-ink">{poiName}</p>
             {postcard.ai_generated ? (
               <span className="rounded-full bg-sage-deep/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sage-deep">
                 {t(language, "postcardAiBadge")}

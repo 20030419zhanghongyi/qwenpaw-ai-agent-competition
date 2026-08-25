@@ -111,7 +111,7 @@ def test_tts_rejects_unsupported_language_and_reports_unavailable(monkeypatch):
 def test_tts_uses_qwenpaw_tool_before_direct_provider(monkeypatch):
     monkeypatch.setattr(guide_tts.settings, "qwenpaw_tts_enabled", True)
     monkeypatch.setattr(guide_tts.settings, "qwenpaw_tts_direct_fallback_enabled", False)
-    monkeypatch.setattr(guide_tts, "_require_oss_config", lambda: None)
+    monkeypatch.setattr(guide_tts, "_has_oss_config", lambda: True)
     monkeypatch.setattr(guide_tts, "upload_audio", lambda *_args, **_kwargs: ("https://oss.example/qwenpaw.mp3", "tts/qwenpaw.mp3"))
     calls: list[tuple[str, str]] = []
     monkeypatch.setattr(
@@ -125,6 +125,38 @@ def test_tts_uses_qwenpaw_tool_before_direct_provider(monkeypatch):
     assert calls == [("hello", "en")]
     assert result["audio_url"] == "https://oss.example/qwenpaw.mp3"
     assert result["voice"] == "Cherry"
+
+
+def test_tts_uses_temporary_local_delivery_without_oss_in_dev(monkeypatch, tmp_path):
+    monkeypatch.setattr(guide_tts.settings, "app_env", "dev")
+    monkeypatch.setattr(guide_tts, "_LOCAL_AUDIO_DIR", tmp_path)
+    monkeypatch.setattr(guide_tts, "_has_oss_config", lambda: False)
+    monkeypatch.setattr(guide_tts, "synthesize_audio", lambda *_args: (b"fake-mp3", "Cherry"))
+
+    result = guide_tts.synthesize_to_oss("hello", "en")
+
+    assert str(result["audio_url"]).startswith("/api/v1/guide/tts/audio/")
+    filename = str(result["object_key"])
+    assert guide_tts.local_audio_path(filename) == tmp_path / filename
+    assert (tmp_path / filename).read_bytes() == b"fake-mp3"
+
+
+def test_tts_local_audio_endpoint_rejects_invalid_or_missing_tokens(monkeypatch, tmp_path):
+    monkeypatch.setattr(guide_tts, "_LOCAL_AUDIO_DIR", tmp_path)
+
+    assert client.get("/api/v1/guide/tts/audio/../secret.mp3").status_code == 404
+    assert client.get("/api/v1/guide/tts/audio/not-a-token.mp3").status_code == 404
+
+
+def test_tts_local_audio_endpoint_serves_generated_mp3(monkeypatch, tmp_path):
+    monkeypatch.setattr(guide_tts, "_LOCAL_AUDIO_DIR", tmp_path)
+    audio_url, _ = guide_tts.store_local_audio(b"fake-mp3")
+
+    response = client.get(audio_url)
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "audio/mpeg"
+    assert response.content == b"fake-mp3"
 
 
 def test_intent_rate_limit_returns_retry_after(monkeypatch):

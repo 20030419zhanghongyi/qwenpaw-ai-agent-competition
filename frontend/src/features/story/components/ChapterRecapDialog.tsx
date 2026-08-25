@@ -1,4 +1,5 @@
 import type { StoryNodeOverview, StoryReward } from "@/types/stories";
+import { useStoryMessages } from "../storyI18n";
 
 interface ChapterRecapDialogProps {
   node: StoryNodeOverview | null;
@@ -15,6 +16,7 @@ export function ChapterRecapDialog({
   skipped = false,
   onClose,
 }: ChapterRecapDialogProps) {
+  const st = useStoryMessages();
   if (!node) return null;
 
   return (
@@ -32,7 +34,7 @@ export function ChapterRecapDialog({
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ochre">
-              章节回顾{node.story_time ? ` · ${node.story_time}` : ""}
+              {st("chapterRecap")}{node.story_time ? ` · ${node.story_time}` : ""}
             </p>
             <h2
               id="chapter-recap-title"
@@ -45,14 +47,14 @@ export function ChapterRecapDialog({
             )}
           </div>
           <span className="shrink-0 rounded-full border border-line bg-card px-3 py-1 text-xs text-ink-soft">
-            {skipped ? "谜题已跳过" : "章节已完成"}
+            {skipped ? st("puzzleSkipped") : st("chapterDone")}
           </span>
         </div>
 
         {reward ? (
           <div className="mt-4 rounded-2xl border border-ochre/25 bg-ochre/5 p-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ochre">
-              本章收获
+              {st("chapterRewards")}
             </p>
             <p className="mt-1 text-base font-medium text-ink">
               {reward.name ?? reward.id}
@@ -66,20 +68,20 @@ export function ChapterRecapDialog({
         ) : (
           <p className="mt-4 text-base leading-7 text-ink-soft">
             {skipped
-              ? "本章谜题已跳过，故事进度和服务端奖励记录仍然保留。"
-              : "本章完成状态已经由服务端保存。"}
+              ? st("skippedRecapBody")
+              : st("completedRecapBody")}
           </p>
         )}
 
         <p className="mt-3 text-sm leading-6 text-ink-soft">
-          完整剧情和知识卡不会由前端伪造重放；这里仅展示当前会话保存的完成状态与奖励材料。
+          {st("recapIntegrity")}
         </p>
         <button
           type="button"
           onClick={onClose}
           className="mt-5 min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper"
         >
-          关闭回顾
+          {st("closeRecap")}
         </button>
       </section>
     </div>

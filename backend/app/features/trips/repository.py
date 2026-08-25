@@ -9,6 +9,9 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.db.models import Checkin as CheckinRecord
 from app.db.models import Postcard as PostcardRecord
+from app.db.models import MemoirPhoto as MemoirPhotoRecord
+from app.db.models import MemoirShare as MemoirShareRecord
+from app.db.models import TravelMemoir as TravelMemoirRecord
 from app.db.models import Trip as TripRecord
 from app.db.models import TripStop as TripStopRecord
 from app.db.models import User as UserRecord
@@ -157,6 +160,29 @@ class SqlAlchemyTripRepository:
         if not trip_ids:
             return
         with self._session_factory() as session:
+            memoir_ids = list(
+                session.scalars(
+                    select(TravelMemoirRecord.id).where(
+                        TravelMemoirRecord.trip_id.in_(trip_ids)
+                    )
+                )
+            )
+            if memoir_ids:
+                session.execute(
+                    delete(MemoirShareRecord).where(
+                        MemoirShareRecord.memoir_id.in_(memoir_ids)
+                    )
+                )
+                session.execute(
+                    delete(MemoirPhotoRecord).where(
+                        MemoirPhotoRecord.memoir_id.in_(memoir_ids)
+                    )
+                )
+                session.execute(
+                    delete(TravelMemoirRecord).where(
+                        TravelMemoirRecord.id.in_(memoir_ids)
+                    )
+                )
             session.execute(delete(PostcardRecord).where(PostcardRecord.trip_id.in_(trip_ids)))
             session.execute(delete(CheckinRecord).where(CheckinRecord.trip_id.in_(trip_ids)))
             session.execute(delete(TripStopRecord).where(TripStopRecord.trip_id.in_(trip_ids)))

@@ -14,6 +14,7 @@ import {
   getTrip,
   TripApiError,
 } from "@/api/trips";
+import { rememberLastTripId } from "@/lib/lastTrip";
 import type { Trip, TripProgress } from "@/types/trips";
 
 interface TripContextValue {
@@ -119,6 +120,7 @@ export function TripProvider({ children }: { children: ReactNode }) {
 
   const applyResponse = useCallback(
     (response: { trip: Trip; progress: TripProgress }) => {
+      rememberLastTripId(response.trip.trip_id);
       setTrip(response.trip);
       setProgress(response.progress);
       setError(null);

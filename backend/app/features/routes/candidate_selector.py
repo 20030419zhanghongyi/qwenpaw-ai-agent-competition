@@ -88,7 +88,7 @@ def select_candidates_for_node(
             reasons.append("模板内可替换点")
         elif other_id in curated_alternatives:
             score += 1
-            reasons.append("离线替代候选（弱参考）")
+            reasons.append("离线调研替代候选")
 
         theme_overlap = source_theme & other_theme
         if theme_overlap:

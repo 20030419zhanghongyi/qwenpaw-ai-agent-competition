@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import re
 import time
+import unicodedata
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 from urllib.parse import quote
@@ -25,6 +26,35 @@ _TIMEOUT = 2.0
 # 整次 search_web_multi 墙钟预算（秒）
 _DEFAULT_BUDGET_S = 2.5
 _MAX_WORKERS = 4
+_GENERIC_PLACE_WORDS = {
+    "a",
+    "da",
+    "de",
+    "do",
+    "dos",
+    "macao",
+    "macau",
+    "museum",
+    "museu",
+    "church",
+    "igreja",
+    "temple",
+    "templo",
+    "square",
+    "praca",
+    "garden",
+    "jardim",
+    "street",
+    "rua",
+    "place",
+    "centre",
+    "center",
+    "cultural",
+    "cultura",
+    "hotel",
+    "beach",
+    "praia",
+}
 
 
 def _wiki_lang(language: str) -> str:
@@ -55,6 +85,53 @@ def _get_json(url: str, *, timeout: float = _TIMEOUT) -> Any | None:
 
 def _strip_html(raw: str) -> str:
     return re.sub(r"<[^>]+>", "", raw or "").strip()
+
+
+def _normalize_relevance_text(value: str) -> str:
+    text = unicodedata.normalize("NFKD", value or "")
+    text = "".join(ch for ch in text if not unicodedata.combining(ch)).lower()
+    text = text.replace("macao", "macau").replace("saint", "st")
+    return " ".join(re.findall(r"[a-z0-9]+|[\u3400-\u9fff]+", text))
+
+
+def filter_relevant_hits(
+    poi_names: str | list[str],
+    hits: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    """Keep only results anchored to the requested POI, never merely its category."""
+    names = [poi_names] if isinstance(poi_names, str) else poi_names
+    names = [name for name in names if _normalize_relevance_text(name)]
+    if not names:
+        return []
+
+    def matches(name: str, haystack: str, title: str) -> bool:
+        normalized_name = _normalize_relevance_text(name)
+        if re.search(r"[\u3400-\u9fff]", name or "") is not None:
+            return normalized_name in haystack
+        # Multi-city bridge names must not accept a generic page for one city.
+        if "bridge" in normalized_name.split() and "bridge" not in title.split():
+            return False
+        distinctive = [
+            token
+            for token in normalized_name.split()
+            if token not in _GENERIC_PLACE_WORDS and len(token) >= 3
+        ]
+        phrase_match = normalized_name in haystack
+        token_matches = sum(token in haystack.split() for token in distinctive)
+        required = max(1, (2 * len(distinctive) + 2) // 3)
+        return phrase_match or bool(distinctive and token_matches >= required)
+
+    relevant: list[dict[str, str]] = []
+    for hit in hits:
+        title = _normalize_relevance_text(str(hit.get("title") or ""))
+        haystack = _normalize_relevance_text(
+            f"{hit.get('title') or ''} {hit.get('snippet') or ''}"
+        )
+        if not haystack:
+            continue
+        if any(matches(name, haystack, title) for name in names):
+            relevant.append(hit)
+    return relevant
 
 
 def _wikipedia_hits(

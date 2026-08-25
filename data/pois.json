@@ -510,8 +510,8 @@
     {
       "id": "poi_0001",
       "name_zh": "大三巴牌坊",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Ruins of St. Paul's",
+      "name_pt": "Ruínas de S. Paulo",
       "alias": "",
       "district": "花王堂区",
       "theme": [
@@ -538,18 +538,28 @@
         "typecode": "110201"
       },
       "intro": "大三巴牌坊是澳门最具标志性的历史遗迹，原为圣保禄大教堂的前壁，属『澳门历史城区』世界遗产核心景点。",
+      "intro_en": "This surviving church façade is one of Macau's best-known landmarks and a central part of the Historic Centre of Macao World Heritage Site.",
+      "intro_pt": "Esta fachada de igreja, que sobreviveu ao tempo, é um dos monumentos mais conhecidos de Macau e integra o centro histórico classificado como Património Mundial.",
       "history": "原为圣保禄大教堂，17世纪初由耶稣会士建造，曾是远东最大的天主教堂之一。1835年毁于大火，仅存石砌前壁与阶梯。",
+      "history_en": "The Jesuits built the original church in the early seventeenth century, and it became one of the largest Catholic churches in the Far East. A fire destroyed most of it in 1835, leaving the stone façade and the steps you see today.",
+      "history_pt": "Os jesuítas construíram a igreja original no início do século XVII, tornando-se uma das maiores igrejas católicas do Extremo Oriente. Um incêndio destruiu grande parte do edifício em 1835, deixando a fachada de pedra e a escadaria que vemos hoje.",
       "architecture": "巴洛克风格石砌立面，高约五层，融合东西方雕刻元素，饰有圣经故事浮雕、中式石狮与中文字样，体现中西文化交融。",
+      "architecture_en": "First, take in the five-tiered Baroque stone façade; Next, find the biblical reliefs among Chinese lions and Chinese characters; Finally, notice how naturally European and Chinese details share the same surface",
+      "architecture_pt": "Comece pela fachada barroca de pedra, organizada em cinco níveis; Depois, procure os relevos bíblicos entre leões chineses e caracteres chineses; Por fim, repare como os elementos europeus e chineses convivem na mesma superfície",
       "story": "『大三巴』一名源自『圣保禄』的粤语音译。",
+      "story_en": "The Cantonese name commonly used for the ruins grew from the local pronunciation of Saint Paul.",
+      "story_pt": "O nome cantonense pelo qual as ruínas são conhecidas nasceu da pronúncia local de São Paulo.",
       "observation_tips": "推荐清晨或黄昏前往，光线柔和、游客较少，适合拍摄立面全景与阶梯构图。",
+      "observation_tips_en": "Step back towards the lower stairs for the full façade; Move closer to compare the carvings; Use the steps to give your photograph depth while keeping pedestrian access clear",
+      "observation_tips_pt": "Afaste-se em direção à parte inferior da escadaria para ver toda a fachada; Aproxime-se para comparar os relevos; Use os degraus para dar profundidade à fotografia sem bloquear a passagem",
       "source_type": "ai",
       "verify_status": "AI生成·待核验"
     },
     {
       "id": "poi_0003",
       "name_zh": "澳门博物馆",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Macao Museum",
+      "name_pt": "Museu de Macau",
       "alias": "",
       "district": "花王堂区",
       "theme": [
@@ -572,10 +582,20 @@
         "typecode": "140100"
       },
       "intro": "位于大炮台之上的综合性博物馆，展示澳门历史与多元文化。",
+      "intro_en": "Set above Mount Fortress, Macao Museum introduces the city's history and the cultures that have met here over centuries.",
+      "intro_pt": "Situado junto à Fortaleza do Monte, o Museu de Macau apresenta a história da cidade e as culturas que aqui se cruzaram ao longo dos séculos.",
       "history": "1998年落成，馆址所在的大炮台建于1617至1626年，由耶稣会会士修建，曾是澳门防御核心。",
+      "history_en": "The museum opened in 1998 within Mount Fortress, which the Jesuits built between 1617 and 1626 and which once formed a key part of Macau's defences.",
+      "history_pt": "O museu abriu em 1998 na Fortaleza do Monte, construída pelos jesuítas entre 1617 e 1626 e outrora essencial para a defesa de Macau.",
       "architecture": "博物馆主体嵌入大炮台山体内，地上仅保留炮台原貌与古炮，地下三层为现代展馆。",
+      "architecture_en": "First, notice how the galleries are set into the hill; Next, compare the modern museum spaces with the surviving fortress walls; Finally, step outside to see the historic cannon and the city beyond",
+      "architecture_pt": "Comece por reparar como as galerias entram na colina; Depois, compare os espaços modernos do museu com as muralhas preservadas; Por fim, saia para observar os antigos canhões e a cidade em redor",
       "story": "1622年荷兰舰队入侵澳门，大炮台一炮命中荷军火药桶，成为击退荷军的关键转折。",
+      "story_en": "A well-known episode from 1622 tells how fire from Mount Fortress struck the invading Dutch forces' ammunition and helped turn the battle.",
+      "story_pt": "Um episódio conhecido de 1622 conta como um disparo da Fortaleza do Monte atingiu as munições das forças neerlandesas invasoras e ajudou a mudar o rumo da batalha.",
       "observation_tips": "登大炮台顶层可环视澳门半岛全景，黄昏时分是拍摄落日与城市天际线的最佳时机。",
+      "observation_tips_en": "Follow the exhibits from daily life to maritime trade; Look for objects that show Chinese and Portuguese influences together; From the fortress platform, compare the old city with today's skyline",
+      "observation_tips_pt": "Percorra as exposições da vida quotidiana ao comércio marítimo; Procure objetos onde se encontrem influências chinesas e portuguesas; Da plataforma da fortaleza, compare a cidade antiga com o perfil urbano atual",
       "source_type": "ai",
       "verify_status": "AI生成·待核验"
     },
@@ -1831,9 +1851,9 @@
     {
       "id": "poi_0048",
       "name_zh": "杏香园甜品",
-      "name_en": "",
-      "name_pt": "",
-      "alias": "",
+      "name_en": "Hang Heong Un Dessert",
+      "name_pt": "Hang Heong Un Dessert",
+      "alias": "Hang Heong Un Dessert",
       "district": "风顺堂区",
       "theme": [
         "美食"
@@ -1863,8 +1883,8 @@
     {
       "id": "poi_0049",
       "name_zh": "哪咤古庙",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Na Tcha Temple",
+      "name_pt": "Templo de Na Tcha",
       "alias": "",
       "district": "大堂区",
       "theme": [
@@ -1902,8 +1922,8 @@
     {
       "id": "poi_0050",
       "name_zh": "圣老楞佐教堂",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "St. Lawrence's Church",
+      "name_pt": "Igreja de S. Lourenço",
       "alias": "",
       "district": "风顺堂区",
       "theme": [
@@ -1941,8 +1961,8 @@
     {
       "id": "poi_0051",
       "name_zh": "岗顶剧院",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Dom Pedro V Theatre",
+      "name_pt": "Teatro D. Pedro V",
       "alias": "",
       "district": "风顺堂区",
       "theme": [
@@ -1972,8 +1992,8 @@
     {
       "id": "poi_0052",
       "name_zh": "圣若瑟修院及圣堂",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "St. Joseph's Seminary and Church",
+      "name_pt": "Seminário e Igreja de S. José",
       "alias": "",
       "district": "风顺堂区",
       "theme": [
@@ -2011,8 +2031,8 @@
     {
       "id": "poi_0053",
       "name_zh": "圣奥斯定教堂",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "St. Augustine's Church",
+      "name_pt": "Igreja de Santo Agostinho",
       "alias": "",
       "district": "风顺堂区",
       "theme": [
@@ -2050,8 +2070,8 @@
     {
       "id": "poi_0054",
       "name_zh": "澳门主教座堂",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Cathedral",
+      "name_pt": "Igreja da Sé Catedral",
       "alias": "",
       "district": "大堂区",
       "theme": [
@@ -2089,8 +2109,8 @@
     {
       "id": "poi_0055",
       "name_zh": "仁慈堂大楼",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Holy House of Mercy",
+      "name_pt": "Santa Casa da Misericórdia de Macau",
       "alias": "",
       "district": "大堂区",
       "theme": [
@@ -2151,8 +2171,8 @@
     {
       "id": "poi_0057",
       "name_zh": "卢家大屋",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Lou Kau Mansion",
+      "name_pt": "Casa de Lou Kau",
       "alias": "",
       "district": "大堂区",
       "theme": [
@@ -2223,8 +2243,8 @@
     {
       "id": "poi_0059",
       "name_zh": "东望洋炮台",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Guia Fortress",
+      "name_pt": "Fortaleza da Guia",
       "alias": "",
       "district": "望德堂区",
       "theme": [
@@ -2261,8 +2281,8 @@
     {
       "id": "poi_0060",
       "name_zh": "澳门科学馆",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Macao Science Center",
+      "name_pt": "Centro de Ciência de Macau",
       "alias": "",
       "district": "大堂区",
       "theme": [
@@ -4072,8 +4092,8 @@
     {
       "id": "poi_0115",
       "name_zh": "澳门大赛车博物馆",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Macao Grand Prix Museum",
+      "name_pt": "Museu do Grande Prémio de Macau",
       "alias": "",
       "district": "大堂区",
       "theme": [
@@ -4168,8 +4188,8 @@
     {
       "id": "poi_0118",
       "name_zh": "益隆炮竹厂旧址",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Former Iec Long Firecracker Factory",
+      "name_pt": "Antiga Fábrica de Panchões Iec Long",
       "alias": "",
       "district": "嘉模堂区",
       "theme": [
@@ -4430,8 +4450,8 @@
     {
       "id": "poi_0126",
       "name_zh": "天主教圣安多尼堂",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "St. Anthony's Church",
+      "name_pt": "Igreja de Santo António",
       "alias": "",
       "district": "花王堂区",
       "theme": [
@@ -4469,8 +4489,8 @@
     {
       "id": "poi_0127",
       "name_zh": "圣母雪地殿教堂",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Chapel of Our Lady of the Snows",
+      "name_pt": "Capela de Nossa Senhora das Neves",
       "alias": "",
       "district": "望德堂区",
       "theme": [
@@ -4508,8 +4528,8 @@
     {
       "id": "poi_0128",
       "name_zh": "岗顶前地",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "St. Augustine's Square",
+      "name_pt": "Largo de Santo Agostinho",
       "alias": "",
       "district": "风顺堂区",
       "theme": [
@@ -4546,8 +4566,8 @@
     {
       "id": "poi_0129",
       "name_zh": "何东图书馆大楼",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Sir Robert Ho Tung Library Building",
+      "name_pt": "Edifício da Biblioteca Sir Robert Ho Tung",
       "alias": "",
       "district": "风顺堂区",
       "theme": [
@@ -4656,8 +4676,8 @@
     {
       "id": "poi_0132",
       "name_zh": "基督教坟场",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Protestant Cemetery",
+      "name_pt": "Cemitério Protestante",
       "alias": "",
       "district": "花王堂区",
       "theme": [
@@ -4687,8 +4707,8 @@
     {
       "id": "poi_0133",
       "name_zh": "旧城墙遗址",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Old City Walls",
+      "name_pt": "Antigas Muralhas da Cidade",
       "alias": "",
       "district": "花王堂区",
       "theme": [
@@ -4725,8 +4745,8 @@
     {
       "id": "poi_0134",
       "name_zh": "大堂前地",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Cathedral Square",
+      "name_pt": "Largo da Sé",
       "alias": "",
       "district": "大堂区",
       "theme": [
@@ -4763,8 +4783,8 @@
     {
       "id": "poi_0135",
       "name_zh": "板樟堂前地",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "St. Dominic's Square",
+      "name_pt": "Largo de S. Domingos",
       "alias": "",
       "district": "大堂区",
       "theme": [
@@ -4801,8 +4821,8 @@
     {
       "id": "poi_0136",
       "name_zh": "三街会馆",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Sam Kai Vui Kun (Kuan Tai Temple)",
+      "name_pt": "Sam Kai Vui Kun (Templo de Kuan Tai)",
       "alias": "",
       "district": "大堂区",
       "theme": [
@@ -5138,8 +5158,8 @@
     {
       "id": "poi_0145",
       "name_zh": "澳门林则徐纪念馆",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Lin Zexu Memorial Museum of Macao",
+      "name_pt": "Museu Memorial Lin Zexu de Macau",
       "alias": "",
       "district": "花地玛堂区",
       "theme": [
@@ -5176,8 +5196,8 @@
     {
       "id": "poi_0146",
       "name_zh": "典当业展示馆",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Heritage Exhibition of a Traditional Pawnshop Business",
+      "name_pt": "Espaço Patrimonial - Uma Casa de Penhores Tradicional",
       "alias": "",
       "district": "大堂区",
       "theme": [
@@ -5244,8 +5264,8 @@
     {
       "id": "poi_0148",
       "name_zh": "海事博物馆",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Maritime Museum",
+      "name_pt": "Museu Marítimo",
       "alias": "",
       "district": "风顺堂区",
       "theme": [
@@ -5278,8 +5298,8 @@
     {
       "id": "poi_0149",
       "name_zh": "澳门消防局博物馆",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Fire Services Museum",
+      "name_pt": "Museu dos Bombeiros",
       "alias": "",
       "district": "花王堂区",
       "theme": [
@@ -5312,8 +5332,8 @@
     {
       "id": "poi_0150",
       "name_zh": "通讯博物馆",
-      "name_en": "",
-      "name_pt": "",
+      "name_en": "Communications Museum",
+      "name_pt": "Museu das Comunicações",
       "alias": "",
       "district": "花地玛堂区",
       "theme": [
@@ -11645,8 +11665,8 @@
     {
       "id": "poi_port_hzmb",
       "name_zh": "港珠澳大桥澳门口岸",
-      "name_en": "HZMB Macao Port",
-      "name_pt": "",
+      "name_en": "Hong Kong-Zhuhai-Macao Bridge Macao Port",
+      "name_pt": "Posto Fronteiriço da Ponte Hong Kong-Zhuhai-Macau",
       "alias": "港珠澳大桥口岸",
       "district": "路氹填海区",
       "theme": [
@@ -11669,13 +11689,24 @@
         "type": "交通设施服务;过境口岸;口岸",
         "typecode": ""
       },
-      "intro": "港珠澳大桥澳门口岸是进出澳门的常用口岸／码头节点，可作为行程起终点锚定。",
-      "history": "",
+      "intro": "港珠澳大桥澳门口岸位于珠澳口岸人工岛，是港珠澳大桥连接澳门的出入境口岸，也是访澳行程常用的交通起终点。",
+      "intro_en": "The Hong Kong-Zhuhai-Macao Bridge Macao Port stands on the Zhuhai-Macao boundary-crossing island. It is the bridge's Macao immigration facility and a common arrival or departure point for visitors.",
+      "intro_pt": "O Posto Fronteiriço da Ponte Hong Kong-Zhuhai-Macau situa-se na ilha artificial das fronteiras Zhuhai-Macau. É o posto de imigração de Macau da ponte e um ponto frequente de chegada ou partida.",
+      "history": "澳门口岸管理区上部建筑工程于2016年12月开展，2017年12月底基本完工，2018年3月15日正式交付澳门特别行政区使用，并于2018年10月24日上午9时随港珠澳大桥正式开通。",
+      "history_en": "Construction of the upper structures in the Macao Port Administration Area began in December 2016 and was substantially completed by the end of December 2017. The area was handed over to the Macao SAR on 15 March 2018 and the port officially opened with the bridge at 09:00 on 24 October 2018.",
+      "history_pt": "A construção das estruturas superiores da Zona de Administração do Posto Fronteiriço de Macau começou em dezembro de 2016 e ficou substancialmente concluída no fim de dezembro de 2017. A zona foi entregue à RAEM em 15 de março de 2018 e o posto abriu oficialmente com a ponte às 9h00 de 24 de outubro de 2018.",
       "architecture": "",
       "story": "",
       "observation_tips": "过关排队因节假日与大型活动而波动，请以现场指引为准。",
-      "source_type": "manual",
-      "verify_status": "人工录入·口岸锚点",
+      "observation_tips_en": "Border queues vary during holidays and major events; follow current signs and official notices.",
+      "observation_tips_pt": "As filas de fronteira variam em feriados e grandes eventos; siga a sinalização e os avisos oficiais.",
+      "source_type": "official",
+      "source_urls": [
+        "https://www.gov.mo/zh-hans/news/223176/",
+        "https://www.gcs.gov.mo/news/detail/zh-hans/N18COz2rEU",
+        "https://www.gcs.gov.mo/news/detail/zh-hans/N18JXIUrZt"
+      ],
+      "verify_status": "澳门政府公开资料核验",
       "region_bias": "cotai"
     },
     {

@@ -8,6 +8,8 @@ import { PostcardCard } from "@/components/postcard/PostcardCard";
 import { TravelMemory } from "@/components/postcard/TravelMemory";
 import { t } from "@/i18n";
 import { resolveTripUserId } from "@/lib/guestUser";
+import { getLastTripId, rememberLastTripId } from "@/lib/lastTrip";
+import { localizedPoiName } from "@/lib/poiLocalization";
 import { useAuth } from "@/state/AuthContext";
 import { useTrip } from "@/state/TripContext";
 import { useWalk } from "@/state/WalkContext";
@@ -21,7 +23,7 @@ export function PostcardGalleryPage() {
   const { trip, loadTrip } = useTrip();
   const [postcards, setPostcards] = useState<Postcard[]>([]);
   const [resolvedTripId, setResolvedTripId] = useState<string | null>(
-    searchParams.get("trip"),
+    searchParams.get("trip") || getLastTripId(),
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,16 +36,18 @@ export function PostcardGalleryPage() {
       .filter((poiId) => trip.checked_in_poi_ids.includes(poiId))
       .map((poiId) => ({
         poiId,
-        name: session.poisById[poiId]?.poi_name ?? poiId,
+        name: session.poisById[poiId]
+          ? localizedPoiName(session.poisById[poiId], language)
+          : poiId,
         hasPostcard: postcards.some((card) => card.poi_id === poiId),
       }));
-  }, [trip, session, postcards]);
+  }, [trip, session, postcards, language]);
 
   const refresh = useCallback(async () => {
     setError(null);
     setLoading(true);
     try {
-      let tripId = tripIdFromQuery;
+      let tripId = tripIdFromQuery || getLastTripId();
       if (!tripId) {
         try {
           const current = await getCurrentTrip(resolveTripUserId(authUserId));
@@ -59,6 +63,7 @@ export function PostcardGalleryPage() {
       }
 
       setResolvedTripId(tripId);
+      rememberLastTripId(tripId);
       await loadTrip(tripId);
       setPostcards(await listTripPostcards(tripId));
     } catch (err) {

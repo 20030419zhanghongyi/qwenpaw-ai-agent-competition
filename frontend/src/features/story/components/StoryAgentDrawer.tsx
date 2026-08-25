@@ -30,6 +30,7 @@ interface StoryAgentDrawerProps {
 function contextPrompt(
   question: string,
   context?: StoryAgentContextData,
+  language: LanguageCode = "zh-CN",
 ): string {
   if (!context) return question;
   const facts = context.known_facts?.slice(0, 4).join("；");
@@ -39,7 +40,7 @@ function contextPrompt(
     context.chapter_goal && `本章目标：${context.chapter_goal}`,
     facts && `已公开事实：${facts}`,
     boundaries && `虚构边界：${boundaries}`,
-    "请勿透露谜题答案，只回答玩家的问题。",
+    storyT(language, "agentGuardrail"),
     `玩家问题：${question}`,
   ].filter(Boolean);
   return parts.join("\n").slice(0, 1000);
@@ -51,8 +52,8 @@ async function defaultAsk(
   language = "zh-CN",
 ): Promise<StoryAgentAnswer> {
   const response = await askGuide({
-    poi: context?.poi_name || "澳门",
-    question: contextPrompt(question, context),
+    poi: context?.poi_name || storyT(language as LanguageCode, "macau"),
+    question: contextPrompt(question, context, language as LanguageCode),
     language,
   });
   return {
@@ -260,7 +261,7 @@ export function StoryAgentDrawer({
         >
           <div className="flex gap-2">
             <label className="sr-only" htmlFor="story-agent-question">
-              向阿莲提问
+              {st("askAlian")}
             </label>
             <input
               ref={inputRef}
@@ -269,7 +270,7 @@ export function StoryAgentDrawer({
               onChange={(event) => setQuestion(event.target.value)}
               maxLength={500}
               disabled={busy}
-              placeholder="问问这个地点或当前线索…"
+              placeholder={st("askPlacePlaceholder")}
               className="min-h-12 min-w-0 flex-1 rounded-full border border-line bg-card px-4 text-base text-ink outline-none placeholder:text-ink-soft/60 focus:border-sage focus:ring-2 focus:ring-sage/30"
             />
             <button
@@ -277,7 +278,7 @@ export function StoryAgentDrawer({
               disabled={busy || !question.trim()}
               className="min-h-12 shrink-0 rounded-full bg-sage-deep px-5 text-base font-medium text-paper disabled:opacity-45"
             >
-              发送
+              {st("send")}
             </button>
           </div>
         </form>

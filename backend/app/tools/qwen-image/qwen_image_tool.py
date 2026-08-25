@@ -156,12 +156,35 @@ async def _download_image(
     filename = f"{prefix}_{timestamp}.png"
     image_path = save_dir / filename
 
-    async with httpx.AsyncClient(timeout=timeout) as client:
-        async with client.stream("GET", image_url) as response:
-            response.raise_for_status()
-            chunks = []
-            async for chunk in response.aiter_bytes(chunk_size=512 * 1024):
-                chunks.append(chunk)
+    download_urls = [image_url]
+    if ".oss-accelerate.aliyuncs.com" in image_url:
+        regional_url = image_url.replace(
+            ".oss-accelerate.aliyuncs.com",
+            ".oss-cn-wulanchabu.aliyuncs.com",
+        )
+        download_urls.insert(0, regional_url)
+
+    last_error: Exception | None = None
+    chunks: list[bytes] = []
+    for download_url in download_urls:
+        for attempt in range(3):
+            try:
+                async with httpx.AsyncClient(timeout=timeout, trust_env=False) as client:
+                    async with client.stream("GET", download_url) as response:
+                        response.raise_for_status()
+                        chunks = [
+                            chunk
+                            async for chunk in response.aiter_bytes(chunk_size=512 * 1024)
+                        ]
+                break
+            except httpx.HTTPError as exc:
+                last_error = exc
+                if attempt < 2:
+                    await asyncio.sleep(0.5 * (2**attempt))
+        if chunks:
+            break
+    else:
+        raise RuntimeError(f"Image download failed after 3 attempts: {last_error}") from last_error
     await asyncio.to_thread(image_path.write_bytes, b"".join(chunks))
 
     logger.info(f"Image saved to {image_path}")

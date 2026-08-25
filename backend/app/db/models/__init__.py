@@ -5,7 +5,7 @@ from .profile import Favorite, TripFeedback
 from .poi import Poi
 from .route import RouteTemplate, RouteTemplateStop
 from .story import StorySession
-from .trip import Checkin, Postcard, Trip, TripStop
+from .trip import Checkin, MemoirPhoto, MemoirShare, Postcard, TravelMemoir, Trip, TripStop
 from .user import User
 
 __all__ = [
@@ -14,6 +14,9 @@ __all__ = [
     "Favorite",
     "Poi",
     "Postcard",
+    "TravelMemoir",
+    "MemoirPhoto",
+    "MemoirShare",
     "RouteTemplate",
     "RouteTemplateStop",
     "StorySession",

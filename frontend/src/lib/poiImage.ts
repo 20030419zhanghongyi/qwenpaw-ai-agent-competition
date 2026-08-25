@@ -1,31 +1,26 @@
 import fallbackHero from "@/assets/hero-ruins.jpg";
 
-/** Wikimedia Commons 直链（Special:FilePath 会 302 到真实文件）。 */
-function commons(file: string, width = 1600): string {
-  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=${width}`;
-}
-
-/** 行程常用景点 → Commons 文件名（可逐步补全）。 */
+/** 行程常用景点 → 已下载到 public/poi 的固定图片。 */
 const BY_POI_ID: Record<string, string> = {
-  poi_ama: commons("Templo de A-Má, Macao, 2013-08-08, DD 05.jpg"),
-  poi_mandarin_house: commons("Casa do Mandarim.jpg"),
-  poi_lilau: commons("Lilau Square.jpg"),
-  poi_dom_pedro_v: commons("Teatro Don Pedro V, Macao, 2013-08-08, DD 01.jpg"),
-  poi_st_augustine: commons("St Augustine's Church, Macau.jpg"),
-  poi_senado: commons("LargoDoSenado Buildings.JPG"),
-  poi_leal_senado: commons("Leal Senado Building.JPG"),
-  poi_st_dominic: commons("St Dominic's Church Macau.jpg"),
-  poi_ruins_st_paul: commons("The Ruins of St. Paul's in Macau.jpg"),
-  poi_na_tcha: commons("Na Tcha Temple and the Ruins of St. Paul's.jpg"),
-  poi_mount_fortress: commons("Fortaleza do Monte, Macau (19).jpg"),
-  poi_holy_house_mercy: commons("Holy House of Mercy of Macau.jpg"),
-  poi_lou_kau: commons("20250806 Main hall of the Lou Kau Mansion.jpg"),
-  poi_fatong: commons("Guia Fortress Lighthouse.jpg"),
-  poi_rua_cunha: commons("Macau Taipa Village - Rua do Cunha (12354319294).jpg"),
-  poi_taipa_houses: commons(
-    "Taipa Houses Museum 凼仔住宅式博物館 - panoramio (2).jpg",
-  ),
-  poi_coloane_chapel: commons("Macau - Chapel of Saint Francis Xavier.jpg"),
+  poi_0002: "/poi/poi_love_lane.jpg",
+  poi_0007: "/poi/poi_fatong.jpg",
+  poi_ama: "/poi/poi_ama.jpg",
+  poi_mandarin_house: "/poi/poi_mandarin_house.jpg",
+  poi_lilau: "/poi/poi_lilau.jpg",
+  poi_dom_pedro_v: "/poi/poi_dom_pedro_v.jpg",
+  poi_st_augustine: "/poi/poi_st_augustine.jpg",
+  poi_senado: "/poi/poi_senado.jpg",
+  poi_leal_senado: "/poi/poi_leal_senado.jpg",
+  poi_st_dominic: "/poi/poi_st_dominic.jpg",
+  poi_ruins_st_paul: "/poi/poi_ruins_st_paul.jpg",
+  poi_na_tcha: "/poi/poi_na_tcha.jpg",
+  poi_mount_fortress: "/poi/poi_mount_fortress.jpg",
+  poi_holy_house_mercy: "/poi/poi_holy_house_mercy.jpg",
+  poi_lou_kau: "/poi/poi_lou_kau.jpg",
+  poi_fatong: "/poi/poi_fatong.jpg",
+  poi_rua_cunha: "/poi/poi_rua_cunha.jpg",
+  poi_taipa_houses: "/poi/poi_taipa_houses.jpg",
+  poi_coloane_chapel: "/poi/poi_coloane_chapel.jpg",
 };
 
 const BY_NAME: Array<{ test: RegExp; url: string }> = [
@@ -35,7 +30,7 @@ const BY_NAME: Array<{ test: RegExp; url: string }> = [
   { test: /郑家大屋|鄭家大屋|Mandarin/i, url: BY_POI_ID.poi_mandarin_house },
   { test: /大炮台|炮兵|升降机|升降機|Mount\s*Fortress|Fortaleza do Monte|Monte Fort/i, url: BY_POI_ID.poi_mount_fortress },
   { test: /玫瑰堂|St\.?\s*Dominic|São Domingos/i, url: BY_POI_ID.poi_st_dominic },
-  { test: /恋爱巷|戀愛巷|Paixão|paixao/i, url: BY_POI_ID.poi_ruins_st_paul },
+  { test: /恋爱巷|戀愛巷|Paixão|paixao/i, url: BY_POI_ID.poi_0002 },
   { test: /东望洋|東望洋|Guia|灯塔|燈塔/i, url: BY_POI_ID.poi_fatong },
   { test: /官也街|官也|Rua da Cunha|Cunha/i, url: BY_POI_ID.poi_rua_cunha },
   { test: /龙环葡韵|龍環葡韻|Taipa Houses/i, url: BY_POI_ID.poi_taipa_houses },
@@ -168,7 +163,7 @@ export async function resolvePoiImage(args: {
   }
 
   const curated = curatedPoiImage(args.poiId, args.name);
-  if (curated && (await imageIsAvailable(curated))) {
+  if (curated) {
     memoryCache.set(cacheKey, curated);
     return curated;
   }

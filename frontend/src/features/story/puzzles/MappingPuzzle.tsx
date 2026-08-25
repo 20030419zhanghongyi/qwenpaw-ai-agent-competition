@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { MappingPuzzleData } from "../types";
 import { PuzzleFrame } from "./PuzzleFrame";
+import { useStoryMessages } from "../storyI18n";
 
 interface MappingPuzzleProps {
   puzzle: MappingPuzzleData;
@@ -21,6 +22,7 @@ export function MappingPuzzle({
   disabled = false,
   onSubmit,
 }: MappingPuzzleProps) {
+  const st = useStoryMessages();
   const [activeField, setActiveField] = useState<string | null>(
     puzzle.fields[0]?.id ?? null,
   );
@@ -57,14 +59,14 @@ export function MappingPuzzle({
   return (
     <PuzzleFrame
       prompt={puzzle.prompt}
-      selectionHint="先选择一个标签，再选择与它配对的观察项。也可以直接使用每项下方的选择框。"
+      selectionHint={st("mappingHint")}
       canSubmit={puzzle.fields.every((field) => Boolean(mapping[field.id]))}
       disabled={disabled}
       onSubmit={() => onSubmit({ ...mapping })}
     >
       <fieldset>
         <legend className="text-[13px] font-medium text-ink-soft">
-          第一步：选择标签
+          {st("mappingStepOne")}
         </legend>
         <div className="mt-2 grid grid-cols-5 gap-1.5">
           {puzzle.fields.map((field, index) => {
@@ -96,7 +98,7 @@ export function MappingPuzzle({
 
       <fieldset className="mt-4">
         <legend className="text-[13px] font-medium text-ink-soft">
-          第二步：选择观察项
+          {st("mappingStepTwo")}
         </legend>
         <div className="mt-2 space-y-2">
           {puzzle.options.map((option) => {
@@ -130,13 +132,13 @@ export function MappingPuzzle({
 
       <div className="mt-4 space-y-2 border-t border-line pt-4">
         <p className="text-[13px] font-medium text-ink-soft">
-          无障碍选择方式
+          {st("accessibleSelection")}
         </p>
         <p
           id={accessibleInstructionsId}
           className="text-xs leading-5 text-ink-soft"
         >
-          每个标签选择一项；选项文字会完整换行显示。
+          {st("mappingAccessibleInstructions")}
         </p>
         {puzzle.fields.map((field) => {
           const groupName = `mapping-${puzzle.id}-${field.id}`;
@@ -161,7 +163,7 @@ export function MappingPuzzle({
                     className="mt-0.5 size-4 shrink-0 accent-sage-deep"
                   />
                   <span className="min-w-0 whitespace-normal break-words leading-5">
-                    未选择
+                    {st("notSelected")}
                   </span>
                 </label>
                 {puzzle.options.map((option) => {
@@ -197,7 +199,7 @@ export function MappingPuzzle({
                         {option.text}
                         {ownedByOtherField && ownerLabel && (
                           <span className="mt-0.5 block text-xs text-ink-soft">
-                            已配对给“{ownerLabel}”
+                            {st("mappingPairedTo", { label: ownerLabel })}
                           </span>
                         )}
                       </span>

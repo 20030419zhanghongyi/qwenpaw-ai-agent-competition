@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from datetime import timedelta
 import logging
+from pathlib import Path
+import re
+import tempfile
+import time
 from typing import Any
 from uuid import uuid4
 
@@ -13,6 +17,9 @@ from app.core.config import settings
 from app.agents.qwenpaw_client import QwenPawClient, QwenPawError
 
 logger = logging.getLogger("macau_storywalk.tts")
+
+_LOCAL_AUDIO_DIR = Path(tempfile.gettempdir()) / "macau-storywalk-tts"
+_LOCAL_AUDIO_FILE = re.compile(r"^[0-9a-f]{32}\.mp3$")
 
 # Qwen3 TTS system voices: Cherry covers Mandarin/English/Portuguese.
 # The product's Traditional Chinese mode is the Macau-facing Cantonese narration
@@ -41,6 +48,51 @@ def _require_oss_config() -> None:
     missing = [name for name, value in required.items() if not value]
     if missing:
         raise TTSUnavailableError(f"TTS delivery is not configured ({', '.join(missing)})")
+
+
+def _has_oss_config() -> bool:
+    return all(
+        (
+            settings.oss_endpoint,
+            settings.oss_region,
+            settings.oss_bucket,
+            settings.oss_access_key_id,
+            settings.oss_access_key_secret,
+        )
+    )
+
+
+def _local_delivery_allowed() -> bool:
+    return settings.app_env.lower() in {"dev", "development", "test"}
+
+
+def _cleanup_local_audio(*, max_age_seconds: int) -> None:
+    if not _LOCAL_AUDIO_DIR.exists():
+        return
+    cutoff = time.time() - max_age_seconds
+    for path in _LOCAL_AUDIO_DIR.glob("*.mp3"):
+        try:
+            if path.stat().st_mtime < cutoff:
+                path.unlink()
+        except OSError:
+            logger.debug("Unable to clean local TTS file %s", path, exc_info=True)
+
+
+def store_local_audio(audio: bytes) -> tuple[str, str]:
+    """Store development audio temporarily and return its same-origin API URL."""
+    _LOCAL_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+    _cleanup_local_audio(max_age_seconds=settings.oss_signed_url_ttl_seconds)
+    filename = f"{uuid4().hex}.mp3"
+    (_LOCAL_AUDIO_DIR / filename).write_bytes(audio)
+    return f"/api/v1/guide/tts/audio/{filename}", filename
+
+
+def local_audio_path(filename: str) -> Path | None:
+    """Resolve a generated local audio token without allowing path traversal."""
+    if not _LOCAL_AUDIO_FILE.fullmatch(filename):
+        return None
+    path = _LOCAL_AUDIO_DIR / filename
+    return path if path.is_file() else None
 
 
 def _require_direct_provider_config() -> None:
@@ -140,7 +192,9 @@ def synthesize_audio_via_qwenpaw(text: str, language: str) -> tuple[bytes, str]:
 
 
 def synthesize_to_oss(text: str, language: str) -> dict[str, str | int]:
-    _require_oss_config()
+    use_oss = _has_oss_config()
+    if not use_oss and not _local_delivery_allowed():
+        _require_oss_config()
     if settings.qwenpaw_tts_enabled:
         try:
             audio, voice = synthesize_audio_via_qwenpaw(text, language)
@@ -151,7 +205,10 @@ def synthesize_to_oss(text: str, language: str) -> dict[str, str | int]:
             audio, voice = synthesize_audio(text, language)
     else:
         audio, voice = synthesize_audio(text, language)
-    audio_url, object_key = upload_audio(audio, language=language)
+    if use_oss:
+        audio_url, object_key = upload_audio(audio, language=language)
+    else:
+        audio_url, object_key = store_local_audio(audio)
     return {
         "audio_url": audio_url,
         "object_key": object_key,

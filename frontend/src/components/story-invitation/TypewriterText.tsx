@@ -20,6 +20,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useStoryMessages } from "@/features/story/storyI18n";
 
 export interface TypewriterTextProps {
   /** Paragraphs to reveal, one at a time. Empty string = visual break. */
@@ -60,6 +61,7 @@ export function TypewriterText({
   onCharTyped,
   keepAllParagraphs = false,
 }: TypewriterTextProps) {
+  const st = useStoryMessages();
   const [paraIndex, setParaIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -178,7 +180,7 @@ export function TypewriterText({
     <div
       ref={containerRef}
       role="region"
-      aria-label="剧情文本"
+      aria-label={st("storyText")}
       tabIndex={0}
       onClick={handleClick}
       onKeyDown={handleKeyDown}

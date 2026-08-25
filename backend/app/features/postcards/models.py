@@ -19,7 +19,7 @@ class PostcardResponse(BaseModel):
     review_decision: str
     photo_scrubbed: bool
     has_user_photo: bool = True
-    # user | ai_edit | ai (live) | library (pre-generated slot) | placeholder
+    # New records: user | ai_edit | ai. Legacy records may report library | placeholder.
     scene_source: str = "user"
     photo_style: str | None = None
     image_url: str
@@ -38,3 +38,9 @@ class PostcardResponse(BaseModel):
 
 class PostcardListResponse(BaseModel):
     postcards: list[PostcardResponse]
+
+
+class PostcardPrewarmResponse(BaseModel):
+    status: str = "queued"
+    trip_id: str
+    poi_id: str

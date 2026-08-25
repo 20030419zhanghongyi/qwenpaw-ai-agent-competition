@@ -1,32 +1,37 @@
 /** Border-crossing catalog aligned with data/ports.json. */
 
 import type { Preference, RouteNode } from "@/types";
+import { toTraditionalText } from "@/lib/poiLocalization";
 
 export interface PortOption {
   poiId: string;
   nameZh: string;
   nameEn: string;
+  namePt: string;
   alias: string;
 }
 
 export const PORT_OPTIONS: PortOption[] = [
-  { poiId: "poi_port_guanja", nameZh: "关闸口岸", nameEn: "Portas do Cerco", alias: "关闸" },
-  { poiId: "poi_port_qingmao", nameZh: "青茂口岸", nameEn: "Qingmao Port", alias: "青茂" },
-  { poiId: "poi_port_hengqin", nameZh: "横琴口岸", nameEn: "Hengqin Port", alias: "横琴" },
-  { poiId: "poi_port_hzmb", nameZh: "港珠澳大桥口岸", nameEn: "HZMB Port", alias: "港珠澳" },
+  { poiId: "poi_port_guanja", nameZh: "关闸口岸", nameEn: "Portas do Cerco Border Gate", namePt: "Posto Fronteiriço das Portas do Cerco", alias: "关闸" },
+  { poiId: "poi_port_qingmao", nameZh: "青茂口岸", nameEn: "Qingmao Port", namePt: "Posto Fronteiriço Qingmao", alias: "青茂" },
+  { poiId: "poi_port_hengqin", nameZh: "横琴口岸", nameEn: "Hengqin Port", namePt: "Posto Fronteiriço de Hengqin", alias: "横琴" },
+  { poiId: "poi_port_hzmb", nameZh: "港珠澳大桥澳门口岸", nameEn: "Hong Kong-Zhuhai-Macao Bridge Macao Port", namePt: "Posto Fronteiriço da Ponte Hong Kong-Zhuhai-Macau", alias: "港珠澳" },
   {
     poiId: "poi_port_outer_harbor",
     nameZh: "外港客运码头",
-    nameEn: "Outer Harbour",
+    nameEn: "Outer Harbour Ferry Terminal",
+    namePt: "Terminal Marítimo do Porto Exterior",
     alias: "外港",
   },
-  { poiId: "poi_0071", nameZh: "内港客运码头", nameEn: "Inner Harbour", alias: "内港" },
+  { poiId: "poi_0071", nameZh: "内港客运码头", nameEn: "Inner Harbour Ferry Terminal", namePt: "Terminal Marítimo do Porto Interior", alias: "内港" },
 ];
 
 export function portLabel(poiId: string | null | undefined, language: string): string {
   const port = PORT_OPTIONS.find((item) => item.poiId === poiId);
-  if (!port) return poiId || "";
-  if (language === "en" || language === "pt") return port.nameEn;
+  if (!port) return "";
+  if (language === "en") return port.nameEn;
+  if (language === "pt") return port.namePt;
+  if (language === "zh-TW") return toTraditionalText(port.nameZh);
   return port.nameZh;
 }
 
@@ -36,8 +41,11 @@ export function entryPortTransferNote(
   language: string,
 ): string {
   const name = portLabel(entryPort, language);
-  if (language === "en" || language === "pt") {
+  if (language === "en") {
     return `${name}: take a bus or resort shuttle to Cotai — do not plan this leg as a walk. Allow 30–50 min for immigration and transfer.`;
+  }
+  if (language === "pt") {
+    return `${name}: apanhe um autocarro ou transporte do resort para o Cotai; não planeie este trajeto a pé. Reserve 30–50 minutos para a imigração e a ligação.`;
   }
   if (language === "zh-TW") {
     return `${name}至路氹不宜按步行排線：出關後可乘巴士或度假區穿梭巴士，建議預留 30–50 分鐘通關與接駁。`;
@@ -77,10 +85,7 @@ export function ensurePreferencePortAnchors(
         ? {
             ...existingEntry,
             anchor: "entry",
-            note:
-              existingEntry.note?.includes("巴士") || existingEntry.note?.includes("shuttle")
-                ? existingEntry.note
-                : entryPortTransferNote(entry, language),
+            note: entryPortTransferNote(entry, language),
           }
         : {
             poi_id: entry,

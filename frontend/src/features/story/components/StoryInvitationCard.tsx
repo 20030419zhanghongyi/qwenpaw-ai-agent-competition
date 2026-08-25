@@ -1,5 +1,6 @@
 import { StoryImage } from "../assets";
 import { STORY_CATALOG } from "@/story-discovery/storyCatalog";
+import { useStoryMessages } from "../storyI18n";
 
 interface StoryInvitationCardProps {
   storyId: string;
@@ -12,6 +13,7 @@ export function StoryInvitationCard({
   onAccept,
   onDecline,
 }: StoryInvitationCardProps) {
+  const st = useStoryMessages();
   const story = STORY_CATALOG.find((entry) => entry.storyId === storyId);
   const isColoane = storyId === "coloane_after_tide";
   const isTaipa = storyId === "taipa_letters";
@@ -20,6 +22,7 @@ export function StoryInvitationCard({
     : isTaipa
       ? "TAI-COVER-01"
       : "V4-ENTRY-01";
+  const title = story?.title ?? st("macauStory");
 
   return (
     <section
@@ -28,23 +31,26 @@ export function StoryInvitationCard({
     >
       <StoryImage
         assetId={invitationAssetId}
-        alt={`${story?.title ?? "澳门"}故事游邀请`}
+        alt={st("storyInvitation", { title })}
         eager
         className="rounded-none border-0"
       />
       <div className="p-5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ochre">
-          {isColoane ? "路环声音故事游" : isTaipa ? "氹仔家书故事游" : "限定故事游"}
+          {isColoane
+            ? st("coloaneAudioStory")
+            : isTaipa
+              ? st("taipaLetterStory")
+              : st("limitedStory")}
         </p>
         <h2
           id="story-invitation-title"
           className="mt-2 font-display text-2xl leading-tight text-ink"
         >
-          {story?.title ?? "澳门故事游"}
+          {title}
         </h2>
         <p className="mt-3 text-base leading-7 text-ink-soft">
-          {story?.subtitle ??
-            "实地故事可随时查看提示，也可以跳过谜题继续游览。"}
+          {story?.subtitle ?? st("invitationBody")}
         </p>
         <div className="mt-5 grid gap-2">
           <button
@@ -52,14 +58,14 @@ export function StoryInvitationCard({
             onClick={onAccept}
             className="min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper shadow-[var(--shadow-soft)]"
           >
-            进入《{story?.title ?? "故事游"}》
+            {st("enterStory", { title })}
           </button>
           <button
             type="button"
             onClick={onDecline}
             className="min-h-12 w-full rounded-full border border-line bg-paper px-5 text-base font-medium text-ink"
           >
-            继续普通路线规划
+            {st("continuePlanner")}
           </button>
         </div>
       </div>

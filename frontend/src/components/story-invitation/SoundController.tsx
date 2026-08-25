@@ -6,12 +6,15 @@
  */
 
 import type { SoundAPI } from "./useSound";
+import { useStoryMessages } from "@/features/story/storyI18n";
 
 export interface SoundControllerProps {
   sound: SoundAPI;
 }
 
 export function SoundController({ sound }: SoundControllerProps) {
+  const st = useStoryMessages();
+  const soundLabel = sound.muted ? st("soundMuted") : st("soundPlaying");
   return (
     <button
       type="button"
@@ -20,10 +23,10 @@ export function SoundController({ sound }: SoundControllerProps) {
         sound.toggleMute();
       }}
       className="rounded-full px-3 py-1.5 text-[11px] tracking-[0.18em] text-paper/20 transition hover:text-paper/45 focus:outline-none focus:ring-1 focus:ring-ochre/40"
-      aria-label={sound.muted ? "开启声音" : "关闭声音"}
-      title={sound.muted ? "声音 ○" : "声音 ◉"}
+      aria-label={sound.muted ? st("soundOn") : st("soundOff")}
+      title={soundLabel}
     >
-      {sound.muted ? "声音 ○" : "声音 ◉"}
+      {soundLabel}
     </button>
   );
 }

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useStoryMessages } from "../storyI18n";
 
 interface StoryBottomActionProps {
   label: string;
@@ -16,11 +17,12 @@ export function StoryBottomAction({
   onClick,
   disabled = false,
   busy = false,
-  busyLabel = "处理中…",
+  busyLabel,
   secondary,
   hint,
   tone = "primary",
 }: StoryBottomActionProps) {
+  const st = useStoryMessages();
   return (
     <div
       className="sticky bottom-0 z-20 border-t border-line/80 bg-paper/95 px-4 pt-3 backdrop-blur-md"
@@ -43,7 +45,7 @@ export function StoryBottomAction({
               tone === "accent" ? "bg-ochre" : "bg-sage-deep"
             }`}
           >
-            {busy ? busyLabel : label}
+            {busy ? (busyLabel ?? st("processing")) : label}
           </button>
         </div>
       </div>

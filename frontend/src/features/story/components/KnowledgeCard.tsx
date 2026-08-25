@@ -4,14 +4,6 @@ import { ConfidenceBadge } from "./ConfidenceBadge";
 import { SourceBadge } from "./SourceBadge";
 import { useStoryMessages } from "../storyI18n";
 
-const KIND_LABELS: Record<string, string> = {
-  historical_fact: "史实",
-  folklore: "民间信俗／地方记忆",
-  contextual_reconstruction: "语境化重建",
-  fictional_story: "剧情虚构",
-  dynamic_operational_info: "动态营运信息",
-};
-
 interface KnowledgeCardProps {
   card: StoryKnowledgeCardData;
   defaultOpen?: boolean;
@@ -22,6 +14,13 @@ export function KnowledgeCard({
   defaultOpen = false,
 }: KnowledgeCardProps) {
   const st = useStoryMessages();
+  const kindLabels: Record<string, string> = {
+    historical_fact: st("kindHistorical"),
+    folklore: st("kindFolklore"),
+    contextual_reconstruction: st("kindReconstruction"),
+    fictional_story: st("kindFiction"),
+    dynamic_operational_info: st("kindOperational"),
+  };
   const [open, setOpen] = useState(defaultOpen);
   const body = card.text ?? card.content ?? "";
   const panelId = `story-knowledge-${card.id ?? card.title.replace(/\s+/g, "-")}`;
@@ -38,7 +37,7 @@ export function KnowledgeCard({
         <span className="min-w-0">
           {card.kind && (
             <span className="block text-[11px] font-semibold tracking-[0.08em] text-sage-deep">
-              {KIND_LABELS[card.kind] ?? card.kind}
+              {kindLabels[card.kind] ?? card.kind}
             </span>
           )}
           <span className="block text-base font-medium text-ink">{card.title}</span>
