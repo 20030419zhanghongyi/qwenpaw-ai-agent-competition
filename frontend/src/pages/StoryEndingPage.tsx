@@ -91,16 +91,19 @@ export function StoryEndingPage() {
   );
   const isCompleted = session?.status === "completed";
   const isLotusStory = session?.story_id === "lotus_city_double_map";
+  const isTaipaStory = session?.story_id === "taipa_letters";
   const petalCount =
     session?.state.rewards.filter((reward) => reward.kind === "note_petal").length ?? 0;
   const completionAgentContext = useMemo(
     () => ({
       persona: "阿莲",
-      poi_name: isLotusStory ? "澳门历史城区" : "路环",
+      poi_name: isLotusStory ? "澳门历史城区" : isTaipaStory ? "氹仔旧城" : "路环",
       chapter_title: story?.title ?? st("journeyComplete"),
       chapter_goal: isLotusStory
         ? "回顾莲城双图六站旅程，并区分史实、地方记忆与剧情演绎。"
-        : "回顾海、船、村、工、土五项记录，整理潮退之后的路环记忆。",
+        : isTaipaStory
+          ? "回顾海、钟、家、工、街五封来信，整理氹仔生活史与家园记忆。"
+          : "回顾海、船、村、工、土五项记录，整理潮退之后的路环记忆。",
       known_facts: [
         story?.summary,
         session?.ending?.text,
@@ -112,13 +115,26 @@ export function StoryEndingPage() {
             "两张地图分别适合记录哪些内容？",
             "哪些内容属于史实，哪些属于剧情演绎？",
           ]
-        : [
-            "五枚记录章怎样串成路环的故事？",
-            "哪些内容属于史实，哪些属于剧情演绎？",
-          ],
+        : isTaipaStory
+          ? [
+              "五封来信怎样串起氹仔生活的变化？",
+              "哪些内容属于史实，哪些属于剧情演绎？",
+            ]
+          : [
+              "五枚记录章怎样串成路环的故事？",
+              "哪些内容属于史实，哪些属于剧情演绎？",
+            ],
       do_not_reveal: [],
     }),
-    [isLotusStory, session?.ending?.text, st, story?.content_notice, story?.summary, story?.title],
+    [
+      isLotusStory,
+      isTaipaStory,
+      session?.ending?.text,
+      st,
+      story?.content_notice,
+      story?.summary,
+      story?.title,
+    ],
   );
 
   const completeTodayNote = async () => {
@@ -158,7 +174,7 @@ export function StoryEndingPage() {
           />
           <button
             type="button"
-            onClick={() => navigate("/stories/lotus_city_double_map")}
+            onClick={() => navigate("/stories")}
             className="mt-4 min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper"
           >
             {st("back")}
@@ -178,8 +194,11 @@ export function StoryEndingPage() {
         ? completionAgentContext
         : undefined;
   const stationNodes = story?.nodes.filter((node) => node.poi_id) ?? [];
-  const collectibleRewards = session.state.rewards.filter((reward) =>
-    isLotusStory ? reward.kind === "note_petal" : reward.kind === "stamp",
+  const collectibleRewards = session.state.rewards.filter(
+    (reward) =>
+      reward.kind !== "story_prop" &&
+      reward.kind !== "collection" &&
+      reward.kind !== "reflection",
   );
   const summaryIndex = summaryNode
     ? stationNodes.findIndex((node) => node.id === summaryNode.id)
@@ -194,6 +213,11 @@ export function StoryEndingPage() {
       : summaryIndex >= 0
         ? collectibleRewards[summaryIndex]
         : undefined;
+  const endingAssets = finalChapter?.presentation?.assets ?? [];
+  const activeEndingAsset =
+    endingAssets[endingAssets.length - 1] ??
+    story?.presentation.cover_asset_id ??
+    "V4-FOR-07";
 
   if (isCompleted) {
     return (
@@ -208,8 +232,20 @@ export function StoryEndingPage() {
 
         <div className="flex-1 px-4 pb-28 pt-4">
           <StoryImage
-            assetId={isLotusStory ? "V4-FOR-09" : "CAT-END-01"}
-            alt={isLotusStory ? "日落后的大炮台与澳门城市" : "路环声音明信片"}
+            assetId={
+              isLotusStory
+                ? "V4-FOR-09"
+                : isTaipaStory
+                  ? activeEndingAsset
+                  : "CAT-END-01"
+            }
+            alt={
+              isLotusStory
+                ? "日落后的大炮台与澳门城市"
+                : isTaipaStory
+                  ? "写给未来氹仔的信"
+                  : "路环声音明信片"
+            }
             eager
             onOpen={setViewerAssetId}
             imageClassName="object-contain"
@@ -230,13 +266,31 @@ export function StoryEndingPage() {
 
           <section className="mt-4 grid grid-cols-2 gap-3">
             <StoryImage
-              assetId={isLotusStory ? "V4-FOR-08" : "CAT-END-01"}
-              alt={isLotusStory ? st("petalsComplete") : "路环声音明信片"}
+              assetId={
+                isLotusStory
+                  ? "V4-FOR-08"
+                  : isTaipaStory
+                    ? activeEndingAsset
+                    : "CAT-END-01"
+              }
+              alt={
+                isLotusStory
+                  ? st("petalsComplete")
+                  : isTaipaStory
+                    ? "氹仔未来信"
+                    : "路环声音明信片"
+              }
               onOpen={setViewerAssetId}
             />
             <StoryImage
-              assetId={isLotusStory ? "V4-PROP-05" : "CAT-PROP-01"}
-              alt={isLotusStory ? st("secretNotes") : "潮汐工作簿"}
+              assetId={
+                isLotusStory
+                  ? "V4-PROP-05"
+                  : isTaipaStory
+                    ? "TAI-PROP-01"
+                    : "CAT-PROP-01"
+              }
+              alt={isLotusStory ? st("secretNotes") : isTaipaStory ? "氹仔退信盒" : "潮汐工作簿"}
               onOpen={setViewerAssetId}
             />
           </section>
@@ -244,7 +298,7 @@ export function StoryEndingPage() {
           <section className="mt-4 rounded-2xl border border-line bg-card p-4">
             <div className="flex items-center justify-between">
               <h2 className="font-serif text-lg font-semibold">
-                {isLotusStory ? st("secretNotes") : "路环记录章"}
+                {isLotusStory ? st("secretNotes") : isTaipaStory ? "氹仔来信" : "路环记录章"}
               </h2>
               {isLotusStory && <PetalProgress collected={petalCount} />}
             </div>
@@ -355,23 +409,45 @@ export function StoryEndingPage() {
 
       <div className="flex-1 px-4 pb-32 pt-4">
         <StoryImage
-          assetId={isLotusStory ? "V4-FOR-07" : "CAT-END-01"}
-          alt={isLotusStory ? st("noteToday") : "完成路环声音明信片"}
+          assetId={
+            isLotusStory
+              ? "V4-FOR-07"
+              : isTaipaStory
+                ? activeEndingAsset
+                : "CAT-END-01"
+          }
+          alt={
+            isLotusStory
+              ? st("noteToday")
+              : isTaipaStory
+                ? "完成写给未来氹仔的信"
+                : "完成路环声音明信片"
+          }
           eager
           onOpen={setViewerAssetId}
         />
 
         <section className="mt-4 rounded-2xl border border-line bg-card p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ochre">
-            {isLotusStory ? st("leaveReader") : "完成潮汐工作簿"}
+            {isLotusStory
+              ? st("leaveReader")
+              : isTaipaStory
+                ? "寄给未来氹仔"
+                : "完成潮汐工作簿"}
           </p>
           <h1 className="mt-2 font-display text-2xl leading-tight">
-            {isLotusStory ? st("noteHeading") : "把路环的声音留在最后一页"}
+            {isLotusStory
+              ? st("noteHeading")
+              : isTaipaStory
+                ? endingChoice?.choice_text ?? "保存并寄出未来信"
+                : "把路环的声音留在最后一页"}
           </h1>
           <p className="mt-3 text-base leading-7 text-ink-soft">
             {isLotusStory
               ? st("noteBody")
-              : "回顾海、船、村、工、土五项记录，写下你此刻最想保留的一段路环记忆。"}
+              : isTaipaStory
+                ? "回顾海、钟、家、工、街五封来信，写下你希望未来仍能记得的一种氹仔生活。"
+                : "回顾海、船、村、工、土五项记录，写下你此刻最想保留的一段路环记忆。"}
           </p>
 
           <label htmlFor="today-note" className="mt-5 block text-sm font-semibold text-sage-deep">

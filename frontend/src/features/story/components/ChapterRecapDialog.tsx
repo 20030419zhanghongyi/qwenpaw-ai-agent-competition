@@ -54,7 +54,7 @@ export function ChapterRecapDialog({
         {reward ? (
           <div className="mt-4 rounded-2xl border border-ochre/25 bg-ochre/5 p-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ochre">
-              {st("stationNote")}
+              {st("chapterRewards")}
             </p>
             <p className="mt-1 text-base font-medium text-ink">
               {reward.name ?? reward.id}

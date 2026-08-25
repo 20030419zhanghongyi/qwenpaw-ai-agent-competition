@@ -27,6 +27,7 @@ export function MappingPuzzle({
     puzzle.fields[0]?.id ?? null,
   );
   const [mapping, setMapping] = useState<Record<string, string>>({});
+  const accessibleInstructionsId = `mapping-accessible-instructions-${puzzle.id}`;
 
   useEffect(() => {
     setActiveField(puzzle.fields[0]?.id ?? null);
@@ -43,6 +44,14 @@ export function MappingPuzzle({
       if (previousOwner) delete next[previousOwner];
       if (next[fieldId] === optionId) delete next[fieldId];
       else next[fieldId] = optionId;
+      return next;
+    });
+  };
+
+  const clearAssignment = (fieldId: string) => {
+    setMapping((current) => {
+      const next = { ...current };
+      delete next[fieldId];
       return next;
     });
   };
@@ -125,45 +134,82 @@ export function MappingPuzzle({
         <p className="text-[13px] font-medium text-ink-soft">
           {st("accessibleSelection")}
         </p>
-        {puzzle.fields.map((field) => (
-          <label
-            key={field.id}
-            className="grid grid-cols-[5rem_1fr] items-center gap-2 text-sm text-ink"
-          >
-            <span>{field.label}</span>
-            <select
-              value={mapping[field.id] ?? ""}
-              disabled={disabled}
-              onChange={(event) => {
-                const optionId = event.target.value;
-                if (!optionId) {
-                  setMapping((current) => {
-                    const next = { ...current };
-                    delete next[field.id];
-                    return next;
-                  });
-                } else {
-                  assign(field.id, optionId);
-                }
-              }}
-              className="min-h-11 rounded-xl border border-line bg-paper px-3 text-base text-ink"
+        <p
+          id={accessibleInstructionsId}
+          className="text-xs leading-5 text-ink-soft"
+        >
+          {st("mappingInstructions")}
+        </p>
+        {puzzle.fields.map((field) => {
+          const groupName = `mapping-${puzzle.id}-${field.id}`;
+          return (
+            <fieldset
+              key={field.id}
+              aria-describedby={accessibleInstructionsId}
+              className="min-w-0 rounded-xl border border-line bg-paper-warm/40 p-3"
             >
-              <option value="">{st("notSelected")}</option>
-              {puzzle.options.map((option) => {
-                const owner = optionOwner(option.id);
-                return (
-                  <option
-                    key={option.id}
-                    value={option.id}
-                    disabled={Boolean(owner && owner !== field.id)}
-                  >
-                    {option.text}
-                  </option>
-                );
-              })}
-            </select>
-          </label>
-        ))}
+              <legend className="px-1 text-sm font-semibold text-ink">
+                {field.label}
+              </legend>
+              <div className="mt-1 space-y-2">
+                <label className="flex min-w-0 cursor-pointer items-start gap-2 rounded-lg border border-line bg-paper px-3 py-2.5 text-sm text-ink">
+                  <input
+                    type="radio"
+                    name={groupName}
+                    value=""
+                    checked={!mapping[field.id]}
+                    disabled={disabled}
+                    onChange={() => clearAssignment(field.id)}
+                    className="mt-0.5 size-4 shrink-0 accent-sage-deep"
+                  />
+                  <span className="min-w-0 whitespace-normal break-words leading-5">
+                    {st("notSelected")}
+                  </span>
+                </label>
+                {puzzle.options.map((option) => {
+                  const owner = optionOwner(option.id);
+                  const selected = mapping[field.id] === option.id;
+                  const ownedByOtherField = Boolean(owner && owner !== field.id);
+                  const ownerLabel = puzzle.fields.find(
+                    (candidate) => candidate.id === owner,
+                  )?.label;
+                  return (
+                    <label
+                      key={option.id}
+                      className={`flex min-w-0 items-start gap-2 rounded-lg border px-3 py-2.5 text-sm transition ${
+                        selected
+                          ? "border-sage-deep bg-sage-deep/10 text-sage-deep"
+                          : "border-line bg-paper text-ink"
+                      } ${
+                        disabled || ownedByOtherField
+                          ? "cursor-not-allowed opacity-50"
+                          : "cursor-pointer"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name={groupName}
+                        value={option.id}
+                        checked={selected}
+                        disabled={disabled || ownedByOtherField}
+                        onChange={() => assign(field.id, option.id)}
+                        className="mt-0.5 size-4 shrink-0 accent-sage-deep"
+                      />
+                      <span className="min-w-0 whitespace-normal break-words leading-5">
+                        {option.text}
+                        {ownedByOtherField && ownerLabel && (
+                          <span className="mt-0.5 block text-xs text-ink-soft">
+                            {st("assignedTo", { label: ownerLabel })}
+                          </span>
+                        )}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+          );
+        })}
       </div>
     </PuzzleFrame>
   );

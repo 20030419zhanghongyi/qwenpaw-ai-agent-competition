@@ -12,6 +12,7 @@ import { StoryComicReader } from "@/features/story/components/StoryComicReader";
 import { StoryImageViewer } from "@/features/story/components/StoryImageViewer";
 import { StoryTopBar } from "@/features/story/components/StoryTopBar";
 import { useStoryMessages } from "@/features/story/storyI18n";
+import { storyStationName } from "@/features/story/storyStations";
 import { useAuth } from "@/state/AuthContext";
 import { useStory, useStoryRestore } from "@/state/StoryContext";
 import type {
@@ -41,7 +42,7 @@ function isRewardAsset(assetId: string): boolean {
 
 const ENDING_PAGE_ONLY_ASSETS = new Set(["V4-FOR-07", "V4-FOR-09"]);
 
-const PROLOGUE_AGENT_CONTEXT: StoryAgentContext = {
+const LOTUS_PROLOGUE_AGENT_CONTEXT: StoryAgentContext = {
   persona: "阿莲",
   poi_name: "旧书与城市双图",
   chapter_goal: "帮助玩家理解旧书、双图和第一张密笺的用途",
@@ -87,6 +88,7 @@ export function StoryScenePage() {
     error,
     errorStatus,
     restoreSession,
+    loadStory,
     refreshSession,
     submitAction,
     clearLatestRewards,
@@ -125,6 +127,12 @@ export function StoryScenePage() {
       void restoreSession(effectiveId);
     }
   }, [effectiveId, restoreSession, session?.session_id, token]);
+
+  useEffect(() => {
+    if (session && story?.id !== session.story_id) {
+      void loadStory(session.story_id);
+    }
+  }, [loadStory, session, story?.id]);
 
   useEffect(() => {
     if (!session || !nodeId) return;
@@ -258,7 +266,7 @@ export function StoryScenePage() {
           />
           <button
             type="button"
-            onClick={() => navigate("/stories/lotus_city_double_map")}
+            onClick={() => navigate("/stories")}
             className="mt-4 min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper"
           >
             {st("back")}
@@ -281,12 +289,18 @@ export function StoryScenePage() {
   const isPuzzleChapter =
     displayChapter.kind === "puzzle" && Boolean(displayChapter.puzzle);
   const isLotusStory = session.story_id === "lotus_city_double_map";
+  const isColoaneStory = session.story_id === "coloane_after_tide";
   const petalCount = chapterPetalCount(session.state.rewards);
+  const stationNodes = story?.nodes.filter((node) => node.poi_id) ?? [];
+  const stationIndex = stationNodes.findIndex(
+    (node) => node.id === displayChapter.id,
+  );
+  const firstStation = stationNodes[0];
   const chapterNumber =
     displayChapter.order === 0
       ? st("prologue")
-      : displayChapter.order <= 6
-        ? st("chapter", { order: displayChapter.order })
+      : stationIndex >= 0
+        ? st("chapter", { order: stationIndex + 1 })
         : st("loadingChapterTitle");
   const lastResultForChapter =
     lastActionResult && submittedChapterSnapshot?.id === displayChapter.id
@@ -294,7 +308,9 @@ export function StoryScenePage() {
       : null;
   const sourceAgentContext =
     displayChapter.agent_context ??
-    (displayChapter.kind === "prologue" ? PROLOGUE_AGENT_CONTEXT : undefined);
+    (displayChapter.id === "prologue_old_book"
+      ? LOTUS_PROLOGUE_AGENT_CONTEXT
+      : undefined);
   const agentContext = sourceAgentContext
     ? {
         ...sourceAgentContext,
@@ -485,64 +501,66 @@ export function StoryScenePage() {
                   </section>
                 )}
 
-                {isEndingChapter && isLotusStory && (
+                {isEndingChapter && (
                   <>
-                    <section className="mt-6 rounded-2xl border border-line bg-card p-4">
-                      <h2 className="font-serif text-xl font-semibold">{st("combineMaps")}</h2>
-                      <p className="mt-2 text-base leading-7 text-ink-soft">
-                        {st("combineMapsBody")}
-                      </p>
-                      <div className="relative mt-4 overflow-hidden rounded-2xl border border-line bg-paper-warm">
-                        <StoryImage
-                          assetId="V4-PROP-03"
-                          alt={st("cityMaps")}
-                          className="rounded-none border-0"
-                        />
-                        <div
-                          className="absolute inset-0"
-                          style={{ opacity: overlayOpacity / 100 }}
-                        >
+                    {isLotusStory && (
+                      <section className="mt-6 rounded-2xl border border-line bg-card p-4">
+                        <h2 className="font-serif text-xl font-semibold">{st("combineMaps")}</h2>
+                        <p className="mt-2 text-base leading-7 text-ink-soft">
+                          {st("combineMapsBody")}
+                        </p>
+                        <div className="relative mt-4 overflow-hidden rounded-2xl border border-line bg-paper-warm">
                           <StoryImage
-                            assetId="V4-FOR-03"
+                            assetId="V4-PROP-03"
                             alt={st("cityMaps")}
                             className="rounded-none border-0"
                           />
+                          <div
+                            className="absolute inset-0"
+                            style={{ opacity: overlayOpacity / 100 }}
+                          >
+                            <StoryImage
+                              assetId="V4-FOR-03"
+                              alt={st("cityMaps")}
+                              className="rounded-none border-0"
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <label htmlFor="map-overlay" className="mt-4 block text-sm font-medium text-sage-deep">
-                        {st("opacity", { value: overlayOpacity })}
-                      </label>
-                      <input
-                        id="map-overlay"
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={overlayOpacity}
-                        onChange={(event) => setOverlayOpacity(Number(event.target.value))}
-                        className="mt-2 min-h-11 w-full accent-sage-deep"
-                      />
-                      <button
-                        type="button"
-                        onPointerDown={() => setOverlayOpacity(100)}
-                        onPointerUp={() => setOverlayOpacity(70)}
-                        onPointerCancel={() => setOverlayOpacity(70)}
-                        className="mt-3 min-h-12 w-full rounded-full border border-sage-deep/30 bg-sage-deep/5 px-5 text-base font-medium text-sage-deep"
-                      >
-                        {st("holdOverlay")}
-                      </button>
-                      <div className="mt-4 border-t border-line pt-4">
-                        <StoryImage
-                          assetId="V4-FOR-08"
-                          alt={st("petalsComplete")}
-                          onOpen={(assetId) => setViewer({ assetId })}
-                          className="mx-auto max-w-64"
-                          imageClassName="object-contain"
+                        <label htmlFor="map-overlay" className="mt-4 block text-sm font-medium text-sage-deep">
+                          {st("opacity", { value: overlayOpacity })}
+                        </label>
+                        <input
+                          id="map-overlay"
+                          type="range"
+                          min={0}
+                          max={100}
+                          value={overlayOpacity}
+                          onChange={(event) => setOverlayOpacity(Number(event.target.value))}
+                          className="mt-2 min-h-11 w-full accent-sage-deep"
                         />
-                        <p className="mt-2 text-center text-sm leading-6 text-ink-soft">
-                          {st("petalsComplete")}
-                        </p>
-                      </div>
-                    </section>
+                        <button
+                          type="button"
+                          onPointerDown={() => setOverlayOpacity(100)}
+                          onPointerUp={() => setOverlayOpacity(70)}
+                          onPointerCancel={() => setOverlayOpacity(70)}
+                          className="mt-3 min-h-12 w-full rounded-full border border-sage-deep/30 bg-sage-deep/5 px-5 text-base font-medium text-sage-deep"
+                        >
+                          {st("holdOverlay")}
+                        </button>
+                        <div className="mt-4 border-t border-line pt-4">
+                          <StoryImage
+                            assetId="V4-FOR-08"
+                            alt={st("petalsComplete")}
+                            onOpen={(assetId) => setViewer({ assetId })}
+                            className="mx-auto max-w-64"
+                            imageClassName="object-contain"
+                          />
+                          <p className="mt-2 text-center text-sm leading-6 text-ink-soft">
+                            {st("petalsComplete")}
+                          </p>
+                        </div>
+                      </section>
+                    )}
 
                     {!dialogueDone &&
                       displayChapter.dialogue &&
@@ -601,7 +619,17 @@ export function StoryScenePage() {
         narrativeReady &&
         displayChapter.kind === "prologue" && (
           <StoryBottomAction
-            label={isLotusStory ? st("goToAmaze") : "开启路环故事路线"}
+            label={
+              isLotusStory
+                ? st("goToAmaze")
+                : isColoaneStory
+                  ? "开启路环故事路线"
+                  : `去第一站：${
+                      firstStation?.location_name ??
+                      (firstStation ? storyStationName(firstStation.id) : undefined) ??
+                      "开启路线"
+                    }`
+            }
             busy={actionPending}
             busyLabel={st("preparing")}
             onClick={() => void handleContinue()}

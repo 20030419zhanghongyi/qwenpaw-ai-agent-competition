@@ -102,6 +102,11 @@ export function StoryImage({
           ) : null}
         </span>
       )}
+      {item?.creditLabel && !failed && (
+        <span className="pointer-events-none absolute bottom-2 left-2 rounded-md bg-ink/75 px-2 py-1 text-[10px] leading-4 text-paper shadow-[var(--shadow-soft)]">
+          {item.creditLabel}
+        </span>
+      )}
       {isInteractive && (
         <span className="absolute right-3 top-3 grid size-11 place-items-center rounded-full border border-paper/70 bg-ink/65 text-paper shadow-[var(--shadow-soft)]">
           <span aria-hidden>⌕</span>

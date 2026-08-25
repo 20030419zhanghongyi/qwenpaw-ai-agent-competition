@@ -22,8 +22,8 @@ QwenPaw 负责多轮偏好引导、需求理解、路线调整、文化讲解、
 
 本节保留 Windows PowerShell 指引，同时提供原生 macOS/zsh 命令。macOS 用户可在
 完成“安装并初始化 QwenPaw”后运行
-`bash scripts/configure_qwenpaw_macos.sh`，一次完成项目 Skills、Agents、伦理基线
-和 Qwen-Image Plugin 的配置；不需要安装 PowerShell 7。
+`bash scripts/configure_qwenpaw_macos.sh`，一次完成项目 Skills、Agents、伦理基线、
+Qwen-Image Plugin 和 Qwen TTS Plugin 的配置；不需要安装 PowerShell 7。
 
 ### 1. 安装基础工具
 
@@ -267,12 +267,17 @@ qwenpaw app
 `host.docker.internal:8088`：
 
 ```powershell
-$qwenpawBaseUrl = "http://127.0.0.1:8088"
+$qwenpawBaseUrl = if ($env:QWENPAW_BASE_URL) {
+  $env:QWENPAW_BASE_URL.TrimEnd("/")
+} else {
+  "http://127.0.0.1:8088"
+}
 Invoke-RestMethod "$qwenpawBaseUrl/api/version"
 ```
 
 以下代码块默认在同一个 PowerShell 会话中依次执行；若打开新终端，请先重新设置
-`$qwenpawBaseUrl`。
+`$qwenpawBaseUrl`。如需使用其他地址，请在执行前设置
+`$env:QWENPAW_BASE_URL`。
 
 #### macOS/zsh 一次性配置
 
@@ -286,10 +291,12 @@ bash scripts/configure_qwenpaw_macos.sh
 ```
 
 脚本会校验并导入本地 Skills，创建缺失的项目 Agents（已有 Agent 不会被删除），
-注入统一伦理基线，安装 Qwen-Image Plugin，并从根目录 `.env` 读取部署者自行提供的
-`QWEN_IMAGE_API_KEY` 与北京原生 `QWEN_IMAGE_ENDPOINT`，同步到 QwenPaw 图片工具。
-仓库与赛委会环境不会提供图像生成 Key；相关用量、额度与费用由部署账号承担。
-脚本不会在终端显示密钥；无 Key 时会保留插件已安装、工具未启用的状态。可用
+注入统一伦理基线与 `guide` 的 TTS 渲染规则，并安装 Qwen-Image、Qwen TTS 两个
+Tool Plugin。脚本从根目录 `.env` 读取部署者自行提供的 `QWEN_IMAGE_API_KEY` 与北京
+原生 `QWEN_IMAGE_ENDPOINT`，同步到 QwenPaw 图片工具；存在 `DASHSCOPE_API_KEY`
+时，也会为 `guide` 配置 `synthesize_speech_qwen`。仓库与赛委会环境不会提供这些
+Key；相关用量、额度与费用由部署账号承担。脚本不会在终端显示密钥；缺少某项
+Key 时会保留对应插件已安装、工具未配置和未启用的状态。可用
 `QWENPAW_BASE_URL=http://127.0.0.1:8088 bash scripts/configure_qwenpaw_macos.sh`
 覆盖默认地址。
 
@@ -361,7 +368,8 @@ foreach ($source in $skillSources) {
   & qwenpaw skills test $destination
   if ($LASTEXITCODE -ne 0) { throw "Skill 检查失败：$skillName" }
 }
-Invoke-RestMethod -Method Post "$qwenpawBaseUrl/api/skills/pool/refresh"
+Invoke-RestMethod -Method Post `
+  "$qwenpawBaseUrl/api/skills/pool/refresh" | Out-Null
 ```
 
 QwenPaw 不会仅因文件出现在 `skill_pool` 就自动登记；最后的 `pool/refresh` 是
@@ -379,43 +387,103 @@ QwenPaw 不会仅因文件出现在 `skill_pool` 就自动登记；最后的 `po
 
 ```powershell
 function Invoke-QwenPawChecked {
-  & qwenpaw @args
+  param([string[]] $CommandArgs)
+  & qwenpaw @CommandArgs
   if ($LASTEXITCODE -ne 0) {
-    throw "QwenPaw 命令失败：qwenpaw $($args -join ' ')"
+    throw "QwenPaw 命令失败：qwenpaw $($CommandArgs -join ' ')"
   }
 }
 
 $activeModel = Invoke-RestMethod "$qwenpawBaseUrl/api/models/active"
 $provider = $activeModel.active_llm.provider_id
 $model = $activeModel.active_llm.model
-if (-not $provider -or -not $model) { throw "QwenPaw 默认模型尚未配置" }
+if (-not $provider -or -not $model) {
+  throw "QwenPaw 默认模型尚未配置"
+}
 Write-Host "Agents 将使用：$provider / $model"
 
-Invoke-QwenPawChecked agents create --agent-id route --name "路线微调" --language zh `
-  --provider-id $provider --model-id $model --skill route-adjust
-Invoke-QwenPawChecked agents create --agent-id intent --name "需求理解" --language zh `
-  --provider-id $provider --model-id $model --skill requirement-understand `
-  --skill fairness-gate
-Invoke-QwenPawChecked agents create --agent-id pref-guide --name "偏好多轮引导" `
-  --language zh --provider-id $provider --model-id $model --skill preference-guide
-Invoke-QwenPawChecked agents create --agent-id guide --name "文化讲解" --language zh `
-  --provider-id $provider --model-id $model --skill macau-guide `
-  --skill source-attribution --skill anti-sycophancy
-Invoke-QwenPawChecked agents create --agent-id photo --name "拍照识别" --language zh `
-  --provider-id $provider --model-id $model --skill photo-recognize `
-  --skill source-attribution
-Invoke-QwenPawChecked agents create --agent-id scene --name "明信片场景" --language zh `
-  --provider-id $provider --model-id $model --skill postcard-scene `
-  --skill qwen-image-postcard --skill photo-abstract-editorial
-Invoke-QwenPawChecked agents create --agent-id reviewer --name "独立审核" --language zh `
-  --provider-id $provider --model-id $model --skill content-safety-review
+$agentSpecs = @(
+  @{ id = "route"; name = "路线微调"; skills = @("route-adjust") },
+  @{
+    id = "intent"
+    name = "需求理解"
+    skills = @("requirement-understand", "fairness-gate")
+  },
+  @{ id = "pref-guide"; name = "偏好多轮引导"; skills = @("preference-guide") },
+  @{
+    id = "guide"
+    name = "文化讲解"
+    skills = @("macau-guide", "source-attribution", "anti-sycophancy")
+  },
+  @{
+    id = "photo"
+    name = "拍照识别"
+    skills = @("photo-recognize", "source-attribution")
+  },
+  @{
+    id = "scene"
+    name = "明信片场景"
+    skills = @(
+      "postcard-scene",
+      "qwen-image-postcard",
+      "photo-abstract-editorial"
+    )
+  },
+  @{
+    id = "reviewer"
+    name = "独立审核"
+    skills = @("content-safety-review")
+  }
+)
 
-Invoke-QwenPawChecked agents list
+$agentResponse = Invoke-RestMethod "$qwenpawBaseUrl/api/agents"
+$existingAgentIds = @($agentResponse.agents | ForEach-Object { $_.id })
+foreach ($spec in $agentSpecs) {
+  if ($spec.id -notin $existingAgentIds) {
+    $createArgs = @(
+      "agents", "create",
+      "--agent-id", $spec.id,
+      "--name", $spec.name,
+      "--language", "zh",
+      "--provider-id", $provider,
+      "--model-id", $model
+    )
+    foreach ($skillName in $spec.skills) {
+      $createArgs += @("--skill", $skillName)
+    }
+    Invoke-QwenPawChecked -CommandArgs $createArgs
+  } else {
+    Write-Host "Agent 已存在：$($spec.id)"
+  }
+}
+
+# 为现有 Agent 补挂缺少的 Skill，但不覆盖开发者已经修改过的工作区副本。
+# HTTP 409 表示该 Skill 已挂载，可以安全忽略。
+foreach ($spec in $agentSpecs) {
+  foreach ($skillName in $spec.skills) {
+    $downloadBody = @{
+      skill_name = $skillName
+      targets = @(@{ workspace_id = $spec.id })
+      overwrite = $false
+    } | ConvertTo-Json -Depth 4
+    try {
+      Invoke-RestMethod -Method Post `
+        -Uri "$qwenpawBaseUrl/api/skills/pool/download" `
+        -ContentType "application/json" -Body $downloadBody | Out-Null
+    } catch {
+      $statusCode = [int]$_.Exception.Response.StatusCode
+      if ($statusCode -ne 409) { throw }
+    }
+  }
+}
+
+Invoke-QwenPawChecked -CommandArgs @("agents", "list")
 ```
 
-这些命令用于首次配置；若 Agent 已存在，不要删除重建，可运行
-`qwenpaw skills config --agent-id <agent-id>` 交互式修正技能。`photo` 还必须保留
-内置 `view_image` 工具为启用状态。
+该代码块可以安全重跑：它只创建缺失的 Agent、补挂缺失的 Skill，不会删除已有
+Agent，也不会覆盖工作区中已存在的 Skill 副本。其他调整可运行
+`qwenpaw skills config --agent-id <agent-id>` 交互式完成。`photo` 还必须保留内置
+`view_image` 工具为启用状态。
 
 `intent` 用于把一段较完整的需求一次性解析为 Preference；`pref-guide` 用于信息
 不足时进行多轮引导，每轮只追问一个缺失项，信息足够后再输出 Preference。后端
@@ -478,70 +546,139 @@ foreach ($agentFile in $agentFiles) {
   Set-Content -LiteralPath $agentFile -Value $updated -Encoding UTF8
   Write-Host "伦理基线已更新：$agentFile"
 }
+
+$guideAgent = @($projectAgents | Where-Object { $_.id -eq "guide" })[0]
+$guideFile = Join-Path $guideAgent.workspace_dir "AGENTS.md"
+$ttsStartMarker = "<!-- MACAU_GUIDE_TTS_START -->"
+$ttsEndMarker = "<!-- MACAU_GUIDE_TTS_END -->"
+$ttsRuleLines = @(
+  "For a request beginning TTS_RENDER_REQUEST: call synthesize_speech_qwen exactly once with the supplied text and language.",
+  "Do not rewrite, translate, summarize, expand, or disclose the approved narration; respond only after the tool completes."
+)
+$ttsBlock = @($ttsStartMarker) + @($ttsRuleLines) + @($ttsEndMarker)
+$guideLines = @(Get-Content -LiteralPath $guideFile -Encoding UTF8)
+$ttsStartCount = @($guideLines | Where-Object { $_ -ceq $ttsStartMarker }).Count
+$ttsEndCount = @($guideLines | Where-Object { $_ -ceq $ttsEndMarker }).Count
+if ($ttsStartCount -gt 1 -or $ttsEndCount -gt 1) {
+  throw "guide 的 TTS 标记重复，请先人工检查：$guideFile"
+}
+$ttsStart = [Array]::IndexOf($guideLines, $ttsStartMarker)
+$ttsEnd = [Array]::IndexOf($guideLines, $ttsEndMarker)
+if (($ttsStart -ge 0) -xor ($ttsEnd -ge 0)) {
+  throw "guide 的 TTS 标记不完整，请先人工检查：$guideFile"
+}
+if ($ttsStart -ge 0 -and $ttsEnd -gt $ttsStart) {
+  $beforeTts = if ($ttsStart -gt 0) { @($guideLines[0..($ttsStart - 1)]) } else { @() }
+  $afterTts = if ($ttsEnd + 1 -lt $guideLines.Count) {
+    @($guideLines[($ttsEnd + 1)..($guideLines.Count - 1)])
+  } else { @() }
+  $updatedGuide = @($beforeTts) + @($ttsBlock) + @($afterTts)
+} elseif ($ttsStart -lt 0 -and $ttsEnd -lt 0) {
+  $updatedGuide = @($guideLines) + @(
+    ""
+  ) + @($ttsBlock)
+} else {
+  throw "guide 的 TTS 标记顺序错误，请先人工检查：$guideFile"
+}
+Set-Content -LiteralPath $guideFile -Value $updatedGuide -Encoding UTF8
+Write-Host "guide TTS 渲染规则已更新：$guideFile"
 ```
 
 只使用 `ethics/qwenpaw-skills/<skill>/SKILL.md` 作为伦理 Skill 内容。该目录内
 的独立 `prompt.md` 不复制、不挂载，也不要再写入 `AGENTS.md` 或 Agent system
 prompt；其规则与 `SKILL.md` 重复，重复注入会增加提示词冲突和上下文噪声。
 
-### 4. 安装 Qwen-Image Tool Plugin
+### 4. 安装 QwenPaw Tool Plugins
 
-仓库已经包含与 AgentScope1.0/QwenPaw1.1.12 post3 兼容的官方插件副本：
+仓库已经包含与 AgentScope 1.0 / QwenPaw 1.1.12 post3 兼容的 Qwen-Image 和
+Qwen TTS Plugin：
 
 ```powershell
 & qwenpaw plugin validate .\backend\app\tools\qwen-image
 if ($LASTEXITCODE -ne 0) { throw "Qwen-Image Plugin 校验失败" }
 & qwenpaw plugin install .\backend\app\tools\qwen-image --force
 if ($LASTEXITCODE -ne 0) { throw "Qwen-Image Plugin 安装失败" }
+& qwenpaw plugin validate .\backend\app\tools\qwen-tts
+if ($LASTEXITCODE -ne 0) { throw "Qwen TTS Plugin 校验失败" }
+& qwenpaw plugin install .\backend\app\tools\qwen-tts --force
+if ($LASTEXITCODE -ne 0) { throw "Qwen TTS Plugin 安装失败" }
 & qwenpaw plugin list
 if ($LASTEXITCODE -ne 0) { throw "无法读取 Plugin 列表" }
 ```
 
 QwenPaw 运行时安装会热加载；未运行时会离线安装，并在下次
-`qwenpaw app` 时加载。插件提供 `generate_image_qwen` 和
-`edit_image_qwen`，只需给 `scene` Agent 启用。
+`qwenpaw app` 时加载。Qwen-Image 为 `scene` 提供 `generate_image_qwen` 和
+`edit_image_qwen`；Qwen TTS 为已有的 `guide` 提供 `synthesize_speech_qwen`。
+不新建语音 Agent：`guide` 负责有据讲解，仅用 TTS 渲染已经过审的
+`audio_script`。
 
 下面的 PowerShell 从项目 `.env` 读取 Key，不把明文写进命令历史，并通过本机
-QwenPaw API 配置、按需启用两个工具：
+QwenPaw API 配置、按需启用相关工具。与 macOS 便捷脚本一致，它也会优先读取
+当前进程环境中的 `DASHSCOPE_API_KEY`；两个来源都没有 Key 时，保留插件安装
+结果并跳过工具配置，不会使其余配置中断：
+
+脚本为 `guide` 配置好 `synthesize_speech_qwen` 后，再在后端环境中设置
+`QWENPAW_TTS_ENABLED=true`。音频从 QwenPaw Tool 返回后，由后端上传为私有 OSS
+对象，浏览器只会收到短期 URL。若要强制使用 QwenPaw 并在其不可用时明确报错，
+而不是走旧的服务商直连回退，可设置
+`QWENPAW_TTS_DIRECT_FALLBACK_ENABLED=false`。
 
 ```powershell
-$keyLine = Get-Content .env |
-  Where-Object { $_ -match '^DASHSCOPE_API_KEY=' } |
-  Select-Object -First 1
-$dashscopeKey = (($keyLine -split '=', 2)[1]).Trim().Trim('"').Trim("'")
-if (-not $dashscopeKey) { throw "DASHSCOPE_API_KEY 未配置" }
-
-$headers = @{ "X-Agent-Id" = "scene" }
-$toolNames = @("generate_image_qwen", "edit_image_qwen")
-$toolConfig = @{
-  config = @{
-    api_key = $dashscopeKey
-    endpoint = "https://dashscope.aliyuncs.com/api/v1"
-    model = "qwen-image-2.0-pro"
-    timeout = 180
+$dashscopeKey = "$($env:DASHSCOPE_API_KEY)".Trim().Trim('"').Trim("'")
+if (-not $dashscopeKey -and (Test-Path -LiteralPath ".env")) {
+  $keyLine = Get-Content -LiteralPath ".env" |
+    Where-Object { $_ -match '^DASHSCOPE_API_KEY=' } |
+    Select-Object -First 1
+  if ($keyLine) {
+    $dashscopeKey = (($keyLine -split '=', 2)[1]).Trim().Trim('"').Trim("'")
   }
-} | ConvertTo-Json -Depth 4
-
-foreach ($toolName in $toolNames) {
-  Invoke-RestMethod -Method Post `
-    -Uri "$qwenpawBaseUrl/api/tools/$toolName/config" `
-    -Headers $headers -ContentType "application/json" `
-    -Body $toolConfig | Out-Null
 }
 
-$allTools = Invoke-RestMethod -Method Get `
-  -Uri "$qwenpawBaseUrl/api/tools" -Headers $headers
-foreach ($toolName in $toolNames) {
-  $current = $null
-  foreach ($candidate in $allTools) {
-    if ($candidate.name -eq $toolName) { $current = $candidate }
+if (-not $dashscopeKey) {
+  Write-Warning "未配置 DASHSCOPE_API_KEY；插件已安装，跳过图片和 TTS 工具配置。"
+} else {
+  function Set-QwenPawToolConfig {
+    param(
+      [Parameter(Mandatory)] [string] $AgentId,
+      [Parameter(Mandatory)] [string] $ToolName,
+      [Parameter(Mandatory)] [hashtable] $Config
+    )
+    $headers = @{ "X-Agent-Id" = $AgentId }
+    $body = @{ config = $Config } | ConvertTo-Json -Depth 4
+    Invoke-RestMethod -Method Post `
+      -Uri "$qwenpawBaseUrl/api/tools/$ToolName/config" `
+      -Headers $headers -ContentType "application/json" -Body $body | Out-Null
+    $allTools = Invoke-RestMethod -Method Get `
+      -Uri "$qwenpawBaseUrl/api/tools" -Headers $headers
+    $current = @($allTools | Where-Object { $_.name -eq $ToolName })[0]
+    if ($null -eq $current) { throw "未找到工具：$ToolName" }
+    if (-not $current.enabled) {
+      Invoke-RestMethod -Method Patch `
+        -Uri "$qwenpawBaseUrl/api/tools/$ToolName/toggle" `
+        -Headers $headers | Out-Null
+    }
   }
-  if ($null -eq $current) { throw "未找到工具：$toolName" }
-  if (-not $current.enabled) {
-    Invoke-RestMethod -Method Patch `
-      -Uri "$qwenpawBaseUrl/api/tools/$toolName/toggle" `
-      -Headers $headers | Out-Null
+
+  $imageConfig = @{
+      api_key = $dashscopeKey
+      endpoint = "https://dashscope.aliyuncs.com/api/v1"
+      model = "qwen-image-2.0-pro"
+      timeout = 180
   }
+  foreach ($toolName in @("generate_image_qwen", "edit_image_qwen")) {
+    Set-QwenPawToolConfig -AgentId "scene" -ToolName $toolName `
+      -Config $imageConfig
+  }
+
+  $ttsConfig = @{
+    api_key = $dashscopeKey
+    model = "qwen3-tts-flash"
+    timeout = 60
+  }
+  Set-QwenPawToolConfig -AgentId "guide" `
+    -ToolName "synthesize_speech_qwen" -Config $ttsConfig
+  Remove-Variable dashscopeKey -ErrorAction SilentlyContinue
+  Write-Host "已为 scene 配置 Qwen-Image，并为 guide 配置 Qwen TTS。"
 }
 ```
 
@@ -558,10 +695,15 @@ foreach ($toolName in $toolNames) {
 ### 5. 验证 QwenPaw 配置
 
 下面的脚本可在新的 PowerShell 会话中独立运行。它会调用一次 QwenPaw 的模型
-健康检查，并核对全部项目 Agent、Skill、伦理基线和图片工具；不会生成明信片图片。
+健康检查，并核对全部项目 Agent、Skill、伦理基线、`guide` 的 TTS 渲染规则和三个
+Plugin 工具；既不会生成明信片图片，也不会合成音频。
 
 ```powershell
-$qwenpawBaseUrl = "http://127.0.0.1:8088"
+$qwenpawBaseUrl = if ($env:QWENPAW_BASE_URL) {
+  $env:QWENPAW_BASE_URL.TrimEnd("/")
+} else {
+  "http://127.0.0.1:8088"
+}
 $projectAgentIds = @(
   "default", "route", "intent", "pref-guide", "guide", "photo", "scene", "reviewer"
 )
@@ -579,8 +721,10 @@ $expectedSkills = [ordered]@{
 if ($LASTEXITCODE -ne 0) { throw "QwenPaw 健康检查失败" }
 $agentList = @(& qwenpaw agents list 2>&1)
 if ($LASTEXITCODE -ne 0) { throw "无法读取 Agent 列表" }
-$pluginInfo = @(& qwenpaw plugin info qwen-image-tool 2>&1)
-if ($LASTEXITCODE -ne 0) { throw "Qwen-Image Plugin 未安装" }
+foreach ($pluginId in @("qwen-image-tool", "qwen-tts-tool")) {
+  $pluginInfo = @(& qwenpaw plugin info $pluginId 2>&1)
+  if ($LASTEXITCODE -ne 0) { throw "Plugin 未安装：$pluginId" }
+}
 
 foreach ($entry in $expectedSkills.GetEnumerator()) {
   $skillOutput = @(& qwenpaw skills list --agent-id $entry.Key 2>&1)
@@ -618,6 +762,27 @@ foreach ($agent in $projectAgents) {
   }
 }
 
+$guideAgent = @($projectAgents | Where-Object { $_.id -eq "guide" })[0]
+$guideFile = Join-Path $guideAgent.workspace_dir "AGENTS.md"
+$guideLines = @(Get-Content -LiteralPath $guideFile -Encoding UTF8)
+$ttsStartMarker = "<!-- MACAU_GUIDE_TTS_START -->"
+$ttsEndMarker = "<!-- MACAU_GUIDE_TTS_END -->"
+$ttsStart = [Array]::IndexOf($guideLines, $ttsStartMarker)
+$ttsEnd = [Array]::IndexOf($guideLines, $ttsEndMarker)
+$ttsStartCount = @($guideLines | Where-Object { $_ -ceq $ttsStartMarker }).Count
+$ttsEndCount = @($guideLines | Where-Object { $_ -ceq $ttsEndMarker }).Count
+$expectedTtsRules = @(
+  "For a request beginning TTS_RENDER_REQUEST: call synthesize_speech_qwen exactly once with the supplied text and language.",
+  "Do not rewrite, translate, summarize, expand, or disclose the approved narration; respond only after the tool completes."
+)
+if ($ttsStartCount -ne 1 -or $ttsEndCount -ne 1 -or $ttsEnd -le $ttsStart) {
+  throw "guide 的 TTS 渲染规则标记不完整或重复"
+}
+$actualTtsRules = @($guideLines[($ttsStart + 1)..($ttsEnd - 1)])
+if (($actualTtsRules -join "`n") -cne ($expectedTtsRules -join "`n")) {
+  throw "guide 的 TTS 渲染规则内容不一致"
+}
+
 $ethicsSkillNames = @(
   "fairness-gate",
   "source-attribution",
@@ -644,7 +809,7 @@ if ($redundantPromptFiles.Count -gt 0) {
 
 function Get-AgentTools([string]$agentId) {
   $headers = @{ "X-Agent-Id" = $agentId }
-  return @(Invoke-RestMethod -Uri "$qwenpawBaseUrl/api/tools" -Headers $headers)
+  return Invoke-RestMethod -Uri "$qwenpawBaseUrl/api/tools" -Headers $headers
 }
 $photoTools = @(Get-AgentTools "photo")
 $viewImage = @($photoTools | Where-Object { $_.name -eq "view_image" })[0]
@@ -663,13 +828,25 @@ foreach ($toolName in @("generate_image_qwen", "edit_image_qwen")) {
     }
   }
 }
+$guideTools = @(Get-AgentTools "guide")
+$ttsTool = @($guideTools | Where-Object { $_.name -eq "synthesize_speech_qwen" })[0]
+if ($null -eq $ttsTool -or -not $ttsTool.enabled) {
+  throw "guide Agent 的 synthesize_speech_qwen 未启用"
+}
+foreach ($field in @("api_key", "model", "timeout")) {
+  if (-not $ttsTool.config_values.$field) {
+    throw "synthesize_speech_qwen 缺少配置：$field"
+  }
+}
 
 $version = Invoke-RestMethod "$qwenpawBaseUrl/api/version"
 Write-Host "QwenPaw 配置验证通过：$($version.version)"
 ```
 
-确认无误后，把 `.env` 中六个 Agent 开关改为 `true`，并保持
-`POSTCARD_AI_IMAGE_ENABLED=true`，再执行：
+确认无误后，把 `.env` 中的 `ROUTE_AGENT_ENABLED`、`INTENT_AGENT_ENABLED`、
+`PREFERENCE_GUIDE_AGENT_ENABLED`、`REVIEWER_AGENT_ENABLED`、
+`GUIDE_AGENT_ENABLED`、`PHOTO_AGENT_ENABLED` 和 `QWENPAW_TTS_ENABLED` 改为
+`true`，并保持 `POSTCARD_AI_IMAGE_ENABLED=true`，再执行：
 
 ```powershell
 docker compose up -d --build

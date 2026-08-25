@@ -16,6 +16,12 @@ export function StoryInvitationCard({
   const st = useStoryMessages();
   const story = STORY_CATALOG.find((entry) => entry.storyId === storyId);
   const isColoane = storyId === "coloane_after_tide";
+  const isTaipa = storyId === "taipa_letters";
+  const invitationAssetId = isColoane
+    ? "CAT-COVER-01"
+    : isTaipa
+      ? "TAI-COVER-01"
+      : "V4-ENTRY-01";
   const title = story?.title ?? st("macauStory");
 
   return (
@@ -24,14 +30,18 @@ export function StoryInvitationCard({
       className="mb-10 overflow-hidden rounded-3xl border border-ochre/30 bg-card shadow-[var(--shadow-lift)]"
     >
       <StoryImage
-        assetId={isColoane ? "CAT-COVER-01" : "V4-ENTRY-01"}
+        assetId={invitationAssetId}
         alt={st("storyInvitation", { title })}
         eager
         className="rounded-none border-0"
       />
       <div className="p-5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ochre">
-          {isColoane ? st("coloaneAudioStory") : st("limitedStory")}
+          {isColoane
+            ? st("coloaneAudioStory")
+            : isTaipa
+              ? st("taipaLetterStory")
+              : st("limitedStory")}
         </p>
         <h2
           id="story-invitation-title"

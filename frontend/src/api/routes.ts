@@ -68,11 +68,20 @@ export async function fetchRoutePois(
 
   if (missing.length > 0) {
     const details = await Promise.all(
-      missing.map((poiId) =>
-        request<RoutePoi>(`/api/v1/pois/${encodeURIComponent(poiId)}`, { signal }),
-      ),
+      missing.map(async (requestedId) => ({
+        requestedId,
+        poi: await request<RoutePoi>(
+          `/api/v1/pois/${encodeURIComponent(requestedId)}`,
+          { signal },
+        ),
+      })),
     );
-    for (const poi of details) byId.set(poi.poi_id, poi);
+    for (const { requestedId, poi } of details) {
+      // A legacy business ID may resolve to a canonical database ID. Keep the
+      // caller's ID so labels, current-station state and marker clicks still
+      // refer to the same route node.
+      byId.set(requestedId, { ...poi, poi_id: requestedId });
+    }
   }
 
   return uniqueIds.map((poiId) => byId.get(poiId)).filter((poi): poi is RoutePoi => Boolean(poi));
