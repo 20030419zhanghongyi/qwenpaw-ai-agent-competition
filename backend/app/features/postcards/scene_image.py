@@ -133,19 +133,55 @@ def _store_cached_jpeg(
         logger.info("postcard AI scene cache write failed: %s", exc)
 
 
-def _image_to_jpeg(raw: bytes) -> bytes | None:
-    """Validate generated image bytes and normalize them to a 4:3 JPEG."""
+def _image_to_jpeg(
+    raw: bytes, *, output_size: tuple[int, int] = (960, 720)
+) -> bytes | None:
+    """Validate generated image bytes and normalize them to a JPEG."""
     try:
         from PIL import Image, ImageOps
 
         image = Image.open(BytesIO(raw)).convert("RGB")
-        image = ImageOps.fit(image, (960, 720), method=Image.Resampling.LANCZOS)
+        image = ImageOps.fit(image, output_size, method=Image.Resampling.LANCZOS)
         buffer = BytesIO()
         image.save(buffer, format="JPEG", quality=90, optimize=True)
         return buffer.getvalue()
     except Exception as exc:  # noqa: BLE001
         logger.info("postcard AI scene image decode failed: %s", exc)
         return None
+
+
+def generate_prompt_image_via_qwenpaw(
+    *,
+    prompt: str,
+    session_prefix: str,
+    output_size: tuple[int, int] = (960, 720),
+) -> bytes:
+    """Generate one image with the configured Scene Agent and return a safe JPEG.
+
+    Callers own prompt construction and persistence. The helper centralizes the
+    QwenPaw image transport, timeout, media download, and image validation used by
+    postcard-like story artifacts.
+    """
+    timeout = max(30.0, float(settings.postcard_ai_scene_timeout or 210.0))
+    agent_id = settings.scene_agent_id or "scene"
+    session_id = f"{session_prefix}-{uuid4().hex[:8]}"
+    client = QwenPawClient(timeout=timeout)
+    try:
+        reference = client.ask_for_image(
+            agent_id,
+            prompt,
+            session_id=session_id,
+        )
+        raw = client.download_media(reference)
+    except QwenPawError as exc:
+        logger.warning("Scene Agent image generation unavailable: %s", exc)
+        raise SceneGenerationError("Scene Agent image generation failed") from exc
+
+    jpeg = _image_to_jpeg(raw, output_size=output_size)
+    if not jpeg:
+        logger.warning("Scene Agent(%s) returned no usable image", agent_id)
+        raise SceneGenerationError("Scene Agent returned no usable image")
+    return jpeg
 
 
 def generate_ai_scene_via_qwenpaw(
@@ -162,25 +198,14 @@ def generate_ai_scene_via_qwenpaw(
             return cached, None
 
         prompt = _qwenpaw_image_prompt(poi_name=poi_name, district=district, language=language)
-        timeout = max(30.0, float(settings.postcard_ai_scene_timeout or 210.0))
-        agent_id = settings.scene_agent_id or "scene"
-        session_id = f"postcard-scene-{key}-{uuid4().hex[:8]}"
-        client = QwenPawClient(timeout=timeout)
         try:
-            reference = client.ask_for_image(
-                agent_id,
-                prompt,
-                session_id=session_id,
+            jpeg = generate_prompt_image_via_qwenpaw(
+                prompt=prompt,
+                session_prefix=f"postcard-scene-{key}",
             )
-            raw = client.download_media(reference)
-        except QwenPawError as exc:
-            logger.warning("postcard AI scene QwenPaw unavailable: %s", exc)
-            raise SceneGenerationError("Scene Agent image generation failed") from exc
-
-        jpeg = _image_to_jpeg(raw)
-        if not jpeg:
-            logger.warning("postcard AI scene QwenPaw(%s) returned no usable image", agent_id)
-            raise SceneGenerationError("Scene Agent returned no usable image")
+        except SceneGenerationError:
+            logger.warning("postcard AI scene generation failed for %s", poi_name)
+            raise
         _store_cached_jpeg(
             poi_name=poi_name,
             district=district,

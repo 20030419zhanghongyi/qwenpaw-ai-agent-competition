@@ -791,6 +791,7 @@ class PostcardService:
             id=str(uuid4()),
             trip_id=trip_id,
             poi_id=poi_id,
+            artifact_kind="postcard",
             stop_order=stop_order,
             caption=caption,
             caption_source=caption_source,
@@ -877,7 +878,7 @@ class PostcardService:
 
     def delete(self, postcard_id: str) -> None:
         record = self._repository.get(postcard_id)
-        if record is None:
+        if record is None or record.artifact_kind != "postcard":
             raise PostcardNotFoundError(f"Postcard not found: {postcard_id}")
         trip_id = record.trip_id
         poi_id = record.poi_id
@@ -899,13 +900,13 @@ class PostcardService:
 
     def image(self, postcard_id: str) -> bytes:
         record = self._repository.get(postcard_id)
-        if record is None:
+        if record is None or record.artifact_kind != "postcard":
             raise PostcardNotFoundError(f"Postcard not found: {postcard_id}")
         return _normalize_postcard_svg_layout(record.image_svg)
 
     def image_png(self, postcard_id: str) -> bytes:
         record = self._repository.get(postcard_id)
-        if record is None:
+        if record is None or record.artifact_kind != "postcard":
             raise PostcardNotFoundError(f"Postcard not found: {postcard_id}")
         trip = trip_repository.get_trip(record.trip_id)
         if trip is None:

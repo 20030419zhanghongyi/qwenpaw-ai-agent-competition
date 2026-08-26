@@ -17,18 +17,33 @@ class PostcardRepository:
         with self._session_factory() as session:
             return session.get(Postcard, postcard_id)
 
-    def get_for_trip_poi(self, trip_id: str, poi_id: str) -> Postcard | None:
+    def get_for_trip_poi(
+        self,
+        trip_id: str,
+        poi_id: str,
+        *,
+        artifact_kind: str = "postcard",
+    ) -> Postcard | None:
         with self._session_factory() as session:
             return session.scalar(
-                select(Postcard).where(Postcard.trip_id == trip_id, Postcard.poi_id == poi_id)
+                select(Postcard).where(
+                    Postcard.trip_id == trip_id,
+                    Postcard.poi_id == poi_id,
+                    Postcard.artifact_kind == artifact_kind,
+                )
             )
 
-    def list_by_trip(self, trip_id: str) -> list[Postcard]:
+    def list_by_trip(
+        self, trip_id: str, *, artifact_kind: str = "postcard"
+    ) -> list[Postcard]:
         with self._session_factory() as session:
             return list(
                 session.scalars(
                     select(Postcard)
-                    .where(Postcard.trip_id == trip_id)
+                    .where(
+                        Postcard.trip_id == trip_id,
+                        Postcard.artifact_kind == artifact_kind,
+                    )
                     .order_by(Postcard.stop_order, Postcard.created_at, Postcard.id)
                 )
             )
@@ -49,10 +64,20 @@ class PostcardRepository:
             session.commit()
             return True
 
-    def delete_for_trip_poi(self, trip_id: str, poi_id: str) -> bool:
+    def delete_for_trip_poi(
+        self,
+        trip_id: str,
+        poi_id: str,
+        *,
+        artifact_kind: str = "postcard",
+    ) -> bool:
         with self._session_factory() as session:
             record = session.scalar(
-                select(Postcard).where(Postcard.trip_id == trip_id, Postcard.poi_id == poi_id)
+                select(Postcard).where(
+                    Postcard.trip_id == trip_id,
+                    Postcard.poi_id == poi_id,
+                    Postcard.artifact_kind == artifact_kind,
+                )
             )
             if record is None:
                 return False

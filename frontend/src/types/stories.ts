@@ -335,3 +335,13 @@ export interface StoryActionResponse {
   new_rewards: StoryReward[];
   session: StorySessionResponse;
 }
+
+export interface FutureLetterResponse {
+  status: "ready";
+  story_session_id: string;
+  postcard_id: string;
+  image_url: string;
+  scene_source: "ai";
+  generated_at: string;
+  reflection_truncated: boolean;
+}

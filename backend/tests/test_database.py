@@ -171,7 +171,17 @@ def test_checkins_unique_constraint():
 
 
 def test_postcards_unique_constraint():
-    assert "uq_postcards_trip_poi" in _unique_constraint_names(Postcard.__table__)
+    constraint = next(
+        item
+        for item in Postcard.__table__.constraints
+        if isinstance(item, UniqueConstraint)
+        and item.name == "uq_postcards_trip_poi_kind"
+    )
+    assert [column.name for column in constraint.columns] == [
+        "trip_id",
+        "poi_id",
+        "artifact_kind",
+    ]
 
 
 def test_favorites_unique_constraint():

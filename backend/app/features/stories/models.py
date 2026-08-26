@@ -101,3 +101,13 @@ class StoryActionResponse(BaseModel):
     new_clues: list[str] = Field(default_factory=list)
     new_rewards: list[StoryReward] = Field(default_factory=list)
     session: StorySessionResponse
+
+
+class FutureLetterResponse(BaseModel):
+    status: str = "ready"
+    story_session_id: str
+    postcard_id: str
+    image_url: str
+    scene_source: str = "ai"
+    generated_at: datetime
+    reflection_truncated: bool = False
