@@ -20,7 +20,7 @@ const specificationPath = path.join(
   repositoryRoot,
   "docs",
   "story-v4",
-  "05-陈兄前端完整开发需求与逐页实施指南.md",
+  "03-竖屏生图编号与提示词清单.md",
 );
 
 async function collectImagePaths(directory, relativeDirectory = "") {
@@ -194,7 +194,7 @@ if (unregisteredFiles.length > 0) {
   problems.push(`未登记的正式素材：${unregisteredFiles.join(", ")}`);
 }
 if (missingRequiredIds.length > 0) {
-  problems.push(`05 文档要求但未登记：${missingRequiredIds.join(", ")}`);
+  problems.push(`素材清单要求但未登记：${missingRequiredIds.join(", ")}`);
 }
 if (filenameConflicts.length > 0) {
   problems.push(
