@@ -138,7 +138,7 @@ export function MappingPuzzle({
           id={accessibleInstructionsId}
           className="text-xs leading-5 text-ink-soft"
         >
-          {st("mappingAccessibleInstructions")}
+          {st("mappingInstructions")}
         </p>
         {puzzle.fields.map((field) => {
           const groupName = `mapping-${puzzle.id}-${field.id}`;
@@ -199,7 +199,7 @@ export function MappingPuzzle({
                         {option.text}
                         {ownedByOtherField && ownerLabel && (
                           <span className="mt-0.5 block text-xs text-ink-soft">
-                            {st("mappingPairedTo", { label: ownerLabel })}
+                            {st("assignedTo", { label: ownerLabel })}
                           </span>
                         )}
                       </span>

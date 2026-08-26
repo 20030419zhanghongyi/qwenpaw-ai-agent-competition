@@ -1,5 +1,6 @@
 """HTTP API for the minimal story-route experience."""
 
+from datetime import date
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -67,11 +68,41 @@ def get_story(
 def start_story(
     story_id: str,
     language: str = Query(default="zh-CN", description="Story display language"),
+    scheduled_day: int | None = Query(default=None, ge=1, le=5),
+    scheduled_date: date | None = Query(default=None),
     user_id: str = Depends(require_user_id),
 ) -> StorySessionResponse:
     try:
-        return story_service.start(story_id, user_id, language=language)
+        return story_service.start(
+            story_id,
+            user_id,
+            language=language,
+            scheduled_day=scheduled_day,
+            scheduled_date=scheduled_date,
+        )
     except (StoryNotFoundError, StoryContentError, RouteNotFoundError, InvalidRouteError) as exc:
+        _raise_http_error(exc)
+
+
+@story_router.get(
+    "/{story_id}/sessions/active",
+    response_model=StorySessionResponse,
+    summary="Restore the user's active session for a selected story",
+    responses={**NOT_FOUND_RESPONSE, **UNPROCESSABLE_RESPONSE},
+)
+def get_active_story_session(
+    story_id: str,
+    language: str = Query(default="zh-CN", description="Story display language"),
+    user_id: str = Depends(require_user_id),
+) -> StorySessionResponse:
+    try:
+        return story_service.get_active_session(story_id, user_id, language=language)
+    except (
+        StorySessionNotFoundError,
+        StoryNotFoundError,
+        StoryContentError,
+        StoryContentVersionError,
+    ) as exc:
         _raise_http_error(exc)
 
 

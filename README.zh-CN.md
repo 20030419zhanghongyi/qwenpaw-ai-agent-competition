@@ -292,11 +292,11 @@ bash scripts/configure_qwenpaw_macos.sh
 
 脚本会校验并导入本地 Skills，创建缺失的项目 Agents（已有 Agent 不会被删除），
 注入统一伦理基线与 `guide` 的 TTS 渲染规则，并安装 Qwen-Image、Qwen TTS 两个
-Tool Plugin。图片工具从根目录 `.env` 读取部署者自行提供的
-`QWEN_IMAGE_API_KEY` 与北京原生 `QWEN_IMAGE_ENDPOINT`；`guide` 的
-`synthesize_speech_qwen` 使用 `DASHSCOPE_API_KEY`。仓库与赛委会环境不会提供
-这些 Key；相关用量、额度与费用由部署账号承担。脚本不会在终端显示密钥；缺少
-某项 Key 时会保留对应 Plugin 已安装，但使相关工具保持未启用。可用
+Tool Plugin。脚本从根目录 `.env` 读取部署者自行提供的 `QWEN_IMAGE_API_KEY` 与北京
+原生 `QWEN_IMAGE_ENDPOINT`，同步到 QwenPaw 图片工具；存在 `DASHSCOPE_API_KEY`
+时，也会为 `guide` 配置 `synthesize_speech_qwen`。仓库与赛委会环境不会提供这些
+Key；相关用量、额度与费用由部署账号承担。脚本不会在终端显示密钥；缺少某项
+Key 时会保留对应插件已安装、工具未配置和未启用的状态。可用
 `QWENPAW_BASE_URL=http://127.0.0.1:8088 bash scripts/configure_qwenpaw_macos.sh`
 覆盖默认地址。
 

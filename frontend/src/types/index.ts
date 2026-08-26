@@ -18,6 +18,11 @@ export interface Preference {
   travel_date?: string | null;
   /** Multi-day plan length (2–5); used as match top_k when duration is multi-day */
   trip_days?: number | null;
+  /** Story participation remains null until the guide asks the user. */
+  story_opt_in?: boolean | null;
+  story_id?: "lotus_city_double_map" | "taipa_letters" | "coloane_after_tide" | null;
+  /** One-based day within a multi-day itinerary. */
+  story_day?: number | null;
 }
 
 export interface RouteNode {

@@ -278,6 +278,8 @@ export type StoryAction =
 
 export interface StorySessionState {
   content_version: number;
+  scheduled_day: number | null;
+  scheduled_date: string | null;
   arrived_chapter_ids: string[];
   completed_chapter_ids: string[];
   hinted_chapter_ids: string[];

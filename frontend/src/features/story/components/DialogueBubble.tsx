@@ -12,7 +12,7 @@ interface DialogueBubbleProps {
 export function DialogueBubble({
   line,
   isCurrent = false,
-  isPlayer = line.speaker_id === "player" || line.speaker === "玩家",
+  isPlayer = line.speaker_id === "player",
   onAdvance,
   className = "",
 }: DialogueBubbleProps) {

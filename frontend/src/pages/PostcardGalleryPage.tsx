@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { listTripPostcards, PostcardApiError } from "@/api/postcards";
+import { listTripHistory } from "@/api/profile";
 import { getCurrentTrip, TripApiError } from "@/api/trips";
 import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { PostcardCard } from "@/components/postcard/PostcardCard";
 import { TravelMemory } from "@/components/postcard/TravelMemory";
+import { ProfileSidebar } from "@/components/profile/ProfileSidebar";
 import { t } from "@/i18n";
 import { resolveTripUserId } from "@/lib/guestUser";
 import { getLastTripId, rememberLastTripId } from "@/lib/lastTrip";
@@ -47,6 +49,33 @@ export function PostcardGalleryPage() {
     setError(null);
     setLoading(true);
     try {
+      if (!tripIdFromQuery && authUserId) {
+        const history = await listTripHistory(authUserId);
+        if (history.length === 0) {
+          setResolvedTripId(null);
+          setPostcards([]);
+          return;
+        }
+
+        const allPostcards = (
+          await Promise.all(history.map(({ trip_id }) => listTripPostcards(trip_id)))
+        )
+          .flat()
+          .sort(
+            (left, right) =>
+              new Date(right.created_at).getTime() - new Date(left.created_at).getTime(),
+          );
+        const rememberedTripId = getLastTripId();
+        const selectedTripId =
+          history.find(({ trip_id }) => trip_id === rememberedTripId)?.trip_id ??
+          history[0].trip_id;
+        setResolvedTripId(selectedTripId);
+        rememberLastTripId(selectedTripId);
+        await loadTrip(selectedTripId);
+        setPostcards(allPostcards);
+        return;
+      }
+
       let tripId = tripIdFromQuery || getLastTripId();
       if (!tripId) {
         try {
@@ -101,7 +130,7 @@ export function PostcardGalleryPage() {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(ellipse_at_top,_oklch(0.62_0.038_145_/_0.12),_transparent_65%)]"
       />
-      <div className="relative mx-auto max-w-3xl px-5 pt-8 lg:px-0">
+      <div className="relative mx-auto max-w-6xl px-5 pt-8 lg:px-8">
         <Link
           to="/walk"
           className="mb-6 inline-block text-sm text-ink-soft transition hover:text-ink"
@@ -119,34 +148,41 @@ export function PostcardGalleryPage() {
           {t(language, "postcardGalleryLead")}
         </p>
 
-        <AzulejoBand className="mb-8" />
+        <div className="grid min-w-0 gap-8 lg:grid-cols-[13rem_minmax(0,1fr)]">
+          <ProfileSidebar language={language} />
+          <div className="min-w-0">
+            <AzulejoBand className="mb-8" />
 
-        {loading ? <LoadingState label={t(language, "postcardLoading")} /> : null}
+            {loading ? <LoadingState label={t(language, "postcardLoading")} /> : null}
 
-        {!loading && error ? (
-          <ErrorState
-            title={t(language, "errorTitle")}
-            message={error}
-            onRetry={() => void refresh()}
-            retryLabel={t(language, "retry")}
-          />
-        ) : null}
+            {!loading && error ? (
+              <ErrorState
+                title={t(language, "errorTitle")}
+                message={error}
+                onRetry={() => void refresh()}
+                retryLabel={t(language, "retry")}
+              />
+            ) : null}
 
-        {!loading && !error && !hasTrip ? (
-          <div className="rounded-2xl border border-line bg-card px-5 py-8 text-center shadow-[var(--shadow-soft)]">
-            <p className="font-display text-xl text-ink">{t(language, "postcardNoTripTitle")}</p>
-            <p className="mt-2 text-sm text-ink-soft">{t(language, "postcardNoTripLead")}</p>
-            <Link
-              to="/walk"
-              className="mt-6 inline-flex h-11 items-center rounded-full bg-sage-deep px-6 text-sm font-medium text-paper transition hover:bg-moss"
-            >
-              {t(language, "postcardGoWalk")}
-            </Link>
-          </div>
-        ) : null}
+            {!loading && !error && !hasTrip ? (
+              <div className="rounded-2xl border border-line bg-card px-5 py-8 text-center shadow-[var(--shadow-soft)]">
+                <p className="font-display text-xl text-ink">
+                  {t(language, "postcardNoTripTitle")}
+                </p>
+                <p className="mt-2 text-sm text-ink-soft">
+                  {t(language, "postcardNoTripLead")}
+                </p>
+                <Link
+                  to="/walk"
+                  className="mt-6 inline-flex h-11 items-center rounded-full bg-sage-deep px-6 text-sm font-medium text-paper transition hover:bg-moss"
+                >
+                  {t(language, "postcardGoWalk")}
+                </Link>
+              </div>
+            ) : null}
 
-        {!loading && !error && hasTrip ? (
-          <>
+            {!loading && !error && hasTrip ? (
+              <>
             <TravelMemory postcards={postcards} language={language} />
             {postcards.length === 0 ? (
               <div className="mb-8 rounded-2xl border border-line bg-card px-5 py-8 text-center shadow-[var(--shadow-soft)]">
@@ -208,13 +244,15 @@ export function PostcardGalleryPage() {
                   ))}
                 </ul>
               </section>
-            ) : (
+            ) : postcards.length === 0 ? (
               <p className="text-center text-sm text-ink-soft">
                 {t(language, "postcardNeedCheckinHint")}
               </p>
-            )}
-          </>
-        ) : null}
+            ) : null}
+              </>
+            ) : null}
+          </div>
+        </div>
       </div>
     </main>
   );

@@ -12,12 +12,12 @@ import { StoryComicReader } from "@/features/story/components/StoryComicReader";
 import { StoryImageViewer } from "@/features/story/components/StoryImageViewer";
 import { StoryTopBar } from "@/features/story/components/StoryTopBar";
 import { useStoryMessages } from "@/features/story/storyI18n";
-import { storyStationName } from "@/features/story/storyStations";
+import { navigateBack } from "@/lib/backNavigation";
 import { useAuth } from "@/state/AuthContext";
 import { useStory, useStoryRestore } from "@/state/StoryContext";
+import { useWalk } from "@/state/WalkContext";
 import type {
   StoryActionResponse,
-  StoryAgentContext,
   StoryAssetRef,
   StoryChapter,
 } from "@/types/stories";
@@ -42,34 +42,12 @@ function isRewardAsset(assetId: string): boolean {
 
 const ENDING_PAGE_ONLY_ASSETS = new Set(["V4-FOR-07", "V4-FOR-09"]);
 
-const LOTUS_PROLOGUE_AGENT_CONTEXT: StoryAgentContext = {
-  persona: "阿莲",
-  poi_name: "旧书与城市双图",
-  chapter_goal: "帮助玩家理解旧书、双图和第一张密笺的用途",
-  known_facts: [
-    "1923年《香山县志续编》是真实存在的地方志",
-    "故事中的家藏版本、信封、双图、纸条、阿澜与M先生均为剧情虚构",
-    "双图记录的侧重点不同，后续需要结合现场逐站核对",
-  ],
-  fiction_boundaries: [
-    "不得把剧情中的夹藏材料、人物和地图描述成真实文物或史实",
-  ],
-  suggested_questions: [
-    "这本古书是什么？",
-    "两张地图应该怎样一起使用？",
-    "为什么第一站要去妈阁庙？",
-  ],
-  do_not_reveal: [
-    "不得提前说明后续谜题答案",
-    "不得提前透露未到达章节的剧情发现",
-  ],
-};
-
 function chapterPetalCount(rewards: Array<{ kind: string }>): number {
   return rewards.filter((reward) => reward.kind === "note_petal").length;
 }
 
 export function StoryScenePage() {
+  const { language } = useWalk();
   const { sessionId, nodeId } = useParams<{
     sessionId: string;
     nodeId: string;
@@ -266,7 +244,7 @@ export function StoryScenePage() {
           />
           <button
             type="button"
-            onClick={() => navigate("/stories")}
+            onClick={() => navigateBack(navigate, location.key)}
             className="mt-4 min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper"
           >
             {st("back")}
@@ -306,11 +284,7 @@ export function StoryScenePage() {
     lastActionResult && submittedChapterSnapshot?.id === displayChapter.id
       ? lastActionResult
       : null;
-  const sourceAgentContext =
-    displayChapter.agent_context ??
-    (displayChapter.id === "prologue_old_book"
-      ? LOTUS_PROLOGUE_AGENT_CONTEXT
-      : undefined);
+  const sourceAgentContext = displayChapter.agent_context;
   const agentContext = sourceAgentContext
     ? {
         ...sourceAgentContext,
@@ -325,6 +299,8 @@ export function StoryScenePage() {
         eyebrow={chapterNumber}
         petals={isLotusStory ? petalCount : undefined}
         onBack={() => navigate(`/story-sessions/${session.session_id}/map`)}
+        onHome={() => navigate("/walk")}
+        homeLabel={{ "zh-CN": "返回主页", "zh-TW": "返回主頁", en: "Home", pt: "Início" }[language]}
         onAskAgent={agentContext ? () => setAgentOpen(true) : undefined}
       />
 
@@ -432,7 +408,7 @@ export function StoryScenePage() {
                   <DialoguePlayer
                     lines={displayChapter.dialogue}
                     chapterId={displayChapter.id}
-                    continueLabel="继续观察"
+                    continueLabel={st("continueObserving")}
                     onComplete={() => setDialogueDone(true)}
                   />
                 </section>
@@ -569,7 +545,7 @@ export function StoryScenePage() {
                           <DialoguePlayer
                             lines={displayChapter.dialogue}
                             chapterId={displayChapter.id}
-                            continueLabel="完成回顾"
+                            continueLabel={st("completeRecap")}
                             onComplete={() => setDialogueDone(true)}
                           />
                         </section>
@@ -585,9 +561,9 @@ export function StoryScenePage() {
                 className="mt-4 rounded-xl border border-clay/30 bg-clay/5 p-3 text-sm text-clay"
               >
                 {errorStatus === 409
-                  ? "进度已在其他页面更新，请重新载入最新章节。"
+                  ? st("conflictReload")
                   : errorStatus === 422
-                    ? "提交内容格式不正确，你的当前选择仍然保留。"
+                    ? st("invalidSelection")
                     : error}
                 {errorStatus === 409 && (
                   <button
@@ -595,7 +571,7 @@ export function StoryScenePage() {
                     onClick={() => void refreshSession()}
                     className="ml-2 min-h-11 rounded-full border border-clay/30 px-3"
                   >
-                    重新载入
+                    {st("reload")}
                   </button>
                 )}
               </div>
@@ -623,12 +599,10 @@ export function StoryScenePage() {
               isLotusStory
                 ? st("goToAmaze")
                 : isColoaneStory
-                  ? "开启路环故事路线"
-                  : `去第一站：${
-                      firstStation?.location_name ??
-                      (firstStation ? storyStationName(firstStation.id) : undefined) ??
-                      "开启路线"
-                    }`
+                  ? st("openColoaneRoute")
+                  : firstStation?.location_name
+                    ? st("goFirstStop", { name: firstStation.location_name })
+                    : st("openRoute")
             }
             busy={actionPending}
             busyLabel={st("preparing")}
@@ -651,7 +625,7 @@ export function StoryScenePage() {
         )}
 
       {advancedSnapshot && latestRewards.length === 0 && (
-        <StoryBottomAction label="查看下一站" onClick={handleNextStop} />
+        <StoryBottomAction label={st("viewNextStop")} onClick={handleNextStop} />
       )}
 
       {latestRewards.length > 0 && (

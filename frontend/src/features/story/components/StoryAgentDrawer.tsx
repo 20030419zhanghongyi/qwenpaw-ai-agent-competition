@@ -36,12 +36,12 @@ function contextPrompt(
   const facts = context.known_facts?.slice(0, 4).join("；");
   const boundaries = context.fiction_boundaries?.slice(0, 3).join("；");
   const parts = [
-    context.chapter_title && `当前章节：${context.chapter_title}`,
-    context.chapter_goal && `本章目标：${context.chapter_goal}`,
-    facts && `已公开事实：${facts}`,
-    boundaries && `虚构边界：${boundaries}`,
+    context.chapter_title && storyT(language, "agentChapter", { value: context.chapter_title }),
+    context.chapter_goal && storyT(language, "agentGoal", { value: context.chapter_goal }),
+    facts && storyT(language, "agentFacts", { value: facts }),
+    boundaries && storyT(language, "agentBoundaries", { value: boundaries }),
     storyT(language, "agentGuardrail"),
-    `玩家问题：${question}`,
+    storyT(language, "agentQuestion", { value: question }),
   ].filter(Boolean);
   return parts.join("\n").slice(0, 1000);
 }

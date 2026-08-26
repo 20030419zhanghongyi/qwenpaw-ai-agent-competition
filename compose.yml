@@ -52,6 +52,8 @@ services:
       POSTCARD_AI_IMAGE_ENABLED: ${POSTCARD_AI_IMAGE_ENABLED:-true}
     ports:
       - "${BACKEND_PUBLISHED_PORT:-8001}:8000"
+    volumes:
+      - qwenpaw_postcard_scene_cache:/app/data/postcard_scene_cache
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -96,3 +98,4 @@ services:
 
 volumes:
   qwenpaw_pg_data:
+  qwenpaw_postcard_scene_cache:

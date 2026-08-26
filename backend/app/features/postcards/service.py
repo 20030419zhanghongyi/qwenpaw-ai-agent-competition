@@ -542,6 +542,20 @@ def _scene_source_from_record(record: PostcardRecord) -> str:
     return "placeholder"
 
 
+def _embedded_scene_jpeg(image_svg: bytes) -> bytes | None:
+    match = re.search(rb'href="data:image/jpeg;base64,([^\"]+)"', image_svg or b"")
+    if not match:
+        return None
+    try:
+        raw = base64.b64decode(match.group(1), validate=True)
+        from PIL import Image
+
+        Image.open(BytesIO(raw)).verify()
+        return raw
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def _photo_style_from_record(record: PostcardRecord) -> str | None:
     match = re.search(rb'data-photo-style="([a-z0-9_-]+)"', record.image_svg or b"")
     if not match:
@@ -601,6 +615,15 @@ class PostcardService:
         if language == "zh-TW":
             return _to_traditional(value)
         return value
+
+    def _reusable_ai_scene(self, poi_id: str) -> bytes | None:
+        for candidate in self._repository.list_reusable_scene_candidates(poi_id):
+            if _scene_source_from_record(candidate) != "ai":
+                continue
+            jpeg = _embedded_scene_jpeg(candidate.image_svg)
+            if jpeg:
+                return jpeg
+        return None
 
     def _stamps(
         self,
@@ -758,24 +781,29 @@ class PostcardService:
                     scene_source = "ai_edit"
                     applied_style = requested_style
         else:
-            try:
-                _src, ai_photo, ai_svg = generate_ai_scene(
-                    poi_id=poi_id,
-                    poi_name=stamps["poi_name"],
-                    district=stamps.get("district"),
-                    language=language,
-                    ai_scene=True,
-                    when=created_at,
-                )
-            except SceneGenerationError as exc:
-                record_audit(
-                    kind="postcard.scene.generate",
-                    status="failed",
-                    subject=trip_id,
-                    agent_id=settings.scene_agent_id or "scene",
-                    metadata={"poi_id": poi_id, "language": language},
-                )
-                raise PostcardSceneUnavailableError("POSTCARD_SCENE_UNAVAILABLE") from exc
+            reused_scene = None if replace else self._reusable_ai_scene(poi_id)
+            if reused_scene:
+                _src, ai_photo, ai_svg = "ai", reused_scene, None
+            else:
+                try:
+                    _src, ai_photo, ai_svg = generate_ai_scene(
+                        poi_id=poi_id,
+                        poi_name=stamps["poi_name"],
+                        district=stamps.get("district"),
+                        language=language,
+                        ai_scene=True,
+                        when=created_at,
+                        reuse_cached=not replace,
+                    )
+                except SceneGenerationError as exc:
+                    record_audit(
+                        kind="postcard.scene.generate",
+                        status="failed",
+                        subject=trip_id,
+                        agent_id=settings.scene_agent_id or "scene",
+                        metadata={"poi_id": poi_id, "language": language},
+                    )
+                    raise PostcardSceneUnavailableError("POSTCARD_SCENE_UNAVAILABLE") from exc
             if not ai_photo and not ai_svg:
                 raise PostcardSceneUnavailableError("POSTCARD_SCENE_UNAVAILABLE")
             cleaned_photo = ai_photo
@@ -832,6 +860,7 @@ class PostcardService:
                 "task_label": stamps["task_label"],
                 "replaced": replace,
                 "ai_scene_requested": ai_scene,
+                "shared_scene_reused": bool(reused_scene) if not has_user_photo else False,
             },
         )
         return self._to_response(saved, trip)
@@ -850,6 +879,15 @@ class PostcardService:
     def prewarm_scene(self, trip_id: str, poi_id: str, language: str) -> None:
         try:
             self.validate_scene_prewarm(trip_id, poi_id, language)
+            if self._reusable_ai_scene(poi_id):
+                record_audit(
+                    kind="postcard.scene.prewarm",
+                    status="reused",
+                    subject=trip_id,
+                    agent_id=settings.scene_agent_id or "scene",
+                    metadata={"poi_id": poi_id, "language": language},
+                )
+                return
             trip = trip_repository.get_trip(trip_id)
             if trip is None:
                 return
@@ -861,6 +899,7 @@ class PostcardService:
                 visited_at=datetime.now(timezone.utc),
             )
             jpeg, _svg = generate_ai_scene_via_qwenpaw(
+                poi_id=poi_id,
                 poi_name=stamps["poi_name"],
                 district=stamps.get("district"),
                 language=language,

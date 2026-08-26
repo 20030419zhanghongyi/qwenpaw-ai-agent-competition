@@ -56,6 +56,36 @@ def test_match_routes_multi_day_respects_trip_days():
     assert len(match_routes(pref5)) == 5
 
 
+def test_selected_story_replaces_requested_day_with_authored_route():
+    pref = Preference(
+        duration="multi-day",
+        trip_days=3,
+        interests=["history"],
+        travel_type=["solo"],
+        physical=["normal"],
+        story_opt_in=True,
+        story_id="taipa_letters",
+        story_day=2,
+    )
+
+    matches = match_routes(pref)
+
+    assert len(matches) == 3
+    assert matches[1]["selected_template"] == "taipa_hotspot_halfday"
+    assert matches[0]["selected_template"] != "taipa_hotspot_halfday"
+    assert matches[2]["selected_template"] != "taipa_hotspot_halfday"
+
+
+def test_story_preference_fields_are_validated_and_parsed():
+    pref = parse_intent_rules("我愿意参加海风寄来的信，安排在第2天")
+    assert pref.story_opt_in is True
+    assert pref.story_id == "taipa_letters"
+    assert pref.story_day == 2
+
+    declined = parse_intent_rules("这次不参加故事")
+    assert declined.story_opt_in is False
+
+
 def test_match_api_echoes_trip_days():
     """POST /routes/match must accept trip_days and return that many multi-day matches."""
     response = client.post(

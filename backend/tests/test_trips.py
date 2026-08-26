@@ -1,5 +1,7 @@
 """API tests for Demo trip, check-in, and progress state."""
 
+from uuid import uuid4
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -67,6 +69,61 @@ def test_create_trip_creates_guest_user_with_default_name():
         assert guest is not None
         assert guest.name == DEFAULT_GUEST_USER_NAME
         assert guest.email == guest_user_email(guest_user_id)
+
+
+def test_authenticated_user_can_claim_guest_trips():
+    guest_user_id = "guest-claim-test"
+    created = create_trip(guest_user_id)
+    registered = client.post(
+        "/api/v1/users/register",
+        json={
+            "email": f"claim-trip-{uuid4()}@test.com",
+            "password": "TestPassword123!",
+            "name": "Trip Owner",
+            "language": "en",
+        },
+    )
+    assert registered.status_code == 201, registered.text
+    account = registered.json()
+
+    claimed = client.post(
+        "/api/v1/users/me/claim-guest-trips",
+        json={"guest_user_id": guest_user_id},
+        headers={"Authorization": f"Bearer {account['token']}"},
+    )
+    assert claimed.status_code == 200, claimed.text
+    assert claimed.json() == {"claimed_trips": 1}
+
+    with SessionLocal() as session:
+        record = session.get(TripRecord, created["trip"]["trip_id"])
+        assert record is not None
+        assert record.user_id == account["user_id"]
+
+    repeated = client.post(
+        "/api/v1/users/me/claim-guest-trips",
+        json={"guest_user_id": guest_user_id},
+        headers={"Authorization": f"Bearer {account['token']}"},
+    )
+    assert repeated.status_code == 200
+    assert repeated.json() == {"claimed_trips": 0}
+
+
+def test_claim_guest_trips_rejects_regular_user_id():
+    registered = client.post(
+        "/api/v1/users/register",
+        json={
+            "email": f"claim-reject-{uuid4()}@test.com",
+            "password": "TestPassword123!",
+            "name": "Trip Owner",
+            "language": "en",
+        },
+    ).json()
+    response = client.post(
+        "/api/v1/users/me/claim-guest-trips",
+        json={"guest_user_id": "ordinary-user"},
+        headers={"Authorization": f"Bearer {registered['token']}"},
+    )
+    assert response.status_code == 422
 
 
 def test_create_trip_with_custom_stop_poi_ids():

@@ -29,6 +29,7 @@ from .models import (
 )
 from .service import (
     EmailOrPhoneRequiredError,
+    IncorrectPasswordError,
     InvalidLanguageError,
     UserAlreadyExistsError,
     UserNotFoundError,
@@ -75,7 +76,15 @@ def login(request: LoginRequest) -> LoginResponse:
     except EmailOrPhoneRequiredError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
     except UserNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="account not found",
+        ) from exc
+    except IncorrectPasswordError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="incorrect password",
+        ) from exc
     return LoginResponse(
         user_id=user.user_id, email=user.email, phone=user.phone,
         token=token,

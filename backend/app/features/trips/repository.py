@@ -121,6 +121,29 @@ class SqlAlchemyTripRepository:
             )
             return self._to_domain(record) if record is not None else None
 
+    def claim_guest_trips(self, guest_user_id: str, user_id: str) -> int:
+        """Move all trips from a locally generated guest identity to an account."""
+        if not guest_user_id.startswith("guest-"):
+            raise ValueError("guest_user_id is not a guest identity")
+
+        with self._session_factory() as session:
+            guest = session.get(UserRecord, guest_user_id)
+            target = session.get(UserRecord, user_id)
+            if target is None:
+                raise ValueError("authenticated user does not exist")
+            if guest is None:
+                return 0
+            if guest.email != guest_user_email(guest_user_id):
+                raise ValueError("guest_user_id is not a system guest identity")
+
+            records = session.scalars(
+                select(TripRecord).where(TripRecord.user_id == guest_user_id)
+            ).all()
+            for record in records:
+                record.user_id = user_id
+            session.commit()
+            return len(records)
+
     def add_checkin(self, trip_id: str, poi_id: str) -> Trip | None:
         with self._session_factory() as session:
             record = session.scalar(

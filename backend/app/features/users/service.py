@@ -17,6 +17,10 @@ class UserNotFoundError(LookupError):
     pass
 
 
+class IncorrectPasswordError(LookupError):
+    pass
+
+
 class EmailOrPhoneRequiredError(ValueError):
     pass
 
@@ -64,7 +68,7 @@ class UserService:
         # Verify password — need raw record for the hash
         raw = self._repository._get_raw(user.user_id)
         if raw is None or raw.password_hash is None or not verify_password(password, raw.password_hash):
-            raise UserNotFoundError(email or phone or "unknown")
+            raise IncorrectPasswordError("incorrect password")
         token = create_access_token(user.user_id)
         return user, token
 

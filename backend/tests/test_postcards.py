@@ -40,8 +40,10 @@ def _photo() -> tuple[str, bytes]:
     return "selfie.png", output.getvalue()
 
 
-def _trip_with_checkin() -> tuple[str, str]:
-    created = client.post("/api/v1/trips", json={"user_id": USER_ID, "route_id": ROUTE_ID}).json()
+def _trip_with_checkin(user_id: str = USER_ID) -> tuple[str, str]:
+    created = client.post(
+        "/api/v1/trips", json={"user_id": user_id, "route_id": ROUTE_ID}
+    ).json()
     trip_id = created["trip"]["trip_id"]
     poi_id = created["trip"]["stop_poi_ids"][0]
     assert (
@@ -351,6 +353,94 @@ def test_postcard_default_no_photo_requires_scene_agent(monkeypatch):
     assert b'data-scene-source="ai"' in image.content
 
 
+def test_no_photo_scene_is_reused_for_same_poi_across_users(monkeypatch):
+    from app.features.postcards.service import postcard_service
+
+    calls = 0
+    test_trip_ids: set[str] = set()
+    original_candidates = postcard_service._repository.list_reusable_scene_candidates
+
+    def _test_candidates(poi_id: str, limit: int = 10):
+        return [
+            record
+            for record in original_candidates(poi_id, limit)
+            if record.trip_id in test_trip_ids
+        ]
+
+    def _generate(**_kwargs):
+        nonlocal calls
+        calls += 1
+        return "ai", _photo()[1], None
+
+    monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
+    monkeypatch.setattr("app.features.postcards.service.generate_ai_scene", _generate)
+    monkeypatch.setattr(
+        postcard_service._repository,
+        "list_reusable_scene_candidates",
+        _test_candidates,
+    )
+    first_trip, first_poi = _trip_with_checkin("postcard-cache-user-one")
+    second_trip, second_poi = _trip_with_checkin("postcard-cache-user-two")
+    test_trip_ids.update((first_trip, second_trip))
+    assert first_poi == second_poi
+
+    first = client.post(
+        f"/api/v1/trips/{first_trip}/postcards",
+        data={"poi_id": first_poi, "language": "zh-CN"},
+    )
+    second = client.post(
+        f"/api/v1/trips/{second_trip}/postcards",
+        data={"poi_id": second_poi, "language": "en"},
+    )
+
+    assert first.status_code == 201
+    assert second.status_code == 201
+    assert calls == 1
+    assert first.json()["postcard_id"] != second.json()["postcard_id"]
+
+
+def test_user_upload_is_never_reused_as_shared_poi_scene(monkeypatch):
+    from app.features.postcards.service import postcard_service
+
+    calls = 0
+    test_trip_ids: set[str] = set()
+    original_candidates = postcard_service._repository.list_reusable_scene_candidates
+
+    def _test_candidates(poi_id: str, limit: int = 10):
+        return [
+            record
+            for record in original_candidates(poi_id, limit)
+            if record.trip_id in test_trip_ids
+        ]
+
+    def _generate(**_kwargs):
+        nonlocal calls
+        calls += 1
+        return "ai", _photo()[1], None
+
+    monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
+    monkeypatch.setattr("app.features.postcards.service.generate_ai_scene", _generate)
+    monkeypatch.setattr(
+        postcard_service._repository,
+        "list_reusable_scene_candidates",
+        _test_candidates,
+    )
+    upload_trip, upload_poi = _trip_with_checkin("postcard-private-upload-user")
+    shared_trip, shared_poi = _trip_with_checkin("postcard-shared-scene-user")
+    test_trip_ids.update((upload_trip, shared_trip))
+    assert upload_poi == shared_poi
+
+    assert _create_postcard(upload_trip, upload_poi).status_code == 201
+    generated = client.post(
+        f"/api/v1/trips/{shared_trip}/postcards",
+        data={"poi_id": shared_poi, "language": "en"},
+    )
+
+    assert generated.status_code == 201
+    assert generated.json()["has_user_photo"] is False
+    assert calls == 1
+
+
 def test_english_postcard_stamps_do_not_leak_chinese(monkeypatch):
     monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
     monkeypatch.setattr(
@@ -493,9 +583,15 @@ def test_postcard_can_be_deleted(monkeypatch):
 
 def test_postcard_replace_creates_new_id(monkeypatch):
     monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
+    reuse_cached: list[bool] = []
+
+    def _generate(**kwargs):
+        reuse_cached.append(kwargs["reuse_cached"])
+        return "ai", _photo()[1], None
+
     monkeypatch.setattr(
         "app.features.postcards.service.generate_ai_scene",
-        lambda **_: ("ai", _photo()[1], None),
+        _generate,
     )
     trip_id, poi_id = _trip_with_checkin()
     first = client.post(
@@ -513,3 +609,4 @@ def test_postcard_replace_creates_new_id(monkeypatch):
     listed = client.get(f"/api/v1/trips/{trip_id}/postcards").json()["postcards"]
     assert len(listed) == 1
     assert listed[0]["postcard_id"] == second["postcard_id"]
+    assert reuse_cached == [True, False]

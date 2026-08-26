@@ -104,7 +104,7 @@ export function StoryImage({
       )}
       {item?.creditLabel && !failed && (
         <span className="pointer-events-none absolute bottom-2 left-2 rounded-md bg-ink/75 px-2 py-1 text-[10px] leading-4 text-paper shadow-[var(--shadow-soft)]">
-          {item.creditLabel}
+          {st("photoCredit", { credit: item.creditLabel })}
         </span>
       )}
       {isInteractive && (

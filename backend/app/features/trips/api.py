@@ -1,11 +1,14 @@
 """HTTP endpoints for Demo trip state."""
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.contracts import NOT_FOUND_RESPONSE, UNPROCESSABLE_RESPONSE
+from app.core.security import require_user_id
 
 from .models import (
     CheckinRequest,
+    ClaimGuestTripsRequest,
+    ClaimGuestTripsResponse,
     LocationCheckinRequest,
     TripCreateRequest,
     TripProgressResponse,
@@ -29,7 +32,7 @@ def _raise_http_error(exc: Exception) -> None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     if isinstance(exc, (InvalidRouteError, PoiNotInTripError, PoiTooFarError)):
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
         ) from exc
     raise exc
@@ -79,6 +82,25 @@ def get_current_trip(user_id: str) -> TripWithProgressResponse:
         return trip_service.get_current_trip(user_id)
     except TripNotFoundError as exc:
         _raise_http_error(exc)
+
+
+@user_router.post(
+    "/me/claim-guest-trips",
+    response_model=ClaimGuestTripsResponse,
+    summary="Move local guest trips into the authenticated account",
+)
+def claim_guest_trips(
+    request: ClaimGuestTripsRequest,
+    user_id: str = Depends(require_user_id),
+) -> ClaimGuestTripsResponse:
+    try:
+        claimed = trip_service.claim_guest_trips(request.guest_user_id, user_id)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+    return ClaimGuestTripsResponse(claimed_trips=claimed)
 
 
 @router.post(

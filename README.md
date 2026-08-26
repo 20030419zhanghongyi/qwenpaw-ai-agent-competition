@@ -309,13 +309,14 @@ bash scripts/configure_qwenpaw_macos.sh
 
 The script validates and imports local Skills, creates only missing project
 Agents, injects the shared ethics baseline and the `guide` TTS rendering rule,
-and installs both Tool Plugins. It configures the Qwen-Image tools from the root
-`.env` using your self-provided `QWEN_IMAGE_API_KEY` and native Beijing
-`QWEN_IMAGE_ENDPOINT`, while `synthesize_speech_qwen` uses `DASHSCOPE_API_KEY`.
-This repository and the competition environment do not provide either key;
-usage, quota, and charges belong to the deploying account. The script never
-prints the keys. A Plugin remains installed but its tool stays disabled when
-the corresponding key is absent.
+and installs both the Qwen-Image and Qwen TTS Tool Plugins. It configures the
+image tools from the root `.env` using your self-provided `QWEN_IMAGE_API_KEY`
+and native Beijing `QWEN_IMAGE_ENDPOINT`; when `DASHSCOPE_API_KEY` is present,
+it also configures `synthesize_speech_qwen` for `guide`. This repository and the
+competition environment do not provide either key; usage, quota, and charges
+belong to the deploying account. The script never prints keys. Missing keys
+leave the corresponding Plugin installed while its tools remain unconfigured
+and disabled.
 Set `QWENPAW_BASE_URL` before the command to override the default endpoint.
 
 After changing only the image key or endpoint, keep QwenPaw running and synchronize
