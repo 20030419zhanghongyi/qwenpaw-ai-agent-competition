@@ -5,7 +5,6 @@ import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { TripDaysStepper } from "@/components/preference/TripDaysStepper";
 import { ProfileSidebar } from "@/components/profile/ProfileSidebar";
-import { TravelHistoryPanel } from "@/components/profile/TravelHistoryPanel";
 import { t } from "@/i18n";
 import { getLastTripId } from "@/lib/lastTrip";
 import {
@@ -85,7 +84,7 @@ const emptyForm = (language: LanguageCode): PreferenceFormState => ({
 
 export function ProfilePage() {
   const navigate = useNavigate();
-  const { isAuthenticated, user, token, logout } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const { language, setLanguage, preference, session, updatePreference, saveMatch } =
     useWalk();
   const [duration, setDuration] = useState<PreferenceFormState["duration"]>("half");
@@ -249,7 +248,10 @@ export function ProfilePage() {
           {isAuthenticated && user ? (
             <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm text-ink">
-                {t(language, "authSignedInAs").replace("{id}", user.user_id)}
+                {t(language, "authSignedInAs").replace(
+                  "{id}",
+                  user.email ?? user.phone ?? user.user_id,
+                )}
               </p>
               <button
                 type="button"
@@ -290,8 +292,6 @@ export function ProfilePage() {
             {t(language, "postcardOpenGallery")}
           </Link>
         </section>
-
-        <TravelHistoryPanel userId={user?.user_id ?? null} token={token} language={language} />
 
         <div className="overflow-hidden rounded-[1.75rem] border border-sage-deep/25 bg-gradient-to-b from-card via-card to-paper-warm shadow-[var(--shadow-soft)]">
           <div className="border-b border-line/80 bg-sage-deep/[0.06] px-5 py-4 sm:px-7">

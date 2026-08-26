@@ -10,6 +10,7 @@ import { listTripHistory } from "@/api/profile";
 import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { ProfileSidebar } from "@/components/profile/ProfileSidebar";
+import { TravelHistoryPanel } from "@/components/profile/TravelHistoryPanel";
 import { useAuth } from "@/state/AuthContext";
 import { useWalk } from "@/state/WalkContext";
 
@@ -26,7 +27,7 @@ const COPY = {
     retry: "重试",
     emptyTitle: "回忆录还是空的",
     emptyLead: "完成一次地点打卡并创建旅行回忆录，就可以上传第一张照片。",
-    backProfile: "查看历史行程",
+    backProfile: "规划新行程",
     photos: "张照片",
     memoirs: "本回忆录",
     edit: "打开回忆录",
@@ -46,7 +47,7 @@ const COPY = {
     retry: "重試",
     emptyTitle: "回憶錄還是空的",
     emptyLead: "完成一次地點打卡並建立旅行回憶錄，就可以上傳第一張照片。",
-    backProfile: "查看歷史行程",
+    backProfile: "規劃新行程",
     photos: "張照片",
     memoirs: "本回憶錄",
     edit: "打開回憶錄",
@@ -66,7 +67,7 @@ const COPY = {
     retry: "Try again",
     emptyTitle: "Your memoir is still empty",
     emptyLead: "Check in at a place and create a travel memoir to upload your first photo.",
-    backProfile: "View trip history",
+    backProfile: "Plan a new itinerary",
     photos: "photos",
     memoirs: "memoirs",
     edit: "Open memoir",
@@ -86,7 +87,7 @@ const COPY = {
     retry: "Tentar novamente",
     emptyTitle: "As suas memórias ainda estão vazias",
     emptyLead: "Faça check-in num local e crie memórias de viagem para carregar a primeira fotografia.",
-    backProfile: "Ver histórico de viagens",
+    backProfile: "Planear um novo itinerário",
     photos: "fotografias",
     memoirs: "memórias",
     edit: "Abrir memórias",
@@ -225,6 +226,14 @@ export function MemoirGalleryPage() {
               </section>
             ) : null}
 
+            {isAuthenticated ? (
+              <TravelHistoryPanel
+                userId={userId}
+                token={token}
+                language={language}
+              />
+            ) : null}
+
             {isAuthenticated && loading ? <LoadingState label={copy.loading} /> : null}
             {isAuthenticated && !loading && error ? (
               <ErrorState
@@ -242,7 +251,7 @@ export function MemoirGalleryPage() {
                   {copy.emptyLead}
                 </p>
                 <Link
-                  to="/profile"
+                  to="/preferences"
                   className="mt-6 inline-flex rounded-full border border-sage-deep px-5 py-2.5 text-sm font-medium text-sage-deep transition hover:bg-sage-deep hover:text-paper"
                 >
                   {copy.backProfile}
@@ -327,6 +336,7 @@ export function MemoirGalleryPage() {
                 ) : null}
               </>
             ) : null}
+
           </div>
         </div>
       </div>
