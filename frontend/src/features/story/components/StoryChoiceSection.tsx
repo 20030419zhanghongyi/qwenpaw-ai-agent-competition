@@ -1,7 +1,8 @@
 import type { LanguageCode } from "@/types";
 import { StoryImage } from "../assets";
+import type { StoryId } from "../storyMetadata";
 
-export type StoryId = "lotus_city_double_map" | "taipa_letters" | "coloane_after_tide";
+export type { StoryId } from "../storyMetadata";
 
 const STORIES: Array<{
   id: StoryId;

@@ -306,6 +306,8 @@ const zhCN = {
   guidePhotoError: "照片识别暂时不可用。",
   guidePhotoUnknown: "照片地点",
   guidePhotoYourShot: "你拍的现场",
+  guidePhotoSavedToMemoir: "已保存到本次行程的回忆录。",
+  guidePhotoNotSavedToMemoir: "已完成识别，但未能保存到回忆录；请确认已完成本站打卡。",
   guideNextStopLabel: "下一站",
   guideLastStopNote: "本段行程已到最后一站。",
 
@@ -708,6 +710,8 @@ const zhTW: Record<MessageKey, string> = {
   guidePhotoError: "照片識別暫時不可用。",
   guidePhotoUnknown: "照片地點",
   guidePhotoYourShot: "你拍的現場",
+  guidePhotoSavedToMemoir: "已儲存到本次行程的回憶錄。",
+  guidePhotoNotSavedToMemoir: "已完成識別，但未能儲存到回憶錄；請確認已完成本站打卡。",
   guideNextStopLabel: "下一站",
   guideLastStopNote: "本段行程已到最後一站。",
 
@@ -1119,6 +1123,8 @@ const en: Record<MessageKey, string> = {
   guidePhotoError: "Photo recognition is unavailable.",
   guidePhotoUnknown: "Photo place",
   guidePhotoYourShot: "Your photo",
+  guidePhotoSavedToMemoir: "Saved to this trip's memoir.",
+  guidePhotoNotSavedToMemoir: "Recognized, but not saved to the memoir. Complete this stop first.",
   guideNextStopLabel: "Next stop",
   guideLastStopNote: "You’ve reached the last stop on this stretch.",
 
@@ -1526,6 +1532,8 @@ const pt: Record<MessageKey, string> = {
   guidePhotoError: "Reconhecimento de foto indisponível.",
   guidePhotoUnknown: "Lugar da foto",
   guidePhotoYourShot: "A sua foto",
+  guidePhotoSavedToMemoir: "Guardada nas memórias desta viagem.",
+  guidePhotoNotSavedToMemoir: "Reconhecida, mas não guardada. Conclua primeiro esta paragem.",
   guideNextStopLabel: "Próxima",
   guideLastStopNote: "Chegou à última paragem deste troço.",
 

@@ -10,6 +10,9 @@ import { listTripHistory } from "@/api/profile";
 import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { ProfileSidebar } from "@/components/profile/ProfileSidebar";
+import { TravelHistoryPanel } from "@/components/profile/TravelHistoryPanel";
+import { localizedMemoirTitle } from "@/lib/memoirLocalization";
+import { localizedPoiIdName } from "@/lib/poiLocalization";
 import { useAuth } from "@/state/AuthContext";
 import { useWalk } from "@/state/WalkContext";
 
@@ -26,7 +29,7 @@ const COPY = {
     retry: "重试",
     emptyTitle: "回忆录还是空的",
     emptyLead: "完成一次地点打卡并创建旅行回忆录，就可以上传第一张照片。",
-    backProfile: "查看历史行程",
+    backProfile: "规划新行程",
     photos: "张照片",
     memoirs: "本回忆录",
     edit: "打开回忆录",
@@ -46,7 +49,7 @@ const COPY = {
     retry: "重試",
     emptyTitle: "回憶錄還是空的",
     emptyLead: "完成一次地點打卡並建立旅行回憶錄，就可以上傳第一張照片。",
-    backProfile: "查看歷史行程",
+    backProfile: "規劃新行程",
     photos: "張照片",
     memoirs: "本回憶錄",
     edit: "打開回憶錄",
@@ -66,7 +69,7 @@ const COPY = {
     retry: "Try again",
     emptyTitle: "Your memoir is still empty",
     emptyLead: "Check in at a place and create a travel memoir to upload your first photo.",
-    backProfile: "View trip history",
+    backProfile: "Plan a new itinerary",
     photos: "photos",
     memoirs: "memoirs",
     edit: "Open memoir",
@@ -86,7 +89,7 @@ const COPY = {
     retry: "Tentar novamente",
     emptyTitle: "As suas memórias ainda estão vazias",
     emptyLead: "Faça check-in num local e crie memórias de viagem para carregar a primeira fotografia.",
-    backProfile: "Ver histórico de viagens",
+    backProfile: "Planear um novo itinerário",
     photos: "fotografias",
     memoirs: "memórias",
     edit: "Abrir memórias",
@@ -148,8 +151,18 @@ export function MemoirGalleryPage() {
               const url = await loadPrivatePhoto(photo, memoir.memoir_id, token);
               objectUrls.push(url);
               const placeName =
-                memoir.chapters.find((chapter) => chapter.poi_id === photo.poi_id)
-                  ?.poi_name ?? copy.unassigned;
+                (() => {
+                  const chapter = memoir.chapters.find(
+                    (item) => item.poi_id === photo.poi_id,
+                  );
+                  return chapter
+                    ? localizedPoiIdName(
+                        chapter.poi_id,
+                        language,
+                        chapter.poi_name,
+                      )
+                    : copy.unassigned;
+                })();
               return { memoir, photo, url, placeName };
             }),
           ),
@@ -180,7 +193,7 @@ export function MemoirGalleryPage() {
       cancelled = true;
       objectUrls.forEach((url) => URL.revokeObjectURL(url));
     };
-  }, [copy.error, copy.unassigned, reloadKey, token, userId]);
+  }, [copy.error, copy.unassigned, language, reloadKey, token, userId]);
 
   const memoirPhotoCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -225,6 +238,14 @@ export function MemoirGalleryPage() {
               </section>
             ) : null}
 
+            {isAuthenticated ? (
+              <TravelHistoryPanel
+                userId={userId}
+                token={token}
+                language={language}
+              />
+            ) : null}
+
             {isAuthenticated && loading ? <LoadingState label={copy.loading} /> : null}
             {isAuthenticated && !loading && error ? (
               <ErrorState
@@ -242,7 +263,7 @@ export function MemoirGalleryPage() {
                   {copy.emptyLead}
                 </p>
                 <Link
-                  to="/profile"
+                  to="/preferences"
                   className="mt-6 inline-flex rounded-full border border-sage-deep px-5 py-2.5 text-sm font-medium text-sage-deep transition hover:bg-sage-deep hover:text-paper"
                 >
                   {copy.backProfile}
@@ -281,7 +302,7 @@ export function MemoirGalleryPage() {
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-ink">{placeName}</p>
                             <p className="mt-1 truncate text-xs text-ink-soft">
-                              {memoir.title}
+                              {localizedMemoirTitle(memoir.title, language)}
                             </p>
                           </div>
                           {photo.has_people ? (
@@ -320,13 +341,14 @@ export function MemoirGalleryPage() {
                           to={`/profile/memoirs/${encodeURIComponent(memoir.memoir_id)}`}
                           className="rounded-full border border-line bg-card px-4 py-2 text-xs text-ink transition hover:border-sage"
                         >
-                          {memoir.title} · {copy.edit}
+                          {localizedMemoirTitle(memoir.title, language)} · {copy.edit}
                         </Link>
                       ))}
                   </div>
                 ) : null}
               </>
             ) : null}
+
           </div>
         </div>
       </div>

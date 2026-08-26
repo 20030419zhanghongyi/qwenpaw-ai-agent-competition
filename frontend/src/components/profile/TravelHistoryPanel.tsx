@@ -23,7 +23,7 @@ const COPY = {
     feedbackHint: "评分和反馈会用于改进路线，不会保存精确位置。", send: "提交反馈", sent: "已保存反馈",
     memoir: "旅行回忆录", createMemoir: "创建回忆录", editMemoir: "继续编辑", viewMemoir: "查看回忆录",
     chooseStyle: "选择叙事风格", diary: "温柔日记", magazine: "旅行杂志", social: "轻松短句", documentary: "纪录片旁白",
-    needCheckin: "至少完成一次打卡后即可创建。", creating: "正在创建…",
+    needCheckin: "至少完成一次打卡后即可创建。", creating: "正在创建…", stops: "站",
   },
   "zh-TW": {
     history: "歷史行程與收藏", empty: "暫時沒有儲存的行程或收藏。", favorite: "收藏地點",
@@ -31,7 +31,7 @@ const COPY = {
     feedbackHint: "評分和回饋會用於改善路線，不會儲存精確位置。", send: "提交回饋", sent: "已儲存回饋",
     memoir: "旅行回憶錄", createMemoir: "建立回憶錄", editMemoir: "繼續編輯", viewMemoir: "查看回憶錄",
     chooseStyle: "選擇敘事風格", diary: "溫柔日記", magazine: "旅行雜誌", social: "輕鬆短句", documentary: "紀錄片旁白",
-    needCheckin: "至少完成一次打卡後即可建立。", creating: "正在建立…",
+    needCheckin: "至少完成一次打卡後即可建立。", creating: "正在建立…", stops: "站",
   },
   en: {
     history: "Trip history and saved places", empty: "No saved trips or places yet.", favorite: "Saved places",
@@ -39,7 +39,7 @@ const COPY = {
     feedbackHint: "Feedback improves routes; precise location is never saved.", send: "Save feedback", sent: "Feedback saved",
     memoir: "Travel memoir", createMemoir: "Create memoir", editMemoir: "Continue editing", viewMemoir: "View memoir",
     chooseStyle: "Choose a narrative style", diary: "Gentle diary", magazine: "Travel magazine", social: "Short and light", documentary: "Documentary",
-    needCheckin: "Create one after at least one check-in.", creating: "Creating…",
+    needCheckin: "Create one after at least one check-in.", creating: "Creating…", stops: "stops",
   },
   pt: {
     history: "Histórico e locais guardados", empty: "Ainda não há viagens ou locais guardados.", favorite: "Locais guardados",
@@ -47,7 +47,7 @@ const COPY = {
     feedbackHint: "O feedback melhora os percursos; a localização exata não é guardada.", send: "Guardar feedback", sent: "Feedback guardado",
     memoir: "Memórias de viagem", createMemoir: "Criar memórias", editMemoir: "Continuar a editar", viewMemoir: "Ver memórias",
     chooseStyle: "Escolher estilo narrativo", diary: "Diário suave", magazine: "Revista de viagem", social: "Frases leves", documentary: "Documentário",
-    needCheckin: "Disponível após pelo menos um check-in.", creating: "A criar…",
+    needCheckin: "Disponível após pelo menos um check-in.", creating: "A criar…", stops: "paragens",
   },
 } as const;
 
@@ -101,6 +101,12 @@ export function TravelHistoryPanel({ userId, token, language }: { userId: string
       setError(err instanceof Error ? err.message : "Unable to create memoir");
     } finally { setCreatingTrip(null); }
   };
+  const tripDate = (value: string) =>
+    new Intl.DateTimeFormat(language, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(new Date(value));
 
   return <section className="mb-8 rounded-2xl border border-line bg-card px-5 py-5 shadow-[var(--shadow-soft)]">
     <h2 className="font-display text-xl text-ink">{copy.history}</h2>
@@ -108,8 +114,8 @@ export function TravelHistoryPanel({ userId, token, language }: { userId: string
     {!error && history.length === 0 && favorites.length === 0 ? <p className="mt-3 text-sm text-ink-soft">{copy.empty}</p> : null}
     {history.length > 0 ? <div className="mt-4 space-y-3">
       {history.map((trip) => <div key={trip.trip_id} className="rounded-xl border border-line/70 px-4 py-3">
-        <div className="flex items-center justify-between gap-3 text-sm text-ink"><span>{trip.route_id}</span><span className="text-ink-soft">{trip.status === "completed" ? copy.completed : copy.active}</span></div>
-        <p className="mt-1 text-xs text-ink-soft">{trip.completed_stops}/{trip.total_stops} stops · {Math.round(trip.completion_ratio * 100)}%</p>
+        <div className="flex items-center justify-between gap-3 text-sm text-ink"><time dateTime={trip.created_at}>{tripDate(trip.created_at)}</time><span className="text-ink-soft">{trip.status === "completed" ? copy.completed : copy.active}</span></div>
+        <p className="mt-1 text-xs text-ink-soft">{trip.completed_stops}/{trip.total_stops} {copy.stops} · {Math.round(trip.completion_ratio * 100)}%</p>
         <div className="mt-3 flex flex-wrap gap-4">
           {memoirs[trip.trip_id] ? <button type="button" onClick={() => navigate(`/profile/memoirs/${encodeURIComponent(memoirs[trip.trip_id].memoir_id)}`)} className="text-xs font-medium text-sage-deep">{memoirs[trip.trip_id].status === "completed" ? copy.viewMemoir : copy.editMemoir}</button> : trip.completed_stops > 0 ? <button type="button" onClick={() => setStyleTrip(styleTrip === trip.trip_id ? null : trip.trip_id)} className="text-xs font-medium text-sage-deep">{creatingTrip === trip.trip_id ? copy.creating : copy.createMemoir}</button> : <span className="text-xs text-ink-soft">{copy.needCheckin}</span>}
           {trip.status === "completed" ? <button type="button" onClick={() => { setFeedbackTrip(trip.trip_id); setSent(false); }} className="text-xs font-medium text-sage-deep">{copy.feedback}</button> : null}

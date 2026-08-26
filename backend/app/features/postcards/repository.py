@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from app.db.models import Postcard
 from app.db.session import SessionLocal
 
+CURRENT_POSTCARD_RENDER_VERSION = 2
+
 
 class PostcardRepository:
     def __init__(self, session_factory: Callable[[], Session] = SessionLocal) -> None:
@@ -15,12 +17,21 @@ class PostcardRepository:
 
     def get(self, postcard_id: str) -> Postcard | None:
         with self._session_factory() as session:
-            return session.get(Postcard, postcard_id)
+            return session.scalar(
+                select(Postcard).where(
+                    Postcard.id == postcard_id,
+                    Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
+                )
+            )
 
     def get_for_trip_poi(self, trip_id: str, poi_id: str) -> Postcard | None:
         with self._session_factory() as session:
             return session.scalar(
-                select(Postcard).where(Postcard.trip_id == trip_id, Postcard.poi_id == poi_id)
+                select(Postcard).where(
+                    Postcard.trip_id == trip_id,
+                    Postcard.poi_id == poi_id,
+                    Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
+                )
             )
 
     def list_by_trip(self, trip_id: str) -> list[Postcard]:
@@ -28,7 +39,10 @@ class PostcardRepository:
             return list(
                 session.scalars(
                     select(Postcard)
-                    .where(Postcard.trip_id == trip_id)
+                    .where(
+                        Postcard.trip_id == trip_id,
+                        Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
+                    )
                     .order_by(Postcard.stop_order, Postcard.created_at, Postcard.id)
                 )
             )
@@ -42,6 +56,7 @@ class PostcardRepository:
                     .where(
                         Postcard.poi_id == poi_id,
                         Postcard.photo_scrubbed.is_(False),
+                        Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
                     )
                     .order_by(Postcard.created_at.desc(), Postcard.id.desc())
                     .limit(limit)
@@ -57,7 +72,12 @@ class PostcardRepository:
 
     def delete(self, postcard_id: str) -> bool:
         with self._session_factory() as session:
-            record = session.get(Postcard, postcard_id)
+            record = session.scalar(
+                select(Postcard).where(
+                    Postcard.id == postcard_id,
+                    Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
+                )
+            )
             if record is None:
                 return False
             session.delete(record)
@@ -67,7 +87,11 @@ class PostcardRepository:
     def delete_for_trip_poi(self, trip_id: str, poi_id: str) -> bool:
         with self._session_factory() as session:
             record = session.scalar(
-                select(Postcard).where(Postcard.trip_id == trip_id, Postcard.poi_id == poi_id)
+                select(Postcard).where(
+                    Postcard.trip_id == trip_id,
+                    Postcard.poi_id == poi_id,
+                    Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
+                )
             )
             if record is None:
                 return False

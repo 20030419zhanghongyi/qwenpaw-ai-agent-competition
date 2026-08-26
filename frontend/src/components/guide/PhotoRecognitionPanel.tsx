@@ -9,6 +9,9 @@ const MAX_SIZE = 8 * 1024 * 1024; // 8 MB
 
 interface PhotoRecognitionPanelProps {
   language: LanguageCode;
+  tripId?: string | null;
+  poiId?: string | null;
+  token?: string | null;
   onRecognized?: (poiName: string) => void;
   onManualSelect?: () => void;
 }
@@ -17,6 +20,9 @@ type Phase = "idle" | "uploading" | "success" | "error";
 
 export function PhotoRecognitionPanel({
   language,
+  tripId,
+  poiId,
+  token,
   onRecognized,
   onManualSelect,
 }: PhotoRecognitionPanelProps) {
@@ -65,7 +71,7 @@ export function PhotoRecognitionPanel({
     setPhase("uploading");
     void (async () => {
       try {
-        const res = await recognizeGuidePhoto({ file, language });
+        const res = await recognizeGuidePhoto({ file, language, tripId, poiId, token });
         setResult(res);
         setPhase("success");
         if (res.candidate_poi && (res.confidence ?? 0) >= 0.6 && onRecognized) {
@@ -176,6 +182,13 @@ export function PhotoRecognitionPanel({
                   ? ` · ${Math.round(result!.confidence * 100)}%`
                   : ""}
               </p>
+              {tripId && token ? (
+                <p className="mt-2 text-xs text-paper/75" role="status">
+                  {result!.saved_to_memoir
+                    ? t(language, "guidePhotoSavedToMemoir")
+                    : t(language, "guidePhotoNotSavedToMemoir")}
+                </p>
+              ) : null}
             </div>
             {result!.explanation?.text ? (
               <p className="text-sm leading-relaxed text-paper/85 whitespace-pre-wrap">
