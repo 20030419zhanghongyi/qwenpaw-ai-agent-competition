@@ -22,6 +22,7 @@ from app.features.stories.engine import apply_action
 from app.features.stories.models import (
     StoryAction,
     StoryActionRequest,
+    StoryReward,
     StorySession,
     StorySessionState,
     StorySessionStatus,
@@ -162,7 +163,7 @@ def test_v4_public_package_matches_frozen_six_stop_story_and_hides_solutions():
     ("story_id", "expected_route_id", "expected_title"),
     [
         ("taipa_letters", "taipa_hotspot_halfday", "海风寄来的信"),
-        ("coloane_after_tide", "coloane_leisure_halfday", "潮退之後"),
+        ("coloane_after_tide", "coloane_leisure_halfday", "潮退之后"),
     ],
 )
 def test_additional_story_packages_are_public_safe_and_complete(
@@ -286,6 +287,104 @@ def test_story_content_endpoint_returns_requested_locale_without_solutions():
     assert response.status_code == 200
     assert response.json()["title"] == "Lotus City, Two Maps: The Map Still Unfinished"
     assert "solution" not in response.text
+
+
+@pytest.mark.parametrize(
+    ("story_id", "node_id", "language", "expected_title", "expected_caption"),
+    [
+        (
+            "taipa_letters",
+            "prologue_taipa_letter_box",
+            "en",
+            "Prologue: Letters with No Recipient",
+            "The box holds five lives that have lost their addresses.",
+        ),
+        (
+            "taipa_letters",
+            "prologue_taipa_letter_box",
+            "pt",
+            "Prólogo: A carta sem destinatário",
+            "A caixa contém cinco vidas que perderam o endereço.",
+        ),
+        (
+            "coloane_after_tide",
+            "prologue_tide_workbook",
+            "en",
+            "Prologue: The Last Page Is Blank",
+            "This is not a treasure map, but a workbook waiting to be filled",
+        ),
+        (
+            "coloane_after_tide",
+            "prologue_tide_workbook",
+            "pt",
+            "Prólogo: A última página está em branco",
+            "Isto não é um mapa de tesouro, mas sim um caderno de trabalho",
+        ),
+    ],
+)
+def test_regional_story_api_returns_requested_locale(
+    story_id: str,
+    node_id: str,
+    language: str,
+    expected_title: str,
+    expected_caption: str,
+):
+    response = TestClient(app).get(f"/api/v1/stories/{story_id}?language={language}")
+
+    assert response.status_code == 200
+    overview_node = next(item for item in response.json()["nodes"] if item["id"] == node_id)
+    assert overview_node["title"] == expected_title
+
+    localized = localize_story(load_story(story_id), language)
+    full_node = next(item for item in story_nodes(localized) if item["id"] == node_id)
+    assert full_node["arrival_comic"][0]["caption"].startswith(expected_caption)
+
+
+@pytest.mark.parametrize(
+    ("language", "expected_name", "expected_text"),
+    [
+        (
+            "zh-TW",
+            "海信",
+            "燈還亮著，信裡的人仍在等水路上的歸航。",
+        ),
+        (
+            "en",
+            "Sea Letter",
+            "The lamp is still on, and the person in the letter is still waiting",
+        ),
+        (
+            "pt",
+            "Carta do Mar",
+            "A luz continua acesa; a pessoa na carta ainda espera",
+        ),
+    ],
+)
+def test_story_session_rewards_follow_requested_locale(
+    language: str,
+    expected_name: str,
+    expected_text: str,
+):
+    story = load_story("taipa_letters")
+    story_session = _session(
+        story_id="taipa_letters",
+        current_chapter_id="chapter_taipa_bell",
+    )
+    story_session.state.rewards = [
+        StoryReward(
+            id="taipa_letter_sea",
+            kind="letter",
+            name="海信",
+            text="灯还亮着，信里的人仍在等水路上的归航。",
+        )
+    ]
+    service = StoryService(repository=None, trips=None)  # type: ignore[arg-type]
+
+    response = service._response(story, story_session, language=language)
+
+    assert response.state.rewards[0].name == expected_name
+    assert response.state.rewards[0].text.startswith(expected_text)
+    assert story_session.state.rewards[0].text == "灯还亮着，信里的人仍在等水路上的归航。"
 
 
 def test_v4_unordered_answers_and_mapping_keys_are_normalized():
@@ -432,12 +531,16 @@ def test_story_api_requires_owner_and_runs_complete_v4_workflow():
         assert missing_auth.status_code == 401
 
         started = client.post(
-            f"/api/v1/stories/{STORY_ID}/sessions", headers=owner_headers
+            f"/api/v1/stories/{STORY_ID}/sessions",
+            headers=owner_headers,
+            params={"scheduled_day": 2, "scheduled_date": "2026-08-26"},
         )
         assert started.status_code == 201, started.text
         session_id = started.json()["session_id"]
         trip_id = started.json()["trip_id"]
         assert started.json()["state"]["content_version"] == 4
+        assert started.json()["state"]["scheduled_day"] == 2
+        assert started.json()["state"]["scheduled_date"] == "2026-08-26"
 
         resumed = client.post(
             f"/api/v1/stories/{STORY_ID}/sessions", headers=owner_headers

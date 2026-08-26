@@ -128,6 +128,28 @@
           "confidence": "high"
         }
       ],
+      "agent_context": {
+        "persona": "阿莲",
+        "poi_name": "旧书与城市双图",
+        "chapter_goal": "帮助玩家理解旧书、双图和第一张密笺的用途",
+        "known_facts": [
+          "1923年《香山县志续编》是真实存在的地方志",
+          "故事中的家藏版本、信封、双图、纸条、阿澜与M先生均为剧情虚构",
+          "双图记录的侧重点不同，后续需要结合现场逐站核对"
+        ],
+        "fiction_boundaries": [
+          "不得把剧情中的夹藏材料、人物和地图描述成真实文物或史实"
+        ],
+        "suggested_questions": [
+          "这本古书是什么？",
+          "两张地图应该怎样一起使用？",
+          "为什么第一站要去妈阁庙？"
+        ],
+        "do_not_reveal": [
+          "不得提前说明后续谜题答案",
+          "不得提前透露未到达章节的剧情发现"
+        ]
+      },
       "presentation": {
         "layout": "portrait_comic",
         "assets": [

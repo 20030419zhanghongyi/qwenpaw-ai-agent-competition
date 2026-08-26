@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { navigateBack } from "@/lib/backNavigation";
 import { STORY_CATALOG } from "@/story-discovery/storyCatalog";
 import { useWalk } from "@/state/WalkContext";
 import type { LanguageCode } from "@/types";
@@ -16,7 +17,7 @@ const COPY: Record<LanguageCode, {
   stories: Record<string, { title: string; subtitle: string }>;
 }> = {
   "zh-CN": {
-    back: "← 返回首页", title: "选择剧情探索",
+    back: "← 返回", title: "选择剧情探索",
     lead: "每条故事线都是一段独立的澳门漫游。选择可游玩的故事后，将进入剧情封面页。",
     developing: "开发中", plannedLead: "后续将补充剧情、地点与谜题内容。",
     playable: (hours) => `预计 ${hours} 小时 · 点击进入`, planned: "暂不可进入 · 后续开放",
@@ -29,7 +30,7 @@ const COPY: Record<LanguageCode, {
     },
   },
   "zh-TW": {
-    back: "← 返回首頁", title: "選擇劇情探索",
+    back: "← 返回", title: "選擇劇情探索",
     lead: "每條故事線都是一段獨立的澳門漫遊。選擇可遊玩的故事後，將進入劇情封面頁。",
     developing: "開發中", plannedLead: "後續將補充劇情、地點及謎題內容。",
     playable: (hours) => `預計 ${hours} 小時 · 點選進入`, planned: "暫不可進入 · 後續開放",
@@ -42,7 +43,7 @@ const COPY: Record<LanguageCode, {
     },
   },
   en: {
-    back: "← Back to home", title: "Choose a story",
+    back: "← Back", title: "Choose a story",
     lead: "Each story is a self-contained walk through Macau. Choose an available journey to open its story cover.",
     developing: "In development", plannedLead: "Story, places, and puzzles will be added later.",
     playable: (hours) => `About ${hours} hours · Open story`, planned: "Not yet available · Coming later",
@@ -55,7 +56,7 @@ const COPY: Record<LanguageCode, {
     },
   },
   pt: {
-    back: "← Voltar ao início", title: "Escolher uma história",
+    back: "← Voltar", title: "Escolher uma história",
     lead: "Cada história é um passeio independente por Macau. Escolha um percurso disponível para abrir a capa.",
     developing: "Em desenvolvimento", plannedLead: "A história, os locais e os enigmas serão adicionados mais tarde.",
     playable: (hours) => `Cerca de ${hours} horas · Abrir história`, planned: "Ainda indisponível · Em breve",
@@ -70,6 +71,8 @@ const COPY: Record<LanguageCode, {
 };
 
 export function StorySelectionPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { language } = useWalk();
   const copy = COPY[language];
   const stories = STORY_ORDER.map((storyId) =>
@@ -80,12 +83,13 @@ export function StorySelectionPage() {
     <main className="min-h-dvh bg-paper px-4 py-6 text-ink sm:px-6">
       <div className="mx-auto flex min-h-[calc(100dvh-3rem)] max-w-3xl flex-col">
         <header className="mb-6">
-          <Link
-            to="/"
+          <button
+            type="button"
+            onClick={() => navigateBack(navigate, location.key)}
             className="text-sm text-ink-soft transition hover:text-ink"
           >
             {copy.back}
-          </Link>
+          </button>
           <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.24em] text-ochre">
             StoryWalk
           </p>

@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { t } from "@/i18n";
 import { useWalk } from "@/state/WalkContext";
+import { useStory } from "@/state/StoryContext";
 
 const TABS = [
   { to: "/guide", labelKey: "navGuide" as const },
@@ -8,8 +9,35 @@ const TABS = [
   { to: "/profile", labelKey: "navProfile" as const },
 ];
 
+function selectedStoryUrl(preference: ReturnType<typeof useWalk>["preference"]): string {
+  if (!preference?.story_id) return "/stories";
+  const base = `/stories/${preference.story_id}`;
+  if (!preference.story_day || !preference.travel_date) return base;
+  const date = new Date(`${preference.travel_date}T00:00:00`);
+  date.setDate(date.getDate() + preference.story_day - 1);
+  const scheduledDate = [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+  return `${base}?${new URLSearchParams({ scheduledDay: String(preference.story_day), scheduledDate })}`;
+}
+
 export function AppNav() {
-  const { language } = useWalk();
+  const { language, preference } = useWalk();
+  const { session } = useStory();
+  const storySelected = preference?.story_opt_in === true && Boolean(preference.story_id);
+  const matchingSession = session?.story_id === preference?.story_id ? session : null;
+  const storyDestination = matchingSession
+    ? matchingSession.status === "completed"
+      ? `/story-sessions/${matchingSession.session_id}/ending`
+      : matchingSession.current_chapter?.kind === "prologue"
+        ? `/story-sessions/${matchingSession.session_id}/nodes/${matchingSession.current_chapter_id}`
+        : `/story-sessions/${matchingSession.session_id}/map`
+    : selectedStoryUrl(preference);
+  const tabs = storySelected
+    ? [TABS[0], { to: storyDestination, labelKey: "navStory" as const }, ...TABS.slice(1)]
+    : TABS;
 
   return (
     <header className="sticky top-0 z-40 border-b border-line/80 bg-paper/95 backdrop-blur-md">
@@ -30,7 +58,7 @@ export function AppNav() {
           aria-label={t(language, "navAria")}
           className="flex flex-1 items-stretch justify-center gap-0 sm:gap-1"
         >
-          {TABS.map((tab) => (
+          {tabs.map((tab) => (
             <NavLink
               key={tab.to}
               to={tab.to}

@@ -11,8 +11,10 @@ import { StoryImageViewer } from "@/features/story/components/StoryImageViewer";
 import { PetalProgress } from "@/features/story/components/PetalProgress";
 import { StoryTopBar } from "@/features/story/components/StoryTopBar";
 import { useStoryMessages } from "@/features/story/storyI18n";
+import { navigateBack } from "@/lib/backNavigation";
 import { useAuth } from "@/state/AuthContext";
 import { useStory, useStoryRestore } from "@/state/StoryContext";
+import { useWalk } from "@/state/WalkContext";
 import type { RoutePoi } from "@/types/routes";
 import type { StoryNodeOverview } from "@/types/stories";
 
@@ -23,6 +25,7 @@ export function StoryMapPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { token, isRestoring } = useAuth();
+  const { language } = useWalk();
   const {
     story,
     session,
@@ -117,13 +120,13 @@ export function StoryMapPage() {
   const collectionTitle = isLotusStory
     ? st("secretNotes")
     : isTaipaStory
-      ? "氹仔来信"
-      : "潮汐工作簿";
+      ? st("taipaLetters")
+      : st("tideWorkbook");
   const collectionProgress = isLotusStory
     ? st("petalsServer")
     : isTaipaStory
-      ? `已收集 ${recordCount}/5 封氹仔来信`
-      : `已收集 ${recordCount}/5 枚路环记录章`;
+      ? st("taipaCollectionProgress", { count: recordCount })
+      : st("coloaneCollectionProgress", { count: recordCount });
   const collectionCoverAsset = isLotusStory
     ? "V4-PROP-03"
     : isTaipaStory
@@ -173,7 +176,7 @@ export function StoryMapPage() {
           />
           <button
             type="button"
-            onClick={() => navigate("/stories")}
+            onClick={() => navigateBack(navigate, location.key)}
             className="mt-4 min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper"
           >
             {st("back")}
@@ -199,6 +202,8 @@ export function StoryMapPage() {
         eyebrow={st("routeEyebrow")}
         petals={isLotusStory ? petalCount : undefined}
         onBack={() => navigate(`/stories/${story.id}`)}
+        onHome={() => navigate("/walk")}
+        homeLabel={{ "zh-CN": "返回主页", "zh-TW": "返回主頁", en: "Home", pt: "Início" }[language]}
         onAskAgent={agentContext ? () => setAgentOpen(true) : undefined}
       />
 
@@ -315,7 +320,7 @@ export function StoryMapPage() {
                               : st("locked")}
                       </span>
                     </span>
-                    <span aria-hidden>{status === "locked" ? "锁" : "→"}</span>
+                    <span aria-hidden>{status === "locked" ? st("lockedShort") : "→"}</span>
                   </button>
                 </li>
               );
@@ -352,7 +357,7 @@ export function StoryMapPage() {
             role="status"
             className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-ochre/30 bg-ochre/5 p-3 text-sm text-ink-soft"
           >
-            <span>{errorStatus === 409 ? "进度已在其他页面更新，请重新载入。" : notice}</span>
+            <span>{errorStatus === 409 ? st("conflictReload") : notice}</span>
             <button
               type="button"
               onClick={() => {
@@ -361,7 +366,7 @@ export function StoryMapPage() {
               }}
               className="min-h-11 shrink-0 rounded-full border border-line px-3"
             >
-              {errorStatus === 409 ? "重新载入" : "知道了"}
+              {errorStatus === 409 ? st("reload") : st("gotIt")}
             </button>
           </div>
         )}

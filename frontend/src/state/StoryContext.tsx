@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -11,6 +12,7 @@ import {
   StoryApiError,
   applyStoryAction,
   createStoryAuthError,
+  fetchActiveStorySession,
   fetchStory,
   fetchStorySession,
   isStoryApiError,
@@ -94,7 +96,10 @@ export interface StoryContextValue {
   errorStatus: number | null;
   loadStory: (storyId: string) => Promise<StoryOverview | null>;
   /** Start or resume and return the backend's real session object. */
-  startStory: (storyId: string) => Promise<StorySessionResponse>;
+  startStory: (
+    storyId: string,
+    schedule?: { day: number; date: string } | null,
+  ) => Promise<StorySessionResponse>;
   /** Restore the explicitly requested session; URL callers take precedence. */
   restoreSession: (sessionId: string) => Promise<StorySessionResponse | null>;
   /** Refresh the in-memory session without recursively invoking restore. */
@@ -110,7 +115,8 @@ const StoryContext = createContext<StoryContextValue | null>(null);
 
 export function StoryProvider({ children }: { children: ReactNode }) {
   const { token, userId } = useAuth();
-  const { language } = useWalk();
+  const { language, preference } = useWalk();
+  const selectedStoryId = preference?.story_opt_in ? preference.story_id ?? null : null;
   const identityKey = userId
     ? `user:${userId}:${language}`
     : token
@@ -123,6 +129,7 @@ export function StoryProvider({ children }: { children: ReactNode }) {
       token={token}
       userId={userId}
       language={language}
+      selectedStoryId={selectedStoryId}
     >
       {children}
     </StoryStateProvider>
@@ -134,11 +141,13 @@ function StoryStateProvider({
   token,
   userId,
   language,
+  selectedStoryId,
 }: {
   children: ReactNode;
   token: string | null;
   userId: string | null;
   language: LanguageCode;
+  selectedStoryId: string | null;
 }) {
   const [story, setStory] = useState<StoryOverview | null>(null);
   const [session, setSessionState] = useState<StorySessionResponse | null>(null);
@@ -226,7 +235,10 @@ function StoryStateProvider({
   );
 
   const startStory = useCallback(
-    (storyId: string): Promise<StorySessionResponse> => {
+    (
+      storyId: string,
+      schedule?: { day: number; date: string } | null,
+    ): Promise<StorySessionResponse> => {
       if (startPromiseRef.current) return startPromiseRef.current;
 
       beginLoading();
@@ -234,7 +246,12 @@ function StoryStateProvider({
       const operation = (async () => {
         try {
           const authToken = requireToken();
-          const startedSession = await startStorySession(storyId, authToken, language);
+          const startedSession = await startStorySession(
+            storyId,
+            authToken,
+            language,
+            schedule,
+          );
           setCurrentSession(startedSession);
           writeSessionId(userId, startedSession.session_id);
           setLatestRewards([]);
@@ -384,6 +401,29 @@ function StoryStateProvider({
     setCurrentSession,
     language,
   ]);
+
+  useEffect(() => {
+    const persistedId = readSessionId(userId);
+    if (!token || !persistedId || sessionRef.current) return;
+    void restoreSession(persistedId);
+  }, [restoreSession, token, userId]);
+
+  useEffect(() => {
+    if (!token || !selectedStoryId || sessionRef.current?.story_id === selectedStoryId) return;
+    let cancelled = false;
+    void fetchActiveStorySession(selectedStoryId, token, language)
+      .then((activeSession) => {
+        if (cancelled) return;
+        setCurrentSession(activeSession);
+        writeSessionId(userId, activeSession.session_id);
+      })
+      .catch((requestError: unknown) => {
+        if (!isStoryApiError(requestError, 404) && !cancelled) recordError(requestError);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [language, recordError, selectedStoryId, setCurrentSession, token, userId]);
 
   const submitAction = useCallback(
     async (request: StoryActionRequest): Promise<StoryActionResponse> => {

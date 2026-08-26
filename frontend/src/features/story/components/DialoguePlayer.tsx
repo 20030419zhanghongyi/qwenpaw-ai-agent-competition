@@ -59,8 +59,7 @@ export function DialoguePlayer({
   };
 
   if (lines.length === 0) return null;
-  const isPlayer =
-    currentLine.speaker_id === "player" || currentLine.speaker === "玩家";
+  const isPlayer = currentLine.speaker_id === "player";
   const portraitAssetId = isPlayer
     ? undefined
     : currentLine.portrait_asset_id;
@@ -132,11 +131,11 @@ export function DialoguePlayer({
           {portraitAssetId && (
             <div
               className="self-end overflow-hidden"
-              aria-label={`${currentLine.speaker}立绘`}
+              aria-label={st("portraitAlt", { speaker: currentLine.speaker })}
             >
               <StoryImage
                 assetId={portraitAssetId}
-                alt={`${currentLine.speaker}立绘`}
+                alt={st("portraitAlt", { speaker: currentLine.speaker })}
                 eager
                 className="rounded-none border-0 bg-transparent"
                 imageClassName="object-contain object-bottom"

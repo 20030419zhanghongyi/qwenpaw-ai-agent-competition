@@ -4,8 +4,10 @@ import { ErrorState, LoadingState } from "@/components/common/States";
 import { StoryImage } from "@/features/story/assets";
 import { StoryBottomAction } from "@/features/story/components/StoryBottomAction";
 import { useStoryMessages } from "@/features/story/storyI18n";
+import { navigateBack } from "@/lib/backNavigation";
 import { useAuth } from "@/state/AuthContext";
 import { useStory, useStoryRestore } from "@/state/StoryContext";
+import { useWalk } from "@/state/WalkContext";
 import type { StorySessionResponse } from "@/types/stories";
 
 function sessionDestination(session: StorySessionResponse): string {
@@ -23,6 +25,7 @@ export function StoryCoverPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, isRestoring } = useAuth();
+  const { language } = useWalk();
   const {
     story,
     session,
@@ -37,6 +40,15 @@ export function StoryCoverPage() {
   const { sessionId: persistedSessionId } = useStoryRestore();
   const st = useStoryMessages();
   const [starting, setStarting] = useState(false);
+  const requestedSchedule = useMemo(() => {
+    const search = new URLSearchParams(location.search);
+    const day = Number(search.get("scheduledDay"));
+    const date = search.get("scheduledDate") ?? "";
+    if (!Number.isInteger(day) || day < 1 || day > 5 || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return null;
+    }
+    return { day, date };
+  }, [location.search]);
 
   useEffect(() => {
     if (storyId) void loadStory(storyId);
@@ -76,14 +88,18 @@ export function StoryCoverPage() {
       return;
     }
 
-    if (ownStorySession) {
+    const scheduleMatches =
+      !requestedSchedule ||
+      (ownStorySession?.state.scheduled_day === requestedSchedule.day &&
+        ownStorySession?.state.scheduled_date === requestedSchedule.date);
+    if (ownStorySession && scheduleMatches) {
       navigate(sessionDestination(ownStorySession));
       return;
     }
 
     setStarting(true);
     try {
-      const startedSession = await startStory(storyId);
+      const startedSession = await startStory(storyId, requestedSchedule);
       navigate(sessionDestination(startedSession));
     } finally {
       setStarting(false);
@@ -111,16 +127,44 @@ export function StoryCoverPage() {
 
   if (!story) return null;
 
+  const savedSchedule = ownStorySession?.state.scheduled_day && ownStorySession.state.scheduled_date
+    ? {
+        day: ownStorySession.state.scheduled_day,
+        date: ownStorySession.state.scheduled_date,
+      }
+    : null;
+  const displayedSchedule = requestedSchedule ?? savedSchedule;
+  const scheduleCopy = {
+    "zh-CN": (day: number, date: string) => `已安排在第 ${day} 天 · ${date}`,
+    "zh-TW": (day: number, date: string) => `已安排在第 ${day} 天 · ${date}`,
+    en: (day: number, date: string) => `Scheduled for day ${day} · ${date}`,
+    pt: (day: number, date: string) => `Agendado para o dia ${day} · ${date}`,
+  }[language];
+  const homeLabel = {
+    "zh-CN": "返回主页",
+    "zh-TW": "返回主頁",
+    en: "Home",
+    pt: "Início",
+  }[language];
+
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-paper text-ink shadow-[var(--shadow-soft)]">
       <div className="flex-1 px-4 pb-32 pt-[max(1rem,env(safe-area-inset-top))]">
-        <button
-          type="button"
-          onClick={() => navigate("/stories")}
-          className="mb-3 inline-flex min-h-11 items-center rounded-full px-2 text-sm text-ink-soft"
-        >
-          {st("backToPreferences")}
-        </button>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => navigateBack(navigate, location.key)}
+            className="inline-flex min-h-11 items-center rounded-full px-2 text-sm text-ink-soft"
+          >
+            ← {st("back")}
+          </button>
+          <a
+            href="/walk"
+            className="inline-flex min-h-11 items-center rounded-full border border-line bg-card px-4 text-sm font-medium text-sage-deep"
+          >
+            {homeLabel}
+          </a>
+        </div>
 
         <StoryImage
           assetId={story.presentation.cover_asset_id}
@@ -142,6 +186,12 @@ export function StoryCoverPage() {
           <p className="mt-4 text-base leading-7 text-ink-soft">
             {story.summary}
           </p>
+
+          {displayedSchedule ? (
+            <p className="mt-4 rounded-xl border border-sage/40 bg-sage/10 px-4 py-3 text-sm font-medium text-sage-deep">
+              {scheduleCopy(displayedSchedule.day, displayedSchedule.date)}
+            </p>
+          ) : null}
 
           <div className="mt-5 grid grid-cols-2 gap-2 text-sm text-ink-soft">
             {[

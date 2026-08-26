@@ -1,0 +1,3338 @@
+{
+  "zh-TW": {
+    "id": "taipa_letters",
+    "version": 4,
+    "title": "海風寄來的信",
+    "subtitle": "沿著氹仔舊城的海風，替五封沒有收件人的信找回時代與歸處",
+    "summary": "你與阿蓮在氹仔舊城打開一隻虛構的退信盒。盒中五封信來自不同的生活背景，卻都遺失了地址。你們將走過北帝廟、嘉模聖母堂、龍環葡韻、益隆炮竹廠舊址和官也街，從信仰、居住、勞動與街巷日常留下的痕跡裡，為每封信找回屬於它的時代與地方。",
+    "route_id": "taipa_hotspot_halfday",
+    "estimated_hours": 4,
+    "product_mode": "mobile_portrait_web",
+    "presentation": {
+      "default_orientation": "portrait",
+      "max_content_width_px": 480,
+      "cover_asset_id": "TAI-COVER-01",
+      "asset_base_path": "/story/taipa-letters/"
+    },
+    "identity": {
+      "id": "returned_letter_keeper",
+      "name": "退信盒保管人",
+      "description": "你不必證明一段並不存在的私人家史。你的任務，是藉現場觀察和公開資料，為五封情境復原信找回合適的時代與地方。"
+    },
+    "content_notice": "退信盒、全部寫信人、信件內容、寄送關係與未來信均為劇情虛構。故事涉及的建築年代、產業、宗教和社區背景依策劃所列公開資料整理；知識卡會分別標註史實、民間信俗、情境復原與劇情虛構。官也街相關任務不會採用未經核實的‘最早’或‘第一家’說法。",
+    "content_labels": {
+      "historical_fact": "史實",
+      "folklore": "民間信俗／地方記憶",
+      "contextual_reconstruction": "情境復原",
+      "fictional_story": "劇情虛構",
+      "dynamic_operational_info": "動態營運資訊"
+    },
+    "characters": [
+      {
+        "id": "player",
+        "name": "玩家",
+        "role": "沿舊城為退信尋找時代與歸處的人",
+        "fictional": true
+      },
+      {
+        "id": "alian",
+        "name": "阿蓮",
+        "role": "你的本地同學與知識 Agent，陪你查證史實，也提醒你分清信俗與虛構",
+        "fictional": true
+      },
+      {
+        "id": "alan",
+        "name": "寫信人",
+        "role": "五封情境復原信中的虛構寫信人，只在信紙上的字句裡出現",
+        "fictional": true
+      },
+      {
+        "id": "m",
+        "name": "未來收信人",
+        "role": "來自未來氹仔、等待玩家來信的想像讀者",
+        "fictional": true
+      }
+    ],
+    "props": [
+      "退信盒",
+      "海信",
+      "鐘信",
+      "家信",
+      "工信",
+      "街信",
+      "未來信"
+    ],
+    "nodes": [
+      {
+        "id": "prologue_taipa_letter_box",
+        "order": 0,
+        "kind": "prologue",
+        "title": "序章：沒有收件人的信",
+        "story_time": "10:00",
+        "scene": "上午十點，氹仔舊城的街聲漸漸熱起來。你的手機屏幕上忽然彈出一隻舊信盒：盒裏的五封信都寫着氹仔，卻沒有一封知道今天該寄往哪裏。",
+        "time_layer": {
+          "period": "今日氹仔與多個歷史時期",
+          "focus": "先弄清信件的虛構邊界，再從現場與公開資料中尋找它們的地址"
+        },
+        "letter_fragment": {
+          "title": "退信盒說明",
+          "text": "有人搬走了，有些行當消失了，有些海岸也不再是從前的模樣。請替這些信找回地址。",
+          "label": "劇情虛構"
+        },
+        "historical_claims": [
+          {
+            "statement": "路氹歷史館的展覽可幫助了解離島村落、宗教、農業、手工業與近現代發展。",
+            "status": "公開資料背景",
+            "source": "路氹歷史館相關展覽資料"
+          }
+        ],
+        "interaction": {
+          "type": "letter_box_opening",
+          "instruction": "讀完退信盒上的說明，先確認這五封信既不屬於同一家族，也不是真實的私人檔案。",
+          "safety": "路氹歷史館是否開放，請以當日官方信息為準；即使不進入場館，也能繼續故事。"
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-PROP-01",
+            "alt": "一隻裝著五封無地址信件的舊退信盒",
+            "caption": "盒裏裝著五段失去地址的生活。退信盒與信件均為劇情道具，並非真實文物。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-prologue-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "沒有一封寫著完整地址，信封上只有五個字：海、鐘、家、工、街。"
+          },
+          {
+            "id": "taipa-prologue-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "先說清楚，它們不是真正被發現的家書，只是從幾種生活背景出發寫成的情境復原信。"
+          },
+          {
+            "id": "taipa-prologue-dialogue-03",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "所以我們不替陌生人編家譜，只替信裏的生活找回它該在的時代和地方。"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "fictional_story",
+            "title": "退信盒與寫信人",
+            "text": "退信盒、五封信和全部寫信人都出自劇情創作，不能把它們當作真實檔案或家族史。",
+            "source_label": "Story Package 劇情設定",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "情境復原信",
+            "text": "這些信借真實的建築、產業、宗教和社區背景，想像普通人的生活視角，但不能代替史料。",
+            "source_label": "策劃中的敘事邊界",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "氹仔舊城／路氹歷史館一帶",
+          "chapter_goal": "帶玩家打開退信盒，並先分清史實、情境復原與劇情虛構。",
+          "known_facts": [
+            "路氹歷史館可作為離島歷史知識補充點",
+            "全部信件與寫信人均為虛構",
+            "玩家要為信件匹配時代與地方，而不是證明私人史"
+          ],
+          "fiction_boundaries": [
+            "不得把退信盒、信件或寫信人說成真實文物、檔案或人物",
+            "不得虛構信件之間的家族關係"
+          ],
+          "suggested_questions": [
+            "這些信是真的嗎？",
+            "情境復原和真實史料有什麼不同？",
+            "為什麼第一封信要從北帝廟開始找地址？"
+          ],
+          "do_not_reveal": [
+            "不得提前給出後續任務答案",
+            "不得把待考證內容說成已核史實"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_prologue_letter_box",
+          "assets": [
+            "TAI-COVER-01",
+            "TAI-PROP-01"
+          ]
+        },
+        "fallback": {
+          "type": "text_only",
+          "text": "如果退信盒插圖暫時無法加載，直接閱讀盒上的說明即可，後續故事不會受影響。"
+        },
+        "reward": {
+          "id": "returned_letter_box",
+          "kind": "story_prop",
+          "name": "退信盒",
+          "text": "盒中留下海、鐘、家、工、街五枚標籤，等待你到現場一一核對。"
+        }
+      },
+      {
+        "id": "chapter_taipa_sea",
+        "order": 1,
+        "kind": "puzzle",
+        "title": "第一章：等船回來的人",
+        "story_time": "10:30",
+        "location_name": "北帝廟",
+        "poi_id": "poi_0100",
+        "scene": "第一封信裡，水聲、風向和歸航被寫了一遍又一遍。站在廟前，你漸漸明白：它等待的並不是某個可考的姓名，而是一段許多海島人都曾熟悉的生活。",
+        "time_layer": {
+          "period": "一座擁有至少160年歷史的廟宇與昔日漁民社區",
+          "focus": "從海島生活與北帝信仰中，理解人們對平安歸航的願望"
+        },
+        "letter_fragment": {
+          "title": "等船信",
+          "text": "風向換了又換，我還是把門前那盞燈留著。等你從水路回來，我們再慢慢說這一季的事。",
+          "label": "情境復原／寫信人虛構"
+        },
+        "historical_claims": [
+          {
+            "statement": "氹仔北帝廟至少有約160年歷史。",
+            "status": "已核",
+            "source": "澳門旅遊局氹仔北帝廟資料"
+          },
+          {
+            "statement": "昔日氹仔居民以漁民為主，北帝信仰與治水、禦火及出海生活相關。",
+            "status": "已核背景",
+            "source": "澳門旅遊局相關資料"
+          }
+        ],
+        "interaction": {
+          "type": "observation_and_classification",
+          "instruction": "先在不打擾宗教活動的前提下看看廟宇與周邊，再選出有公開資料支持的生活背景。",
+          "safety": "請勿觸碰供奉物或拍攝正在進行的儀式，也不要在出入口停留。"
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-SEA-01",
+            "alt": "氹仔北帝廟與廟前公共空間",
+            "caption": "風從廟前穿過，廟宇與周邊街巷仍保留著舊日海島生活的迴聲。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-sea-dialogue-01",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "先別急著把信當真。廟的歷史可以查，等船的人卻只活在這張信紙上。"
+          },
+          {
+            "id": "taipa-sea-dialogue-02",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "明白了。水、風和歸航能幫我讀懂那時的生活，卻不能證明真有這樣一個寫信人。"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "北帝廟與昔日社區",
+            "text": "官方旅遊資料把北帝廟的歷史追溯到至少約160年前，也將它與昔日氹仔的漁民社區聯繫起來。",
+            "source_label": "澳門旅遊局：氹仔北帝廟資料",
+            "confidence": "high"
+          },
+          {
+            "kind": "folklore",
+            "title": "水上信仰語境",
+            "text": "北帝信仰中有關治水、禦火和出海平安的寓意，屬於宗教與地方信俗，不能當作某段個人經歷已經發生的證據。",
+            "source_label": "官方旅遊資料與地方信俗說明",
+            "confidence": "medium"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "等船信",
+            "text": "信裡的等待、燈火與歸航，是為了讓人靠近昔日海島生活而作的情境復原，並非史料原文。",
+            "source_label": "Story Package 情境復原",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "北帝廟",
+          "chapter_goal": "引導玩家用已核背景讀懂等船信，同時尊重仍在使用的宗教場所。",
+          "known_facts": [
+            "北帝廟至少約有160年歷史",
+            "昔日氹仔居民以漁民為主",
+            "北帝信仰與治水、禦火及出海生活相關"
+          ],
+          "fiction_boundaries": [
+            "等船信和寫信人是虛構的",
+            "不得從信件推斷真實家族或具體歷史事件"
+          ],
+          "suggested_questions": [
+            "為什麼這封信總在寫水和風？",
+            "哪些是史實，哪些是信俗？",
+            "在宗教場所怎樣觀察才不會打擾別人？"
+          ],
+          "do_not_reveal": [
+            "不得直接說出任務正確選項",
+            "不得把信俗寫成確定發生的史實"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_location_letter",
+          "assets": [
+            "TAI-SEA-01"
+          ]
+        },
+        "fallback": {
+          "type": "observation_optional",
+          "text": "如果正逢宗教活動或現場擠擁，請退到外圍的安全位置閱讀知識卡；不用進入廟內也能作答。"
+        },
+        "puzzle": {
+          "id": "puzzle_taipa_sea_context",
+          "type": "multi_select",
+          "prompt": "哪些內容有公開資料支持，可以幫助你讀懂這封「等船信」？",
+          "min_selections": 2,
+          "max_selections": 2,
+          "options": [
+            {
+              "id": "historic_temple",
+              "text": "北帝廟至少有約160年歷史"
+            },
+            {
+              "id": "fisher_community",
+              "text": "昔日氹仔居民多為漁民，相關信仰與水上生活相連"
+            },
+            {
+              "id": "real_letter_writer",
+              "text": "這封信證明曾有一位真實漁民在這裡等候家人"
+            },
+            {
+              "id": "fixed_ritual_result",
+              "text": "只要祈願，每次出海都一定能平安歸來"
+            }
+          ],
+          "solution": [
+            "historic_temple",
+            "fisher_community"
+          ],
+          "hints": [
+            "只選擇能從地點與公開資料中核對的背景，別把虛構的信當成個人檔案。",
+            "答案一項與廟宇歷史有關，另一項藏在昔日社區的生活裡。"
+          ],
+          "explanation": "北帝廟的歷史與昔日漁民社區都有資料依據；至於具體的寫信人，以及「祈願便必然平安」，都無法由現場證明。",
+          "skip_text": "阿蓮替你把史實與信俗分放在信紙兩邊。海信仍然落進了退信盒。",
+          "reward": {
+            "id": "taipa_letter_sea",
+            "kind": "letter",
+            "name": "海信",
+            "text": "燈還亮著，信裡的人仍在等水路上的歸航。"
+          }
+        }
+      },
+      {
+        "id": "chapter_taipa_bell",
+        "order": 2,
+        "kind": "puzzle",
+        "title": "第二章：海另一邊的鐘聲",
+        "story_time": "11:20",
+        "location_name": "嘉模聖母堂",
+        "poi_id": "poi_carmo",
+        "scene": "第二封信循著坡地上的鐘聲而來。聲音越過屋頂，也讓你注意到：同一座島上，不同信仰與社區一直擁有各自的相聚之處。",
+        "time_layer": {
+          "period": "1885年至今日",
+          "focus": "從教堂的年代與位置，觀察島上並存的社區空間"
+        },
+        "letter_fragment": {
+          "title": "鐘聲信",
+          "text": "坡上的鐘聲一落下來，我便知道，島的另一邊也有人循著自己的日子相聚。",
+          "label": "情境復原／寫信人虛構"
+        },
+        "historical_claims": [
+          {
+            "statement": "嘉模聖母堂建於1885年。",
+            "status": "已核",
+            "source": "澳門旅遊局相關資料"
+          },
+          {
+            "statement": "嘉模聖母堂是氹仔唯一的天主教堂。",
+            "status": "已核",
+            "source": "澳門旅遊局相關資料"
+          }
+        ],
+        "interaction": {
+          "type": "fact_to_place_mapping",
+          "instruction": "在開放的公共空間看看教堂和前地，再為兩條可核查的事實找到對應含義。",
+          "safety": "請勿打擾禮拜、婚禮或其他宗教活動，只在開放的公共區域停留觀察。"
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-BELL-01",
+            "alt": "坡地上的嘉模聖母堂與嘉模前地",
+            "caption": "鐘聲從坡上落向舊城。站在嘉模前地，教堂立面與周邊街區一同進入視野。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-bell-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "原來廟宇和教堂可以同時留在一座島上，不必非要寫成誰取代了誰。"
+          },
+          {
+            "id": "taipa-bell-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-03",
+            "text": "對。守住能查清的年代和地點，就能看見不同社區怎樣在這裏並存。"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "1885年的教堂",
+            "text": "嘉模聖母堂建於1885年，是氹仔唯一的天主教堂。",
+            "source_label": "澳門旅遊局：氹仔葡韻遊及嘉模聖母堂資料",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "海另一邊的鐘聲",
+            "text": "聽見鐘聲的人是虛構角色；故事借這陣鐘聲，帶你靠近一種社區生活的節奏。",
+            "source_label": "Story Package 情境復原",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "嘉模聖母堂",
+          "chapter_goal": "從已核年代與地點出發，理解同一座島上並存的不同社區空間。",
+          "known_facts": [
+            "嘉模聖母堂建於1885年",
+            "它是氹仔唯一的天主教堂",
+            "現場宗教活動與開放情況可能變化"
+          ],
+          "fiction_boundaries": [
+            "鐘聲信和寫信人均為虛構",
+            "不得編造具體歷史居民或禮拜事件"
+          ],
+          "suggested_questions": [
+            "這座教堂是哪一年建成的？",
+            "為什麼一座教堂也能幫助理解社區空間？",
+            "現場看到的景象，怎樣和歷史資料互相印證？"
+          ],
+          "do_not_reveal": [
+            "不得直接給出配對答案",
+            "不得把未經審核的視覺復原當作歷史照片"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_location_letter",
+          "assets": [
+            "TAI-BELL-01"
+          ]
+        },
+        "fallback": {
+          "type": "visual_overlay_optional",
+          "text": "如果教堂照片暫時無法顯示，也可以結合現場所見和知識卡完成配對。"
+        },
+        "puzzle": {
+          "id": "puzzle_taipa_bell_mapping",
+          "type": "mapping",
+          "prompt": "把兩條可核查的信息，放回它們在本章中對應的位置。",
+          "fields": [
+            {
+              "id": "date",
+              "label": "建築年代"
+            },
+            {
+              "id": "community",
+              "label": "社區空間"
+            }
+          ],
+          "options": [
+            {
+              "id": "year_1885",
+              "text": "建於1885年"
+            },
+            {
+              "id": "only_catholic_church",
+              "text": "氹仔唯一的天主教堂"
+            },
+            {
+              "id": "fictional_bell_owner",
+              "text": "信裏的寫信人曾經擁有這座鐘樓"
+            }
+          ],
+          "solution": {
+            "date": "year_1885",
+            "community": "only_catholic_church"
+          },
+          "hints": [
+            "一條答案是明確的年份，另一條說明它在氹仔宗教空間中的位置。",
+            "信裏的私人關係無法查證，不要讓虛構替史實作證。"
+          ],
+          "explanation": "建於1885年、為氹仔唯一的天主教堂，都是已經核實的信息；至於寫信人擁有鐘樓，只是沒有依據的虛構延伸。",
+          "skip_text": "阿蓮在地圖上標出年份與地點。坡上的鐘聲隨即落進第二封信。",
+          "reward": {
+            "id": "taipa_letter_bell",
+            "kind": "letter",
+            "name": "鐘信",
+            "text": "一陣從坡上落下的鐘聲，記住了島上另一種相聚的日子。"
+          }
+        }
+      },
+      {
+        "id": "chapter_taipa_home",
+        "order": 3,
+        "kind": "puzzle",
+        "title": "第三章：家是什麼模樣",
+        "story_time": "12:10",
+        "location_name": "龍環葡韻",
+        "poi_id": "poi_taipa_houses",
+        "scene": "第三封信沒有讚美甚麼『異國風格』，只寫門怎樣開、房間怎樣住、家具怎樣被一家人反覆使用。比起漂亮的外牆，它更想問：一棟房子究竟怎樣才會成為家？",
+        "time_layer": {
+          "period": "1921年前後至今日的活化展示",
+          "focus": "從昔日官邸與土生葡人住宅，走進具體的家居生活空間"
+        },
+        "letter_fragment": {
+          "title": "家信",
+          "text": "屋裡的每件東西都有自己的位置。讓我認出家的，從來不是牆的顏色，而是誰在這裡吃飯、歇息，又願意為誰留一扇門。",
+          "label": "情境復原／寫信人虛構"
+        },
+        "historical_claims": [
+          {
+            "statement": "龍環葡韻五座代表性建築於1921年前落成。",
+            "status": "已核",
+            "source": "澳門文化局《龍環葡韻》"
+          },
+          {
+            "statement": "建築曾作為高級官員官邸及具代表性的土生葡人住宅。",
+            "status": "已核",
+            "source": "澳門文化局《龍環葡韻》"
+          }
+        ],
+        "interaction": {
+          "type": "evidence_chain",
+          "instruction": "從建築用途、居住者背景和家居空間三個層次，拼出一條關於『家』的證據鏈。",
+          "safety": "只在開放區域觀察，請勿觸碰展品；室內是否開放，以當天現場安排為準。"
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-HOME-01",
+            "alt": "龍環葡韻的住宅式博物館建築群",
+            "caption": "別只看薄荷色外牆。門窗、房間與家居陳設，也在講述這裡曾經怎樣生活。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-home-dialogue-01",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "先別只看顏色和風格。問問這些房子從前供誰居住，裡面的空間又是怎樣使用的。"
+          },
+          {
+            "id": "taipa-home-dialogue-02",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "要把房子的用途、住過的人和日常空間放在一起，我才真正看見這裡曾經是家。"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "五座住宅建築",
+            "text": "五座代表性建築於1921年前落成，曾為高級官員官邸及具代表性的土生葡人住宅。",
+            "source_label": "澳門文化局：《龍環葡韻》",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "家居視角",
+            "text": "本章從房間和生活物件進入居住空間；信裡那一家人的經歷則是情境復原，並非史實。",
+            "source_label": "Story Package 情境復原",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "龍環葡韻",
+          "chapter_goal": "讓玩家從住宅用途與家居生活理解建築，而不是停在抽象的風格標籤上。",
+          "known_facts": [
+            "五座代表性建築於1921年前落成",
+            "建築曾為高級官員官邸及土生葡人住宅",
+            "今日展示與開放狀態以官方安排為準"
+          ],
+          "fiction_boundaries": [
+            "家信中的家庭和生活細節是情境復原",
+            "不得把虛構家居片段歸給具體真實住戶"
+          ],
+          "suggested_questions": [
+            "為甚麼只看建築顏色還不夠？",
+            "哪些線索能說明這裡曾經是住宅？",
+            "怎樣準確說明這裡的土生葡人住宅背景？"
+          ],
+          "do_not_reveal": [
+            "不得直接給出證據鏈答案",
+            "不得編造具體住戶姓名或家庭事件"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_location_letter",
+          "assets": [
+            "TAI-HOME-01"
+          ]
+        },
+        "fallback": {
+          "type": "interior_optional",
+          "text": "如果室內暫未開放，閱讀建築說明與知識卡也能完成任務；請勿越過圍欄或觸碰展品。"
+        },
+        "puzzle": {
+          "id": "puzzle_taipa_home_evidence",
+          "type": "evidence_chain",
+          "prompt": "選出三份材料，一起說明：在成為景點以前，這裡首先是一處家。",
+          "required_count": 3,
+          "options": [
+            {
+              "id": "residential_use",
+              "text": "建築曾用作官邸和住宅",
+              "description": "它說明了這些建築最初怎樣被使用。",
+              "source_label": "澳門文化局公開資料",
+              "asset_id": "TAI-HOME-01"
+            },
+            {
+              "id": "resident_community",
+              "text": "這裡與土生葡人居住生活有關",
+              "description": "它把住宅與一個真實的社區生活背景連在一起。",
+              "source_label": "澳門文化局公開資料",
+              "asset_id": "TAI-HOME-01"
+            },
+            {
+              "id": "domestic_space",
+              "text": "房間與家居物件保留著日常生活的功能",
+              "description": "它讓人從空間的使用方式理解『家』。",
+              "source_label": "現場展示／情境觀察",
+              "asset_id": "TAI-HOME-01"
+            },
+            {
+              "id": "color_only",
+              "text": "只憑薄荷綠色，就能證明信裡的家庭住過這裡",
+              "description": "外牆顏色無法證明某段具體的私人經歷。",
+              "source_label": "無可核查來源",
+              "asset_id": "TAI-HOME-01"
+            }
+          ],
+          "solution": [
+            "residential_use",
+            "resident_community",
+            "domestic_space"
+          ],
+          "hints": [
+            "一條完整的證據鏈，要同時包含建築用途、居住群體和生活空間。",
+            "顏色能留下印象，卻不能替一個虛構家庭證明經歷。"
+          ],
+          "explanation": "建築用途、居住背景與家居空間彼此補充，才能讓住宅生活變得具體；外牆顏色再鮮明，也不能證明信裡的家庭真實存在。",
+          "skip_text": "阿蓮把用途、住戶背景與家居空間排成一條線。第三封家信輕輕合上。",
+          "reward": {
+            "id": "taipa_letter_home",
+            "kind": "letter",
+            "name": "家信",
+            "text": "門、房間和舊物仍各在其位，等你讀懂一棟房子怎樣成為家。"
+          }
+        }
+      },
+      {
+        "id": "chapter_taipa_work",
+        "order": 4,
+        "kind": "puzzle",
+        "title": "第四章：島上的上工聲",
+        "story_time": "14:00",
+        "location_name": "益隆炮竹廠舊址",
+        "poi_id": "poi_0118",
+        "scene": "第四封信的字句像趕着工時：上工、分區、響聲、停工，幾乎沒有多餘的話。沿著舊址的開放步道往裏看，一段產業年代、一片勞動空間和許多家庭的生計，漸漸從紙上一層層顯現。",
+        "time_layer": {
+          "period": "20世紀20年代至1984年",
+          "focus": "把炮竹工業的興衰，與勞動風險、家庭收入和社區生活放在一起"
+        },
+        "letter_fragment": {
+          "title": "上工信",
+          "text": "今天廠裏的響聲還是一陣緊過一陣。我把工錢仔細收好，別的等回家再說。這裏的路得一段一段走，急不得。",
+          "label": "情境復原／寫信人虛構"
+        },
+        "historical_claims": [
+          {
+            "statement": "澳門炮竹業在20世紀20年代快速發展，氹仔成為主要生產基地。",
+            "status": "已核",
+            "source": "澳門特區政府／文化局《氹仔炮竹業》第四版資料"
+          },
+          {
+            "statement": "20世紀50至70年代是行業全盛期，許多居民從事相關工作。",
+            "status": "已核",
+            "source": "澳門特區政府／文化局相關資料"
+          },
+          {
+            "statement": "益隆於1925年申報開業，1984年全面停產。",
+            "status": "已核",
+            "source": "澳門文化局《益隆炮竹廠舊址》"
+          }
+        ],
+        "interaction": {
+          "type": "industry_space_mapping",
+          "instruction": "把產業年代、遺址空間和社區生活三類線索，分別放回信中對應的位置。",
+          "safety": "請沿開放步道行走，不要進入封閉工房；實際開放範圍以現場標識為準。"
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-WORK-01",
+            "alt": "益隆炮竹廠舊址的工房與開放步道",
+            "caption": "開放步道旁，舊工房已經沉默，水道與分區仍勾勒著昔日勞動空間。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-work-dialogue-01",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "如果只講當年的興旺，這封信就少了一半。勞動、風險和一家人的收入，本來就是連在一起的。"
+          },
+          {
+            "id": "taipa-work-dialogue-02",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "所以信裏的工人可以是虛構的，但行業怎樣興起、又怎樣停下來，這些都能查清。"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "氹仔炮竹業",
+            "text": "澳門炮竹業在20世紀20年代快速發展，50至70年代進入全盛期，氹仔是主要生產基地之一。",
+            "source_label": "澳門特區政府／文化局：《氹仔炮竹業》相關資料",
+            "confidence": "high"
+          },
+          {
+            "kind": "historical_fact",
+            "title": "益隆的開業與停產",
+            "text": "益隆於1925年申報開業，並於1984年全面停產。",
+            "source_label": "澳門文化局：《益隆炮竹廠舊址》",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "上工信",
+            "text": "信裏的工人、工錢與這一天的經歷，是為了呈現勞動者的視角而創作，並不對應某位真實工人。",
+            "source_label": "Story Package 情境復原",
+            "confidence": "high"
+          },
+          {
+            "kind": "dynamic_operational_info",
+            "title": "開放範圍會變化",
+            "text": "遺址的開放路徑、展覽安排與臨時封閉情況可能變化，請以官方資訊和現場標識為準。",
+            "source_label": "現場營運資訊",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "益隆炮竹廠舊址",
+          "chapter_goal": "把產業年代、勞動空間與居民生計放在一起，理解氹仔的工業生活史。",
+          "known_facts": [
+            "氹仔炮竹業在20世紀20年代快速發展",
+            "50至70年代為全盛期",
+            "益隆1925年申報開業，1984年全面停產"
+          ],
+          "fiction_boundaries": [
+            "上工信與工人經歷是虛構的",
+            "不得編造具體事故、工序細節或真實工人姓名"
+          ],
+          "suggested_questions": [
+            "益隆是哪一年開業和停產的？",
+            "為什麼講工業興盛時，也要談勞動與風險？",
+            "現場哪些區域可以安全參觀？"
+          ],
+          "do_not_reveal": [
+            "不得直接給出配對答案",
+            "不得把未核工序寫成標準生產流程",
+            "不得忽略現場封閉標識"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_location_letter",
+          "assets": [
+            "TAI-WORK-01"
+          ]
+        },
+        "fallback": {
+          "type": "route_or_exhibit_optional",
+          "text": "如果遺址部分區域關閉，請留在開放步道閱讀知識卡；不用進入工房，也不必想像一套未經核實的完整工序。"
+        },
+        "puzzle": {
+          "id": "puzzle_taipa_work_mapping",
+          "type": "mapping",
+          "prompt": "把三類線索與相應說明配對，讓這封短訊背後的工業生活重新清晰起來。",
+          "fields": [
+            {
+              "id": "industry_time",
+              "label": "產業年代"
+            },
+            {
+              "id": "site_space",
+              "label": "遺址空間"
+            },
+            {
+              "id": "daily_life",
+              "label": "生活意義"
+            }
+          ],
+          "options": [
+            {
+              "id": "boom_and_closure",
+              "text": "20世紀20年代起步發展，50至70年代全盛，益隆於1984年停產"
+            },
+            {
+              "id": "workshop_evidence",
+              "text": "工房、倉庫、曬場與水道等遺址空間"
+            },
+            {
+              "id": "labor_family_community",
+              "text": "勞動與風險牽動家庭收入，也影響整個社區的生活"
+            },
+            {
+              "id": "fictional_shift_record",
+              "text": "信裏這一天的上工記錄就是真實工人檔案"
+            }
+          ],
+          "solution": {
+            "industry_time": "boom_and_closure",
+            "site_space": "workshop_evidence",
+            "daily_life": "labor_family_community"
+          },
+          "hints": [
+            "分別尋找一段年代、一片看得見的空間，以及它對居民生活的影響。",
+            "這封信能帶你進入勞動者的視角，卻不能變成真實工人檔案。"
+          ],
+          "explanation": "產業年代告訴我們行業如何興衰，遺址空間留下勞動的形狀，家庭與社區則讓這段歷史有了生活的重量；上工信本身仍是情境復原。",
+          "skip_text": "阿蓮替你把年代、空間與生活排成三欄。廠房安靜下來，工信留在了盒中。",
+          "reward": {
+            "id": "taipa_letter_work",
+            "kind": "letter",
+            "name": "工信",
+            "text": "一封寫得很短的上工信，背後連著勞動、風險與許多家庭的日子。"
+          }
+        }
+      },
+      {
+        "id": "chapter_taipa_street",
+        "order": 5,
+        "kind": "puzzle",
+        "title": "第五章：街口留下的味道",
+        "story_time": "15:30",
+        "location_name": "官也街與氹仔舊城",
+        "poi_id": "poi_rua_cunha",
+        "scene": "最後一封信沒有留下店名，也沒有抄錄配方。它只記得街口層疊的語言、舊建築的細部，以及每天仍在這裡發生的小事。你決定不追問誰是『第一』，只認真看看今天的街道。",
+        "time_layer": {
+          "period": "歷史街道與今日商業、生活空間",
+          "focus": "從多語招牌、建築細節與當代日常，讀一條仍在生活的街"
+        },
+        "letter_fragment": {
+          "title": "街信",
+          "text": "味道會變，招牌會換，走過這裡的人也一批批不同。我只記得每次轉進街口，總有人用自己的語言，說著當天的日常。",
+          "label": "情境復原／寫信人虛構"
+        },
+        "historical_claims": [
+          {
+            "statement": "官也街具體飲食、商鋪和行業起源年代仍需進一步考證。",
+            "status": "待考",
+            "source": "《海風寄來的信》策劃考證清單"
+          }
+        ],
+        "interaction": {
+          "type": "street_observation",
+          "instruction": "選出三項能在現場直接觀察、又不依賴未經核實起源故事的內容。",
+          "safety": "不要拍攝陌生人的正臉或阻塞店鋪經營，任務也不要求消費；人流密集時可移到相鄰街巷完成。"
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-STREET-01",
+            "alt": "氹仔官也街的多語招牌與街巷景象",
+            "caption": "招牌、立面和來往腳步擠在一條街上。這裡留下的不只是味道，還有正在發生的日常。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-street-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "我可以寫下今天看到的街道，卻不能因為一種食物有名，就順手替它編出一個起源。"
+          },
+          {
+            "id": "taipa-street-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-03",
+            "text": "正是這樣。把此刻看見的語言、建築和日常記下來，已經足夠寫成一封街信。"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "dynamic_operational_info",
+            "title": "今天的街道",
+            "text": "店鋪、招牌、人流與營業狀態都會變化；本章只記錄你到訪當下能夠安全觀察的內容。",
+            "source_label": "現場動態觀察",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "不編造起源",
+            "text": "故事不會把流傳說法直接寫成『最早』或『第一家』。街信真正關心的，是商業與日常怎樣一起使用這片舊城空間。",
+            "source_label": "策劃考證邊界",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "街信寫信人",
+            "text": "信裡的味覺記憶與寫信人均為劇情創作，不指向任何特定店鋪、品牌或真實顧客。",
+            "source_label": "Story Package 劇情設定",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "官也街與氹仔舊城",
+          "chapter_goal": "引導玩家輕量觀察街道，同時避開未經考證的商業與食物起源敘事。",
+          "known_facts": [
+            "官也街的商鋪和營業狀態會動態變化",
+            "具體飲食、商鋪和行業起源年代仍需考證",
+            "可以觀察不同語言招牌、舊建築細節和今日生活行為"
+          ],
+          "fiction_boundaries": [
+            "不得為店鋪、食物或品牌編造『第一』或『最早』",
+            "不得把街信寫信人說成真實顧客或商戶"
+          ],
+          "suggested_questions": [
+            "街上哪些內容適合直接觀察和記錄？",
+            "為什麼故事不寫未經考證的『第一家』？",
+            "人多的時候，怎樣安全完成這封街信？"
+          ],
+          "do_not_reveal": [
+            "不得直接給出多選答案",
+            "不得推薦必須消費才能完成的任務",
+            "不得識別或描述陌生人的個人身份"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_location_letter",
+          "assets": [
+            "TAI-STREET-01"
+          ]
+        },
+        "fallback": {
+          "type": "crowd_safe_observation",
+          "text": "如果官也街過於擁擠，可以退到相鄰的開放街巷，從文字、建築或聲音中選擇安全可觀察的內容。"
+        },
+        "puzzle": {
+          "id": "puzzle_taipa_street_observation",
+          "type": "multi_select",
+          "prompt": "哪些現場觀察可以寫進街信，又不必借用未經考證的起源故事？",
+          "min_selections": 3,
+          "max_selections": 3,
+          "options": [
+            {
+              "id": "multilingual_signs",
+              "text": "記下現場看得見的不同語言招牌"
+            },
+            {
+              "id": "building_details",
+              "text": "留意舊建築立面與街道的尺度"
+            },
+            {
+              "id": "daily_activity",
+              "text": "記錄不涉及個人身份的當代日常活動"
+            },
+            {
+              "id": "invent_first_shop",
+              "text": "隨意挑一家店，寫成某種食物未經核實的『第一家』"
+            }
+          ],
+          "solution": [
+            "multilingual_signs",
+            "building_details",
+            "daily_activity"
+          ],
+          "hints": [
+            "選擇此刻就在眼前、可以直接觀察的三項。",
+            "凡是需要證明『最早』或『第一家』的選項，都要格外小心。"
+          ],
+          "explanation": "招牌、建築與當代活動都能在現場觀察；沒有經過考證的商業起源，則不應該被寫成事實。",
+          "skip_text": "你沒有替街道編造一個響亮的『第一』，只把眼前的日常收進了最後一封街信。",
+          "reward": {
+            "id": "taipa_letter_street",
+            "kind": "letter",
+            "name": "街信",
+            "text": "不同語言的招牌下，舊建築與今天的生活仍在同一條街上相遇。"
+          }
+        }
+      },
+      {
+        "id": "ending_taipa_future_letter",
+        "order": 6,
+        "kind": "ending",
+        "title": "終章：寄給未來氹仔",
+        "story_time": "16:20",
+        "location_name": "氹仔舊城公共空間",
+        "poi_id": "poi_0104",
+        "scene": "五封信終於各自找回了地址，卻依然沒有真正的收件人。直到這時你才明白，退信盒收集的從來不是同一家人的歷史，而是不同時代的人如何生活，又如何理解『家』。",
+        "time_layer": {
+          "period": "從多段生活史到未來",
+          "focus": "把海信、鐘信、家信、工信與街信放在一起，寫一封寄往未來的信"
+        },
+        "letter_fragment": {
+          "title": "未來信空白頁",
+          "text": "收件人：未來仍願意記得氹仔如何生活的人。",
+          "label": "玩家創作／劇情虛構"
+        },
+        "historical_claims": [
+          {
+            "statement": "終章只綜合前五章已經分層標註的背景，不新增未經核實的歷史主張。",
+            "status": "敘事邊界",
+            "source": "Story Package 內容規則"
+          }
+        ],
+        "interaction": {
+          "type": "future_letter_reflection",
+          "instruction": "重新讀一遍五封信，再為未來的氹仔寫下一句你希望被記住的話。",
+          "safety": "請在不影響通行的公共空間完成；無需上傳照片或任何個人身份信息。"
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-END-01",
+            "alt": "氹仔消防局前地與舊城街景",
+            "caption": "回到舊城的街聲裡，五封信依次攤開，空白的一頁正等著寄往未來。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-ending-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "原來它們並不屬於同一個家族，只是在反覆問同一件事：什麼才算是家。"
+          },
+          {
+            "id": "taipa-ending-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "氹仔沒有從地圖上挪開，可海岸變了，工作變了，住在這裡的人也一代代換過。"
+          },
+          {
+            "id": "taipa-ending-dialogue-03",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-03",
+            "text": "也許家從來不是永遠不變的地方，而是變化以後，仍有人願意記得它曾怎樣生活。"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "contextual_reconstruction",
+            "title": "五封信的共同收件人",
+            "text": "海信、鐘信、家信、工信和街信共同指向氹仔的生活史與集體記憶，而不是一條可以查證的家族線索。",
+            "source_label": "Story Package 終章解釋",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "未來信",
+            "text": "未來信是你在這趟旅程中留下的個人創作。文字會被保存；是否生成配圖，則屬於可選體驗。",
+            "source_label": "Story Package 玩家創作",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "氹仔舊城公共空間",
+          "chapter_goal": "陪玩家重新讀懂五封信並寫下未來信，同時守住史實與虛構的邊界。",
+          "known_facts": [
+            "五封信分別關聯信仰、社區空間、居住、勞動和街道日常",
+            "全部寫信人與信件均為虛構",
+            "未來信是玩家個人反思"
+          ],
+          "fiction_boundaries": [
+            "不得把五封信解釋為真實家族檔案",
+            "不得把玩家留言包裝成歷史事實"
+          ],
+          "suggested_questions": [
+            "五封信最後共同留下了什麼？",
+            "我想把哪一句話寄給未來的氹仔？",
+            "怎樣分清歷史背景與我自己的感受？"
+          ],
+          "do_not_reveal": [
+            "不得替玩家生成或決定個人反思",
+            "不得新增未經前文核實的歷史結論"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_ending_future_letter",
+          "assets": [
+            "TAI-END-01"
+          ]
+        },
+        "fallback": {
+          "type": "text_reflection",
+          "text": "如果圖片生成暫時不可用，仍可用你的文字和已經收集的五封信完成未來信。"
+        }
+      }
+    ],
+    "endings": [
+      {
+        "id": "send_future_taipa_letter",
+        "title": "寄給未來氹仔",
+        "choice_text": "寫下並寄出未來信",
+        "text": "氹仔沒有從地圖上挪開，可海岸變了，工作變了，住在這裡的人也一代代換過。也許家不是永遠不變的地方，而是變化以後，仍有人願意記得它曾怎樣生活。",
+        "condition": "完成終章並保存給未來氹仔的留言",
+        "rewards": [
+          {
+            "id": "taipa_future_letter",
+            "kind": "collection",
+            "name": "未來信",
+            "text": "海信、鐘信、家信、工信和街信在這一頁相遇，匯成一封寫給未來的信。"
+          },
+          {
+            "id": "taipa_home_reflection",
+            "kind": "reflection",
+            "name": "關於家的回答",
+            "text": "你替今天的氹仔留下一句話，等未來的人重新讀到。"
+          }
+        ]
+      }
+    ]
+  },
+  "en": {
+    "id": "taipa_letters",
+    "version": 4,
+    "title": "Sea Breeze Letters",
+    "subtitle": "Follow the sea breeze through Taipa's Old Town to find the era and destination for five letters with no recipients.",
+    "summary": "You and A Lin open a fictional returned-letter box in Taipa Old Town. Inside, five letters from different walks of life have all lost their addresses. You will walk through Pak Tai Temple, Our Lady of Carmel Church, Taipa Houses, the former I Long Firecracker Factory, and Rua do Cunha. From the traces left by faith, dwelling, labor, and everyday street life, you will restore each letter to its proper era and place.",
+    "route_id": "taipa_hotspot_halfday",
+    "estimated_hours": 4,
+    "product_mode": "mobile_portrait_web",
+    "presentation": {
+      "default_orientation": "portrait",
+      "max_content_width_px": 480,
+      "cover_asset_id": "TAI-COVER-01",
+      "asset_base_path": "/story/taipa-letters/"
+    },
+    "identity": {
+      "id": "returned_letter_keeper",
+      "name": "Returned Letter Box Keeper",
+      "description": "You don't need to prove a private family history that never existed. Your task is to use on-site observation and public information to find the correct era and place for the five contextual-reconstruction letters."
+    },
+    "content_notice": "The returned-letter box, all letter writers, letter contents, delivery relationships, and the future letter are fictional plot elements. The architectural dates, industries, religions, and community backgrounds in the story are compiled from public materials listed in the plan. Knowledge cards will respectively label historical fact, folk belief, contextual reconstruction, and fictional story. Tasks related to Rua do Cunha will not adopt unverified 'earliest' or 'first' claims.",
+    "content_labels": {
+      "historical_fact": "Historical fact",
+      "folklore": "Folk belief / local memory",
+      "contextual_reconstruction": "Contextual reconstruction",
+      "fictional_story": "Fictional story",
+      "dynamic_operational_info": "Dynamic operational info"
+    },
+    "characters": [
+      {
+        "id": "player",
+        "name": "You",
+        "role": "The person who walks the old town to find the era and destination of the returned letters.",
+        "fictional": true
+      },
+      {
+        "id": "alian",
+        "name": "A Lin",
+        "role": "Your local classmate and knowledge agent, who helps you verify historical facts and reminds you to distinguish folklore from fiction.",
+        "fictional": true
+      },
+      {
+        "id": "alan",
+        "name": "The Letter Writer",
+        "role": "The fictional writer of the five contextual-reconstruction letters, appearing only in the words on the letter paper.",
+        "fictional": true
+      },
+      {
+        "id": "m",
+        "name": "Future Recipient",
+        "role": "An imaginary reader from future Taipa who waits for the player's letter.",
+        "fictional": true
+      }
+    ],
+    "props": [
+      "Returned Letter Box",
+      "Sea Letter",
+      "Bell Letter",
+      "Home Letter",
+      "Work Letter",
+      "Street Letter",
+      "Future Letter"
+    ],
+    "nodes": [
+      {
+        "id": "prologue_taipa_letter_box",
+        "order": 0,
+        "kind": "prologue",
+        "title": "Prologue: Letters with No Recipient",
+        "story_time": "10:00",
+        "scene": "At ten in the morning, the street sounds of Taipa's old town gradually warm up. A weathered letter box suddenly pops up on your phone screen: the five letters inside are all inscribed with 'Taipa,' yet none of them knows where it should be sent today.",
+        "time_layer": {
+          "period": "Today's Taipa and multiple historical periods",
+          "focus": "First determine the fictional boundaries of the letters, then search on-site and in public materials for their addresses."
+        },
+        "letter_fragment": {
+          "title": "Returned Letter Box Note",
+          "text": "Some people have moved away, some trades have disappeared, and some coastlines are no longer what they used to be. Please help these letters find their addresses.",
+          "label": "Fictional plot"
+        },
+        "historical_claims": [
+          {
+            "statement": "The exhibitions at the Taipa and Coloane Historical Museum can help you understand the outlying island villages, religion, agriculture, handicrafts, and modern development.",
+            "status": "Public information background",
+            "source": "Exhibition materials from the Taipa and Coloane Historical Museum"
+          }
+        ],
+        "interaction": {
+          "type": "letter_box_opening",
+          "instruction": "After reading the note on the returned letter box, first confirm that these five letters are neither from the same family nor real private archives.",
+          "safety": "Whether the Taipa and Coloane Historical Museum is open depends on the day's official information; you can continue the story even if you do not enter the venue."
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-PROP-01",
+            "alt": "An old returned letter box containing five unaddressed letters.",
+            "caption": "The box holds five lives that have lost their addresses. The returned letter box and the letters are story props, not real artifacts."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-prologue-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "Not one has a complete address; there are only five words on the envelope: Sea, Bell, Home, Work, Street."
+          },
+          {
+            "id": "taipa-prologue-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "First, to be clear: they are not real discovered family letters; they are contextual reconstruction letters written from several life backgrounds."
+          },
+          {
+            "id": "taipa-prologue-dialogue-03",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "So we don't invent family histories for strangers; we only help the lives in the letters return to the era and place where they belong."
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "fictional_story",
+            "title": "The Returned Letter Box and the Letter Writers",
+            "text": "The returned letter box, the five letters, and all the letter writers are from fictional creation; they must not be treated as real archives or family histories.",
+            "source_label": "Story Package: Fictional Setting",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "Contextual Reconstruction Letters",
+            "text": "These letters imagine the perspectives of ordinary people using real buildings, industries, religions, and community backgrounds, but they cannot replace historical records.",
+            "source_label": "Narrative boundaries in the creative plan",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Taipa Old Town / Taipa and Coloane Historical Museum area",
+          "chapter_goal": "Guide the player to open the returned letter box and first distinguish among historical facts, contextual reconstruction, and fictional plot.",
+          "known_facts": [
+            "The Taipa and Coloane Historical Museum can serve as a supplementary point for outlying island history.",
+            "All letters and letter writers are fictional.",
+            "The player needs to match the letters with an era and a place, not prove a private history."
+          ],
+          "fiction_boundaries": [
+            "Do not describe the returned letter box, letters, or letter writers as real artifacts, archives, or people.",
+            "Do not invent family relationships between the letters."
+          ],
+          "suggested_questions": [
+            "Are these letters real?",
+            "What is the difference between contextual reconstruction and real historical sources?",
+            "Why should the first letter's address start from Pak Tai Temple?"
+          ],
+          "do_not_reveal": [
+            "Do not reveal the answers to subsequent tasks in advance.",
+            "Do not present unverified content as confirmed historical fact."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_prologue_letter_box",
+          "assets": [
+            "TAI-COVER-01",
+            "TAI-PROP-01"
+          ]
+        },
+        "fallback": {
+          "type": "text_only",
+          "text": "If the returned letter box illustration fails to load for now, just read the note on the box; the rest of the story won't be affected."
+        },
+        "reward": {
+          "id": "returned_letter_box",
+          "kind": "story_prop",
+          "name": "Returned Letter Box",
+          "text": "The box holds five tags—Sea, Bell, Home, Work, Street—waiting for you to check them one by one on site."
+        }
+      },
+      {
+        "id": "chapter_taipa_sea",
+        "order": 1,
+        "kind": "puzzle",
+        "title": "Chapter One: The One Waiting for the Boat's Return",
+        "story_time": "10:30",
+        "location_name": "Pak Tai Temple",
+        "poi_id": "poi_0100",
+        "scene": "In the first letter, the sound of water, the wind direction, and the return voyage were written over and over. Standing in front of the temple, you gradually come to understand: it is not waiting for a name that can be verified, but for a way of life once familiar to many island dwellers.",
+        "time_layer": {
+          "period": "A temple with at least 160 years of history and a former fishing community",
+          "focus": "Understanding people's wish for a safe homecoming through island life and Pak Tai worship"
+        },
+        "letter_fragment": {
+          "title": "The Boat-Waiting Letter",
+          "text": "The wind has changed again and again, but I still keep the lamp at the door lit. When you return by water, we will slowly talk about this season's affairs.",
+          "label": "Contextual reconstruction / fictitious letter writer"
+        },
+        "historical_claims": [
+          {
+            "statement": "Taipa's Pak Tai Temple has a history of at least about 160 years.",
+            "status": "Verified",
+            "source": "Macau Government Tourism Office: Pak Tai Temple, Taipa information"
+          },
+          {
+            "statement": "In the past, the residents of Taipa were mainly fishermen, and Pak Tai worship was related to water control, fire prevention, and life at sea.",
+            "status": "Verified background",
+            "source": "Relevant information from the Macau Government Tourism Office"
+          }
+        ],
+        "interaction": {
+          "type": "observation_and_classification",
+          "instruction": "First, observe the temple and its surroundings without disturbing religious activities, then select the life context supported by public information.",
+          "safety": "Do not touch offerings or photograph ongoing ceremonies, and do not linger at entrances or exits."
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-SEA-01",
+            "alt": "Pak Tai Temple in Taipa and the public space in front of the temple",
+            "caption": "Wind passes through the front of the temple, and the temple and surrounding streets still preserve the echo of old island life."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-sea-dialogue-01",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "Don't rush to take the letter as real. The temple's history can be verified, but the person waiting for the boat lives only on this piece of letter paper."
+          },
+          {
+            "id": "taipa-sea-dialogue-02",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "I see. Water, wind, and the homeward voyage can help me understand the life of that time, but they cannot prove that such a letter writer really existed."
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Pak Tai Temple and the Former Community",
+            "text": "Official tourism information traces the history of Pak Tai Temple back to at least about 160 years ago and links it with the former fishing community of Taipa.",
+            "source_label": "Macau Government Tourism Office: Pak Tai Temple, Taipa information",
+            "confidence": "high"
+          },
+          {
+            "kind": "folklore",
+            "title": "Water-Related Belief Context",
+            "text": "The meanings related to water control, fire prevention, and safe sea voyages in Pak Tai worship belong to religion and local folk customs and cannot be taken as evidence that a particular personal experience actually happened.",
+            "source_label": "Official tourism information and explanations of local folk customs",
+            "confidence": "medium"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "The Boat-Waiting Letter",
+            "text": "The waiting, lamplight, and return voyage in the letter are a contextual reconstruction designed to bring people closer to the island life of the past; they are not original historical text.",
+            "source_label": "Story Package: Contextual Reconstruction",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Pak Tai Temple",
+          "chapter_goal": "Guide the player to understand the boat-waiting letter using verified background, while respecting the religious site still in use.",
+          "known_facts": [
+            "Pak Tai Temple has a history of at least about 160 years",
+            "In the past, Taipa residents were mainly fishermen",
+            "Pak Tai worship is related to water control, fire prevention, and sea life"
+          ],
+          "fiction_boundaries": [
+            "The boat-waiting letter and its writer are fictitious",
+            "Do not infer real families or specific historical events from the letter"
+          ],
+          "suggested_questions": [
+            "Why does this letter keep writing about water and wind?",
+            "Which parts are historical facts, and which are folk beliefs?",
+            "How can you observe at a religious site without disturbing others?"
+          ],
+          "do_not_reveal": [
+            "Do not directly state the correct option for the task",
+            "Do not write folk beliefs as established historical facts"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_location_letter",
+          "assets": [
+            "TAI-SEA-01"
+          ]
+        },
+        "fallback": {
+          "type": "observation_optional",
+          "text": "If a religious ceremony is in progress or if the site is crowded, please move to a safe spot on the periphery to read the knowledge cards; you can answer without entering the temple."
+        },
+        "puzzle": {
+          "id": "puzzle_taipa_sea_context",
+          "type": "multi_select",
+          "prompt": "Which content is supported by public information and can help you understand this 'boat-waiting letter'?",
+          "min_selections": 2,
+          "max_selections": 2,
+          "options": [
+            {
+              "id": "historic_temple",
+              "text": "Pak Tai Temple has a history of at least about 160 years"
+            },
+            {
+              "id": "fisher_community",
+              "text": "In the past, most Taipa residents were fishermen, and their beliefs were linked to life on the water"
+            },
+            {
+              "id": "real_letter_writer",
+              "text": "This letter proves that a real fisherman once waited for his family here"
+            },
+            {
+              "id": "fixed_ritual_result",
+              "text": "As long as you pray, every time you go to sea you will surely return safely"
+            }
+          ],
+          "solution": [
+            "historic_temple",
+            "fisher_community"
+          ],
+          "hints": [
+            "Select only the background that can be verified from the location and public information; don't treat the fictional letter as a personal record.",
+            "One answer is related to the temple's history; the other lies in the life of the former community."
+          ],
+          "explanation": "Both the history of Pak Tai Temple and the former fishing community have documentary support; as for the specific letter writer and the idea that 'praying ensures safety,' neither can be proven on site.",
+          "skip_text": "A Lin has separated the historical facts from the folk beliefs on either side of the letter paper for you. The sea letter still falls into the return-mail box.",
+          "reward": {
+            "id": "taipa_letter_sea",
+            "kind": "letter",
+            "name": "Sea Letter",
+            "text": "The lamp is still on, and the person in the letter is still waiting for the homeward voyage on the waterway."
+          }
+        }
+      },
+      {
+        "id": "chapter_taipa_bell",
+        "order": 2,
+        "kind": "puzzle",
+        "title": "Chapter 2: The Bell Beyond the Sea",
+        "story_time": "11:20",
+        "location_name": "Our Lady of Carmel Church",
+        "poi_id": "poi_carmo",
+        "scene": "The second letter arrives following the bell sound from the slope. The sound crosses the rooftops and also makes you notice: on this same island, different faiths and communities have always had their own gathering places.",
+        "time_layer": {
+          "period": "1885 to today",
+          "focus": "Observing the coexisting community spaces on the island through the church's age and location."
+        },
+        "letter_fragment": {
+          "title": "The Bell Letter",
+          "text": "As soon as the bell from the slope sounds, I know that on the other side of the island, others also gather in their own rhythm.",
+          "label": "Contextual reconstruction / fictional letter writer"
+        },
+        "historical_claims": [
+          {
+            "statement": "Our Lady of Carmel Church was built in 1885.",
+            "status": "Verified",
+            "source": "Macau Government Tourism Office materials"
+          },
+          {
+            "statement": "Our Lady of Carmel Church is the only Catholic church in Taipa.",
+            "status": "Verified",
+            "source": "Macau Government Tourism Office materials"
+          }
+        ],
+        "interaction": {
+          "type": "fact_to_place_mapping",
+          "instruction": "In the open public space, look at the church and the forecourt, then match the two verifiable facts to their corresponding meanings.",
+          "safety": "Do not disturb worship, weddings, or other religious activities; only stay and observe in open public areas."
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-BELL-01",
+            "alt": "Our Lady of Carmel Church and Carmo Forecourt on the slope",
+            "caption": "The bell sound falls from the slope toward the old town. Standing at Carmo Forecourt, the church facade and the surrounding neighbourhood come into view together."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-bell-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "So temples and churches can remain together on the same island; it doesn't have to be written as one replacing the other."
+          },
+          {
+            "id": "taipa-bell-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-03",
+            "text": "Yes. Hold on to the dates and places that can be verified, and you can see how different communities coexist here."
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "The 1885 Church",
+            "text": "Our Lady of Carmel Church was built in 1885 and is the only Catholic church in Taipa.",
+            "source_label": "Macau Government Tourism Office: Taipa Portuguese Charm Tour and Our Lady of Carmel Church materials",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "The Bell Beyond the Sea",
+            "text": "The person who hears the bell is a fictional character; the story uses this bell to bring you closer to the rhythm of a community life.",
+            "source_label": "Story Package: Contextual Reconstruction",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Our Lady of Carmel Church",
+          "chapter_goal": "Starting from verified dates and places, understand the different community spaces coexisting on the same island.",
+          "known_facts": [
+            "Our Lady of Carmel Church was built in 1885",
+            "It is the only Catholic church in Taipa",
+            "Religious activities and opening conditions at the site may change"
+          ],
+          "fiction_boundaries": [
+            "The bell letter and its writer are both fictional",
+            "Do not fabricate specific historical residents or worship events"
+          ],
+          "suggested_questions": [
+            "In what year was this church built?",
+            "Why can a church also help us understand community space?",
+            "How does what you see on site corroborate with historical materials?"
+          ],
+          "do_not_reveal": [
+            "Do not directly give the matching answers",
+            "Do not treat unverified visual reconstructions as historical photos"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_location_letter",
+          "assets": [
+            "TAI-BELL-01"
+          ]
+        },
+        "fallback": {
+          "type": "visual_overlay_optional",
+          "text": "If the church photo cannot be displayed for the moment, you can also use what you see on site and the knowledge cards to complete the matching."
+        },
+        "puzzle": {
+          "id": "puzzle_taipa_bell_mapping",
+          "type": "mapping",
+          "prompt": "Place the two verifiable facts back into their corresponding positions in this chapter.",
+          "fields": [
+            {
+              "id": "date",
+              "label": "Year built"
+            },
+            {
+              "id": "community",
+              "label": "Community space"
+            }
+          ],
+          "options": [
+            {
+              "id": "year_1885",
+              "text": "Built in 1885"
+            },
+            {
+              "id": "only_catholic_church",
+              "text": "The only Catholic church in Taipa"
+            },
+            {
+              "id": "fictional_bell_owner",
+              "text": "The letter writer in the letter once owned this bell tower"
+            }
+          ],
+          "solution": {
+            "date": "year_1885",
+            "community": "only_catholic_church"
+          },
+          "hints": [
+            "One answer is a specific year; the other indicates its position in Taipa's religious spaces.",
+            "The personal relationship in the letter cannot be verified; do not let fiction stand in for historical fact."
+          ],
+          "explanation": "Built in 1885 and being the only Catholic church in Taipa are both verified pieces of information; as for the letter writer owning the bell tower, that is only an unsubstantiated fictional extension.",
+          "skip_text": "A Lin marks the year and the place on the map. The bell from the slope then falls into the second letter.",
+          "reward": {
+            "id": "taipa_letter_bell",
+            "kind": "letter",
+            "name": "The Bell Letter",
+            "text": "The sound of a bell falling from the slope remembers another kind of gathering day on the island."
+          }
+        }
+      },
+      {
+        "id": "chapter_taipa_home",
+        "order": 3,
+        "kind": "puzzle",
+        "title": "Chapter 3: What Does Home Look Like",
+        "story_time": "12:10",
+        "location_name": "Taipa Houses",
+        "poi_id": "poi_taipa_houses",
+        "scene": "The third letter does not praise any 'exotic style'; it only writes about how doors open, how rooms are lived in, and how furniture is used again and again by a family. Rather than beautiful facades, it asks: what actually turns a house into a home?",
+        "time_layer": {
+          "period": "From around 1921 to today's adaptive reuse display",
+          "focus": "From former official residences and Macanese homes to the concrete spaces of domestic life"
+        },
+        "letter_fragment": {
+          "title": "Family Letter",
+          "text": "Every object in the house has its own place. What makes me recognize a home is never the color of the walls, but who eats and rests here, and for whom they are willing to leave a door open.",
+          "label": "Contextual reconstruction / Fictional letter-writer"
+        },
+        "historical_claims": [
+          {
+            "statement": "The five iconic buildings of the Taipa Houses were completed before 1921.",
+            "status": "Verified",
+            "source": "Macao Cultural Affairs Bureau, Taipa Houses"
+          },
+          {
+            "statement": "The buildings once served as residences for senior officials and representative Macanese homes.",
+            "status": "Verified",
+            "source": "Macao Cultural Affairs Bureau, Taipa Houses"
+          }
+        ],
+        "interaction": {
+          "type": "evidence_chain",
+          "instruction": "From three layers—building use, residents' background, and domestic space—piece together an evidence chain about 'home'.",
+          "safety": "Observe only in open areas; do not touch exhibits. Interior opening is subject to the day's on-site arrangements."
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-HOME-01",
+            "alt": "The residential-museum complex of the Taipa Houses",
+            "caption": "Don't just look at the mint-green facades. Windows, doors, rooms, and home furnishings also tell how life was once lived here."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-home-dialogue-01",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "Don't just look at colors and style. Ask who lived in these houses and how the spaces inside were used."
+          },
+          {
+            "id": "taipa-home-dialogue-02",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "Only by putting together the buildings' use, the people who lived there, and the everyday spaces do I truly see that this was once a home."
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Five Residential Buildings",
+            "text": "The five representative buildings were completed before 1921 and served as residences for senior officials and as representative Macanese homes.",
+            "source_label": "Macao Cultural Affairs Bureau: Taipa Houses",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "A Domestic Perspective",
+            "text": "This chapter enters living spaces through rooms and everyday objects; the family's experience in the letter is a contextual reconstruction, not historical fact.",
+            "source_label": "Story Package: Contextual Reconstruction",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Taipa Houses",
+          "chapter_goal": "Help the player understand the buildings through residential use and domestic life, rather than stopping at abstract style labels.",
+          "known_facts": [
+            "The five representative buildings were completed before 1921.",
+            "The buildings once served as senior officials' residences and Macanese homes.",
+            "Today's display and opening status are subject to official arrangements."
+          ],
+          "fiction_boundaries": [
+            "The family and life details in the family letter are contextual reconstruction.",
+            "Do not attribute fictional domestic episodes to any specific real residents."
+          ],
+          "suggested_questions": [
+            "Why isn't it enough to look only at the buildings' color?",
+            "Which clues suggest that this was once a residence?",
+            "How can you accurately describe the Macanese residential background here?"
+          ],
+          "do_not_reveal": [
+            "Do not directly give away the evidence-chain answer.",
+            "Do not invent specific residents' names or family events."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_location_letter",
+          "assets": [
+            "TAI-HOME-01"
+          ]
+        },
+        "fallback": {
+          "type": "interior_optional",
+          "text": "If the interiors are temporarily closed, reading the building descriptions and knowledge cards can still complete the task; do not cross barriers or touch exhibits."
+        },
+        "puzzle": {
+          "id": "puzzle_taipa_home_evidence",
+          "type": "evidence_chain",
+          "prompt": "Choose three materials that together show: before becoming a tourist attraction, this was first a home.",
+          "required_count": 3,
+          "options": [
+            {
+              "id": "residential_use",
+              "text": "The buildings were used as official residences and homes",
+              "description": "It shows how these buildings were originally used.",
+              "source_label": "Public information from the Macao Cultural Affairs Bureau",
+              "asset_id": "TAI-HOME-01"
+            },
+            {
+              "id": "resident_community",
+              "text": "It is connected to the residential life of the Macanese",
+              "description": "It links the houses to a real community life background.",
+              "source_label": "Public information from the Macao Cultural Affairs Bureau",
+              "asset_id": "TAI-HOME-01"
+            },
+            {
+              "id": "domestic_space",
+              "text": "Rooms and household objects retain the functions of everyday life",
+              "description": "It makes 'home' understandable through how the spaces were used.",
+              "source_label": "On-site display / contextual observation",
+              "asset_id": "TAI-HOME-01"
+            },
+            {
+              "id": "color_only",
+              "text": "The mint-green color alone proves the letter's family lived here",
+              "description": "The color of the facades cannot prove a specific private experience.",
+              "source_label": "No verifiable source",
+              "asset_id": "TAI-HOME-01"
+            }
+          ],
+          "solution": [
+            "residential_use",
+            "resident_community",
+            "domestic_space"
+          ],
+          "hints": [
+            "A complete evidence chain must include building use, the residential community, and living spaces.",
+            "Colors can leave an impression, but they cannot prove the experience of a fictional family."
+          ],
+          "explanation": "Building use, residential background, and domestic space complement each other to make residential life concrete; however vivid the facade color, it cannot prove that the family in the letter really existed.",
+          "skip_text": "A Lin lines up use, residents' background, and domestic space. The third family letter closes softly.",
+          "reward": {
+            "id": "taipa_letter_home",
+            "kind": "letter",
+            "name": "Family Letter",
+            "text": "Doors, rooms, and old objects remain in their places, waiting for you to understand how a house becomes a home."
+          }
+        }
+      },
+      {
+        "id": "chapter_taipa_work",
+        "order": 4,
+        "kind": "puzzle",
+        "title": "Chapter 4: The Sound of Work on the Island",
+        "story_time": "14:00",
+        "location_name": "Former Iec Long Firecracker Factory",
+        "poi_id": "poi_0118",
+        "scene": "The words of the fourth letter feel rushed by work hours: starting work, zoning, noise, stoppages—almost nothing extra. Looking in along the site's open trail, an industrial era, a working space, and the livelihoods of many families gradually emerge layer by layer from the paper.",
+        "time_layer": {
+          "period": "1920s to 1984",
+          "focus": "Bring together the rise and fall of the firecracker industry with labour risk, family income, and community life."
+        },
+        "letter_fragment": {
+          "title": "The Work-Start Letter",
+          "text": "Today the noise at the factory is still one burst after another. I put my wages away carefully; the rest can wait until I get home. The road here must be taken step by step; there is no hurry.",
+          "label": "Contextual reconstruction / fictional letter-writer"
+        },
+        "historical_claims": [
+          {
+            "statement": "Macau's firecracker industry developed rapidly in the 1920s, and Taipa became a major production base.",
+            "status": "Verified",
+            "source": "Macau SAR Government / Cultural Affairs Bureau, 'Taipa Firecracker Industry' (4th edition materials)"
+          },
+          {
+            "statement": "The 1950s to 1970s were the industry's peak, and many residents worked in related jobs.",
+            "status": "Verified",
+            "source": "Macau SAR Government / Cultural Affairs Bureau, related materials"
+          },
+          {
+            "statement": "Iec Long applied to open in 1925 and ceased full production in 1984.",
+            "status": "Verified",
+            "source": "Macau Cultural Affairs Bureau, 'Former Iec Long Firecracker Factory'"
+          }
+        ],
+        "interaction": {
+          "type": "industry_space_mapping",
+          "instruction": "Place the three kinds of clues—industrial era, site space, and community life—back into their corresponding places in the letter.",
+          "safety": "Please walk along the open trail and do not enter closed workshops; the actual open area is subject to on-site signage."
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-WORK-01",
+            "alt": "Workshops and open trail at the Former Iec Long Firecracker Factory",
+            "caption": "Beside the open trail, old workshops now stand silent; water channels and zoning still trace the former working space."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-work-dialogue-01",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "If we only talk about the prosperity of those days, this letter would be missing half. Labour, risk, and a family's income were always bound together."
+          },
+          {
+            "id": "taipa-work-dialogue-02",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "So the worker in the letter can be fictional, but how the industry rose and how it stopped—those can be verified."
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Taipa Firecracker Industry",
+            "text": "Macau's firecracker industry developed rapidly in the 1920s and reached its peak in the 1950s–70s; Taipa was one of its main production bases.",
+            "source_label": "Macau SAR Government / Cultural Affairs Bureau: related materials on Taipa Firecracker Industry",
+            "confidence": "high"
+          },
+          {
+            "kind": "historical_fact",
+            "title": "Iec Long's Opening and Closure",
+            "text": "Iec Long applied to open in 1925 and ceased full production in 1984.",
+            "source_label": "Macau Cultural Affairs Bureau: 'Former Iec Long Firecracker Factory'",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "The Work-Start Letter",
+            "text": "The worker, wages, and this day's experience in the letter were created to present a labourer's perspective and do not correspond to any real worker.",
+            "source_label": "Story Package contextual reconstruction",
+            "confidence": "high"
+          },
+          {
+            "kind": "dynamic_operational_info",
+            "title": "Open Area May Change",
+            "text": "The site's open routes, exhibition arrangements, and temporary closures may change; please refer to official information and on-site signage.",
+            "source_label": "On-site operational information",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Former Iec Long Firecracker Factory",
+          "chapter_goal": "Bring together the industrial era, working space, and residents' livelihoods to understand Taipa's industrial life history.",
+          "known_facts": [
+            "Taipa's firecracker industry developed rapidly in the 1920s",
+            "The 1950s–70s were its peak period",
+            "Iec Long applied to open in 1925 and ceased full production in 1984"
+          ],
+          "fiction_boundaries": [
+            "The work-start letter and worker's experience are fictional",
+            "Do not invent specific accidents, process details, or real workers' names"
+          ],
+          "suggested_questions": [
+            "In what years did Iec Long open and cease production?",
+            "Why talk about labour and risk when discussing industrial prosperity?",
+            "Which areas on site can be safely visited?"
+          ],
+          "do_not_reveal": [
+            "Do not directly give the matching answer",
+            "Do not present unverified processes as standard production procedures",
+            "Do not ignore on-site closure signs"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_location_letter",
+          "assets": [
+            "TAI-WORK-01"
+          ]
+        },
+        "fallback": {
+          "type": "route_or_exhibit_optional",
+          "text": "If parts of the site are closed, stay on the open trail and read the knowledge cards; no need to enter workshops or imagine an unverified complete process."
+        },
+        "puzzle": {
+          "id": "puzzle_taipa_work_mapping",
+          "type": "mapping",
+          "prompt": "Match the three types of clues with their corresponding descriptions to bring the industrial life behind this short letter back into focus.",
+          "fields": [
+            {
+              "id": "industry_time",
+              "label": "Industrial era"
+            },
+            {
+              "id": "site_space",
+              "label": "Site space"
+            },
+            {
+              "id": "daily_life",
+              "label": "Meaning for daily life"
+            }
+          ],
+          "options": [
+            {
+              "id": "boom_and_closure",
+              "text": "Developed starting in the 1920s, peaked in the 1950s–70s, and Iec Long ceased production in 1984"
+            },
+            {
+              "id": "workshop_evidence",
+              "text": "Site spaces such as workshops, warehouses, drying yards, and water channels"
+            },
+            {
+              "id": "labor_family_community",
+              "text": "Labour and risk affect family income and also shape life in the whole community"
+            },
+            {
+              "id": "fictional_shift_record",
+              "text": "The work-start record for that day in the letter is a real worker's file"
+            }
+          ],
+          "solution": {
+            "industry_time": "boom_and_closure",
+            "site_space": "workshop_evidence",
+            "daily_life": "labor_family_community"
+          },
+          "hints": [
+            "Look for an era, a visible space, and its impact on residents' lives.",
+            "This letter can bring you into a worker's perspective, but it cannot become a real worker's file."
+          ],
+          "explanation": "The industrial era tells us how the industry rose and fell; the site space preserves the shape of labour; family and community give this history the weight of life; the work-start letter itself remains a contextual reconstruction.",
+          "skip_text": "A Lin arranges era, space, and life into three columns for you. The workshop falls silent, and the work letter stays in the box.",
+          "reward": {
+            "id": "taipa_letter_work",
+            "kind": "letter",
+            "name": "Work Letter",
+            "text": "A very short work-start letter, connected behind it to labour, risk, and the daily lives of many families."
+          }
+        }
+      },
+      {
+        "id": "chapter_taipa_street",
+        "order": 5,
+        "kind": "puzzle",
+        "title": "Chapter 5: The Taste Left at the Street Corner",
+        "story_time": "15:30",
+        "location_name": "Rua do Cunha and Taipa Old Town",
+        "poi_id": "poi_rua_cunha",
+        "scene": "The last letter left no shop name or recipe. It only remembers the layered languages at the street corner, the details of old buildings, and the small everyday moments that still happen here. You decide not to ask who is 'the first' and simply look carefully at today's street.",
+        "time_layer": {
+          "period": "Historic street and today's commercial and living space",
+          "focus": "Read a street still alive through multilingual signs, architectural details, and contemporary daily life"
+        },
+        "letter_fragment": {
+          "title": "Street Letter",
+          "text": "Flavors change, signs change, and the people passing through come in different batches. I only remember that every time I turn into the street corner, someone is speaking their own language about daily life.",
+          "label": "Contextual reconstruction / fictional letter writer"
+        },
+        "historical_claims": [
+          {
+            "statement": "The specific origins of cuisine, shops, and trades on Rua do Cunha still require further verification.",
+            "status": "Pending verification",
+            "source": "‘Letters Sent by the Sea Breeze’ planning research checklist"
+          }
+        ],
+        "interaction": {
+          "type": "street_observation",
+          "instruction": "Choose three things that can be directly observed on site and do not rely on unverified origin stories.",
+          "safety": "Do not photograph strangers' faces or block shop operations; the task does not require making purchases; if crowded, you may move to an adjacent street to complete it."
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-STREET-01",
+            "alt": "Multilingual signs and street views on Rua do Cunha in Taipa",
+            "caption": "Signs, facades, and passing footsteps crowd the street. What remains here is not only flavor, but an everyday life that is still happening."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-street-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "I can write about the street as it looks today, but I can't just invent an origin for a food just because it's famous."
+          },
+          {
+            "id": "taipa-street-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-03",
+            "text": "Exactly. Recording the languages, architecture, and daily life seen at this moment is enough to write a street letter."
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "dynamic_operational_info",
+            "title": "Today's Street",
+            "text": "Shops, signs, foot traffic, and business status all change; this chapter only records what you can safely observe at the time of your visit.",
+            "source_label": "On-site dynamic observation",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "Don't Fabricate Origins",
+            "text": "The story will not directly turn local sayings into 'earliest' or 'first.' The street letter is really concerned with how commerce and daily life use this old town space together.",
+            "source_label": "Planning research boundaries",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "Letter Writer of the Street Letter",
+            "text": "The taste memories and the letter writer in the letter are fictional creations and do not point to any specific shop, brand, or real customer.",
+            "source_label": "Story Package narrative setting",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Rua do Cunha and Taipa Old Town",
+          "chapter_goal": "Guide you to lightly observe the street while avoiding unverified commercial and food origin narratives.",
+          "known_facts": [
+            "Shops and business status on Rua do Cunha change dynamically",
+            "The specific origins of cuisine, shops, and trades still require verification",
+            "One can observe multilingual signs, old building details, and today's everyday behaviors"
+          ],
+          "fiction_boundaries": [
+            "Must not fabricate 'first' or 'earliest' for shops, foods, or brands",
+            "Must not present the street letter writer as a real customer or merchant"
+          ],
+          "suggested_questions": [
+            "What content on the street is suitable for direct observation and recording?",
+            "Why doesn't the story write about unverified 'first shop'?",
+            "When it's crowded, how do you safely complete this street letter?"
+          ],
+          "do_not_reveal": [
+            "Do not directly give the multiple-choice answers",
+            "Do not recommend tasks that require spending money",
+            "Do not identify or describe strangers' personal identities"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_location_letter",
+          "assets": [
+            "TAI-STREET-01"
+          ]
+        },
+        "fallback": {
+          "type": "crowd_safe_observation",
+          "text": "If Rua do Cunha is too crowded, you can retreat to an adjacent open street and choose safely observable content from text, architecture, or sound."
+        },
+        "puzzle": {
+          "id": "puzzle_taipa_street_observation",
+          "type": "multi_select",
+          "prompt": "Which on-site observations can go into the street letter without relying on unverified origin stories?",
+          "min_selections": 3,
+          "max_selections": 3,
+          "options": [
+            {
+              "id": "multilingual_signs",
+              "text": "Note the multilingual signs visible on site"
+            },
+            {
+              "id": "building_details",
+              "text": "Notice the facades of old buildings and the scale of the street"
+            },
+            {
+              "id": "daily_activity",
+              "text": "Record contemporary daily activities that do not involve personal identity"
+            },
+            {
+              "id": "invent_first_shop",
+              "text": "Arbitrarily pick a shop and claim it as the unverified 'first' of some food"
+            }
+          ],
+          "solution": [
+            "multilingual_signs",
+            "building_details",
+            "daily_activity"
+          ],
+          "hints": [
+            "Choose the three things that are right before you and can be directly observed.",
+            "Be especially careful with any option that requires proving 'earliest' or 'first.'"
+          ],
+          "explanation": "Signs, architecture, and contemporary activities can all be observed on site; commercial origins that have not been verified should not be written as fact.",
+          "skip_text": "You did not invent a grand 'first' for the street; you simply gathered the daily life before you into the last street letter.",
+          "reward": {
+            "id": "taipa_letter_street",
+            "kind": "letter",
+            "name": "Street Letter",
+            "text": "Under multilingual signs, old buildings and today's life still meet on the same street."
+          }
+        }
+      },
+      {
+        "id": "ending_taipa_future_letter",
+        "order": 6,
+        "kind": "ending",
+        "title": "Final Chapter: A Letter to Future Taipa",
+        "story_time": "16:20",
+        "location_name": "Taipa Old Town Public Space",
+        "poi_id": "poi_0104",
+        "scene": "The five letters finally found their addresses, yet still had no true recipients. Only then did you understand that the returned-letter box had never collected the history of one family, but rather how people of different eras lived and how they understood 'home'.",
+        "time_layer": {
+          "period": "From multiple life histories to the future",
+          "focus": "Bring together the Sea Letter, Bell Letter, Home Letter, Work Letter, and Street Letter to write a letter addressed to the future"
+        },
+        "letter_fragment": {
+          "title": "Future Letter Blank Page",
+          "text": "Recipient: Those in the future who still wish to remember how Taipa lived.",
+          "label": "Player creation / Fictional narrative"
+        },
+        "historical_claims": [
+          {
+            "statement": "The final chapter only synthesizes the stratified background already noted in the previous five chapters and adds no unverified historical claims.",
+            "status": "Narrative boundary",
+            "source": "Story Package content rules"
+          }
+        ],
+        "interaction": {
+          "type": "future_letter_reflection",
+          "instruction": "Read the five letters once more, then write one sentence you hope will be remembered for the future Taipa.",
+          "safety": "Please complete this in a public space without obstructing passage; no need to upload photos or any personal identification information."
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-END-01",
+            "alt": "Taipa Fire Station forecourt and old town street view",
+            "caption": "Back in the sounds of the old town, the five letters are spread out in turn, with a blank page waiting to be sent to the future."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-ending-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "So they didn't belong to the same family; they were just repeatedly asking the same question: what counts as home?"
+          },
+          {
+            "id": "taipa-ending-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "Taipa hasn't moved off the map, but the coastline has changed, the work has changed, and the people living here have changed generation after generation."
+          },
+          {
+            "id": "taipa-ending-dialogue-03",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-03",
+            "text": "Perhaps home has never been a place that stays the same forever, but after change, there are still people willing to remember how it once lived."
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "contextual_reconstruction",
+            "title": "The Common Recipient of the Five Letters",
+            "text": "The Sea Letter, Bell Letter, Home Letter, Work Letter, and Street Letter together point to Taipa's life history and collective memory, not a verifiable family lineage.",
+            "source_label": "Story Package final chapter explanation",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "Future Letter",
+            "text": "The Future Letter is your personal creation left during this journey. The text will be saved; whether to generate an accompanying image is an optional experience.",
+            "source_label": "Story Package player creation",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Taipa Old Town Public Space",
+          "chapter_goal": "Accompany You in re-reading the five letters and writing the Future Letter, while maintaining the boundary between historical fact and fiction.",
+          "known_facts": [
+            "The five letters respectively relate to faith, community space, dwelling, labor, and everyday street life",
+            "All letter writers and letters are fictional",
+            "The Future Letter is Your personal reflection"
+          ],
+          "fiction_boundaries": [
+            "Must not interpret the five letters as a real family archive",
+            "Must not package Your messages as historical fact"
+          ],
+          "suggested_questions": [
+            "What do the five letters ultimately leave together?",
+            "Which sentence do I want to send to the future Taipa?",
+            "How do I distinguish between historical background and my own feelings?"
+          ],
+          "do_not_reveal": [
+            "Must not generate or decide Your personal reflection on Your behalf",
+            "Must not add new historical conclusions not verified in the preceding text"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_ending_future_letter",
+          "assets": [
+            "TAI-END-01"
+          ]
+        },
+        "fallback": {
+          "type": "text_reflection",
+          "text": "If image generation is temporarily unavailable, you can still complete the Future Letter with your text and the five letters already collected."
+        }
+      }
+    ],
+    "endings": [
+      {
+        "id": "send_future_taipa_letter",
+        "title": "Letter to Future Taipa",
+        "choice_text": "Write and send a letter to the future",
+        "text": "Taipa hasn't moved off the map, but the coastline has changed, the work has changed, and the people living here have changed generation after generation. Perhaps home is not a place that stays the same forever, but after change, there are still people willing to remember how it once lived.",
+        "condition": "Complete the final chapter and save a message for future Taipa",
+        "rewards": [
+          {
+            "id": "taipa_future_letter",
+            "kind": "collection",
+            "name": "Future Letter",
+            "text": "Sea letters, bell letters, home letters, work letters, and street letters come together on this page, gathered into one letter for the future."
+          },
+          {
+            "id": "taipa_home_reflection",
+            "kind": "reflection",
+            "name": "An Answer About Home",
+            "text": "You leave a message for today's Taipa, for future people to read anew."
+          }
+        ]
+      }
+    ]
+  },
+  "pt": {
+    "id": "taipa_letters",
+    "version": 4,
+    "title": "Cartas enviadas pela brisa do mar",
+    "subtitle": "Seguindo a brisa do mar pela cidade velha da Taipa, devolver a época e o destino a cinco cartas sem destinatário",
+    "summary": "Tu e a A Lin abrem uma caixa fictícia de cartas devolvidas na cidade velha da Taipa. As cinco cartas na caixa vêm de diferentes contextos de vida, mas todas perderam o endereço. Percorrerão o Templo de Pak Tai, a Igreja de Nossa Senhora do Carmo, as Casas da Taipa, o antigo recinto da Fábrica de Panchões I Long e a Rua do Cunha; a partir dos vestígios deixados pela fé, pela habitação, pelo trabalho e pelo quotidiano das ruas, encontrarão para cada carta a sua época e o seu lugar.",
+    "route_id": "taipa_hotspot_halfday",
+    "estimated_hours": 4,
+    "product_mode": "mobile_portrait_web",
+    "presentation": {
+      "default_orientation": "portrait",
+      "max_content_width_px": 480,
+      "cover_asset_id": "TAI-COVER-01",
+      "asset_base_path": "/story/taipa-letters/"
+    },
+    "identity": {
+      "id": "returned_letter_keeper",
+      "name": "Guardião da Caixa de Cartas Devolvidas",
+      "description": "Não precisas de provar uma história familiar privada que não existe. A tua tarefa é, através da observação no local e de informações públicas, devolver a época e o lugar adequados às cinco cartas de reconstituição contextual."
+    },
+    "content_notice": "A caixa de cartas devolvidas, todos os escritores, o conteúdo das cartas, as relações de envio e as cartas do futuro são ficção da história. As datas dos edifícios, indústrias, religiões e contextos comunitários envolvidos na história foram organizadas com base em informações públicas listadas na planificação; os cartões de conhecimento distinguirão separadamente factos históricos, crença popular, reconstituição contextual e ficção da história. As tarefas relacionadas com a Rua do Cunha não utilizarão alegações não verificadas de «o mais antigo» ou «a primeira».",
+    "content_labels": {
+      "historical_fact": "Facto histórico",
+      "folklore": "Crença popular / Memória local",
+      "contextual_reconstruction": "Reconstituição contextual",
+      "fictional_story": "Ficção da história",
+      "dynamic_operational_info": "Informação operacional dinâmica"
+    },
+    "characters": [
+      {
+        "id": "player",
+        "name": "Você",
+        "role": "a pessoa que percorre a cidade velha à procura de época e destino para as cartas devolvidas",
+        "fictional": true
+      },
+      {
+        "id": "alian",
+        "name": "A Lin",
+        "role": "a tua colega local e agente de conhecimento, que te acompanha na verificação dos factos históricos e te lembra de distinguir entre crenças populares e ficção",
+        "fictional": true
+      },
+      {
+        "id": "alan",
+        "name": "O Escritor das Cartas",
+        "role": "o escritor fictício das cinco cartas de reconstituição contextual, que aparece apenas nas palavras escritas nas cartas",
+        "fictional": true
+      },
+      {
+        "id": "m",
+        "name": "O Destinatário do Futuro",
+        "role": "um leitor imaginário da Taipa futura, à espera de uma carta do jogador",
+        "fictional": true
+      }
+    ],
+    "props": [
+      "caixa de cartas devolvidas",
+      "carta do mar",
+      "carta do sino",
+      "carta de família",
+      "carta de trabalho",
+      "carta da rua",
+      "carta do futuro"
+    ],
+    "nodes": [
+      {
+        "id": "prologue_taipa_letter_box",
+        "order": 0,
+        "kind": "prologue",
+        "title": "Prólogo: A carta sem destinatário",
+        "story_time": "10:00",
+        "scene": "Dez horas da manhã, os sons das ruas da Taipa vão ficando mais vivos. No ecrã do seu telemóvel aparece subitamente uma caixa de cartas antiga: as cinco cartas dentro têm todas escrito 'Taipa', mas nenhuma sabe para onde deve ser enviada hoje.",
+        "time_layer": {
+          "period": "A Taipa de hoje e vários períodos históricos",
+          "focus": "Primeiro, perceber a fronteira ficcional das cartas e, depois, procurar os seus endereços no local e nos materiais públicos."
+        },
+        "letter_fragment": {
+          "title": "Instruções da caixa de devolução",
+          "text": "Algumas pessoas mudaram-se, alguns ofícios desapareceram, e algumas costas também já não são como eram. Por favor, encontre o endereço destas cartas.",
+          "label": "Ficção da história"
+        },
+        "historical_claims": [
+          {
+            "statement": "O Museu da História da Taipa e de Coloane pode ajudar a compreender o desenvolvimento das aldeias das ilhas, da religião, da agricultura, do artesanato e da era moderna.",
+            "status": "Contexto de informação pública",
+            "source": "Materiais de exposição do Museu da História da Taipa e de Coloane"
+          }
+        ],
+        "interaction": {
+          "type": "letter_box_opening",
+          "instruction": "Depois de ler as instruções na caixa de devolução, confirme primeiro que estas cinco cartas não são da mesma família, nem arquivos privados reais.",
+          "safety": "Quanto à abertura do Museu da História da Taipa e de Coloane, siga as informações oficiais do dia; mesmo sem entrar no museu, pode continuar a história."
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-PROP-01",
+            "alt": "Uma caixa de devolução antiga com cinco cartas sem endereço",
+            "caption": "A caixa contém cinco vidas que perderam o endereço. A caixa e as cartas são adereços da história, não artefactos reais."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-prologue-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Nenhuma está endereçada por completo; no envelope estão apenas cinco palavras: mar, sino, casa, trabalho, rua."
+          },
+          {
+            "id": "taipa-prologue-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "Deixe-me esclarecer: não são cartas de família verdadeiras descobertas; são apenas cartas de reconstituição situacional, escritas a partir de vários contextos de vida."
+          },
+          {
+            "id": "taipa-prologue-dialogue-03",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "Por isso, não inventamos genealogias para estranhos; apenas devolvemos às vidas das cartas a época e o lugar que lhes cabem."
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "fictional_story",
+            "title": "A caixa de devolução e os autores das cartas",
+            "text": "A caixa de devolução, as cinco cartas e todos os autores das cartas são criações da história; não os trate como arquivos reais ou história de família.",
+            "source_label": "Story Package (definição da história)",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "Cartas de reconstituição de situação",
+            "text": "Estas cartas usam o contexto real de edifícios, indústrias, religiões e comunidades para imaginar a perspetiva de vida de pessoas comuns, mas não substituem fontes históricas.",
+            "source_label": "Limite narrativo do planeamento",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Vila da Taipa / zona do Museu da História da Taipa e de Coloane",
+          "chapter_goal": "Levar Você a abrir a caixa de devolução e, primeiro, a distinguir factos históricos, reconstituição de situação e ficção narrativa.",
+          "known_facts": [
+            "O Museu da História da Taipa e de Coloane pode servir como ponto de complemento sobre a história das ilhas.",
+            "Todas as cartas e os seus autores são fictícios.",
+            "Você deve fazer corresponder as cartas a épocas e lugares, e não provar uma história privada."
+          ],
+          "fiction_boundaries": [
+            "Não pode apresentar a caixa de devolução, as cartas ou os autores como artefactos, arquivos ou pessoas reais.",
+            "Não pode inventar relações familiares entre as cartas."
+          ],
+          "suggested_questions": [
+            "Estas cartas são verdadeiras?",
+            "Qual é a diferença entre reconstituição situacional e verdadeiras fontes históricas?",
+            "Porque é que a primeira carta começa a procurar o endereço no Templo de Pak Tai?"
+          ],
+          "do_not_reveal": [
+            "Não deve adiantar as respostas das missões seguintes.",
+            "Não deve apresentar como facto histórico confirmado aquilo que ainda está por verificar."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_prologue_letter_box",
+          "assets": [
+            "TAI-COVER-01",
+            "TAI-PROP-01"
+          ]
+        },
+        "fallback": {
+          "type": "text_only",
+          "text": "Se a ilustração da caixa de devolução não carregar temporariamente, basta ler as instruções na caixa; a história seguinte não será afetada."
+        },
+        "reward": {
+          "id": "returned_letter_box",
+          "kind": "story_prop",
+          "name": "Caixa de devolução",
+          "text": "Na caixa ficam cinco etiquetas — mar, sino, casa, trabalho, rua — à espera que você as verifique uma a uma no local."
+        }
+      },
+      {
+        "id": "chapter_taipa_sea",
+        "order": 1,
+        "kind": "puzzle",
+        "title": "Capítulo Primeiro: A Pessoa Que Espera o Barco Voltar",
+        "story_time": "10:30",
+        "location_name": "Templo de Pak Tai",
+        "poi_id": "poi_0100",
+        "scene": "Na primeira carta, o som da água, a direção do vento e o regresso da navegação foram escritos vezes sem conta. Em frente ao templo, Você começa a perceber: o que ele espera não é um nome verificável, mas uma vida que muitos ilhéus conheceram.",
+        "time_layer": {
+          "period": "Um templo com pelo menos 160 anos de história e a antiga comunidade piscatória",
+          "focus": "Compreender o desejo das pessoas por um regresso seguro, através da vida insular e da fé em Pak Tai"
+        },
+        "letter_fragment": {
+          "title": "Carta de Espera pelo Barco",
+          "text": "O vento mudou vezes sem conta, mas ainda mantenho acesa a luz em frente à porta. Quando voltares pelo caminho das águas, contaremos devagar o que aconteceu nesta estação.",
+          "label": "Reconstituição contextual / Remetente fictício"
+        },
+        "historical_claims": [
+          {
+            "statement": "O Templo de Pak Tai em Taipa tem pelo menos cerca de 160 anos de história.",
+            "status": "Verificado",
+            "source": "Dados do Templo de Pak Tai em Taipa da Direcção dos Serviços de Turismo de Macau"
+          },
+          {
+            "statement": "Os antigos habitantes da Taipa eram maioritariamente pescadores; a fé em Pak Tai está relacionada com o controlo das águas, a protecção contra o fogo e a vida no mar.",
+            "status": "Contexto verificado",
+            "source": "Informação relacionada da Direcção dos Serviços de Turismo de Macau"
+          }
+        ],
+        "interaction": {
+          "type": "observation_and_classification",
+          "instruction": "Antes de mais, sem incomodar as actividades religiosas, observe o templo e os arredores e, em seguida, seleccione os contextos de vida apoiados por informações públicas.",
+          "safety": "Não toque nas oferendas nem fotografe cerimónias em curso; também não permaneça à entrada ou saída."
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-SEA-01",
+            "alt": "Templo de Pak Tai na Taipa e o espaço público em frente ao templo",
+            "caption": "O vento passa em frente ao templo; o templo e as ruas circundantes ainda guardam o eco da vida insular de outrora."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-sea-dialogue-01",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "Não se apresse em levar a carta a sério. A história do templo pode ser verificada, mas a pessoa que espera o barco só vive nestas folhas de papel."
+          },
+          {
+            "id": "taipa-sea-dialogue-02",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Percebo. A água, o vento e o regresso da navegação ajudam-me a compreender a vida daquela época, mas não provam que tenha existido realmente tal remetente."
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "O Templo de Pak Tai e a antiga comunidade",
+            "text": "As informações turísticas oficiais remontam a história do Templo de Pak Tai a pelo menos cerca de 160 anos e ligam-no à antiga comunidade piscatória da Taipa.",
+            "source_label": "Direcção dos Serviços de Turismo de Macau: dados do Templo de Pak Tai na Taipa",
+            "confidence": "high"
+          },
+          {
+            "kind": "folklore",
+            "title": "Contexto da crença ligada à água",
+            "text": "Os significados de controlo das águas, protecção contra o fogo e segurança nas viagens marítimas na fé em Pak Tai pertencem à religião e às crenças populares locais; não podem ser considerados prova de que uma experiência pessoal tenha ocorrido.",
+            "source_label": "Informações turísticas oficiais e explicações de crenças populares locais",
+            "confidence": "medium"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "Carta de Espera pelo Barco",
+            "text": "A espera, a luz e o regresso no barco descritos na carta são uma reconstituição contextual para aproximar as pessoas da vida insular de outrora, e não um texto original de fontes históricas.",
+            "source_label": "Story Package – Reconstituição contextual",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Templo de Pak Tai",
+          "chapter_goal": "Orientar Você na leitura da carta de espera pelo barco com base em contextos verificados, respeitando simultaneamente um local de culto ainda em uso.",
+          "known_facts": [
+            "O Templo de Pak Tai tem pelo menos cerca de 160 anos de história",
+            "Os antigos habitantes da Taipa eram maioritariamente pescadores",
+            "A fé em Pak Tai está relacionada com o controlo das águas, a protecção contra o fogo e a vida no mar"
+          ],
+          "fiction_boundaries": [
+            "A carta de espera pelo barco e o seu remetente são fictícios",
+            "Não se pode inferir famílias reais ou acontecimentos históricos concretos a partir da carta"
+          ],
+          "suggested_questions": [
+            "Porque é que esta carta fala sempre de água e vento?",
+            "O que é facto histórico e o que é crença popular?",
+            "Como observar num local de culto sem incomodar os outros?"
+          ],
+          "do_not_reveal": [
+            "Não se pode revelar directamente as opções correctas da missão",
+            "Não se pode apresentar as crenças populares como factos históricos comprovadamente ocorridos"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_location_letter",
+          "assets": [
+            "TAI-SEA-01"
+          ]
+        },
+        "fallback": {
+          "type": "observation_optional",
+          "text": "Se estiver a ocorrer uma cerimónia religiosa ou se o local estiver cheio, recue para uma posição segura na periferia e leia os cartões de conhecimento; não é necessário entrar no templo para responder."
+        },
+        "puzzle": {
+          "id": "puzzle_taipa_sea_context",
+          "type": "multi_select",
+          "prompt": "Que conteúdos são apoiados por informações públicas e podem ajudar Você a ler esta 'carta de espera pelo barco'?",
+          "min_selections": 2,
+          "max_selections": 2,
+          "options": [
+            {
+              "id": "historic_temple",
+              "text": "O Templo de Pak Tai tem pelo menos cerca de 160 anos de história"
+            },
+            {
+              "id": "fisher_community",
+              "text": "Os antigos habitantes da Taipa eram maioritariamente pescadores e as crenças relacionadas estão ligadas à vida na água"
+            },
+            {
+              "id": "real_letter_writer",
+              "text": "Esta carta prova que houve um pescador real que esperou pela família aqui"
+            },
+            {
+              "id": "fixed_ritual_result",
+              "text": "Se se fizer uma prece, todas as saídas para o mar estão certamente garantidas um regresso em segurança"
+            }
+          ],
+          "solution": [
+            "historic_temple",
+            "fisher_community"
+          ],
+          "hints": [
+            "Selecione apenas os contextos que pode verificar no local e em informações públicas; não trate a carta fictícia como um arquivo pessoal.",
+            "Uma resposta está relacionada com a história do templo; a outra está escondida na vida da antiga comunidade."
+          ],
+          "explanation": "A história do Templo de Pak Tai e a antiga comunidade piscatória têm base em informações; quanto ao remetente concreto e à ideia de que 'orar garante segurança', não podem ser comprovados no local.",
+          "skip_text": "A Lin separou para você, nos dois lados da folha, os factos históricos e as crenças populares. Mesmo assim, a carta do mar caiu na caixa de devolução.",
+          "reward": {
+            "id": "taipa_letter_sea",
+            "kind": "letter",
+            "name": "Carta do Mar",
+            "text": "A luz continua acesa; a pessoa na carta ainda espera o regresso pelo caminho das águas."
+          }
+        }
+      },
+      {
+        "id": "chapter_taipa_bell",
+        "order": 2,
+        "kind": "puzzle",
+        "title": "Capítulo 2: O Sino do Outro Lado do Mar",
+        "story_time": "11:20",
+        "location_name": "Igreja de Nossa Senhora do Carmo",
+        "poi_id": "poi_carmo",
+        "scene": "A segunda carta chega seguindo o sino da encosta. O som ultrapassa os telhados e também faz você reparar que, na mesma ilha, diferentes crenças e comunidades sempre tiveram os seus próprios lugares de encontro.",
+        "time_layer": {
+          "period": "de 1885 até hoje",
+          "focus": "A partir da época e da localização da igreja, observar os espaços comunitários que coexistem na ilha."
+        },
+        "letter_fragment": {
+          "title": "Carta do Sino",
+          "text": "Assim que o sino da encosta se fez ouvir, percebi que, do outro lado da ilha, também há quem se reúna seguindo os seus próprios dias.",
+          "label": "Reconstituição contextual / autor da carta fictício"
+        },
+        "historical_claims": [
+          {
+            "statement": "A Igreja de Nossa Senhora do Carmo foi construída em 1885.",
+            "status": "Verificado",
+            "source": "Informações da Direção dos Serviços de Turismo de Macau"
+          },
+          {
+            "statement": "A Igreja de Nossa Senhora do Carmo é a única igreja católica da Taipa.",
+            "status": "Verificado",
+            "source": "Informações da Direção dos Serviços de Turismo de Macau"
+          }
+        ],
+        "interaction": {
+          "type": "fact_to_place_mapping",
+          "instruction": "Observe a igreja e o largo no espaço público aberto e encontre o significado correspondente para os dois factos verificáveis.",
+          "safety": "Não perturbe cultos, casamentos ou outras atividades religiosas; permaneça apenas nas áreas públicas abertas e observe."
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-BELL-01",
+            "alt": "A Igreja de Nossa Senhora do Carmo e o Largo do Carmo na encosta",
+            "caption": "O sino desce da encosta para a cidade antiga. No Largo do Carmo, a fachada da igreja e o bairro ao redor entram em perspetiva."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-bell-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Afinal, templos e igrejas podem coexistir numa ilha, sem que seja preciso escrever que um substituiu o outro."
+          },
+          {
+            "id": "taipa-bell-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-03",
+            "text": "Sim. Ao manter as datas e lugares que podem ser verificados, vemos como diferentes comunidades coexistem aqui."
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "A igreja de 1885",
+            "text": "A Igreja de Nossa Senhora do Carmo foi construída em 1885 e é a única igreja católica da Taipa.",
+            "source_label": "Direção dos Serviços de Turismo de Macau: informações sobre a Taipa e a Igreja de Nossa Senhora do Carmo",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "O sino do outro lado do mar",
+            "text": "Quem ouve o sino é uma personagem fictícia; a história usa esse sino para aproximar você do ritmo de uma vida comunitária.",
+            "source_label": "Story Package – reconstituição contextual",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Igreja de Nossa Senhora do Carmo",
+          "chapter_goal": "Partir das datas e lugares verificados para entender os diferentes espaços comunitários que coexistem na mesma ilha.",
+          "known_facts": [
+            "A Igreja de Nossa Senhora do Carmo foi construída em 1885",
+            "É a única igreja católica da Taipa",
+            "As atividades religiosas e as condições de abertura no local podem variar"
+          ],
+          "fiction_boundaries": [
+            "A Carta do Sino e o seu autor são fictícios",
+            "Não se devem inventar residentes históricos concretos nem eventos de culto"
+          ],
+          "suggested_questions": [
+            "Em que ano foi construída esta igreja?",
+            "Porque é que uma igreja também pode ajudar a compreender os espaços comunitários?",
+            "Como é que aquilo que se vê no local pode ser confrontado com os dados históricos?"
+          ],
+          "do_not_reveal": [
+            "Não revelar diretamente as respostas do emparelhamento",
+            "Não tratar reconstituições visuais não validadas como fotografias históricas"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_location_letter",
+          "assets": [
+            "TAI-BELL-01"
+          ]
+        },
+        "fallback": {
+          "type": "visual_overlay_optional",
+          "text": "Se a fotografia da igreja não estiver disponível, também pode fazer a correspondência combinando o que vê no local com os cartões informativos."
+        },
+        "puzzle": {
+          "id": "puzzle_taipa_bell_mapping",
+          "type": "mapping",
+          "prompt": "Coloque as duas informações verificáveis nos seus lugares correspondentes neste capítulo.",
+          "fields": [
+            {
+              "id": "date",
+              "label": "Ano de construção"
+            },
+            {
+              "id": "community",
+              "label": "Espaço comunitário"
+            }
+          ],
+          "options": [
+            {
+              "id": "year_1885",
+              "text": "Construída em 1885"
+            },
+            {
+              "id": "only_catholic_church",
+              "text": "A única igreja católica da Taipa"
+            },
+            {
+              "id": "fictional_bell_owner",
+              "text": "O autor da carta terá possuído esta torre sineira"
+            }
+          ],
+          "solution": {
+            "date": "year_1885",
+            "community": "only_catholic_church"
+          },
+          "hints": [
+            "Uma resposta é um ano concreto; a outra indica o seu lugar no espaço religioso da Taipa.",
+            "A relação pessoal referida na carta não pode ser verificada; não deixe a ficção servir de prova para os factos históricos."
+          ],
+          "explanation": "A construção em 1885 e o facto de ser a única igreja católica da Taipa são informações verificadas; quanto ao remetente da carta ser dono da torre sineira, trata-se apenas de um prolongamento fictício sem fundamento.",
+          "skip_text": "A Lin assinala no mapa o ano e o local. O sino da encosta acompanha então a segunda carta.",
+          "reward": {
+            "id": "taipa_letter_bell",
+            "kind": "letter",
+            "name": "Carta do Sino",
+            "text": "Um sino a descer da encosta recorda os dias de uma outra forma de convívio na ilha."
+          }
+        }
+      },
+      {
+        "id": "chapter_taipa_home",
+        "order": 3,
+        "kind": "puzzle",
+        "title": "Capítulo 3: Que forma tem um lar?",
+        "story_time": "12:10",
+        "location_name": "Casas da Taipa",
+        "poi_id": "poi_taipa_houses",
+        "scene": "A terceira carta não elogia qualquer «estilo exótico»; fala apenas de como as portas se abrem, como os quartos se habitam e como os móveis são usados repetidamente por uma família. Mais do que a fachada bonita, ela pergunta: o que é que torna uma casa num lar?",
+        "time_layer": {
+          "period": "Exibição de revitalização de cerca de 1921 até à atualidade",
+          "focus": "Dos antigos palacetes oficiais e residências macaenses, entrar nos espaços concretos da vida doméstica."
+        },
+        "letter_fragment": {
+          "title": "Carta familiar",
+          "text": "Cada coisa em casa tem o seu lugar. O que me faz reconhecer um lar nunca é a cor das paredes, mas quem aqui come, descansa e está disposto a deixar a porta aberta por alguém.",
+          "label": "Reconstituição contextual / remetente fictício"
+        },
+        "historical_claims": [
+          {
+            "statement": "As cinco edificações representativas das Casas da Taipa foram concluídas antes de 1921.",
+            "status": "Verificado",
+            "source": "Instituto Cultural de Macau, «Casas da Taipa»"
+          },
+          {
+            "statement": "Os edifícios serviram como residências de altos funcionários e habitações representativas da comunidade macaense.",
+            "status": "Verificado",
+            "source": "Instituto Cultural de Macau, «Casas da Taipa»"
+          }
+        ],
+        "interaction": {
+          "type": "evidence_chain",
+          "instruction": "A partir de três níveis — uso arquitetónico, contexto dos residentes e espaço doméstico —, monta uma cadeia de evidências sobre «lar».",
+          "safety": "Observa apenas nas áreas abertas, não toques nas peças em exposição; a abertura do interior depende das disposições do dia."
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-HOME-01",
+            "alt": "Conjunto de edifícios-museu residenciais das Casas da Taipa",
+            "caption": "Não olhes só para a cor de menta das fachadas. As portas, janelas, quartos e a mobília também contam como se vivia aqui."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-home-dialogue-01",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "Não olhes primeiro só para as cores e estilos. Pergunta para quem serviam estas casas no passado e como eram usados os seus espaços."
+          },
+          {
+            "id": "taipa-home-dialogue-02",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Se juntar a utilização das casas, as pessoas que nelas viveram e os espaços do quotidiano, só então vejo verdadeiramente que aqui houve um lar."
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Cinco edifícios residenciais",
+            "text": "Cinco edifícios representativos foram concluídos antes de 1921 e serviram como residências de altos funcionários e habitações representativas da comunidade macaense.",
+            "source_label": "Instituto Cultural de Macau: «Casas da Taipa»",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "Perspetiva doméstica",
+            "text": "Este capítulo entra no espaço habitacional através dos quartos e dos objetos do quotidiano; a experiência daquela família na carta é uma reconstituição contextual, não é facto histórico.",
+            "source_label": "Story Package – Reconstituição contextual",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Casas da Taipa",
+          "chapter_goal": "Fazer com que você compreenda o edifício através do uso residencial e da vida doméstica, em vez de ficar pelos rótulos de estilo abstratos.",
+          "known_facts": [
+            "Cinco edifícios representativos foram concluídos antes de 1921",
+            "Os edifícios serviram como residências de altos funcionários e habitações macaenses",
+            "A exibição atual e o estado de abertura dependem das disposições oficiais"
+          ],
+          "fiction_boundaries": [
+            "Os detalhes familiares e do quotidiano na carta são uma reconstituição contextual",
+            "Não se devem atribuir episódios domésticos fictícios a residentes reais específicos"
+          ],
+          "suggested_questions": [
+            "Porque é que olhar só para a cor do edifício não chega?",
+            "Que pistas mostram que aqui existiram habitações?",
+            "Como descrever com rigor o contexto das habitações macaenses aqui?"
+          ],
+          "do_not_reveal": [
+            "Não revelar diretamente a resposta da cadeia de evidências",
+            "Não inventar nomes de residentes ou eventos familiares concretos"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_location_letter",
+          "assets": [
+            "TAI-HOME-01"
+          ]
+        },
+        "fallback": {
+          "type": "interior_optional",
+          "text": "Se o interior ainda não estiver aberto, podes concluir a tarefa lendo a descrição do edifício e os cartões informativos; não ultrapasses as vedações nem toques nas peças."
+        },
+        "puzzle": {
+          "id": "puzzle_taipa_home_evidence",
+          "type": "evidence_chain",
+          "prompt": "Escolhe três materiais que, juntos, mostrem que, antes de se tornar uma atração turística, este lugar foi primeiro um lar.",
+          "required_count": 3,
+          "options": [
+            {
+              "id": "residential_use",
+              "text": "Os edifícios serviram como residências oficiais e habitações",
+              "description": "Explica como estes edifícios foram originalmente utilizados.",
+              "source_label": "Informação pública do Instituto Cultural de Macau",
+              "asset_id": "TAI-HOME-01"
+            },
+            {
+              "id": "resident_community",
+              "text": "Este lugar está ligado à vida residencial macaense",
+              "description": "Liga as habitações a um contexto real de vida comunitária.",
+              "source_label": "Informação pública do Instituto Cultural de Macau",
+              "asset_id": "TAI-HOME-01"
+            },
+            {
+              "id": "domestic_space",
+              "text": "Os quartos e os objetos domésticos preservam a função do quotidiano",
+              "description": "Faz-nos compreender «lar» pela forma como os espaços eram usados.",
+              "source_label": "Exibição no local / observação contextual",
+              "asset_id": "TAI-HOME-01"
+            },
+            {
+              "id": "color_only",
+              "text": "Só pela cor de menta, pode-se provar que a família da carta morou aqui",
+              "description": "A cor da fachada não pode provar uma experiência privada concreta.",
+              "source_label": "Sem fonte verificável",
+              "asset_id": "TAI-HOME-01"
+            }
+          ],
+          "solution": [
+            "residential_use",
+            "resident_community",
+            "domestic_space"
+          ],
+          "hints": [
+            "Uma cadeia de evidências completa deve incluir em simultâneo o uso do edifício, o grupo de residentes e o espaço doméstico.",
+            "A cor pode causar impressão, mas não pode provar as experiências de uma família fictícia."
+          ],
+          "explanation": "O uso do edifício, o contexto residencial e o espaço doméstico complementam-se para tornar concreta a vida habitacional; por mais viva que seja a cor da fachada, não pode provar que a família da carta existiu de facto.",
+          "skip_text": "A Lin alinha o uso, o contexto dos moradores e o espaço doméstico numa linha. A terceira carta de casa fecha-se suavemente.",
+          "reward": {
+            "id": "taipa_letter_home",
+            "kind": "letter",
+            "name": "Carta de casa",
+            "text": "As portas, os quartos e os objetos antigos continuam nos seus lugares, à espera que percebas como uma casa se torna num lar."
+          }
+        }
+      },
+      {
+        "id": "chapter_taipa_work",
+        "order": 4,
+        "kind": "puzzle",
+        "title": "Capítulo 4: Os Sons do Trabalho na Ilha",
+        "story_time": "14:00",
+        "location_name": "Antiga Fábrica de Panchões I Long",
+        "poi_id": "poi_0118",
+        "scene": "As palavras da quarta carta parecem apressadas com o horário de trabalho: iniciar o trabalho, divisão em zonas, ruído, paragem. Não há quase nada de supérfluo. Olhando para dentro ao longo do percurso pedonal aberto do sítio antigo, uma época industrial, um espaço de trabalho e o sustento de muitas famílias vão-se revelando camada a camada a partir do papel.",
+        "time_layer": {
+          "period": "da década de 1920 a 1984",
+          "focus": "juntar a ascensão e queda da indústria de panchões com os riscos do trabalho, o rendimento familiar e a vida da comunidade"
+        },
+        "letter_fragment": {
+          "title": "Carta de Início de Trabalho",
+          "text": "Hoje, na fábrica, o ruído continuou numa cadência cada vez mais apertada. Guardei cuidadosamente o salário; o resto fica para quando chegar a casa. As estradas daqui têm de se percorrer passo a passo, não se pode ter pressa.",
+          "label": "Reconstituição contextual / remetente fictício"
+        },
+        "historical_claims": [
+          {
+            "statement": "A indústria de panchões de Macau desenvolveu-se rapidamente na década de 1920, e a Taipa tornou-se uma das principais bases de produção.",
+            "status": "Verificado",
+            "source": "Governo da Região Administrativa Especial de Macau / Instituto Cultural, dados da 4.ª edição de «A Indústria de Panchões na Taipa»"
+          },
+          {
+            "statement": "As décadas de 1950 a 1970 foram o período de auge da indústria, e muitos residentes trabalhavam em atividades relacionadas.",
+            "status": "Verificado",
+            "source": "Governo da Região Administrativa Especial de Macau / Instituto Cultural, materiais relacionados"
+          },
+          {
+            "statement": "A Fábrica I Long requereu a abertura em 1925 e cessou totalmente a produção em 1984.",
+            "status": "Verificado",
+            "source": "Instituto Cultural de Macau, «Sítio da Fábrica de Panchões I Long»"
+          }
+        ],
+        "interaction": {
+          "type": "industry_space_mapping",
+          "instruction": "Coloque as pistas dos três tipos — época industrial, espaço do sítio e vida comunitária — nas posições correspondentes da carta.",
+          "safety": "Por favor, caminhe pelo percurso pedonal aberto e não entre nas oficinas fechadas; a área efetivamente aberta ao público depende da sinalização no local."
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-WORK-01",
+            "alt": "Oficinas da Antiga Fábrica de Panchões I Long e o percurso pedonal aberto",
+            "caption": "Junto ao percurso pedonal aberto, as antigas oficinas já silenciaram, mas o canal de água e as divisões ainda delineiam o espaço de trabalho de outrora."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-work-dialogue-01",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "Se falarmos apenas da prosperidade daquela época, esta carta fica a faltar metade. O trabalho, os riscos e o rendimento de uma família estão, desde sempre, ligados uns aos outros."
+          },
+          {
+            "id": "taipa-work-dialogue-02",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Portanto, o trabalhador da carta pode ser fictício, mas como a indústria surgiu e como parou, isso pode ser investigado."
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "A indústria de panchões na Taipa",
+            "text": "A indústria de panchões de Macau desenvolveu-se rapidamente na década de 1920, atingiu o auge nas décadas de 1950 a 1970, e a Taipa foi uma das principais bases de produção.",
+            "source_label": "Governo da RAEM / Instituto Cultural: materiais relacionados com «A Indústria de Panchões na Taipa»",
+            "confidence": "high"
+          },
+          {
+            "kind": "historical_fact",
+            "title": "Abertura e cessação da Fábrica I Long",
+            "text": "A Fábrica I Long requereu a abertura em 1925 e cessou totalmente a produção em 1984.",
+            "source_label": "Instituto Cultural de Macau: «Sítio da Fábrica de Panchões I Long»",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "Carta de Início de Trabalho",
+            "text": "O trabalhador, o salário e as experiências deste dia na carta foram criados para apresentar a perspetiva dos trabalhadores, não correspondendo a nenhum trabalhador real.",
+            "source_label": "Story Package: reconstituição contextual",
+            "confidence": "high"
+          },
+          {
+            "kind": "dynamic_operational_info",
+            "title": "A área aberta pode mudar",
+            "text": "Os percursos abertos, a disposição das exposições e o encerramento temporário do sítio podem sofrer alterações; consulte as informações oficiais e a sinalização no local.",
+            "source_label": "Informação operacional no local",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Antiga Fábrica de Panchões I Long",
+          "chapter_goal": "Juntar a época industrial, o espaço de trabalho e o sustento dos residentes para compreender a história da vida industrial da Taipa.",
+          "known_facts": [
+            "A indústria de panchões da Taipa desenvolveu-se rapidamente na década de 1920",
+            "As décadas de 1950 a 1970 foram o período de auge",
+            "A I Long requereu a abertura em 1925 e cessou totalmente a produção em 1984"
+          ],
+          "fiction_boundaries": [
+            "A Carta de Início de Trabalho e a experiência do trabalhador são fictícias",
+            "Não é permitido inventar acidentes específicos, pormenores do processo de produção ou nomes de trabalhadores reais"
+          ],
+          "suggested_questions": [
+            "Em que ano a Fábrica I Long abriu e cessou a produção?",
+            "Por que razão devemos falar do trabalho e dos riscos quando falamos da prosperidade industrial?",
+            "Que áreas do local podem ser visitadas com segurança?"
+          ],
+          "do_not_reveal": [
+            "Não deve revelar diretamente as respostas do emparelhamento",
+            "Não deve apresentar processos não verificados como um fluxo de produção padrão",
+            "Não deve ignorar a sinalização de áreas fechadas no local"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_location_letter",
+          "assets": [
+            "TAI-WORK-01"
+          ]
+        },
+        "fallback": {
+          "type": "route_or_exhibit_optional",
+          "text": "Se parte do sítio estiver encerrada, permaneça no percurso pedonal aberto e leia os cartões informativos; não entre nas oficinas, nem é necessário imaginar um processo de produção completo não verificado."
+        },
+        "puzzle": {
+          "id": "puzzle_taipa_work_mapping",
+          "type": "mapping",
+          "prompt": "Faça corresponder os três tipos de pistas às respetivas descrições, para que a vida industrial por trás desta carta breve se torne novamente clara.",
+          "fields": [
+            {
+              "id": "industry_time",
+              "label": "Época industrial"
+            },
+            {
+              "id": "site_space",
+              "label": "Espaço do sítio"
+            },
+            {
+              "id": "daily_life",
+              "label": "Vida quotidiana"
+            }
+          ],
+          "options": [
+            {
+              "id": "boom_and_closure",
+              "text": "Desenvolvimento inicial na década de 1920, auge nas décadas de 1950 a 1970, e cessação da Fábrica I Long em 1984"
+            },
+            {
+              "id": "workshop_evidence",
+              "text": "Espaços do sítio como oficinas, armazéns, pátios de secagem e canais de água"
+            },
+            {
+              "id": "labor_family_community",
+              "text": "O trabalho e os riscos afetam o rendimento familiar e também a vida de toda a comunidade"
+            },
+            {
+              "id": "fictional_shift_record",
+              "text": "O registo do dia de trabalho na carta é um arquivo real de um trabalhador"
+            }
+          ],
+          "solution": {
+            "industry_time": "boom_and_closure",
+            "site_space": "workshop_evidence",
+            "daily_life": "labor_family_community"
+          },
+          "hints": [
+            "Procure, respetivamente, uma época, um espaço visível e o seu impacto na vida dos residentes.",
+            "Esta carta pode levá-lo à perspetiva do trabalhador, mas não pode transformar-se num arquivo real de um trabalhador."
+          ],
+          "explanation": "A época industrial diz-nos como a indústria subiu e caiu; o espaço do sítio preserva a forma do trabalho; a família e a comunidade dão a esta história o peso da vida; a Carta de Início de Trabalho em si é uma reconstituição contextual.",
+          "skip_text": "A Lin organizou em três colunas: a época, o espaço e a vida. A fábrica ficou silenciosa, e a carta de trabalho ficou guardada na caixa.",
+          "reward": {
+            "id": "taipa_letter_work",
+            "kind": "letter",
+            "name": "Carta de Início de Trabalho",
+            "text": "Uma carta de início de trabalho muito curta, que tem atrás de si o trabalho, os riscos e os dias de muitas famílias."
+          }
+        }
+      },
+      {
+        "id": "chapter_taipa_street",
+        "order": 5,
+        "kind": "puzzle",
+        "title": "Capítulo 5: O sabor que ficou na esquina da rua",
+        "story_time": "15:30",
+        "location_name": "Rua do Cunha e o Centro Antigo da Taipa",
+        "poi_id": "poi_rua_cunha",
+        "scene": "A última carta não deixava o nome da loja, nem copiava a receita. Apenas recordava as línguas sobrepostas na esquina, os pormenores dos edifícios antigos e as pequenas coisas que aqui acontecem todos os dias. Você decidiu não perguntar quem é o “primeiro”, e apenas observou com atenção a rua de hoje.",
+        "time_layer": {
+          "period": "Rua histórica e espaço comercial e de vida atual",
+          "focus": "A partir da sinalética multilingue, dos pormenores arquitetónicos e do quotidiano contemporâneo, ler uma rua que ainda vive."
+        },
+        "letter_fragment": {
+          "title": "Carta da rua",
+          "text": "Os sabores mudam, as placas mudam, e as pessoas que passam por aqui também são diferentes em cada leva. Só me recordo de que, sempre que virava a esquina, havia alguém que, na sua própria língua, falava do quotidiano desse dia.",
+          "label": "Recriação contextual / escritor da carta fictício"
+        },
+        "historical_claims": [
+          {
+            "statement": "A cronologia específica das origens das atividades de restauração, lojas e ofícios na Rua do Cunha ainda necessita de investigação adicional.",
+            "status": "Por apurar",
+            "source": "“Carta enviada pela brisa do mar”: lista de verificação e investigação do planeamento"
+          }
+        ],
+        "interaction": {
+          "type": "street_observation",
+          "instruction": "Selecione três elementos que podem ser observados diretamente no local, sem depender de narrativas de origem não verificadas.",
+          "safety": "Não fotografe rostos de desconhecidos nem bloqueie o funcionamento das lojas; a tarefa também não exige consumo; se houver muita gente, pode deslocar-se para ruelas adjacentes para a concluir."
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-STREET-01",
+            "alt": "Placas multilingues da Rua do Cunha, na Taipa, e vista da rua",
+            "caption": "Placas, fachadas e passos apressam-se numa mesma rua. O que aqui permanece não é só sabor, mas um quotidiano em curso."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-street-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Posso escrever a rua que vejo hoje, mas não posso, só porque uma comida é famosa, inventar-lhe uma origem."
+          },
+          {
+            "id": "taipa-street-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-03",
+            "text": "Exatamente. Anotar as línguas, a arquitetura e o quotidiano que agora se veem já chega para escrever uma carta da rua."
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "dynamic_operational_info",
+            "title": "A rua de hoje",
+            "text": "As lojas, as placas, o movimento de pessoas e os horários de funcionamento mudam; este capítulo regista apenas o que pode ser observado em segurança no momento da sua visita.",
+            "source_label": "Observação dinâmica no local",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "Não inventar origens",
+            "text": "A história não transformará diretamente uma versão transmitida oralmente em “o mais antigo” ou “o primeiro”. O que a carta da rua verdadeiramente interessa é como o comércio e o quotidiano utilizam em conjunto este espaço do centro antigo.",
+            "source_label": "Limite da investigação do planeamento",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "Quem escreve a carta da rua",
+            "text": "A memória gustativa e o escritor da carta são criações ficcionais da narrativa, e não apontam para nenhuma loja, marca ou cliente real em particular.",
+            "source_label": "Definição da narrativa do Story Package",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Rua do Cunha e o Centro Antigo da Taipa",
+          "chapter_goal": "Guiar Você para uma observação ligeira da rua, evitando narrativas não averiguadas sobre origens comerciais e alimentares.",
+          "known_facts": [
+            "As lojas e os horários de funcionamento na Rua do Cunha mudam dinamicamente",
+            "A cronologia específica das origens das atividades de restauração, lojas e ofícios ainda necessita de investigação",
+            "É possível observar placas em diferentes línguas, pormenores de edifícios antigos e comportamentos da vida quotidiana atual"
+          ],
+          "fiction_boundaries": [
+            "Não inventar “primeiro” ou “mais antigo” para lojas, comidas ou marcas",
+            "Não apresentar o escritor da carta da rua como cliente ou comerciante real"
+          ],
+          "suggested_questions": [
+            "Que elementos na rua são adequados para observação e registo diretos?",
+            "Porque é que a história não escreve sobre a “primeira loja” sem verificação?",
+            "Quando há muita gente, como completar esta carta da rua em segurança?"
+          ],
+          "do_not_reveal": [
+            "Não dar diretamente as respostas de escolha múltipla",
+            "Não recomendar tarefas que exijam consumo obrigatório para serem concluídas",
+            "Não identificar nem descrever a identidade pessoal de desconhecidos"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_location_letter",
+          "assets": [
+            "TAI-STREET-01"
+          ]
+        },
+        "fallback": {
+          "type": "crowd_safe_observation",
+          "text": "Se a Rua do Cunha estiver demasiado cheia, pode recuar para ruas abertas adjacentes e escolher, a partir de letreiros, arquitetura ou sons, conteúdos que possam ser observados em segurança."
+        },
+        "puzzle": {
+          "id": "puzzle_taipa_street_observation",
+          "type": "multi_select",
+          "prompt": "Que observações no local podem ser escritas na carta da rua sem recorrer a histórias de origem não verificadas?",
+          "min_selections": 3,
+          "max_selections": 3,
+          "options": [
+            {
+              "id": "multilingual_signs",
+              "text": "Anotar as placas em diferentes línguas que são visíveis no local"
+            },
+            {
+              "id": "building_details",
+              "text": "Reparar nas fachadas dos edifícios antigos e na escala da rua"
+            },
+            {
+              "id": "daily_activity",
+              "text": "Registar atividades quotidianas contemporâneas que não envolvem a identidade pessoal de ninguém"
+            },
+            {
+              "id": "invent_first_shop",
+              "text": "Escolher uma loja ao acaso e escrevê-la como sendo a “primeira” não verificada de uma comida"
+            }
+          ],
+          "solution": [
+            "multilingual_signs",
+            "building_details",
+            "daily_activity"
+          ],
+          "hints": [
+            "Escolha as três que estão neste momento diante de você e que podem ser observadas diretamente.",
+            "Sempre que uma opção exigir provar “mais antigo” ou “primeiro”, é preciso ter cuidado extra."
+          ],
+          "explanation": "Placas, arquitetura e atividades contemporâneas podem ser observadas no local; origens comerciais não investigadas não devem ser apresentadas como factos.",
+          "skip_text": "Você não inventou um sonoro “primeiro” para a rua, apenas guardou o quotidiano visível para a última carta da rua.",
+          "reward": {
+            "id": "taipa_letter_street",
+            "kind": "letter",
+            "name": "Carta da rua",
+            "text": "Debaixo das placas em diferentes línguas, os edifícios antigos e a vida de hoje ainda se encontram na mesma rua."
+          }
+        }
+      },
+      {
+        "id": "ending_taipa_future_letter",
+        "order": 6,
+        "kind": "ending",
+        "title": "Epílogo: Carta para a Taipa do Futuro",
+        "story_time": "16:20",
+        "location_name": "Espaço Público do Centro Antigo da Taipa",
+        "poi_id": "poi_0104",
+        "scene": "As cinco cartas encontraram finalmente os seus endereços, mas continuam sem um destinatário verdadeiro. Só então você compreendeu que a caixa de devoluções nunca recolheu a história de uma mesma família, mas sim como pessoas de diferentes épocas viveram e como entenderam «casa».",
+        "time_layer": {
+          "period": "De várias histórias de vida ao futuro",
+          "focus": "Juntando a carta do mar, a carta do relógio, a carta da família, a carta do trabalho e a carta da rua, escrever uma carta enviada ao futuro."
+        },
+        "letter_fragment": {
+          "title": "Página em branco da carta do futuro",
+          "text": "Destinatário: aqueles que, no futuro, ainda queiram lembrar-se de como a Taipa viveu.",
+          "label": "Criação de Você / Ficção narrativa"
+        },
+        "historical_claims": [
+          {
+            "statement": "O epílogo apenas sintetiza os contextos já anotados por camadas nos cinco capítulos anteriores, sem acrescentar afirmações históricas não verificadas.",
+            "status": "Limite narrativo",
+            "source": "Regras de conteúdo do Story Package"
+          }
+        ],
+        "interaction": {
+          "type": "future_letter_reflection",
+          "instruction": "Leia novamente as cinco cartas e, para a Taipa do futuro, escreva uma frase que você gostaria que fosse lembrada.",
+          "safety": "Por favor, realize a atividade num espaço público sem bloquear a passagem; não é necessário carregar fotografias ou qualquer informação pessoal identificável."
+        },
+        "arrival_comic": [
+          {
+            "asset_id": "TAI-END-01",
+            "alt": "Largo em frente do Corpo de Bombeiros da Taipa e paisagem do centro antigo",
+            "caption": "De regresso aos sons das ruas do centro antigo, as cinco cartas são espalhadas uma a uma; a página em branco espera ser enviada ao futuro."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "taipa-ending-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Afinal, elas não pertenciam à mesma família; apenas faziam repetidamente a mesma pergunta: o que é que se pode chamar casa?"
+          },
+          {
+            "id": "taipa-ending-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "A Taipa não saiu do mapa, mas a costa mudou, o trabalho mudou, e as pessoas que aqui viveram foram substituídas geração após geração."
+          },
+          {
+            "id": "taipa-ending-dialogue-03",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-03",
+            "text": "Talvez a casa nunca seja um lugar imutável, mas sim algo em que, mesmo depois das mudanças, ainda exista quem queira lembrar como se vivia ali."
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "contextual_reconstruction",
+            "title": "O destinatário comum das cinco cartas",
+            "text": "A carta do mar, a carta do relógio, a carta da família, a carta do trabalho e a carta da rua apontam em conjunto para a história da vida e a memória coletiva da Taipa, e não para uma linha familiar verificável.",
+            "source_label": "Explicação do epílogo do Story Package",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "A carta do futuro",
+            "text": "A carta do futuro é a criação pessoal que você deixa nesta viagem. O texto será guardado; gerar ou não uma ilustração é uma experiência opcional.",
+            "source_label": "Story Package, criação de Você",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Espaço Público do Centro Antigo da Taipa",
+          "chapter_goal": "Acompanhar você a reler as cinco cartas e a escrever a carta do futuro, mantendo ao mesmo tempo o limite entre factos históricos e ficção.",
+          "known_facts": [
+            "As cinco cartas dizem respeito, respetivamente, à fé, ao espaço comunitário, à habitação, ao trabalho e ao quotidiano das ruas.",
+            "Todos os autores das cartas e as próprias cartas são fictícios.",
+            "A carta do futuro é uma reflexão pessoal de Você."
+          ],
+          "fiction_boundaries": [
+            "Não se podem interpretar as cinco cartas como um arquivo familiar real.",
+            "Não se pode apresentar a mensagem de Você como um facto histórico."
+          ],
+          "suggested_questions": [
+            "O que é que, no fim, as cinco cartas deixaram em conjunto?",
+            "Que frase quero eu enviar para a Taipa do futuro?",
+            "Como distinguir o contexto histórico dos meus próprios sentimentos?"
+          ],
+          "do_not_reveal": [
+            "Não se deve gerar nem decidir a reflexão pessoal de Você.",
+            "Não se devem acrescentar conclusões históricas não verificadas nas partes anteriores."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_ending_future_letter",
+          "assets": [
+            "TAI-END-01"
+          ]
+        },
+        "fallback": {
+          "type": "text_reflection",
+          "text": "Se a geração de imagens estiver temporariamente indisponível, ainda pode completar a carta do futuro com o seu texto e as cinco cartas já recolhidas."
+        }
+      }
+    ],
+    "endings": [
+      {
+        "id": "send_future_taipa_letter",
+        "title": "Carta para a Taipa do Futuro",
+        "choice_text": "Escreva e envie a carta para o futuro",
+        "text": "Taipa não desapareceu do mapa, mas a costa mudou, o trabalho mudou, e as pessoas que aqui vivem mudaram de geração em geração. Talvez o lar não seja um lugar eternamente imutável, mas sim, depois das mudanças, ainda haja quem queira lembrar-se de como ele vivia.",
+        "condition": "Completar o capítulo final e salvar a mensagem para a Taipa do futuro",
+        "rewards": [
+          {
+            "id": "taipa_future_letter",
+            "kind": "collection",
+            "name": "Carta para o Futuro",
+            "text": "A Carta do Mar, a Carta do Sino, a Carta de Casa, a Carta do Trabalho e a Carta da Rua encontram-se nesta página, formando uma carta escrita para o futuro."
+          },
+          {
+            "id": "taipa_home_reflection",
+            "kind": "reflection",
+            "name": "Resposta sobre o Lar",
+            "text": "Você deixa uma frase pela Taipa de hoje, para que as pessoas do futuro a possam reler."
+          }
+        ]
+      }
+    ]
+  }
+}

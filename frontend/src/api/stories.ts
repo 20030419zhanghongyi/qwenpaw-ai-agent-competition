@@ -122,9 +122,15 @@ export function startStorySession(
   storyId: string,
   token: string,
   language: LanguageCode,
+  schedule?: { day: number; date: string } | null,
 ): Promise<StorySessionResponse> {
+  const search = new URLSearchParams({ language });
+  if (schedule) {
+    search.set("scheduled_day", String(schedule.day));
+    search.set("scheduled_date", schedule.date);
+  }
   return request<StorySessionResponse>(
-    `/api/v1/stories/${encodeURIComponent(storyId)}/sessions${languageQuery(language)}`,
+    `/api/v1/stories/${encodeURIComponent(storyId)}/sessions?${search.toString()}`,
     { method: "POST" },
     token,
   );
@@ -137,6 +143,18 @@ export function fetchStorySession(
 ): Promise<StorySessionResponse> {
   return request<StorySessionResponse>(
     `/api/v1/story-sessions/${encodeURIComponent(sessionId)}${languageQuery(language)}`,
+    undefined,
+    token,
+  );
+}
+
+export function fetchActiveStorySession(
+  storyId: string,
+  token: string,
+  language: LanguageCode,
+): Promise<StorySessionResponse> {
+  return request<StorySessionResponse>(
+    `/api/v1/stories/${encodeURIComponent(storyId)}/sessions/active${languageQuery(language)}`,
     undefined,
     token,
   );

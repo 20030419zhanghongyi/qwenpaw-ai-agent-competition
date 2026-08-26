@@ -23,23 +23,23 @@ interface EvidencePresentation {
 
 const SAM_KAI_EVIDENCE: Record<string, EvidencePresentation> = {
   delivery_order: {
-    description: "记录货物从梁掌柜处交付出去的起点。",
-    sourceLabel: "交货方记录",
+    description: "",
+    sourceLabel: "",
     assetId: "V4-SAM-02",
   },
   store_ledger: {
-    description: "记录陈掌柜店内实际登记收进的货物。",
-    sourceLabel: "收货方账簿",
+    description: "",
+    sourceLabel: "",
     assetId: "V4-SAM-03",
   },
   porter_receipt: {
-    description: "记录脚夫阿成对中途寄存货物的说明。",
-    sourceLabel: "经手人存条",
+    description: "",
+    sourceLabel: "",
     assetId: "V4-SAM-04",
   },
   single_summary: {
-    description: "后来人根据已有材料写下的二手概括。",
-    sourceLabel: "后人整理",
+    description: "",
+    sourceLabel: "",
     assetId: "V4-SAM-05",
   },
 };
@@ -52,13 +52,17 @@ function move<T>(items: T[], from: number, to: number): T[] {
   return next;
 }
 
-function presentation(option: StoryPuzzleOption): EvidencePresentation {
+function presentation(
+  option: StoryPuzzleOption,
+  fallbackDescription: string,
+  fallbackSource: string,
+): EvidencePresentation {
   const fallback = SAM_KAI_EVIDENCE[option.id];
   return {
     description:
-      option.description ?? fallback?.description ?? "查看这份材料所记录的环节。",
+      option.description ?? (fallback?.description || fallbackDescription),
     sourceLabel:
-      option.source_label ?? fallback?.sourceLabel ?? "剧情证据材料",
+      option.source_label ?? (fallback?.sourceLabel || fallbackSource),
     assetId: option.asset_id ?? fallback?.assetId ?? "V4-SAM-05",
   };
 }
@@ -70,17 +74,23 @@ function EvidenceCardContent({
   option: StoryPuzzleOption;
   onOpen?: (assetId: string, alt: string) => void;
 }) {
-  const detail = presentation(option);
+  const st = useStoryMessages();
+  const detail = presentation(
+    option,
+    st("evidenceFallbackDescription"),
+    st("evidenceFallbackSource"),
+  );
+  const imageAlt = st("evidenceImageAlt", { item: option.text });
   return (
     <div className="grid grid-cols-[5rem_minmax(0,1fr)] items-start gap-3">
       <StoryImage
         assetId={detail.assetId}
-        alt={`${option.text}对应材料`}
+        alt={imageAlt}
         className="rounded-xl"
         imageClassName="object-cover"
         onOpen={
           onOpen
-            ? (assetId) => onOpen(assetId, `${option.text}对应材料`)
+            ? (assetId) => onOpen(assetId, imageAlt)
             : undefined
         }
       />
@@ -92,7 +102,7 @@ function EvidenceCardContent({
           {detail.description}
         </p>
         <span className="mt-2 inline-flex min-h-6 items-center rounded-full border border-sage/30 bg-sage/10 px-2 text-[11px] font-medium text-sage-deep">
-          来源类型：{detail.sourceLabel}
+          {st("sourceType", { label: detail.sourceLabel })}
         </span>
       </div>
     </div>
@@ -156,7 +166,7 @@ export function EvidenceChainPuzzle({
     <>
       <PuzzleFrame
         prompt={puzzle.prompt}
-        selectionHint={`选择 ${requiredCount} 份能互相验证的材料，长按拖动或使用按钮调整顺序。后端会判断证据链。`}
+        selectionHint={st("evidenceSelectionHint", { count: requiredCount })}
         canSubmit={chain.length >= requiredCount}
         disabled={disabled}
         onSubmit={() => onSubmit(chain.map((item) => item.id))}
@@ -231,7 +241,7 @@ export function EvidenceChainPuzzle({
                     disabled={disabled || index === 0}
                     onClick={() => moveBy(index, -1)}
                     className="min-h-11 rounded-full border border-line bg-card text-sm text-ink disabled:opacity-35"
-                    aria-label={`上移${option.text}`}
+                    aria-label={st("moveUpItem", { item: option.text })}
                   >
                     {st("moveUp")}
                   </button>
@@ -240,7 +250,7 @@ export function EvidenceChainPuzzle({
                     disabled={disabled || index === chain.length - 1}
                     onClick={() => moveBy(index, 1)}
                     className="min-h-11 rounded-full border border-line bg-card text-sm text-ink disabled:opacity-35"
-                    aria-label={`下移${option.text}`}
+                    aria-label={st("moveDownItem", { item: option.text })}
                   >
                     {st("moveDown")}
                   </button>
