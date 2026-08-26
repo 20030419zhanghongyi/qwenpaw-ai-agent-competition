@@ -97,6 +97,7 @@ export interface StoryNodeOverview {
   kind: StoryNodeKind;
   title: string;
   story_time?: string;
+  location_name?: string;
   poi_id?: string;
 }
 

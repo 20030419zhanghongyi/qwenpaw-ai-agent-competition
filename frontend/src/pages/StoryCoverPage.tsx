@@ -116,7 +116,7 @@ export function StoryCoverPage() {
       <div className="flex-1 px-4 pb-32 pt-[max(1rem,env(safe-area-inset-top))]">
         <button
           type="button"
-          onClick={() => navigate("/preferences")}
+          onClick={() => navigate("/stories")}
           className="mb-3 inline-flex min-h-11 items-center rounded-full px-2 text-sm text-ink-soft"
         >
           {st("backToPreferences")}

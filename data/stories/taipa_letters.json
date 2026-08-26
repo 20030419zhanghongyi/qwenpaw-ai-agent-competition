@@ -1,0 +1,1227 @@
+{
+  "id": "taipa_letters",
+  "version": 4,
+  "title": "海风寄来的信",
+  "subtitle": "沿着氹仔旧城的海风，替五封没有收件人的信找回时代与归处",
+  "summary": "你与阿莲在氹仔旧城打开一只落满岁月痕迹的退信盒。盒中五封信都遗失了地址，只在信封上留下海、钟、家、工、街五枚标签。你们将走过北帝庙、嘉模圣母堂、龙环葡韵、益隆炮竹厂旧址和官也街，从信仰、居住、劳动与街巷日常留下的痕迹里，为每封信找回属于它的时代与地方。",
+  "route_id": "taipa_hotspot_halfday",
+  "estimated_hours": 4,
+  "product_mode": "mobile_portrait_web",
+  "presentation": {
+    "default_orientation": "portrait",
+    "max_content_width_px": 480,
+    "cover_asset_id": "TAI-COVER-01",
+    "asset_base_path": "/story/taipa-letters/"
+  },
+  "identity": {
+    "id": "returned_letter_keeper",
+    "name": "退信盒保管人",
+    "description": "你要循着海、钟、家、工、街五枚标签，在今日氹仔仍看得见、听得到的线索里，为五封退信找回时代与归处。"
+  },
+  "content_notice": "故事中的地点与历史背景依据公开资料整理，人物和信件采用情境复原。知识卡会分别标注史实、民间信俗与剧情创作；官也街相关任务不采用未经核实的‘最早’或‘第一家’说法。",
+  "content_labels": {
+    "historical_fact": "史实",
+    "folklore": "民间信俗／地方记忆",
+    "contextual_reconstruction": "情境复原",
+    "fictional_story": "剧情虚构",
+    "dynamic_operational_info": "动态运营信息"
+  },
+  "characters": [
+    {
+      "id": "player",
+      "name": "玩家",
+      "role": "沿旧城为退信寻找时代与归处的人",
+      "fictional": true
+    },
+    {
+      "id": "alian",
+      "name": "阿莲",
+      "role": "你的本地同学与知识 Agent，陪你查证史实，也提醒你分清信俗与虚构",
+      "fictional": true
+    },
+    {
+      "id": "alan",
+      "name": "写信人",
+      "role": "五封情境复原信中的虚构写信人，只在信纸上的字句里出现",
+      "fictional": true
+    },
+    {
+      "id": "m",
+      "name": "未来收信人",
+      "role": "来自未来氹仔、等待玩家来信的想象读者",
+      "fictional": true
+    }
+  ],
+  "props": [
+    "退信盒",
+    "海信",
+    "钟信",
+    "家信",
+    "工信",
+    "街信",
+    "未来信"
+  ],
+  "nodes": [
+    {
+      "id": "prologue_taipa_letter_box",
+      "order": 0,
+      "kind": "prologue",
+      "title": "序章：没有收件人的信",
+      "story_time": "10:00",
+      "scene": "上午十点，氹仔旧城的街声渐渐热起来。手机轻轻一震，一只旧退信盒在屏幕上缓缓打开。五封信叠在里面，地址栏一片空白，信封上却分别写着：海、钟、家、工、街。",
+      "time_layer": {
+        "period": "今日氹仔与多个历史时期",
+        "focus": "从五枚标签出发，在现场与公开资料中寻找信件的时代与地址"
+      },
+      "letter_fragment": {
+        "title": "退信盒说明",
+        "text": "有人搬走了，有些行当消失了，有些海岸也不再是从前的模样。请替这些信找回地址。",
+        "label": "剧情虚构"
+      },
+      "historical_claims": [
+        {
+          "statement": "路氹历史馆的展览可帮助了解离岛村落、宗教、农业、手工业与近现代发展。",
+          "status": "公开资料背景",
+          "source": "路氹历史馆相关展览资料"
+        }
+      ],
+      "interaction": {
+        "type": "letter_box_opening",
+        "instruction": "打开退信盒，读一读五枚标签，再选出最先可以循迹寻找的那封信。",
+        "safety": "路氹历史馆是否开放，请以当日官方信息为准；即使不进入场馆，也能继续故事。"
+      },
+      "arrival_comic": [
+        {
+          "asset_id": "TAI-PROP-01",
+          "alt": "一只装着五封无地址信件的旧退信盒",
+          "caption": "盒盖吱呀一声弹开，五封没有地址的信安静地叠在一起，等着有人认出它们要去的地方。"
+        }
+      ],
+      "dialogue": [
+        {
+          "id": "taipa-prologue-dialogue-01",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "海、钟、家、工、街……地址栏全是空的，信封上只剩这五个字。"
+        },
+        {
+          "id": "taipa-prologue-dialogue-02",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-01",
+          "text": "那就别急着一次拆完。先挑一封，看看它最先让你想到氹仔的哪里。"
+        },
+        {
+          "id": "taipa-prologue-dialogue-03",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "我选‘海’。纸上反复写着风向、水路，还有一盏留给归船的灯。"
+        },
+        {
+          "id": "taipa-prologue-dialogue-04",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-02",
+          "text": "归船、风向、灯火……我想到北帝庙。旧时靠海生活的人，总有些盼望要托给水和风。"
+        },
+        {
+          "id": "taipa-prologue-dialogue-05",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "好，就从庙前开始。先替第一封信试出一个地址。"
+        }
+      ],
+      "knowledge_cards": [
+        {
+          "kind": "fictional_story",
+          "title": "退信盒与写信人",
+          "text": "退信盒、五封信和全部写信人都出自剧情创作，用来串联氹仔不同年代的生活背景，不对应真实档案或家族史。",
+          "source_label": "Story Package 剧情设定",
+          "confidence": "high"
+        },
+        {
+          "kind": "contextual_reconstruction",
+          "title": "情境复原信",
+          "text": "这些信借真实的建筑、产业、宗教和社区背景，想象普通人的生活视角。信中的人物与经历属于创作，地点年代等事实则以知识卡来源为准。",
+          "source_label": "策划中的叙事边界",
+          "confidence": "high"
+        }
+      ],
+      "agent_context": {
+        "persona": "阿莲",
+        "poi_name": "氹仔旧城／路氹历史馆一带",
+        "chapter_goal": "带玩家打开退信盒，并先分清史实、情境复原与剧情虚构。",
+        "known_facts": [
+          "路氹历史馆可作为离岛历史知识补充点",
+          "全部信件与写信人均为虚构",
+          "玩家要为信件匹配时代与地方，而不是证明私人史"
+        ],
+        "fiction_boundaries": [
+          "不得把退信盒、信件或写信人说成真实文物、档案或人物",
+          "不得虚构信件之间的家族关系"
+        ],
+        "suggested_questions": [
+          "这些信是真的吗？",
+          "情境复原和真实史料有什么不同？",
+          "为什么第一封信要从北帝庙开始找地址？"
+        ],
+        "do_not_reveal": [
+          "不得提前给出后续任务答案",
+          "不得把待考证内容说成已核史实"
+        ]
+      },
+      "presentation": {
+        "layout": "portrait_prologue_letter_box",
+        "assets": [
+          "TAI-COVER-01",
+          "TAI-PROP-01"
+        ]
+      },
+      "fallback": {
+        "type": "text_only",
+        "text": "如果退信盒插图暂时无法加载，直接阅读盒上的说明即可，后续故事不会受影响。"
+      },
+      "reward": {
+        "id": "returned_letter_box",
+        "kind": "story_prop",
+        "name": "退信盒",
+        "text": "盒中留下海、钟、家、工、街五枚标签，等待你到现场一一核对。"
+      }
+    },
+    {
+      "id": "chapter_taipa_sea",
+      "order": 1,
+      "kind": "puzzle",
+      "title": "第一章：等船回来的人",
+      "story_time": "10:30",
+      "location_name": "北帝庙",
+      "poi_id": "poi_0100",
+      "scene": "第一封信里，水声、风向和归航被写了一遍又一遍。站在庙前，风从街巷穿过来，信纸上那盏迟迟不灭的灯，忽然有了海岛生活的温度。",
+      "time_layer": {
+        "period": "一座拥有至少160年历史的庙宇与昔日渔民社区",
+        "focus": "从海岛生活与北帝信仰中，理解人们对平安归航的愿望"
+      },
+      "letter_fragment": {
+        "title": "等船信",
+        "text": "风向换了又换，我还是把门前那盏灯留着。等你从水路回来，我们再慢慢说这一季的事。",
+        "label": "情境复原／写信人虚构"
+      },
+      "historical_claims": [
+        {
+          "statement": "氹仔北帝庙至少有约160年历史。",
+          "status": "已核",
+          "source": "澳门旅游局氹仔北帝庙资料"
+        },
+        {
+          "statement": "昔日氹仔居民以渔民为主，北帝信仰与治水、御火及出海生活相关。",
+          "status": "已核背景",
+          "source": "澳门旅游局相关资料"
+        }
+      ],
+      "interaction": {
+        "type": "observation_and_classification",
+        "instruction": "先在不打扰宗教活动的前提下看看庙宇与周边，再选出有公开资料支持的生活背景。",
+        "safety": "请勿触碰供奉物或拍摄正在进行的仪式，也不要在出入口停留。"
+      },
+      "arrival_comic": [
+        {
+          "asset_id": "TAI-SEA-01",
+          "alt": "氹仔北帝庙与庙前公共空间",
+          "caption": "风从庙前穿过，庙宇与周边街巷仍保留着旧日海岛生活的回声。"
+        }
+      ],
+      "dialogue": [
+        {
+          "id": "taipa-sea-dialogue-01",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "这封信把风向写了又写。等船的人，真的会这样反复看风吗？"
+        },
+        {
+          "id": "taipa-sea-dialogue-02",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-02",
+          "text": "如果家里有人靠水路吃饭，风就不只是景色，还是船能不能回来的一条消息。"
+        },
+        {
+          "id": "taipa-sea-dialogue-03",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "难怪灯要一直留着。那北帝庙和这份等待，又是怎样连起来的？"
+        },
+        {
+          "id": "taipa-sea-dialogue-04",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-01",
+          "text": "看看庙的历史，也看看从前住在这里的人。两条线索放在一起，你就会读到一座海岛对平安归航的盼望。"
+        }
+      ],
+      "knowledge_cards": [
+        {
+          "kind": "historical_fact",
+          "title": "北帝庙与昔日社区",
+          "text": "官方旅游资料把北帝庙的历史追溯到至少约160年前，也将它与昔日氹仔的渔民社区联系起来。",
+          "source_label": "澳门旅游局：氹仔北帝庙资料",
+          "confidence": "high"
+        },
+        {
+          "kind": "folklore",
+          "title": "水上信仰语境",
+          "text": "北帝信仰中有关治水、御火和出海平安的寓意，属于宗教与地方信俗，不能当作某段个人经历已经发生的证据。",
+          "source_label": "官方旅游资料与地方信俗说明",
+          "confidence": "medium"
+        },
+        {
+          "kind": "contextual_reconstruction",
+          "title": "等船信",
+          "text": "信里的等待、灯火与归航，是为了让人靠近昔日海岛生活而作的情境复原，并非史料原文。",
+          "source_label": "Story Package 情境复原",
+          "confidence": "high"
+        }
+      ],
+      "agent_context": {
+        "persona": "阿莲",
+        "poi_name": "北帝庙",
+        "chapter_goal": "引导玩家用已核背景读懂等船信，同时尊重仍在使用的宗教场所。",
+        "known_facts": [
+          "北帝庙至少约有160年历史",
+          "昔日氹仔居民以渔民为主",
+          "北帝信仰与治水、御火及出海生活相关"
+        ],
+        "fiction_boundaries": [
+          "等船信和写信人是虚构的",
+          "不得从信件推断真实家族或具体历史事件"
+        ],
+        "suggested_questions": [
+          "为什么这封信总在写水和风？",
+          "哪些是史实，哪些是信俗？",
+          "在宗教场所怎样观察才不会打扰别人？"
+        ],
+        "do_not_reveal": [
+          "不得直接说出任务正确选项",
+          "不得把信俗写成确定发生的史实"
+        ]
+      },
+      "presentation": {
+        "layout": "portrait_location_letter",
+        "assets": [
+          "TAI-SEA-01"
+        ]
+      },
+      "fallback": {
+        "type": "observation_optional",
+        "text": "如果正逢宗教活动或现场拥挤，请退到外围的安全位置阅读知识卡；不用进入庙内也能作答。"
+      },
+      "puzzle": {
+        "id": "puzzle_taipa_sea_context",
+        "type": "multi_select",
+        "prompt": "哪些内容有公开资料支持，可以帮助你读懂这封‘等船信’？",
+        "min_selections": 2,
+        "max_selections": 2,
+        "options": [
+          {
+            "id": "historic_temple",
+            "text": "北帝庙至少有约160年历史"
+          },
+          {
+            "id": "fisher_community",
+            "text": "昔日氹仔居民多为渔民，相关信仰与水上生活相连"
+          },
+          {
+            "id": "real_letter_writer",
+            "text": "这封信证明曾有一位真实渔民在这里等候家人"
+          },
+          {
+            "id": "fixed_ritual_result",
+            "text": "只要祈愿，每次出海都一定能平安归来"
+          }
+        ],
+        "solution": [
+          "historic_temple",
+          "fisher_community"
+        ],
+        "hints": [
+          "只选择能从地点与公开资料中核对的背景，别把虚构的信当成个人档案。",
+          "答案一项与庙宇历史有关，另一项藏在昔日社区的生活里。"
+        ],
+        "explanation": "北帝庙的历史与昔日渔民社区都有资料依据；至于具体的写信人，以及‘祈愿便必然平安’，都无法由现场证明。",
+        "skip_text": "阿莲替你把史实与信俗分放在信纸两边。海信仍然落进了退信盒。",
+        "reward": {
+          "id": "taipa_letter_sea",
+          "kind": "letter",
+          "name": "海信",
+          "text": "灯还亮着，信里的人仍在等水路上的归航。"
+        }
+      }
+    },
+    {
+      "id": "chapter_taipa_bell",
+      "order": 2,
+      "kind": "puzzle",
+      "title": "第二章：海另一边的钟声",
+      "story_time": "11:20",
+      "location_name": "嘉模圣母堂",
+      "poi_id": "poi_carmo",
+      "scene": "第二封信循着坡地上的钟声而来。声音越过屋顶，也让你注意到：同一座岛上，不同信仰与社区一直拥有各自的相聚之处。",
+      "time_layer": {
+        "period": "1885年至今日",
+        "focus": "从教堂的年代与位置，观察岛上并存的社区空间"
+      },
+      "letter_fragment": {
+        "title": "钟声信",
+        "text": "坡上的钟声一落下来，我便知道，岛的另一边也有人循着自己的日子相聚。",
+        "label": "情境复原／写信人虚构"
+      },
+      "historical_claims": [
+        {
+          "statement": "嘉模圣母堂建于1885年。",
+          "status": "已核",
+          "source": "澳门旅游局相关资料"
+        },
+        {
+          "statement": "嘉模圣母堂是氹仔唯一的天主教堂。",
+          "status": "已核",
+          "source": "澳门旅游局相关资料"
+        }
+      ],
+      "interaction": {
+        "type": "fact_to_place_mapping",
+        "instruction": "在开放的公共空间看看教堂和前地，再为两条可核查的事实找到对应含义。",
+        "safety": "请勿打扰礼拜、婚礼或其他宗教活动，只在开放的公共区域停留观察。"
+      },
+      "arrival_comic": [
+        {
+          "asset_id": "TAI-BELL-01",
+          "alt": "坡地上的嘉模圣母堂与嘉模前地",
+          "caption": "钟声从坡上落向旧城。站在嘉模前地，教堂立面与周边街区一同进入视野。"
+        }
+      ],
+      "dialogue": [
+        {
+          "id": "taipa-bell-dialogue-01",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "站在这里回头看，北帝庙那边的街声仿佛还在，坡上却响着另一种钟声。"
+        },
+        {
+          "id": "taipa-bell-dialogue-02",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-03",
+          "text": "同一座岛，不同社区有各自相聚的地方。它们不必把彼此的声音盖住。"
+        },
+        {
+          "id": "taipa-bell-dialogue-03",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "所以信里那句‘岛的另一边也有人循着自己的日子相聚’，不是要把两边分开。"
+        },
+        {
+          "id": "taipa-bell-dialogue-04",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-02",
+          "text": "是要让你把两边都看见。先找出教堂的年代，再看看它在氹仔的社区空间里处在什么位置。"
+        }
+      ],
+      "knowledge_cards": [
+        {
+          "kind": "historical_fact",
+          "title": "1885年的教堂",
+          "text": "嘉模圣母堂建于1885年，是氹仔唯一的天主教堂。",
+          "source_label": "澳门旅游局：氹仔葡韵游及嘉模圣母堂资料",
+          "confidence": "high"
+        },
+        {
+          "kind": "contextual_reconstruction",
+          "title": "海另一边的钟声",
+          "text": "听见钟声的人是虚构角色；故事借这阵钟声，带你靠近一种社区生活的节奏。",
+          "source_label": "Story Package 情境复原",
+          "confidence": "high"
+        }
+      ],
+      "agent_context": {
+        "persona": "阿莲",
+        "poi_name": "嘉模圣母堂",
+        "chapter_goal": "从已核年代与地点出发，理解同一座岛上并存的不同社区空间。",
+        "known_facts": [
+          "嘉模圣母堂建于1885年",
+          "它是氹仔唯一的天主教堂",
+          "现场宗教活动与开放情况可能变化"
+        ],
+        "fiction_boundaries": [
+          "钟声信和写信人均为虚构",
+          "不得编造具体历史居民或礼拜事件"
+        ],
+        "suggested_questions": [
+          "这座教堂是哪一年建成的？",
+          "为什么一座教堂也能帮助理解社区空间？",
+          "现场看到的景象，怎样和历史资料互相印证？"
+        ],
+        "do_not_reveal": [
+          "不得直接给出配对答案",
+          "不得把未经审核的视觉复原当作历史照片"
+        ]
+      },
+      "presentation": {
+        "layout": "portrait_location_letter",
+        "assets": [
+          "TAI-BELL-01"
+        ]
+      },
+      "fallback": {
+        "type": "visual_overlay_optional",
+        "text": "如果教堂照片暂时无法显示，也可以结合现场所见和知识卡完成配对。"
+      },
+      "puzzle": {
+        "id": "puzzle_taipa_bell_mapping",
+        "type": "mapping",
+        "prompt": "把两条可核查的信息，放回它们在本章中对应的位置。",
+        "fields": [
+          {
+            "id": "date",
+            "label": "建筑年代"
+          },
+          {
+            "id": "community",
+            "label": "社区空间"
+          }
+        ],
+        "options": [
+          {
+            "id": "year_1885",
+            "text": "建于1885年"
+          },
+          {
+            "id": "only_catholic_church",
+            "text": "氹仔唯一的天主教堂"
+          },
+          {
+            "id": "fictional_bell_owner",
+            "text": "信里的写信人曾经拥有这座钟楼"
+          }
+        ],
+        "solution": {
+          "date": "year_1885",
+          "community": "only_catholic_church"
+        },
+        "hints": [
+          "一条答案是明确的年份，另一条说明它在氹仔宗教空间中的位置。",
+          "信里的私人关系无法查证，不要让虚构替史实作证。"
+        ],
+        "explanation": "建于1885年、为氹仔唯一的天主教堂，都是已经核实的信息；至于写信人拥有钟楼，只是没有依据的虚构延伸。",
+        "skip_text": "阿莲在地图上标出年份与地点。坡上的钟声随即落进第二封信。",
+        "reward": {
+          "id": "taipa_letter_bell",
+          "kind": "letter",
+          "name": "钟信",
+          "text": "一阵从坡上落下的钟声，记住了岛上另一种相聚的日子。"
+        }
+      }
+    },
+    {
+      "id": "chapter_taipa_home",
+      "order": 3,
+      "kind": "puzzle",
+      "title": "第三章：家是什么模样",
+      "story_time": "12:10",
+      "location_name": "龙环葡韵",
+      "poi_id": "poi_taipa_houses",
+      "scene": "第三封信没有赞美什么‘异国风格’，只写门怎样开、房间怎样住、家具怎样被一家人反复使用。比起漂亮的外墙，它更想问：一栋房子究竟怎样才会成为家？",
+      "time_layer": {
+        "period": "1921年前后至今日的活化展示",
+        "focus": "从昔日官邸与土生葡人住宅，走进具体的家居生活空间"
+      },
+      "letter_fragment": {
+        "title": "家信",
+        "text": "屋里的每件东西都有自己的位置。让我认出家的，从来不是墙的颜色，而是谁在这里吃饭、歇息，又愿意为谁留一扇门。",
+        "label": "情境复原／写信人虚构"
+      },
+      "historical_claims": [
+        {
+          "statement": "龙环葡韵五座代表性建筑于1921年前落成。",
+          "status": "已核",
+          "source": "澳门文化局《龙环葡韵》"
+        },
+        {
+          "statement": "建筑曾作为高级官员官邸及具代表性的土生葡人住宅。",
+          "status": "已核",
+          "source": "澳门文化局《龙环葡韵》"
+        }
+      ],
+      "interaction": {
+        "type": "evidence_chain",
+        "instruction": "从建筑用途、居住者背景和家居空间三个层次，拼出一条关于‘家’的证据链。",
+        "safety": "只在开放区域观察，请勿触碰展品；室内是否开放，以当天现场安排为准。"
+      },
+      "arrival_comic": [
+        {
+          "asset_id": "TAI-HOME-01",
+          "alt": "龙环葡韵的住宅式博物馆建筑群",
+          "caption": "别只看薄荷色外墙。门窗、房间与家居陈设，也在讲述这里曾经怎样生活。"
+        }
+      ],
+      "dialogue": [
+        {
+          "id": "taipa-home-dialogue-01",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-02",
+          "text": "你走近以后，第一眼看见了什么？"
+        },
+        {
+          "id": "taipa-home-dialogue-02",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "薄荷色的外墙。它太醒目了，我差点只顾着看颜色。"
+        },
+        {
+          "id": "taipa-home-dialogue-03",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-03",
+          "text": "如果把颜色换掉，这里还会像一处家吗？"
+        },
+        {
+          "id": "taipa-home-dialogue-04",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "会。门怎样开，房间怎样相连，桌椅和旧物放在哪里——这些都在说人曾经怎样住。"
+        },
+        {
+          "id": "taipa-home-dialogue-05",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-01",
+          "text": "那就别替房子贴一个风格标签。把用途、居住背景和生活空间串起来，看看它怎样先成为家，后来才成为今天的景点。"
+        }
+      ],
+      "knowledge_cards": [
+        {
+          "kind": "historical_fact",
+          "title": "五座住宅建筑",
+          "text": "五座代表性建筑于1921年前落成，曾为高级官员官邸及具代表性的土生葡人住宅。",
+          "source_label": "澳门文化局：《龙环葡韵》",
+          "confidence": "high"
+        },
+        {
+          "kind": "contextual_reconstruction",
+          "title": "家居视角",
+          "text": "本章从房间和生活物件进入居住空间；信里那一家人的经历则是情境复原，并非史实。",
+          "source_label": "Story Package 情境复原",
+          "confidence": "high"
+        }
+      ],
+      "agent_context": {
+        "persona": "阿莲",
+        "poi_name": "龙环葡韵",
+        "chapter_goal": "让玩家从住宅用途与家居生活理解建筑，而不是停在抽象的风格标签上。",
+        "known_facts": [
+          "五座代表性建筑于1921年前落成",
+          "建筑曾为高级官员官邸及土生葡人住宅",
+          "今日展示与开放状态以官方安排为准"
+        ],
+        "fiction_boundaries": [
+          "家信中的家庭和生活细节是情境复原",
+          "不得把虚构家居片段归给具体真实住户"
+        ],
+        "suggested_questions": [
+          "为什么只看建筑颜色还不够？",
+          "哪些线索能说明这里曾经是住宅？",
+          "怎样准确说明这里的土生葡人住宅背景？"
+        ],
+        "do_not_reveal": [
+          "不得直接给出证据链答案",
+          "不得编造具体住户姓名或家庭事件"
+        ]
+      },
+      "presentation": {
+        "layout": "portrait_location_letter",
+        "assets": [
+          "TAI-HOME-01"
+        ]
+      },
+      "fallback": {
+        "type": "interior_optional",
+        "text": "如果室内暂未开放，阅读建筑说明与知识卡也能完成任务；请勿越过围栏或触碰展品。"
+      },
+      "puzzle": {
+        "id": "puzzle_taipa_home_evidence",
+        "type": "evidence_chain",
+        "prompt": "选出三份材料，一起说明：在成为景点以前，这里首先是一处家。",
+        "required_count": 3,
+        "options": [
+          {
+            "id": "residential_use",
+            "text": "建筑曾用作官邸和住宅",
+            "description": "它说明了这些建筑最初怎样被使用。",
+            "source_label": "澳门文化局公开资料",
+            "asset_id": "TAI-HOME-01"
+          },
+          {
+            "id": "resident_community",
+            "text": "这里与土生葡人居住生活有关",
+            "description": "它把住宅与一个真实的社区生活背景连在一起。",
+            "source_label": "澳门文化局公开资料",
+            "asset_id": "TAI-HOME-01"
+          },
+          {
+            "id": "domestic_space",
+            "text": "房间与家居物件保留着日常生活的功能",
+            "description": "它让人从空间的使用方式理解‘家’。",
+            "source_label": "现场展示／情境观察",
+            "asset_id": "TAI-HOME-01"
+          },
+          {
+            "id": "color_only",
+            "text": "只凭薄荷绿色，就能证明信里的家庭住过这里",
+            "description": "外墙颜色无法证明某段具体的私人经历。",
+            "source_label": "无可核查来源",
+            "asset_id": "TAI-HOME-01"
+          }
+        ],
+        "solution": [
+          "residential_use",
+          "resident_community",
+          "domestic_space"
+        ],
+        "hints": [
+          "一条完整的证据链，要同时包含建筑用途、居住群体和生活空间。",
+          "颜色能留下印象，却不能替一个虚构家庭证明经历。"
+        ],
+        "explanation": "建筑用途、居住背景与家居空间彼此补充，才能让住宅生活变得具体；外墙颜色再鲜明，也不能证明信里的家庭真实存在。",
+        "skip_text": "阿莲把用途、住户背景与家居空间排成一条线。第三封家信轻轻合上。",
+        "reward": {
+          "id": "taipa_letter_home",
+          "kind": "letter",
+          "name": "家信",
+          "text": "门、房间和旧物仍各在其位，等你读懂一栋房子怎样成为家。"
+        }
+      }
+    },
+    {
+      "id": "chapter_taipa_work",
+      "order": 4,
+      "kind": "puzzle",
+      "title": "第四章：岛上的上工声",
+      "story_time": "14:00",
+      "location_name": "益隆炮竹厂旧址",
+      "poi_id": "poi_0118",
+      "scene": "第四封信的字句像赶着工时：上工、分区、响声、停工，几乎没有多余的话。沿着旧址的开放步道往里看，一段产业年代、一片劳动空间和许多家庭的生计，渐渐从纸上一层层显现。",
+      "time_layer": {
+        "period": "20世纪20年代至1984年",
+        "focus": "把炮竹工业的兴衰，与劳动风险、家庭收入和社区生活放在一起"
+      },
+      "letter_fragment": {
+        "title": "上工信",
+        "text": "今天厂里的响声还是一阵紧过一阵。我把工钱仔细收好，别的等回家再说。这里的路得一段一段走，急不得。",
+        "label": "情境复原／写信人虚构"
+      },
+      "historical_claims": [
+        {
+          "statement": "澳门炮竹业在20世纪20年代快速发展，氹仔成为主要生产基地。",
+          "status": "已核",
+          "source": "澳门特区政府／文化局《氹仔炮竹业》第四版资料"
+        },
+        {
+          "statement": "20世纪50至70年代是行业全盛期，许多居民从事相关工作。",
+          "status": "已核",
+          "source": "澳门特区政府／文化局相关资料"
+        },
+        {
+          "statement": "益隆于1925年申报开业，1984年全面停产。",
+          "status": "已核",
+          "source": "澳门文化局《益隆炮竹厂旧址》"
+        }
+      ],
+      "interaction": {
+        "type": "industry_space_mapping",
+        "instruction": "把产业年代、遗址空间和社区生活三类线索，分别放回信中对应的位置。",
+        "safety": "请沿开放步道行走，不要进入封闭工房；实际开放范围以现场标识为准。"
+      },
+      "arrival_comic": [
+        {
+          "asset_id": "TAI-WORK-01",
+          "alt": "益隆炮竹厂旧址的工房与开放步道",
+          "caption": "开放步道旁，旧工房已经沉默，水道与分区仍勾勒着昔日劳动空间。"
+        }
+      ],
+      "dialogue": [
+        {
+          "id": "taipa-work-dialogue-01",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "这封信真短。只写了上工、收好工钱，还有一句‘回家再说’。"
+        },
+        {
+          "id": "taipa-work-dialogue-02",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-01",
+          "text": "赶着工时的人，未必有空把一天写得很长。越是省下来的字，越要慢一点读。"
+        },
+        {
+          "id": "taipa-work-dialogue-03",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "‘把工钱仔细收好’是在惦记家里；‘一段一段走’又像是在提醒自己小心。"
+        },
+        {
+          "id": "taipa-work-dialogue-04",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-03",
+          "text": "所以只讲产业有多兴旺，还读不完这封信。工房里的风险、手里的收入和家里的日子，本来就牵在一起。"
+        },
+        {
+          "id": "taipa-work-dialogue-05",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "明白了。我得把行业的年代、眼前的遗址和居民的生活放回同一幅图里。"
+        }
+      ],
+      "knowledge_cards": [
+        {
+          "kind": "historical_fact",
+          "title": "氹仔炮竹业",
+          "text": "澳门炮竹业在20世纪20年代快速发展，50至70年代进入全盛期，氹仔是主要生产基地之一。",
+          "source_label": "澳门特区政府／文化局：《氹仔炮竹业》相关资料",
+          "confidence": "high"
+        },
+        {
+          "kind": "historical_fact",
+          "title": "益隆的开业与停产",
+          "text": "益隆于1925年申报开业，并于1984年全面停产。",
+          "source_label": "澳门文化局：《益隆炮竹厂旧址》",
+          "confidence": "high"
+        },
+        {
+          "kind": "contextual_reconstruction",
+          "title": "上工信",
+          "text": "信里的工人、工钱与这一天的经历，是为了呈现劳动者的视角而创作，并不对应某位真实工人。",
+          "source_label": "Story Package 情境复原",
+          "confidence": "high"
+        },
+        {
+          "kind": "dynamic_operational_info",
+          "title": "开放范围会变化",
+          "text": "遗址的开放路径、展览安排与临时封闭情况可能变化，请以官方信息和现场标识为准。",
+          "source_label": "现场运营信息",
+          "confidence": "high"
+        }
+      ],
+      "agent_context": {
+        "persona": "阿莲",
+        "poi_name": "益隆炮竹厂旧址",
+        "chapter_goal": "把产业年代、劳动空间与居民生计放在一起，理解氹仔的工业生活史。",
+        "known_facts": [
+          "氹仔炮竹业在20世纪20年代快速发展",
+          "50至70年代为全盛期",
+          "益隆1925年申报开业，1984年全面停产"
+        ],
+        "fiction_boundaries": [
+          "上工信与工人经历是虚构的",
+          "不得编造具体事故、工序细节或真实工人姓名"
+        ],
+        "suggested_questions": [
+          "益隆是哪一年开业和停产的？",
+          "为什么讲工业兴盛时，也要谈劳动与风险？",
+          "现场哪些区域可以安全参观？"
+        ],
+        "do_not_reveal": [
+          "不得直接给出配对答案",
+          "不得把未核工序写成标准生产流程",
+          "不得忽略现场封闭标识"
+        ]
+      },
+      "presentation": {
+        "layout": "portrait_location_letter",
+        "assets": [
+          "TAI-WORK-01"
+        ]
+      },
+      "fallback": {
+        "type": "route_or_exhibit_optional",
+        "text": "如果遗址部分区域关闭，请留在开放步道阅读知识卡；不用进入工房，也不必想象一套未经核实的完整工序。"
+      },
+      "puzzle": {
+        "id": "puzzle_taipa_work_mapping",
+        "type": "mapping",
+        "prompt": "把三类线索与相应说明配对，让这封短信背后的工业生活重新清晰起来。",
+        "fields": [
+          {
+            "id": "industry_time",
+            "label": "产业年代"
+          },
+          {
+            "id": "site_space",
+            "label": "遗址空间"
+          },
+          {
+            "id": "daily_life",
+            "label": "生活意义"
+          }
+        ],
+        "options": [
+          {
+            "id": "boom_and_closure",
+            "text": "20世纪20年代起步发展，50至70年代全盛，益隆于1984年停产"
+          },
+          {
+            "id": "workshop_evidence",
+            "text": "工房、仓库、晒场与水道等遗址空间"
+          },
+          {
+            "id": "labor_family_community",
+            "text": "劳动与风险牵动家庭收入，也影响整个社区的生活"
+          },
+          {
+            "id": "fictional_shift_record",
+            "text": "信里这一天的上工记录就是真实工人档案"
+          }
+        ],
+        "solution": {
+          "industry_time": "boom_and_closure",
+          "site_space": "workshop_evidence",
+          "daily_life": "labor_family_community"
+        },
+        "hints": [
+          "分别寻找一段年代、一片看得见的空间，以及它对居民生活的影响。",
+          "这封信能带你进入劳动者的视角，却不能变成真实工人档案。"
+        ],
+        "explanation": "产业年代告诉我们行业如何兴衰，遗址空间留下劳动的形状，家庭与社区则让这段历史有了生活的重量；上工信本身仍是情境复原。",
+        "skip_text": "阿莲替你把年代、空间与生活排成三栏。厂房安静下来，工信留在了盒中。",
+        "reward": {
+          "id": "taipa_letter_work",
+          "kind": "letter",
+          "name": "工信",
+          "text": "一封写得很短的上工信，背后连着劳动、风险与许多家庭的日子。"
+        }
+      }
+    },
+    {
+      "id": "chapter_taipa_street",
+      "order": 5,
+      "kind": "puzzle",
+      "title": "第五章：街口留下的味道",
+      "story_time": "15:30",
+      "location_name": "官也街与氹仔旧城",
+      "poi_id": "poi_rua_cunha",
+      "scene": "最后一封信没有留下店名，也没有抄录配方。它只记得街口层叠的语言、旧建筑的细部，以及每天仍在这里发生的小事。你决定不追问谁是‘第一’，只认真看看今天的街道。",
+      "time_layer": {
+        "period": "历史街道与今日商业、生活空间",
+        "focus": "从多语招牌、建筑细节与当代日常，读一条仍在生活的街"
+      },
+      "letter_fragment": {
+        "title": "街信",
+        "text": "味道会变，招牌会换，走过这里的人也一批批不同。我只记得每次转进街口，总有人用自己的语言，说着当天的日常。",
+        "label": "情境复原／写信人虚构"
+      },
+      "historical_claims": [
+        {
+          "statement": "官也街具体饮食、商铺和行业起源年代仍需进一步考证。",
+          "status": "待考",
+          "source": "《海风寄来的信》策划考证清单"
+        }
+      ],
+      "interaction": {
+        "type": "street_observation",
+        "instruction": "选出三项能在现场直接观察、又不依赖未经核实起源故事的内容。",
+        "safety": "不要拍摄陌生人的正脸或阻塞店铺经营，任务也不要求消费；人流密集时可移到相邻街巷完成。"
+      },
+      "arrival_comic": [
+        {
+          "asset_id": "TAI-STREET-01",
+          "alt": "氹仔官也街的多语招牌与街巷景象",
+          "caption": "招牌、立面和来往脚步挤在一条街上。这里留下的不只是味道，还有正在发生的日常。"
+        }
+      ],
+      "dialogue": [
+        {
+          "id": "taipa-street-dialogue-01",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "这封信的地址应该最好找吧？官也街到处都是招牌和味道。"
+        },
+        {
+          "id": "taipa-street-dialogue-02",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-03",
+          "text": "也可能最容易写错。一个地方越有名，‘第一家’、‘最早做’的故事就越容易被顺手加上去。"
+        },
+        {
+          "id": "taipa-street-dialogue-03",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "那我不替它追一个说不清的起点，只写今天亲眼看见的，可以吗？"
+        },
+        {
+          "id": "taipa-street-dialogue-04",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-02",
+          "text": "当然。街道每天都在变化，此刻的样子也值得被认真记下来。"
+        },
+        {
+          "id": "taipa-street-dialogue-05",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "那就从不同语言的招牌、旧建筑的细节，还有不打扰别人的日常开始。"
+        }
+      ],
+      "knowledge_cards": [
+        {
+          "kind": "dynamic_operational_info",
+          "title": "今天的街道",
+          "text": "店铺、招牌、人流与营业状态都会变化；本章只记录你到访当下能够安全观察的内容。",
+          "source_label": "现场动态观察",
+          "confidence": "high"
+        },
+        {
+          "kind": "contextual_reconstruction",
+          "title": "不编造起源",
+          "text": "故事不会把流传说法直接写成‘最早’或‘第一家’。街信真正关心的，是商业与日常怎样一起使用这片旧城空间。",
+          "source_label": "策划考证边界",
+          "confidence": "high"
+        },
+        {
+          "kind": "fictional_story",
+          "title": "街信写信人",
+          "text": "信里的味觉记忆与写信人均为剧情创作，不指向任何特定店铺、品牌或真实顾客。",
+          "source_label": "Story Package 剧情设定",
+          "confidence": "high"
+        }
+      ],
+      "agent_context": {
+        "persona": "阿莲",
+        "poi_name": "官也街与氹仔旧城",
+        "chapter_goal": "引导玩家轻量观察街道，同时避开未经考证的商业与食物起源叙事。",
+        "known_facts": [
+          "官也街的商铺和营业状态会动态变化",
+          "具体饮食、商铺和行业起源年代仍需考证",
+          "可以观察不同语言招牌、旧建筑细节和今日生活行为"
+        ],
+        "fiction_boundaries": [
+          "不得为店铺、食物或品牌编造‘第一’或‘最早’",
+          "不得把街信写信人说成真实顾客或商户"
+        ],
+        "suggested_questions": [
+          "街上哪些内容适合直接观察和记录？",
+          "为什么故事不写未经考证的‘第一家’？",
+          "人多的时候，怎样安全完成这封街信？"
+        ],
+        "do_not_reveal": [
+          "不得直接给出多选答案",
+          "不得推荐必须消费才能完成的任务",
+          "不得识别或描述陌生人的个人身份"
+        ]
+      },
+      "presentation": {
+        "layout": "portrait_location_letter",
+        "assets": [
+          "TAI-STREET-01"
+        ]
+      },
+      "fallback": {
+        "type": "crowd_safe_observation",
+        "text": "如果官也街过于拥挤，可以退到相邻的开放街巷，从文字、建筑或声音中选择安全可观察的内容。"
+      },
+      "puzzle": {
+        "id": "puzzle_taipa_street_observation",
+        "type": "multi_select",
+        "prompt": "哪些现场观察可以写进街信，又不必借用未经考证的起源故事？",
+        "min_selections": 3,
+        "max_selections": 3,
+        "options": [
+          {
+            "id": "multilingual_signs",
+            "text": "记下现场看得见的不同语言招牌"
+          },
+          {
+            "id": "building_details",
+            "text": "留意旧建筑立面与街道的尺度"
+          },
+          {
+            "id": "daily_activity",
+            "text": "记录不涉及个人身份的当代日常活动"
+          },
+          {
+            "id": "invent_first_shop",
+            "text": "随意挑一家店，写成某种食物未经核实的‘第一家’"
+          }
+        ],
+        "solution": [
+          "multilingual_signs",
+          "building_details",
+          "daily_activity"
+        ],
+        "hints": [
+          "选择此刻就在眼前、可以直接观察的三项。",
+          "凡是需要证明‘最早’或‘第一家’的选项，都要格外小心。"
+        ],
+        "explanation": "招牌、建筑与当代活动都能在现场观察；没有经过考证的商业起源，则不应该被写成事实。",
+        "skip_text": "你没有替街道编造一个响亮的‘第一’，只把眼前的日常收进了最后一封街信。",
+        "reward": {
+          "id": "taipa_letter_street",
+          "kind": "letter",
+          "name": "街信",
+          "text": "不同语言的招牌下，旧建筑与今天的生活仍在同一条街上相遇。"
+        }
+      }
+    },
+    {
+      "id": "ending_taipa_future_letter",
+      "order": 6,
+      "kind": "ending",
+      "title": "终章：寄给未来氹仔",
+      "story_time": "16:20",
+      "location_name": "氹仔旧城公共空间",
+      "poi_id": "poi_0104",
+      "scene": "五封信终于各自找回了地址。你把它们依次排开：海风、钟声、门窗、工房与街巷，像五种不同的生活，在同一只盒子里轻轻碰到了一起。可退信盒仍没有合上，里面还留着一页没有收件人的空白信纸。",
+      "time_layer": {
+        "period": "从多段生活史到未来",
+        "focus": "把海信、钟信、家信、工信与街信放在一起，写一封寄往未来的信"
+      },
+      "letter_fragment": {
+        "title": "未来信空白页",
+        "text": "收件人：未来仍愿意记得氹仔如何生活的人。",
+        "label": "玩家创作／剧情虚构"
+      },
+      "historical_claims": [
+        {
+          "statement": "终章只综合前五章已经分层标注的背景，不新增未经核实的历史主张。",
+          "status": "叙事边界",
+          "source": "Story Package 内容规则"
+        }
+      ],
+      "interaction": {
+        "type": "future_letter_reflection",
+        "instruction": "重新读一遍五封信，再为未来的氹仔写下一句你希望被记住的话。",
+        "safety": "请在不影响通行的公共空间完成；无需上传照片或任何个人身份信息。"
+      },
+      "arrival_comic": [
+        {
+          "asset_id": "TAI-END-01",
+          "alt": "氹仔消防局前地与旧城街景",
+          "caption": "回到旧城的街声里，五封信依次摊开，空白的一页正等着寄往未来。"
+        }
+      ],
+      "dialogue": [
+        {
+          "id": "taipa-ending-dialogue-01",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "五封信都有地址了，为什么退信盒还没有合上？"
+        },
+        {
+          "id": "taipa-ending-dialogue-02",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-01",
+          "text": "因为你一路替它们找的是地方。再想想看，有哪一封真的只是在写一个地方？"
+        },
+        {
+          "id": "taipa-ending-dialogue-03",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "海信等归航，钟信记相聚，家信留着一扇门，工信牵着生计，街信装下每天的日常……它们都在写人怎样生活。"
+        },
+        {
+          "id": "taipa-ending-dialogue-04",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-03",
+          "text": "也都在问同一件事：海岸、工作和住在这里的人都变过，什么还让人愿意把这里叫作家？"
+        },
+        {
+          "id": "taipa-ending-dialogue-05",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "那最后一封不该寄回过去。它应该寄给还没有见过今天氹仔的人。"
+        },
+        {
+          "id": "taipa-ending-dialogue-06",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-01",
+          "text": "正好。空白页留给你——写一句希望未来仍有人记得的话。"
+        }
+      ],
+      "knowledge_cards": [
+        {
+          "kind": "contextual_reconstruction",
+          "title": "五封信的共同收件人",
+          "text": "海信、钟信、家信、工信和街信共同指向氹仔的生活史与集体记忆，而不是一条可以查证的家族线索。",
+          "source_label": "Story Package 终章解释",
+          "confidence": "high"
+        },
+        {
+          "kind": "fictional_story",
+          "title": "未来信",
+          "text": "未来信是你在这趟旅程中留下的个人创作。文字会被保存；是否生成配图，则属于可选体验。",
+          "source_label": "Story Package 玩家创作",
+          "confidence": "high"
+        }
+      ],
+      "agent_context": {
+        "persona": "阿莲",
+        "poi_name": "氹仔旧城公共空间",
+        "chapter_goal": "陪玩家重新读懂五封信并写下未来信，同时守住史实与虚构的边界。",
+        "known_facts": [
+          "五封信分别关联信仰、社区空间、居住、劳动和街道日常",
+          "全部写信人与信件均为虚构",
+          "未来信是玩家个人反思"
+        ],
+        "fiction_boundaries": [
+          "不得把五封信解释为真实家族档案",
+          "不得把玩家留言包装成历史事实"
+        ],
+        "suggested_questions": [
+          "五封信最后共同留下了什么？",
+          "我想把哪一句话寄给未来的氹仔？",
+          "怎样分清历史背景与我自己的感受？"
+        ],
+        "do_not_reveal": [
+          "不得替玩家生成或决定个人反思",
+          "不得新增未经前文核实的历史结论"
+        ]
+      },
+      "presentation": {
+        "layout": "portrait_ending_future_letter",
+        "assets": [
+          "TAI-END-01"
+        ]
+      },
+      "fallback": {
+        "type": "text_reflection",
+        "text": "如果图片生成暂时不可用，仍可用你的文字和已经收集的五封信完成未来信。"
+      }
+    }
+  ],
+  "endings": [
+    {
+      "id": "send_future_taipa_letter",
+      "title": "寄给未来氹仔",
+      "choice_text": "写下并寄出未来信",
+      "text": "氹仔没有从地图上挪开，可海岸变了，工作变了，住在这里的人也一代代换过。也许家不是永远不变的地方，而是变化以后，仍有人愿意记得它曾怎样生活。",
+      "condition": "完成终章并保存给未来氹仔的留言",
+      "rewards": [
+        {
+          "id": "taipa_future_letter",
+          "kind": "collection",
+          "name": "未来信",
+          "text": "海信、钟信、家信、工信和街信在这一页相遇，汇成一封写给未来的信。"
+        },
+        {
+          "id": "taipa_home_reflection",
+          "kind": "reflection",
+          "name": "关于家的回答",
+          "text": "你替今天的氹仔留下一句话，等未来的人重新读到。"
+        }
+      ]
+    }
+  ]
+}

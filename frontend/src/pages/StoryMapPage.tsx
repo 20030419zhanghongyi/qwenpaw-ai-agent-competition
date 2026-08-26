@@ -104,13 +104,38 @@ export function StoryMapPage() {
   const petalCount =
     session?.state.rewards.filter((reward) => reward.kind === "note_petal").length ?? 0;
   const isLotusStory = story?.id === "lotus_city_double_map";
-  const recordCount =
-    session?.state.rewards.filter((reward) => reward.kind === "stamp").length ?? 0;
+  const isTaipaStory = story?.id === "taipa_letters";
   const stationNodes = story?.nodes.filter((node) => node.poi_id) ?? [];
   const collectibleRewards =
-    session?.state.rewards.filter((reward) =>
-      isLotusStory ? reward.kind === "note_petal" : reward.kind === "stamp",
+    session?.state.rewards.filter(
+      (reward) =>
+        reward.kind !== "story_prop" &&
+        reward.kind !== "collection" &&
+        reward.kind !== "reflection",
     ) ?? [];
+  const recordCount = collectibleRewards.length;
+  const collectionTitle = isLotusStory
+    ? st("secretNotes")
+    : isTaipaStory
+      ? "氹仔来信"
+      : "潮汐工作簿";
+  const collectionProgress = isLotusStory
+    ? st("petalsServer")
+    : isTaipaStory
+      ? `已收集 ${recordCount}/5 封氹仔来信`
+      : `已收集 ${recordCount}/5 枚路环记录章`;
+  const collectionCoverAsset = isLotusStory
+    ? "V4-PROP-03"
+    : isTaipaStory
+      ? "TAI-COVER-01"
+      : "CAT-COVER-01";
+  const collectionPropAsset = isLotusStory
+    ? petalCount === 5
+      ? "V4-PROP-05"
+      : "V4-PROP-04"
+    : isTaipaStory
+      ? "TAI-PROP-01"
+      : "CAT-PROP-01";
 
   const statusFor = (node: StoryNodeOverview): NodeStatus => {
     if (node.id === session?.current_chapter_id) return "current";
@@ -148,7 +173,7 @@ export function StoryMapPage() {
           />
           <button
             type="button"
-            onClick={() => navigate("/stories/lotus_city_double_map")}
+            onClick={() => navigate("/stories")}
             className="mt-4 min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper"
           >
             {st("back")}
@@ -197,32 +222,24 @@ export function StoryMapPage() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="font-serif text-lg font-semibold">
-                {isLotusStory ? st("secretNotes") : "潮汐工作簿"}
+                {collectionTitle}
               </h2>
               <p className="mt-1 text-sm text-ink-soft">
-                {isLotusStory
-                  ? st("petalsServer")
-                  : `已收集 ${recordCount}/5 枚路环记录章`}
+                {collectionProgress}
               </p>
             </div>
             {isLotusStory && <PetalProgress collected={petalCount} />}
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <StoryImage
-              assetId={isLotusStory ? "V4-PROP-03" : "CAT-COVER-01"}
-              alt={isLotusStory ? st("cityMaps") : "潮退之后"}
+              assetId={collectionCoverAsset}
+              alt={isLotusStory ? st("cityMaps") : story.title}
               onOpen={setViewerAssetId}
               className="rounded-xl"
             />
             <StoryImage
-              assetId={
-                isLotusStory
-                  ? petalCount === 5
-                    ? "V4-PROP-05"
-                    : "V4-PROP-04"
-                  : "CAT-PROP-01"
-              }
-              alt={isLotusStory ? st("secretNotes") : "潮汐工作簿"}
+              assetId={collectionPropAsset}
+              alt={collectionTitle}
               onOpen={setViewerAssetId}
               className="rounded-xl"
             />
@@ -240,7 +257,8 @@ export function StoryMapPage() {
               </h2>
             </div>
             <span className="text-sm text-ink-soft">
-              {session.progress.solved_puzzles + session.progress.skipped_puzzles}/5
+              {session.progress.solved_puzzles + session.progress.skipped_puzzles}/
+              {session.progress.total_puzzles}
             </span>
           </div>
 

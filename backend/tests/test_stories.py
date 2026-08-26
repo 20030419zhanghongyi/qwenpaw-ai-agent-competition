@@ -10,6 +10,8 @@ from sqlalchemy import delete, select
 from app.db.models import Checkin, StorySession as StorySessionRecord
 from app.db.models import Trip, TripStop, User
 from app.db.session import SessionLocal
+from app.features.pois.repository import PoiRepository
+from app.features.routes.repository import get_template
 from app.features.stories.content import (
     load_story,
     localize_story,
@@ -153,6 +155,83 @@ def test_v4_public_package_matches_frozen_six_stop_story_and_hides_solutions():
     assert "哪吒" not in str(story)
     assert "红绫" not in str(story)
     assert "消失的界线" not in str(story)
+
+
+@pytest.mark.parametrize(
+    ("story_id", "expected_route_id", "expected_title"),
+    [
+        ("taipa_letters", "taipa_hotspot_halfday", "海风寄来的信"),
+        ("coloane_after_tide", "coloane_leisure_halfday", "潮退之後"),
+    ],
+)
+def test_additional_story_packages_are_public_safe_and_complete(
+    story_id: str,
+    expected_route_id: str,
+    expected_title: str,
+):
+    story = load_story(story_id)
+    public = public_story(story)
+    nodes = sorted(story_nodes(story), key=lambda item: item["order"])
+
+    assert story["version"] == 4
+    assert story["route_id"] == expected_route_id
+    assert story["title"] == expected_title
+    assert len(nodes) == 7
+    assert [node["order"] for node in nodes] == list(range(7))
+    assert all("solution" not in node.get("puzzle", {}) for node in story_nodes(public))
+    assert "solution" not in str(public)
+
+    response = TestClient(app).get(f"/api/v1/stories/{story_id}")
+    assert response.status_code == 200
+    assert response.json()["title"] == expected_title
+    assert response.json()["nodes"][1]["location_name"]
+
+    assert get_template(expected_route_id) is not None
+    story_poi_ids = [node["poi_id"] for node in nodes if node.get("poi_id")]
+    with SessionLocal() as database:
+        assert set(PoiRepository(database).get_by_ids(story_poi_ids)) == set(
+            story_poi_ids
+        )
+
+    now = datetime.now(timezone.utc)
+    story_session = StorySession(
+        session_id=f"{story_id}-session-test",
+        user_id="story-user-test",
+        story_id=story_id,
+        trip_id="trip-test",
+        current_chapter_id=nodes[0]["id"],
+        status=StorySessionStatus.ACTIVE,
+        state=StorySessionState(content_version=story["version"]),
+        created_at=now,
+        updated_at=now,
+    )
+    _complete_workflow(story, story_session)
+
+    assert story_session.status == StorySessionStatus.COMPLETED
+    assert story_session.state.ending_id == story["endings"][0]["id"]
+    assert len(story_session.state.completed_chapter_ids) == 7
+
+
+def test_taipa_package_preserves_planned_content_layers_and_fallbacks():
+    story = load_story("taipa_letters")
+    nodes = story_nodes(story)
+
+    assert [node["location_name"] for node in nodes if node.get("poi_id")] == [
+        "北帝庙",
+        "嘉模圣母堂",
+        "龙环葡韵",
+        "益隆炮竹厂旧址",
+        "官也街与氹仔旧城",
+        "氹仔旧城公共空间",
+    ]
+    for node in nodes:
+        assert node["time_layer"]
+        assert node["letter_fragment"]
+        assert node["historical_claims"]
+        assert node["interaction"]
+        assert node["fallback"]["text"]
+        assert node["presentation"]["assets"]
+        assert node["agent_context"]["fiction_boundaries"]
 
 
 def test_v4_every_location_exposes_portrait_assets_dialogue_and_agent_context():

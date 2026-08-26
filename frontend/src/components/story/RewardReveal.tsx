@@ -48,6 +48,8 @@ export function RewardReveal({
     note_petal: { label: st("rewardPetal"), icon: "✦" },
     collection: { label: st("rewardCollection"), icon: "❀" },
     reflection: { label: st("rewardReflection"), icon: "◇" },
+    letter: { label: st("rewardLetter"), icon: "✉" },
+    record: { label: st("rewardRecord"), icon: "▧" },
   };
   const rewardLabel = (kind: string) =>
     kindLabels[kind] ?? { label: kind, icon: "✦" };

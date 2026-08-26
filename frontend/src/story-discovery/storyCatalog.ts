@@ -48,20 +48,20 @@ export const STORY_CATALOG: StoryCatalogEntry[] = [
     },
   },
 
-  // ── Planned (not yet playable) ─────────────────────────────────────────
+  // ── Additional playable story ──────────────────────────────────────────
   {
     storyId: "taipa_letters",
-    status: "planned",
-    title: "氹仔家书",
-    subtitle: "",
+    status: "playable",
+    title: "海风寄来的信",
+    subtitle: "沿氹仔旧城寻找五封没有收件人的信，读见岛上的家与生活",
     region: "taipa",
-    estimatedHours: 0,
+    estimatedHours: 4,
     invitationType: "letter",
     matchRule: {
-      durationAnyOf: [],
-      interestAnyOf: [],
-      themeAnyOf: [],
-      minScore: 0,
+      durationAnyOf: ["half", "full"],
+      interestAnyOf: ["history", "culture", "arch", "food"],
+      themeAnyOf: ["heritage", "architecture", "food"],
+      minScore: 1,
     },
   },
 ];
