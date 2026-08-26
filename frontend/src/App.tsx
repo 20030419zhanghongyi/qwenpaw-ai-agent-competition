@@ -4,6 +4,7 @@ import { AuthPage } from "@/pages/AuthPage";
 import { GuidePage } from "@/pages/GuidePage";
 import { LanguagePage } from "@/pages/LanguagePage";
 import { MemoirEditorPage } from "@/pages/MemoirEditorPage";
+import { MemoirGalleryPage } from "@/pages/MemoirGalleryPage";
 import { PostcardCreatePage } from "@/pages/PostcardCreatePage";
 import { PostcardGalleryPage } from "@/pages/PostcardGalleryPage";
 import { PostcardViewPage } from "@/pages/PostcardViewPage";
@@ -39,6 +40,7 @@ export default function App() {
                     <Route path="/postcards/new" element={<PostcardCreatePage />} />
                     <Route path="/postcards/:postcardId" element={<PostcardViewPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/profile/memories" element={<MemoirGalleryPage />} />
                     <Route path="/profile/memoirs/:memoirId" element={<MemoirEditorPage />} />
                     <Route path="/preferences" element={<PreferencePage />} />
                   </Route>

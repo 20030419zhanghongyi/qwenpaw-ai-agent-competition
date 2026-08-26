@@ -16,6 +16,7 @@ logger = logging.getLogger("macau_storywalk.postcard_scene")
 
 DEFAULT_PHOTO_STYLE = "souvenir"
 DEFAULT_SCENE_STYLE = "gc-minimal-zine-poster"
+SCENE_CACHE_VERSION = "v1"
 PHOTO_STYLE_PROMPTS = {
     "souvenir": "雅致澳门旅行纪念品插画，柔和纸张纹理，暖色电影光线",
     "watercolor": "轻盈透明水彩画，细腻纸纹，柔和晕染，保留主体轮廓",
@@ -99,13 +100,33 @@ def _cache_dir() -> Path:
     return path
 
 
-def _cache_key(*, poi_name: str, district: str | None, language: str) -> str:
-    raw = f"{DEFAULT_SCENE_STYLE}|{language}|{district or ''}|{poi_name}".encode("utf-8")
+def _cache_key(
+    *,
+    poi_id: str | None,
+    poi_name: str,
+    district: str | None,
+    language: str,
+) -> str:
+    # Generated scenes contain no text, so a canonical POI can be reused across UI languages.
+    identity = poi_id or f"{language}|{district or ''}|{poi_name}"
+    raw = f"{DEFAULT_SCENE_STYLE}|{SCENE_CACHE_VERSION}|{identity}".encode("utf-8")
     return hashlib.sha1(raw).hexdigest()[:20]
 
 
-def _load_cached_jpeg(*, poi_name: str, district: str | None, language: str) -> bytes | None:
-    path = _cache_dir() / f"{_cache_key(poi_name=poi_name, district=district, language=language)}.jpg"
+def _load_cached_jpeg(
+    *,
+    poi_id: str | None,
+    poi_name: str,
+    district: str | None,
+    language: str,
+) -> bytes | None:
+    key = _cache_key(
+        poi_id=poi_id,
+        poi_name=poi_name,
+        district=district,
+        language=language,
+    )
+    path = _cache_dir() / f"{key}.jpg"
     if not path.is_file():
         return None
     try:
@@ -121,12 +142,19 @@ def _load_cached_jpeg(*, poi_name: str, district: str | None, language: str) -> 
 
 def _store_cached_jpeg(
     *,
+    poi_id: str | None,
     poi_name: str,
     district: str | None,
     language: str,
     jpeg: bytes,
 ) -> None:
-    path = _cache_dir() / f"{_cache_key(poi_name=poi_name, district=district, language=language)}.jpg"
+    key = _cache_key(
+        poi_id=poi_id,
+        poi_name=poi_name,
+        district=district,
+        language=language,
+    )
+    path = _cache_dir() / f"{key}.jpg"
     try:
         path.write_bytes(jpeg)
     except Exception as exc:  # noqa: BLE001
@@ -150,16 +178,29 @@ def _image_to_jpeg(raw: bytes) -> bytes | None:
 
 def generate_ai_scene_via_qwenpaw(
     *,
+    poi_id: str | None = None,
     poi_name: str,
     district: str | None = None,
     language: str = "zh-CN",
+    reuse_cached: bool = True,
 ) -> tuple[bytes, None]:
     """Return a cached or newly generated Scene Agent image, otherwise raise."""
-    key = _cache_key(poi_name=poi_name, district=district, language=language)
+    key = _cache_key(
+        poi_id=poi_id,
+        poi_name=poi_name,
+        district=district,
+        language=language,
+    )
     with _scene_lock(key):
-        cached = _load_cached_jpeg(poi_name=poi_name, district=district, language=language)
-        if cached:
-            return cached, None
+        if reuse_cached:
+            cached = _load_cached_jpeg(
+                poi_id=poi_id,
+                poi_name=poi_name,
+                district=district,
+                language=language,
+            )
+            if cached:
+                return cached, None
 
         prompt = _qwenpaw_image_prompt(poi_name=poi_name, district=district, language=language)
         timeout = max(30.0, float(settings.postcard_ai_scene_timeout or 210.0))
@@ -182,6 +223,7 @@ def generate_ai_scene_via_qwenpaw(
             logger.warning("postcard AI scene QwenPaw(%s) returned no usable image", agent_id)
             raise SceneGenerationError("Scene Agent returned no usable image")
         _store_cached_jpeg(
+            poi_id=poi_id,
             poi_name=poi_name,
             district=district,
             language=language,
@@ -235,17 +277,22 @@ def generate_ai_scene(
     language: str = "zh-CN",
     ai_scene: bool = True,
     when: object | None = None,
+    reuse_cached: bool = True,
 ) -> tuple[str, bytes | None, str | None]:
     """Resolve a no-photo scene exclusively through the configured Scene Agent.
 
     Compatibility arguments remain in the signature, but local scene libraries and
     generic placeholders are intentionally not valid fallbacks.
     """
-    del poi_id, ai_scene, when
+    del ai_scene, when
     if not settings.postcard_ai_image_enabled:
         raise SceneGenerationError("Scene Agent image generation is disabled")
     jpeg, _ = generate_ai_scene_via_qwenpaw(
-        poi_name=poi_name, district=district, language=language
+        poi_id=poi_id,
+        poi_name=poi_name,
+        district=district,
+        language=language,
+        reuse_cached=reuse_cached,
     )
     return "ai", jpeg, None
 

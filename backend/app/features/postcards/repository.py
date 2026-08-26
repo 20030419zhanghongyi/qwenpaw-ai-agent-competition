@@ -33,6 +33,21 @@ class PostcardRepository:
                 )
             )
 
+    def list_reusable_scene_candidates(self, poi_id: str, limit: int = 10) -> list[Postcard]:
+        """Return recent no-upload cards that may contain a reusable AI scene."""
+        with self._session_factory() as session:
+            return list(
+                session.scalars(
+                    select(Postcard)
+                    .where(
+                        Postcard.poi_id == poi_id,
+                        Postcard.photo_scrubbed.is_(False),
+                    )
+                    .order_by(Postcard.created_at.desc(), Postcard.id.desc())
+                    .limit(limit)
+                )
+            )
+
     def create(self, postcard: Postcard) -> Postcard:
         with self._session_factory() as session:
             session.add(postcard)
