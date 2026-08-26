@@ -215,10 +215,11 @@ def get_future_letter(
 )
 def generate_future_letter(
     session_id: str,
+    language: str = Query(default="zh-CN", description="Future-letter display language"),
     user_id: str = Depends(require_user_id),
 ) -> FutureLetterResponse:
     try:
-        return future_letter_service.generate(session_id, user_id)
+        return future_letter_service.generate(session_id, user_id, language=language)
     except (
         StorySessionNotFoundError,
         StorySessionOwnershipError,
@@ -236,11 +237,12 @@ def generate_future_letter(
 )
 def future_letter_image(
     session_id: str,
+    language: str | None = Query(default=None, description="Future-letter display language"),
     user_id: str = Depends(require_user_id),
 ) -> Response:
     try:
         return Response(
-            content=future_letter_service.image(session_id, user_id),
+            content=future_letter_service.image(session_id, user_id, language=language),
             media_type="image/svg+xml",
             headers={"Cache-Control": "private, max-age=86400"},
         )

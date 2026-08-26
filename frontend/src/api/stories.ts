@@ -196,9 +196,10 @@ export async function fetchFutureLetter(
 export function generateFutureLetter(
   sessionId: string,
   token: string,
+  language: LanguageCode,
 ): Promise<FutureLetterResponse> {
   return request<FutureLetterResponse>(
-    `/api/v1/story-sessions/${encodeURIComponent(sessionId)}/future-letter`,
+    `/api/v1/story-sessions/${encodeURIComponent(sessionId)}/future-letter${languageQuery(language)}`,
     { method: "POST" },
     token,
   );
@@ -207,8 +208,9 @@ export function generateFutureLetter(
 export async function fetchFutureLetterImage(
   sessionId: string,
   token: string,
+  language: LanguageCode,
 ): Promise<Blob> {
-  const path = `/api/v1/story-sessions/${encodeURIComponent(sessionId)}/future-letter/image`;
+  const path = `/api/v1/story-sessions/${encodeURIComponent(sessionId)}/future-letter/image${languageQuery(language)}`;
   const response = await fetch(`${API_BASE}${path}`, {
     headers: { Authorization: `Bearer ${token}` },
   });

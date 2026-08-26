@@ -760,14 +760,14 @@ def test_taipa_future_letter_is_authenticated_idempotent_and_separate_from_postc
         assert client.post(metadata_path).status_code == 401
         assert client.post(metadata_path, headers=other_headers).status_code == 403
 
-        generated = client.post(metadata_path, headers=owner_headers)
+        generated = client.post(f"{metadata_path}?language=en", headers=owner_headers)
         assert generated.status_code == 201, generated.text
         future_letter = generated.json()
         assert future_letter["status"] == "ready"
         assert future_letter["scene_source"] == "ai"
         assert future_letter["reflection_truncated"] is False
 
-        repeated = client.post(metadata_path, headers=owner_headers)
+        repeated = client.post(f"{metadata_path}?language=en", headers=owner_headers)
         assert repeated.status_code == 201
         assert repeated.json()["postcard_id"] == future_letter["postcard_id"]
         assert generated_calls == 1
@@ -775,12 +775,56 @@ def test_taipa_future_letter_is_authenticated_idempotent_and_separate_from_postc
         image_path = future_letter["image_url"]
         assert client.get(image_path).status_code == 401
         assert client.get(image_path, headers=other_headers).status_code == 403
-        image = client.get(image_path, headers=owner_headers)
+        stored_language_image = client.get(image_path, headers=owner_headers)
+        assert stored_language_image.status_code == 200
+        assert b'xml:lang="en"' in stored_language_image.content
+        image = client.get(f"{image_path}?language=en", headers=owner_headers)
         assert image.status_code == 200
         assert image.headers["content-type"].startswith("image/svg+xml")
         assert b'data-artifact-kind="future_letter"' in image.content
+        assert b'xml:lang="en"' in image.content
+        assert b"To Taipa&#x27;s Future" in image.content
+        assert b"AI-generated scene" in image.content
         assert reflection.encode("utf-8") in image.content
-        assert b"AI \xe5\x9c\xba\xe6\x99\xaf\xe7\xa4\xba\xe6\x84\x8f" in image.content
+
+        simplified_chinese_image = client.get(
+            f"{image_path}?language=zh-CN",
+            headers=owner_headers,
+        )
+        assert simplified_chinese_image.status_code == 200
+        assert b'xml:lang="zh-CN"' in simplified_chinese_image.content
+        assert "寄给未来氹仔".encode() in simplified_chinese_image.content
+        assert "AI 场景示意".encode() in simplified_chinese_image.content
+
+        traditional_chinese_image = client.get(
+            f"{image_path}?language=zh-TW",
+            headers=owner_headers,
+        )
+        assert traditional_chinese_image.status_code == 200
+        assert b'xml:lang="zh-TW"' in traditional_chinese_image.content
+        assert "寄給未來氹仔".encode() in traditional_chinese_image.content
+        assert "AI 場景示意".encode() in traditional_chinese_image.content
+
+        portuguese_image = client.get(
+            f"{image_path}?language=pt",
+            headers=owner_headers,
+        )
+        assert portuguese_image.status_code == 200
+        assert b'xml:lang="pt"' in portuguese_image.content
+        assert "Para o Futuro da Taipa".encode() in portuguese_image.content
+        assert "Cena gerada por IA".encode() in portuguese_image.content
+        assert reflection.encode("utf-8") in portuguese_image.content
+        assert generated_calls == 1
+
+        with SessionLocal() as database:
+            stored_future_letter = database.scalar(
+                select(Postcard).where(
+                    Postcard.trip_id == trip_id,
+                    Postcard.artifact_kind == "future_letter",
+                )
+            )
+            assert stored_future_letter is not None
+            assert stored_future_letter.language == "en"
         assert (
             client.get(
                 f"/api/v1/postcards/{future_letter['postcard_id']}/image"

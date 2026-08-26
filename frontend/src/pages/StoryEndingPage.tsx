@@ -18,6 +18,7 @@ import { useStoryMessages } from "@/features/story/storyI18n";
 import { navigateBack } from "@/lib/backNavigation";
 import { useAuth } from "@/state/AuthContext";
 import { useStory, useStoryRestore } from "@/state/StoryContext";
+import { useWalk } from "@/state/WalkContext";
 import type { FutureLetterResponse, StoryNodeOverview } from "@/types/stories";
 
 export function StoryEndingPage() {
@@ -38,6 +39,7 @@ export function StoryEndingPage() {
     loadStory,
     submitAction,
   } = useStory();
+  const { language } = useWalk();
   const { sessionId: effectiveId } = useStoryRestore(sessionId);
   const st = useStoryMessages();
   const futureLetterErrorMessage = (requestError: unknown): string => {
@@ -118,7 +120,7 @@ export function StoryEndingPage() {
     void fetchFutureLetter(session.session_id, token)
       .then(async (letter) => {
         if (!letter || cancelled) return;
-        const image = await fetchFutureLetterImage(session.session_id, token);
+        const image = await fetchFutureLetterImage(session.session_id, token, language);
         if (cancelled) return;
         setFutureLetter(letter);
         setFutureLetterImageUrl(URL.createObjectURL(image));
@@ -132,7 +134,7 @@ export function StoryEndingPage() {
     return () => {
       cancelled = true;
     };
-  }, [isCompleted, isTaipaStory, session, token]);
+  }, [isCompleted, isTaipaStory, language, session, token]);
 
   useEffect(
     () => () => {
@@ -209,8 +211,8 @@ export function StoryEndingPage() {
     setFutureLetterGenerating(true);
     setFutureLetterError(null);
     try {
-      const letter = await generateFutureLetter(session.session_id, token);
-      const image = await fetchFutureLetterImage(session.session_id, token);
+      const letter = await generateFutureLetter(session.session_id, token, language);
+      const image = await fetchFutureLetterImage(session.session_id, token, language);
       setFutureLetter(letter);
       setFutureLetterImageUrl(URL.createObjectURL(image));
     } catch (requestError) {

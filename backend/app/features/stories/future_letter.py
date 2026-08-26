@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import base64
+import binascii
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from html import escape
+import re
 import threading
 from uuid import uuid4
 
@@ -20,7 +23,7 @@ from app.features.postcards.scene_image import (
 from app.features.trips.repository import trip_repository
 from app.guardrails.runtime import record_audit
 
-from .content import load_story, story_nodes
+from .content import load_story, normalize_story_language, story_nodes
 from .models import FutureLetterResponse, StorySession, StorySessionStatus
 from .repository import StorySessionRepository, story_session_repository
 from .service import (
@@ -32,8 +35,70 @@ from .service import (
 TAIPA_STORY_ID = "taipa_letters"
 TAIPA_ENDING_ID = "send_future_taipa_letter"
 FUTURE_LETTER_KIND = "future_letter"
-DEFAULT_REFLECTION = "愿未来仍有人记得，氹仔曾经怎样生活。"
 MAX_RENDERED_REFLECTION_CHARS = 1800
+
+
+@dataclass(frozen=True)
+class FutureLetterCopy:
+    aria_label: str
+    title: str
+    disclaimer: str
+    recipient_label: str
+    recipient: str
+    letter_labels: tuple[str, str, str, str, str]
+    summary: str
+    ai_disclosure: str
+    default_reflection: str
+
+
+_FUTURE_LETTER_COPY = {
+    "zh-CN": FutureLetterCopy(
+        aria_label="寄给未来氹仔的未来信",
+        title="寄给未来氹仔",
+        disclaimer="未来信与写信关系均为剧情虚构",
+        recipient_label="收件人",
+        recipient="未来仍愿意记得氹仔如何生活的人",
+        letter_labels=("海信", "钟信", "家信", "工信", "街信"),
+        summary="海信、钟信、家信、工信与街信，在这里写向未来。",
+        ai_disclosure="AI 场景示意 · 信中文字为玩家个人创作",
+        default_reflection="愿未来仍有人记得，氹仔曾经怎样生活。",
+    ),
+    "zh-TW": FutureLetterCopy(
+        aria_label="寄給未來氹仔的未來信",
+        title="寄給未來氹仔",
+        disclaimer="未來信與寫信關係均為劇情虛構",
+        recipient_label="收件人",
+        recipient="未來仍願意記得氹仔如何生活的人",
+        letter_labels=("海信", "鐘信", "家信", "工信", "街信"),
+        summary="海信、鐘信、家信、工信與街信，在這裡寫向未來。",
+        ai_disclosure="AI 場景示意 · 信中文字為玩家個人創作",
+        default_reflection="願未來仍有人記得，氹仔曾經怎樣生活。",
+    ),
+    "en": FutureLetterCopy(
+        aria_label="A future letter to Taipa",
+        title="To Taipa's Future",
+        disclaimer="The future letter and correspondence are fictional",
+        recipient_label="Recipient",
+        recipient="Someone in the future who still wants to remember how Taipa lived",
+        letter_labels=("Sea", "Bell", "Home", "Work", "Street"),
+        summary="Letters of sea, bell, home, work, and street are written here toward the future.",
+        ai_disclosure="AI-generated scene · Letter text is the player's own creation",
+        default_reflection="May someone in the future still remember how Taipa once lived.",
+    ),
+    "pt": FutureLetterCopy(
+        aria_label="Uma carta para o futuro da Taipa",
+        title="Para o Futuro da Taipa",
+        disclaimer="A carta futura e a relação de correspondência são ficcionais",
+        recipient_label="Destinatário",
+        recipient="Quem, no futuro, ainda queira recordar como se vivia na Taipa",
+        letter_labels=("Mar", "Sino", "Lar", "Trabalho", "Rua"),
+        summary="As cartas do mar, sino, lar, trabalho e rua são aqui escritas para o futuro.",
+        ai_disclosure="Cena gerada por IA · O texto da carta é uma criação do jogador",
+        default_reflection="Que alguém no futuro ainda recorde como se vivia na Taipa.",
+    ),
+}
+
+_SCENE_IMAGE_PATTERN = re.compile(rb'href="data:image/jpeg;base64,([^"]+)"')
 
 _LETTER_LOCKS: dict[str, threading.Lock] = {}
 _LETTER_LOCKS_GUARD = threading.Lock()
@@ -79,7 +144,14 @@ def _future_letter_prompt() -> str:
     )
 
 
-def _render_future_letter_svg(*, scene_jpeg: bytes, reflection: str) -> tuple[bytes, bool]:
+def _render_future_letter_svg(
+    *,
+    scene_jpeg: bytes,
+    reflection: str,
+    language: str = "zh-CN",
+) -> tuple[bytes, bool]:
+    locale = normalize_story_language(language)
+    copy = _FUTURE_LETTER_COPY[locale]
     rendered = reflection
     truncated = len(rendered) > MAX_RENDERED_REFLECTION_CHARS
     if truncated:
@@ -97,8 +169,23 @@ def _render_future_letter_svg(*, scene_jpeg: bytes, reflection: str) -> tuple[by
 
     image_data = base64.b64encode(scene_jpeg).decode("ascii")
     safe_reflection = escape(rendered)
+    safe_labels = [escape(label) for label in copy.letter_labels]
+    serif_font = (
+        "Noto Serif CJK TC, PMingLiU, serif"
+        if locale == "zh-TW"
+        else "Noto Serif CJK SC, Songti SC, serif"
+        if locale == "zh-CN"
+        else "Georgia, serif"
+    )
+    sans_font = (
+        "Noto Sans CJK TC, sans-serif"
+        if locale == "zh-TW"
+        else "Noto Sans CJK SC, sans-serif"
+        if locale == "zh-CN"
+        else "Arial, sans-serif"
+    )
     return (
-        f'''<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1600" viewBox="0 0 900 1600" role="img" aria-label="寄给未来氹仔的未来信" data-scene-source="ai" data-artifact-kind="future_letter">
+        f'''<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1600" viewBox="0 0 900 1600" role="img" lang="{locale}" xml:lang="{locale}" aria-label="{escape(copy.aria_label)}" data-scene-source="ai" data-artifact-kind="future_letter">
   <defs>
     <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#172d27" stop-opacity="0.08"/>
@@ -111,27 +198,41 @@ def _render_future_letter_svg(*, scene_jpeg: bytes, reflection: str) -> tuple[by
   <rect width="900" height="1600" fill="#e8dcc8"/>
   <image width="900" height="820" preserveAspectRatio="xMidYMid slice" href="data:image/jpeg;base64,{image_data}"/>
   <rect width="900" height="820" fill="url(#shade)"/>
-  <text x="70" y="92" fill="#fffaf0" font-family="Noto Serif CJK SC, Songti SC, serif" font-size="24" letter-spacing="5">MACAU STORYWALK · TAIPA</text>
-  <text x="70" y="164" fill="#fffaf0" font-family="Noto Serif CJK SC, Songti SC, serif" font-size="52" font-weight="700">寄给未来氹仔</text>
-  <text x="70" y="212" fill="#fffaf0" font-family="Noto Sans CJK SC, sans-serif" font-size="22">未来信与写信关系均为剧情虚构</text>
+  <text x="70" y="92" fill="#fffaf0" font-family="{serif_font}" font-size="24" letter-spacing="5">MACAU STORYWALK · TAIPA</text>
+  <text x="70" y="164" fill="#fffaf0" font-family="{serif_font}" font-size="52" font-weight="700">{escape(copy.title)}</text>
+  <text x="70" y="212" fill="#fffaf0" font-family="{sans_font}" font-size="22">{escape(copy.disclaimer)}</text>
   <rect x="50" y="540" width="800" height="1000" rx="30" fill="#fffaf0" stroke="#b87652" stroke-width="3" filter="url(#paper-shadow)"/>
-  <text x="100" y="628" fill="#8b4c36" font-family="Noto Serif CJK SC, Songti SC, serif" font-size="24" letter-spacing="3">收件人</text>
-  <text x="100" y="680" fill="#243f36" font-family="Noto Serif CJK SC, Songti SC, serif" font-size="32" font-weight="700">未来仍愿意记得氹仔如何生活的人</text>
-  <line x1="100" y1="722" x2="800" y2="722" stroke="#d8c4a8" stroke-width="2"/>
-  <g fill="#365d50" font-family="Noto Sans CJK SC, sans-serif" font-size="22">
-    <text x="100" y="778">海信</text><text x="224" y="778">钟信</text>
-    <text x="348" y="778">家信</text><text x="472" y="778">工信</text>
-    <text x="596" y="778">街信</text>
+  <text x="100" y="616" fill="#8b4c36" font-family="{serif_font}" font-size="24" letter-spacing="3">{escape(copy.recipient_label)}</text>
+  <foreignObject x="100" y="638" width="700" height="82">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="font-weight:700;font-size:28px;font-family:{serif_font};color:#243f36;line-height:1.25;overflow:hidden;">{escape(copy.recipient)}</div>
+  </foreignObject>
+  <line x1="100" y1="732" x2="800" y2="732" stroke="#d8c4a8" stroke-width="2"/>
+  <g fill="#365d50" font-family="{sans_font}" font-size="19" text-anchor="middle">
+    <text x="140" y="790">{safe_labels[0]}</text><text x="280" y="790">{safe_labels[1]}</text>
+    <text x="420" y="790">{safe_labels[2]}</text><text x="560" y="790">{safe_labels[3]}</text>
+    <text x="700" y="790">{safe_labels[4]}</text>
   </g>
-  <foreignObject x="100" y="830" width="700" height="540">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="font:{font_size}px 'Noto Serif CJK SC','Songti SC',serif;color:#273a34;line-height:1.68;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;overflow:hidden;">{safe_reflection}</div>
+  <foreignObject x="100" y="836" width="700" height="530">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="font-size:{font_size}px;font-family:{serif_font};color:#273a34;line-height:1.68;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;overflow:hidden;">{safe_reflection}</div>
   </foreignObject>
   <line x1="100" y1="1402" x2="800" y2="1402" stroke="#d8c4a8" stroke-width="2"/>
-  <text x="100" y="1456" fill="#76685b" font-family="Noto Sans CJK SC, sans-serif" font-size="20">海信、钟信、家信、工信与街信，在这里写向未来。</text>
-  <text x="100" y="1496" fill="#8b4c36" font-family="Noto Sans CJK SC, sans-serif" font-size="18">AI 场景示意 · 信中文字为玩家个人创作</text>
+  <foreignObject x="100" y="1430" width="700" height="48">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="font-size:20px;font-family:{sans_font};color:#76685b;line-height:1.25;overflow:hidden;">{escape(copy.summary)}</div>
+  </foreignObject>
+  <text x="100" y="1508" fill="#8b4c36" font-family="{sans_font}" font-size="18">{escape(copy.ai_disclosure)}</text>
 </svg>'''.encode("utf-8"),
         truncated,
     )
+
+
+def _scene_image_from_svg(image_svg: bytes) -> bytes | None:
+    match = _SCENE_IMAGE_PATTERN.search(image_svg)
+    if match is None:
+        return None
+    try:
+        return base64.b64decode(match.group(1), validate=True)
+    except (binascii.Error, ValueError):
+        return None
 
 
 class FutureLetterService:
@@ -200,7 +301,15 @@ class FutureLetterService:
             raise FutureLetterNotFoundError("未来信配图尚未生成")
         return self._response(story_session, record)
 
-    def generate(self, session_id: str, user_id: str) -> FutureLetterResponse:
+    def generate(
+        self,
+        session_id: str,
+        user_id: str,
+        *,
+        language: str = "zh-CN",
+    ) -> FutureLetterResponse:
+        locale = normalize_story_language(language)
+        copy = _FUTURE_LETTER_COPY[locale]
         story_session = self._session(session_id, user_id)
         poi_id = self._ending_poi_id(story_session)
         existing = self._record(story_session, poi_id)
@@ -221,7 +330,7 @@ class FutureLetterService:
                 raise FutureLetterConflictError("请先确认到达氹仔终章地点")
 
             reflection = (story_session.state.ending_reflection or "").strip()
-            caption = reflection or DEFAULT_REFLECTION
+            caption = reflection or copy.default_reflection
             try:
                 scene_jpeg = generate_prompt_image_via_qwenpaw(
                     prompt=_future_letter_prompt(),
@@ -231,6 +340,7 @@ class FutureLetterService:
                 image_svg, truncated = _render_future_letter_svg(
                     scene_jpeg=scene_jpeg,
                     reflection=caption,
+                    language=locale,
                 )
                 if truncated:
                     image_svg = image_svg.replace(
@@ -261,7 +371,7 @@ class FutureLetterService:
                 caption_source="user" if reflection else "story",
                 source_type="story_future_letter",
                 ai_generated=False,
-                language="zh-CN",
+                language=locale,
                 review_decision="not_required",
                 image_svg=image_svg,
                 photo_scrubbed=False,
@@ -288,17 +398,46 @@ class FutureLetterService:
                     "reflection_chars": len(caption),
                     "reflection_sent_to_agent": False,
                     "scene_source": "ai",
+                    "language": locale,
                 },
             )
             return self._response(story_session, saved)
 
-    def image(self, session_id: str, user_id: str) -> bytes:
+    def image(
+        self,
+        session_id: str,
+        user_id: str,
+        *,
+        language: str | None = None,
+    ) -> bytes:
         story_session = self._session(session_id, user_id)
         poi_id = self._ending_poi_id(story_session)
         record = self._record(story_session, poi_id)
         if record is None:
             raise FutureLetterNotFoundError("未来信配图尚未生成")
-        return record.image_svg
+        locale = normalize_story_language(language or record.language)
+        if record.language == locale:
+            return record.image_svg
+        scene_jpeg = _scene_image_from_svg(record.image_svg)
+        if scene_jpeg is None:
+            return record.image_svg
+        reflection = (
+            record.caption
+            if record.caption_source == "user"
+            else _FUTURE_LETTER_COPY[locale].default_reflection
+        )
+        image_svg, truncated = _render_future_letter_svg(
+            scene_jpeg=scene_jpeg,
+            reflection=reflection,
+            language=locale,
+        )
+        if truncated:
+            image_svg = image_svg.replace(
+                b'data-artifact-kind="future_letter"',
+                b'data-artifact-kind="future_letter" data-reflection-truncated="true"',
+                1,
+            )
+        return image_svg
 
 
 future_letter_service = FutureLetterService(story_session_repository, postcard_repository)
