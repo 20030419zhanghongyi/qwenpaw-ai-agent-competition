@@ -32,6 +32,16 @@ from .models import (
 from .repository import StorySessionRepository, story_session_repository
 
 
+_ACTION_MESSAGES = {
+    "arrival_confirmed": {
+        "zh-CN": "已到达当前剧情地点",
+        "zh-TW": "已到達目前的故事地點",
+        "en": "You have arrived at the current story location.",
+        "pt": "Chegou ao local atual da história.",
+    },
+}
+
+
 class StorySessionNotFoundError(LookupError):
     pass
 
@@ -261,10 +271,16 @@ class StoryService:
         *,
         language: str = "zh-CN",
     ) -> StoryActionResponse:
-        display_story = localize_story(story, normalize_story_language(language))
+        locale = normalize_story_language(language)
+        display_story = localize_story(story, locale)
+        message = (
+            _ACTION_MESSAGES.get(result.message_key, {}).get(locale, result.message)
+            if result.message_key
+            else result.message
+        )
         return StoryActionResponse(
             accepted=result.accepted,
-            message=result.message,
+            message=message,
             hint=result.hint,
             new_clues=result.new_clues,
             new_rewards=self._localized_rewards(display_story, result.new_rewards),

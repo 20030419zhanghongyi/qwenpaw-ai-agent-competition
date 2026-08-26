@@ -391,6 +391,38 @@ def test_story_session_rewards_follow_requested_locale(
     assert story_session.state.rewards[0].text == "灯还亮着，信里的人仍在等水路上的归航。"
 
 
+@pytest.mark.parametrize(
+    ("language", "expected_message"),
+    [
+        ("zh-CN", "已到达当前剧情地点"),
+        ("zh-TW", "已到達目前的故事地點"),
+        ("en", "You have arrived at the current story location."),
+        ("pt", "Chegou ao local atual da história."),
+    ],
+)
+def test_story_arrival_message_follows_requested_locale(
+    language: str,
+    expected_message: str,
+):
+    story = load_story(STORY_ID)
+    story_session = _session(current_chapter_id="chapter_ama")
+    result = apply_action(
+        story,
+        story_session,
+        _action(StoryAction.ARRIVE, "chapter_ama"),
+    )
+    service = StoryService(repository=None, trips=None)  # type: ignore[arg-type]
+
+    response = service._action_response(
+        story,
+        story_session,
+        result,
+        language=language,
+    )
+
+    assert response.message == expected_message
+
+
 def test_v4_unordered_answers_and_mapping_keys_are_normalized():
     story = load_story(STORY_ID)
     story_session = _session()
