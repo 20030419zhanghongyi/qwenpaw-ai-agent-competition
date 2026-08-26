@@ -44,7 +44,12 @@ from app.guardrails.runtime import rate_limit, record_audit, sanitize_untrusted_
 from app.observability.trace import record_trace
 from app.tools.scrub import scrub
 
-from .preset_script import build_preset_narration, poi_names_by_language, poi_names_for
+from .preset_script import (
+    build_preset_narration,
+    poi_names_by_language,
+    poi_names_for,
+    poi_official_hits_for,
+)
 from .trigger_state import trigger_state
 from .tts import TTSUnavailableError, VOICE_BY_LANGUAGE, local_audio_path, synthesize_to_oss
 from .web_search import filter_relevant_hits, format_web_material, search_web_multi
@@ -109,6 +114,12 @@ _TEMPORAL_FACT = re.compile(
     r"built|completed|opened|inaugurated|construction|constru[íi]d|conclu[íi]d)",
     re.IGNORECASE,
 )
+_HISTORY_CHANGE_INTENT = re.compile(
+    r"(变化|變化|演变|演變|变迁|變遷|沿革|修缮|修繕|修复|修復|重建|改建|扩建|擴建|"
+    r"changed?|changes|evol(?:ve|ved|ution)|development|restor(?:e|ed|ation)|rebuilt?|"
+    r"mudan[çc]as?|evolu[çc][ãa]o|restaur(?:ado|a[çc][ãa]o)|reconstru[íi]d)",
+    re.IGNORECASE,
+)
 _TRADITIONAL_MARKERS = set("這麼時為麼開啟麼裡與還體來說請問過於從將會後發現處")
 _PORTUGUESE_MARKERS = {
     "a",
@@ -149,8 +160,15 @@ _QUERY_INTENT_TERMS: list[tuple[re.Pattern[str], dict[str, str]]] = [
         },
     ),
     (
-        re.compile(r"历史|歷史|沿革|过去|過去|history|historical|história", re.IGNORECASE),
-        {"zh-CN": "历史 沿革", "en": "history development", "pt": "história evolução"},
+        re.compile(
+            rf"历史|歷史|过去|過去|history|historical|história|{_HISTORY_CHANGE_INTENT.pattern}",
+            re.IGNORECASE,
+        ),
+        {
+            "zh-CN": "历史 沿革 变化 修缮 重建",
+            "en": "history changes development restoration rebuilding",
+            "pt": "história evolução mudanças restauro reconstrução",
+        },
     ),
     (
         re.compile(r"建筑|建築|设计|設計|风格|風格|architecture|design|arquitetura", re.IGNORECASE),
@@ -600,6 +618,7 @@ def _web_search_queries(
     q = (question or "").strip()
     queries: list[str] = []
     temporal = bool(_TEMPORAL_INTENT.search(q))
+    history_change = bool(_HISTORY_CHANGE_INTENT.search(q))
     if temporal and names:
         suffix = {
             "en": "built completed opened inauguration date",
@@ -612,6 +631,18 @@ def _web_search_queries(
         ] or names
         primary = preferred[0]
         queries.extend([primary, f"{primary} {suffix}"])
+    elif history_change and names:
+        suffix = {
+            "en": "history changes development restoration rebuilding",
+            "pt": "história evolução mudanças restauro reconstrução",
+        }.get(language, "历史 沿革 变化 修缮 重建")
+        preferred = [
+            name
+            for name in names
+            if (language.startswith("zh")) == bool(re.search(r"[\u3400-\u9fff]", name))
+        ] or names
+        primary = preferred[0]
+        queries.extend([f"{primary} {suffix}", primary])
     elif poi and q:
         same_script = language.startswith("zh") or not re.search(r"[\u3400-\u9fff]", q)
         queries.append(f"{poi} {q}" if same_script else poi)
@@ -1045,7 +1076,10 @@ def ask(
                 language=search_language,
                 limit=2,
             )
-        raw_web_hits = _search_query_sets(query_sets, k=2, budget_s=3.5)
+        raw_web_hits = [
+            *(poi_official_hits_for(req.poi) if req.language.startswith("zh") else []),
+            *_search_query_sets(query_sets, k=2, budget_s=3.5),
+        ]
         web_hits = filter_relevant_hits(expanded_names, raw_web_hits)
         if _TEMPORAL_INTENT.search(req.question):
             web_hits = [
