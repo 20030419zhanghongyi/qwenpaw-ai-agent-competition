@@ -7,12 +7,18 @@ import type {
 } from "../types";
 import { PuzzleFrame } from "./PuzzleFrame";
 import { usePointerDrag } from "./usePointerDrag";
-import { useStoryMessages } from "../storyI18n";
+import { useStoryMessages, type StoryMessageKey } from "../storyI18n";
 
 interface EvidenceChainPuzzleProps {
   puzzle: EvidenceChainPuzzleData;
   disabled?: boolean;
   onSubmit: (answer: string[]) => void;
+}
+
+interface EvidenceConfig {
+  descriptionKey: StoryMessageKey;
+  sourceKey: StoryMessageKey;
+  assetId: string;
 }
 
 interface EvidencePresentation {
@@ -21,25 +27,25 @@ interface EvidencePresentation {
   assetId: string;
 }
 
-const SAM_KAI_EVIDENCE: Record<string, EvidencePresentation> = {
+const SAM_KAI_EVIDENCE: Record<string, EvidenceConfig> = {
   delivery_order: {
-    description: "",
-    sourceLabel: "",
+    descriptionKey: "evidenceDeliveryDescription",
+    sourceKey: "evidenceDeliverySource",
     assetId: "V4-SAM-02",
   },
   store_ledger: {
-    description: "",
-    sourceLabel: "",
+    descriptionKey: "evidenceLedgerDescription",
+    sourceKey: "evidenceLedgerSource",
     assetId: "V4-SAM-03",
   },
   porter_receipt: {
-    description: "",
-    sourceLabel: "",
+    descriptionKey: "evidenceReceiptDescription",
+    sourceKey: "evidenceReceiptSource",
     assetId: "V4-SAM-04",
   },
   single_summary: {
-    description: "",
-    sourceLabel: "",
+    descriptionKey: "evidenceSummaryDescription",
+    sourceKey: "evidenceSummarySource",
     assetId: "V4-SAM-05",
   },
 };
@@ -56,13 +62,13 @@ function presentation(
   option: StoryPuzzleOption,
   fallbackDescription: string,
   fallbackSource: string,
+  localizedDescription?: string,
+  localizedSource?: string,
 ): EvidencePresentation {
   const fallback = SAM_KAI_EVIDENCE[option.id];
   return {
-    description:
-      option.description ?? (fallback?.description || fallbackDescription),
-    sourceLabel:
-      option.source_label ?? (fallback?.sourceLabel || fallbackSource),
+    description: option.description ?? localizedDescription ?? fallbackDescription,
+    sourceLabel: option.source_label ?? localizedSource ?? fallbackSource,
     assetId: option.asset_id ?? fallback?.assetId ?? "V4-SAM-05",
   };
 }
@@ -75,10 +81,13 @@ function EvidenceCardContent({
   onOpen?: (assetId: string, alt: string) => void;
 }) {
   const st = useStoryMessages();
+  const evidence = SAM_KAI_EVIDENCE[option.id];
   const detail = presentation(
     option,
     st("evidenceFallbackDescription"),
     st("evidenceFallbackSource"),
+    evidence ? st(evidence.descriptionKey) : undefined,
+    evidence ? st(evidence.sourceKey) : undefined,
   );
   const imageAlt = st("evidenceImageAlt", { item: option.text });
   return (
