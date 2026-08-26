@@ -11,6 +11,8 @@ import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { ProfileSidebar } from "@/components/profile/ProfileSidebar";
 import { TravelHistoryPanel } from "@/components/profile/TravelHistoryPanel";
+import { localizedMemoirTitle } from "@/lib/memoirLocalization";
+import { localizedPoiIdName } from "@/lib/poiLocalization";
 import { useAuth } from "@/state/AuthContext";
 import { useWalk } from "@/state/WalkContext";
 
@@ -149,8 +151,18 @@ export function MemoirGalleryPage() {
               const url = await loadPrivatePhoto(photo, memoir.memoir_id, token);
               objectUrls.push(url);
               const placeName =
-                memoir.chapters.find((chapter) => chapter.poi_id === photo.poi_id)
-                  ?.poi_name ?? copy.unassigned;
+                (() => {
+                  const chapter = memoir.chapters.find(
+                    (item) => item.poi_id === photo.poi_id,
+                  );
+                  return chapter
+                    ? localizedPoiIdName(
+                        chapter.poi_id,
+                        language,
+                        chapter.poi_name,
+                      )
+                    : copy.unassigned;
+                })();
               return { memoir, photo, url, placeName };
             }),
           ),
@@ -181,7 +193,7 @@ export function MemoirGalleryPage() {
       cancelled = true;
       objectUrls.forEach((url) => URL.revokeObjectURL(url));
     };
-  }, [copy.error, copy.unassigned, reloadKey, token, userId]);
+  }, [copy.error, copy.unassigned, language, reloadKey, token, userId]);
 
   const memoirPhotoCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -290,7 +302,7 @@ export function MemoirGalleryPage() {
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-ink">{placeName}</p>
                             <p className="mt-1 truncate text-xs text-ink-soft">
-                              {memoir.title}
+                              {localizedMemoirTitle(memoir.title, language)}
                             </p>
                           </div>
                           {photo.has_people ? (
@@ -329,7 +341,7 @@ export function MemoirGalleryPage() {
                           to={`/profile/memoirs/${encodeURIComponent(memoir.memoir_id)}`}
                           className="rounded-full border border-line bg-card px-4 py-2 text-xs text-ink transition hover:border-sage"
                         >
-                          {memoir.title} · {copy.edit}
+                          {localizedMemoirTitle(memoir.title, language)} · {copy.edit}
                         </Link>
                       ))}
                   </div>

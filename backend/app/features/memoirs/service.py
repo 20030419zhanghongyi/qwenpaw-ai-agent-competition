@@ -3,7 +3,8 @@
 from app.db.models import MemoirPhoto, TravelMemoir
 from app.db.session import SessionLocal
 from app.features.pois.repository import PoiRepository
-from app.features.postcards.service import postcard_service
+from app.features.postcards.service import _to_traditional, postcard_service
+from app.features.routes.poi_metadata import get_poi_metadata
 from app.features.trips.repository import trip_repository
 
 from .models import (
@@ -80,6 +81,17 @@ class MemoirService:
         return STYLE_COPY.get(language, STYLE_COPY["zh-CN"])
 
     @staticmethod
+    def _poi_name(poi_id: str, fallback: str, language: str) -> str:
+        metadata = get_poi_metadata(poi_id) or {}
+        if language == "en":
+            return str(metadata.get("name_en") or fallback)
+        if language == "pt":
+            return str(metadata.get("name_pt") or metadata.get("name_en") or fallback)
+        if language == "zh-TW":
+            return _to_traditional(str(metadata.get("name_zh") or fallback))
+        return str(metadata.get("name_zh") or fallback)
+
+    @staticmethod
     def _owned(record: TravelMemoir | None, user_id: str) -> TravelMemoir:
         if record is None:
             raise MemoirNotFoundError("Memoir not found")
@@ -140,7 +152,8 @@ class MemoirService:
         chapters = list(record.chapters or [])
         for poi_id in missing_ids:
             order = trip.checked_in_poi_ids.index(poi_id)
-            name = poi_map[poi_id].poi_name if poi_id in poi_map else poi_id
+            fallback_name = poi_map[poi_id].poi_name if poi_id in poi_map else poi_id
+            name = self._poi_name(poi_id, fallback_name, record.language)
             chapters.append(
                 MemoirChapter(
                     poi_id=poi_id,
@@ -200,7 +213,8 @@ class MemoirService:
         copy = self._copy(request.language)
         chapters = []
         for order, poi_id in enumerate(trip.checked_in_poi_ids):
-            name = poi_map[poi_id].poi_name if poi_id in poi_map else poi_id
+            fallback_name = poi_map[poi_id].poi_name if poi_id in poi_map else poi_id
+            name = self._poi_name(poi_id, fallback_name, request.language)
             chapters.append(
                 MemoirChapter(
                     poi_id=poi_id,

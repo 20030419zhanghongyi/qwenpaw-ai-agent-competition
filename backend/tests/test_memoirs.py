@@ -93,6 +93,21 @@ def test_existing_memoir_adds_later_checkins_without_overwriting_chapters():
     chapters = refreshed.json()["chapters"]
     assert [chapter["poi_id"] for chapter in chapters] == trip["checked_in_poi_ids"] + [next_poi]
     assert chapters[0]["personal_note"] == "keep this note"
+    assert not any("\u3400" <= character <= "\u9fff" for character in chapters[-1]["body"])
+
+
+@pytest.mark.parametrize("language", ["en", "pt"])
+def test_foreign_language_memoir_uses_localized_poi_names(language: str):
+    trip = _checked_in_trip()
+    created = client.post(
+        f"/api/v1/trips/{trip['trip_id']}/memoir",
+        json={"style": "magazine", "language": language},
+        headers=_headers(),
+    )
+    assert created.status_code == 201, created.text
+    chapter = created.json()["chapters"][0]
+    assert not any("\u3400" <= character <= "\u9fff" for character in chapter["poi_name"])
+    assert not any("\u3400" <= character <= "\u9fff" for character in chapter["body"])
 
 
 def test_share_privacy_filters_people_date_route_and_notes_then_revokes():
