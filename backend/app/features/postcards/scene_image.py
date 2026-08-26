@@ -16,7 +16,7 @@ logger = logging.getLogger("macau_storywalk.postcard_scene")
 
 DEFAULT_PHOTO_STYLE = "souvenir"
 DEFAULT_SCENE_STYLE = "gc-minimal-zine-poster"
-SCENE_CACHE_VERSION = "v1"
+SCENE_CACHE_VERSION = "v2"
 PHOTO_STYLE_PROMPTS = {
     "souvenir": "雅致澳门旅行纪念品插画，柔和纸张纹理，暖色电影光线",
     "watercolor": "轻盈透明水彩画，细腻纸纹，柔和晕染，保留主体轮廓",

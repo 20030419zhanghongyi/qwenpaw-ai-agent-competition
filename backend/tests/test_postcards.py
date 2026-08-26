@@ -152,6 +152,27 @@ def test_postcard_is_idempotent_for_same_checked_in_stop(monkeypatch):
     assert second.json()["postcard_id"] == first.json()["postcard_id"]
 
 
+def test_legacy_postcard_is_hidden_and_can_be_replaced(monkeypatch):
+    monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
+    trip_id, poi_id = _trip_with_checkin()
+    legacy = _create_postcard(trip_id, poi_id).json()
+    with SessionLocal() as session:
+        record = session.get(PostcardRecord, legacy["postcard_id"])
+        assert record is not None
+        record.render_version = 1
+        session.commit()
+
+    listed = client.get(f"/api/v1/trips/{trip_id}/postcards")
+    assert listed.status_code == 200
+    assert listed.json()["postcards"] == []
+    assert client.get(legacy["image_url"]).status_code == 404
+
+    current = _create_postcard(trip_id, poi_id)
+    assert current.status_code == 201
+    assert current.json()["postcard_id"] != legacy["postcard_id"]
+    assert len(client.get(f"/api/v1/trips/{trip_id}/postcards").json()["postcards"]) == 1
+
+
 def test_list_postcards_follows_route_order(monkeypatch):
     monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
     trip_id, first_poi = _trip_with_checkin()

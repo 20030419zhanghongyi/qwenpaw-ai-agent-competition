@@ -357,8 +357,10 @@ POSTCARD_AI_SCENE_TIMEOUT=210
 
 后端从 SSE 的图片工具结果中取得 `file://` 引用，通过 QwenPaw 的受控文件
 预览接口下载图片，裁切为 960×720 JPEG，并缓存到
-`data/postcard_scene_cache/`。生成失败时仍会依次回退到直接 DashScope 图像
-调用、预生成场景图库和本地占位图，不会使明信片创建接口失败。
+`data/postcard_scene_cache/`。无照片场景只接受 Scene Agent 生成的有效图片；
+生成失败时接口会明确返回失败，不再回退到直接 DashScope 调用、旧 SVG 场景库
+或本地占位图。场景缓存版本更新时，旧缓存不会被再次读取；数据库中的旧版
+明信片保留为历史记录，但不会出现在列表、回忆录或跨用户场景复用中。
 
 上传照片时，`photo_style` 可选值为 `souvenir`（默认 UI 选项）、
 `watercolor`、`azulejo`、`vintage` 或 `ink`；不提交该字段则不使用 AI。
