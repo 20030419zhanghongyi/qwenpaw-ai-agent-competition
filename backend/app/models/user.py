@@ -16,6 +16,7 @@ SUPPORTED_LANGS = ("zh-CN", "zh-TW", "en", "pt")
 TRIP_DAYS_MIN = 2
 TRIP_DAYS_MAX = 5
 TRIP_DAYS_DEFAULT = 3
+STORY_IDS = ("lotus_city_double_map", "taipa_letters", "coloane_after_tide")
 
 
 def clamp_trip_days(value: int | None) -> int | None:
@@ -41,6 +42,10 @@ class Preference(BaseModel):
     travel_date: str | None = None
     # 多日游天数（仅 duration=multi-day 时有意义）；匹配层用作 top_k
     trip_days: int | None = None
+    # 故事体验是普通行程的一部分；None 表示尚未询问，False 表示明确跳过。
+    story_opt_in: bool | None = None
+    story_id: str | None = None
+    story_day: int | None = None
 
     @field_validator("trip_days", mode="before")
     @classmethod
@@ -49,6 +54,21 @@ class Preference(BaseModel):
             return None
         try:
             return clamp_trip_days(int(value))
+        except (TypeError, ValueError):
+            return None
+
+    @field_validator("story_id", mode="before")
+    @classmethod
+    def validate_story_id(cls, value: Any) -> str | None:
+        return value if value in STORY_IDS else None
+
+    @field_validator("story_day", mode="before")
+    @classmethod
+    def validate_story_day(cls, value: Any) -> int | None:
+        if value is None or value == "":
+            return None
+        try:
+            return max(1, min(TRIP_DAYS_MAX, int(value)))
         except (TypeError, ValueError):
             return None
 

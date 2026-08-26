@@ -68,6 +68,20 @@ export function getCurrentUser(token: string): Promise<CurrentUserResponse> {
   return request("/api/v1/users/me", undefined, token);
 }
 
+export function claimGuestTrips(
+  token: string,
+  guestUserId: string,
+): Promise<{ claimed_trips: number }> {
+  return request(
+    "/api/v1/users/me/claim-guest-trips",
+    {
+      method: "POST",
+      body: JSON.stringify({ guest_user_id: guestUserId }),
+    },
+    token,
+  );
+}
+
 export function saveUserPreference(
   userId: string,
   preference: Preference,

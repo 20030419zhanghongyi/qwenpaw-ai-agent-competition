@@ -88,7 +88,8 @@ class Postcard(Base):
             "trip_id",
             "poi_id",
             "artifact_kind",
-            name="uq_postcards_trip_poi_kind",
+            "render_version",
+            name="uq_postcards_trip_poi_kind_version",
         ),
     )
 
@@ -107,6 +108,7 @@ class Postcard(Base):
     review_decision: Mapped[str] = mapped_column(String(16), nullable=False)
     image_svg: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     photo_scrubbed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    render_version: Mapped[int] = mapped_column(Integer, nullable=False, default=2)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now, server_default=func.now(), nullable=False
     )

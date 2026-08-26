@@ -1,0 +1,3113 @@
+{
+  "zh-TW": {
+    "id": "coloane_after_tide",
+    "version": 4,
+    "title": "潮退之後",
+    "subtitle": "沿路環村、古廟、船廠與黑沙，補完一本沒有寫完的潮汐工作簿",
+    "summary": "你與阿蓮在路環打開一本虛構的《潮汐工作簿》。最後一頁只留下問題：船不再下水以後，這本簿該記什麼？你們沿村心、古廟、譚公廟、聖方濟各廣場、荔枝碗與黑沙，為它補上今天仍能找到的五種證據：海、船、村、工、土。",
+    "route_id": "coloane_leisure_halfday",
+    "estimated_hours": 4,
+    "product_mode": "mobile_portrait_web",
+    "presentation": {
+      "default_orientation": "portrait",
+      "max_content_width_px": 480,
+      "cover_asset_id": "CAT-COVER-01",
+      "asset_base_path": "/story/coloane-after-tide/"
+    },
+    "identity": {
+      "id": "tide_workbook_keeper",
+      "name": "潮汐工作簿記錄者",
+      "description": "你不是預先知道答案的導覽員。你要用現場觀察、公開資料、阿蓮的查證與自己的判斷，補完一本虛構工作簿。"
+    },
+    "content_notice": "《潮汐工作簿》、虛構記錄員、頁面問題、記錄章與聲音明信片均為劇情創作。路環古廟、譚公廟、荔枝碗船廠片區、聖方濟各聖堂及黑沙考古相關內容依公開資料整理；信俗、地方記憶與史實在故事中分欄呈現。",
+    "content_labels": {
+      "historical_fact": "史實",
+      "folklore": "民間信俗／地方記憶",
+      "contextual_reconstruction": "語境化重建",
+      "fictional_story": "劇情虛構",
+      "dynamic_operational_info": "動態營運資訊"
+    },
+    "characters": [
+      {
+        "id": "player",
+        "name": "玩家",
+        "role": "為《潮汐工作簿》補上今日路環記錄的人",
+        "fictional": true
+      },
+      {
+        "id": "alian",
+        "name": "阿蓮",
+        "role": "本地同學與知識 Agent，協助區分史實、信俗和劇情虛構",
+        "fictional": true
+      },
+      {
+        "id": "alan",
+        "name": "記錄員",
+        "role": "《潮汐工作簿》的虛構前任記錄者，只以文字頁面出現",
+        "fictional": true
+      },
+      {
+        "id": "m",
+        "name": "後來的人",
+        "role": "工作簿想像中的未來讀者",
+        "fictional": true
+      }
+    ],
+    "props": [
+      "潮汐工作簿",
+      "海記錄",
+      "船記錄",
+      "村記錄",
+      "工記錄",
+      "土記錄",
+      "路環聲音明信片"
+    ],
+    "nodes": [
+      {
+        "id": "prologue_tide_workbook",
+        "order": 0,
+        "kind": "prologue",
+        "title": "序章：最後一頁空着",
+        "story_time": "10:00",
+        "scene": "你在路環村的公共空間打開一本舊工作簿。封面寫着《潮汐工作簿》，最後一頁卻是空白。",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-PROP-01",
+            "alt": "潮汐工作簿的封面與空白頁",
+            "caption": "這不是藏寶圖，而是一本等待今日記錄的工作簿。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-prologue-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "這不是藏寶圖，只有五個空格：海、船、村、工、土。"
+          },
+          {
+            "id": "cat-prologue-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "也許它不是要你找寶物，而是要你判斷路環應該留下甚麼。",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "cat-prologue-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "那我們先從哪裏開始？"
+          },
+          {
+            "id": "cat-prologue-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "先別急着去船廠。路環不是從一艘船開始的，是從村裏每天的聲音開始的。聽完這裏，我們先走到村中的古廟，看看靠海生活的人把不安放在哪裏。",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "fictional_story",
+            "title": "潮汐工作簿",
+            "text": "工作簿、前任記錄員和五個空欄均為故事道具，用來組織路環的觀察線索。",
+            "source_label": "《潮退之後》劇情設定",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "路環村",
+          "chapter_goal": "幫助玩家理解《潮汐工作簿》的虛構設定，並從聲音和觀察進入路環故事。",
+          "known_facts": [
+            "路環村保留海邊街巷、宗教場所和社區公共空間",
+            "本故事以觀察、聲音、手藝和社區記憶串聯路環"
+          ],
+          "fiction_boundaries": [
+            "《潮汐工作簿》和前任記錄員為虛構"
+          ],
+          "suggested_questions": [
+            "這條故事線和蓮城雙圖有甚麼不同？",
+            "路環為甚麼適合慢節奏觀察？"
+          ],
+          "do_not_reveal": [
+            "不要提前透露後續謎題答案"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-COVER-01",
+            "CAT-PROP-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p0-cover",
+            "kind": "title",
+            "title": "潮退之後",
+            "text": "一本沒有寫完的潮汐工作簿，正在等待今天的路環。",
+            "asset_id": "CAT-COVER-01"
+          },
+          {
+            "id": "p0-book",
+            "kind": "narrative",
+            "title": "最後一頁空着",
+            "text": "你在路環村的公共空間打開一本舊工作簿。封面寫着《潮汐工作簿》，最後一頁卻是空白。",
+            "asset_id": "CAT-PROP-01"
+          },
+          {
+            "id": "p0-dialogue",
+            "kind": "dialogue",
+            "speaker": "阿蓮",
+            "text": "先別急着去船廠。路環不是從一艘船開始的，是從村裏每天的聲音開始的。聽完這裏，我們先走到村中的古廟，看看靠海生活的人把不安放在哪裏。"
+          },
+          {
+            "id": "p0-sound",
+            "kind": "narrative",
+            "title": "先聽三十秒",
+            "text": "請先不看熒幕三十秒。你可以在心裏記下三種聲音：海風、人聲、腳步、車聲、鳥聲，或廟前香火。這一步不判對錯，只是把今天的路環寫進第一頁。記好以後，順着村中的街巷走向天后古廟／觀音古廟，第一個空欄是【海】。"
+          }
+        ],
+        "reward": {
+          "id": "tide_workbook",
+          "kind": "story_prop",
+          "name": "潮汐工作簿",
+          "text": "你與阿蓮決定沿路環走一圈，先從村中的古廟開始，補完第一個空欄【海】。"
+        }
+      },
+      {
+        "id": "chapter_coloane_sea",
+        "order": 1,
+        "kind": "puzzle",
+        "title": "第一章：廟前等潮",
+        "location_name": "天后古廟／觀音古廟",
+        "story_time": "10:30",
+        "poi_id": "poi_0236",
+        "scene": "工作簿第一頁浮出一句話：出海以前，人先把不安放在哪裡？",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-SEA-01",
+            "alt": "路環村內古廟與街巷",
+            "caption": "海不只是遠處的風景，也曾是社區每天要面對的未知。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-sea-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "所以海不是遠處的藍色？"
+          },
+          {
+            "id": "cat-sea-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "對。對靠海生活的人來說，海是每天都要回答的未知。",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "cat-sea-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "那古廟不只是建築，也是社區留下的記錄。"
+          },
+          {
+            "id": "cat-sea-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "是。但我們要分清楚，哪些是可查的史實，哪些是人們賦予它的信俗意義。",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "路環古廟",
+            "text": "觀音古廟約建於1800年，碑文記載由船戶集資興建；天后古廟約建於1763年，是路環較早的廟宇之一。",
+            "source_label": "澳門旅遊局及公開文化資料",
+            "confidence": "high"
+          },
+          {
+            "kind": "folklore",
+            "title": "出海平安",
+            "text": "祈求出海平安屬於信俗和地方生活記憶，應被尊重，但不應寫成可驗證史實。",
+            "source_label": "地方信俗整理",
+            "confidence": "medium"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "路環天后古廟與觀音古廟",
+          "chapter_goal": "幫助玩家區分古廟相關史實和信俗表達，補上工作簿的海欄。",
+          "known_facts": [
+            "路環天后古廟約建於1763年",
+            "路環觀音古廟約建於1800年，與船戶集資有關",
+            "祈求平安屬於信俗，不等於可驗證歷史事件"
+          ],
+          "fiction_boundaries": [
+            "工作簿問題和海記錄章為劇情創作"
+          ],
+          "suggested_questions": [
+            "天后古廟和觀音古廟分別有什麼背景？",
+            "史實和信俗應該怎樣分開？"
+          ],
+          "do_not_reveal": [
+            "不要直接列出謎題正確選項"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-SEA-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p1-transition",
+            "kind": "transition",
+            "title": "從村心走向古廟",
+            "text": "從剛才停下聆聽的公共空間出發，你們沿路環村的街巷慢慢走向天后古廟／觀音古廟。工作簿第一頁浮出一句話：出海以前，人先把不安放在哪裡？"
+          },
+          {
+            "id": "p1-scene",
+            "kind": "narrative",
+            "title": "廟前等潮",
+            "text": "古廟藏在村中。香火、碑文、拜亭和街巷，把海變成一種日常生活。",
+            "asset_id": "CAT-SEA-01"
+          },
+          {
+            "id": "p1-dialogue",
+            "kind": "dialogue",
+            "speaker": "阿蓮",
+            "text": "對靠海生活的人來說，海不是遠處的藍色，而是每天都要回答的未知。這一站先分清史實和信俗；完成後，我們再去譚公廟，看一條不下水的船如何繼續載著願望。"
+          },
+          {
+            "id": "p1-puzzle",
+            "kind": "puzzle",
+            "title": "補上「海」",
+            "text": "把可被資料核對的說法寫入史實欄。"
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "宗教活動、人流或現場限制時，只在開放區域閱讀內容，不進入封閉空間。"
+        },
+        "puzzle": {
+          "id": "puzzle_coloane_sea_facts",
+          "type": "multi_select",
+          "prompt": "哪些適合寫入《潮汐工作簿》的【海】欄？",
+          "options": [
+            {
+              "id": "kuan_yin_1800",
+              "text": "觀音古廟約建於1800年"
+            },
+            {
+              "id": "boat_households_funded",
+              "text": "觀音古廟與船戶集資有關"
+            },
+            {
+              "id": "wish_always_comes_true",
+              "text": "祈願一定會應驗"
+            },
+            {
+              "id": "tin_hau_1763",
+              "text": "天后古廟約建於1763年"
+            }
+          ],
+          "solution": [
+            "kuan_yin_1800",
+            "boat_households_funded",
+            "tin_hau_1763"
+          ],
+          "hints": [
+            "找可被資料核對的說法。",
+            "信俗可以被尊重，但不能寫成必然發生的史實。"
+          ],
+          "explanation": "觀音古廟年代、船戶集資和天后古廟年代都屬於可查資料；祈願一定應驗屬於信俗表達，不宜寫入史實欄。你補上【海】後，工作簿的下一頁出現一條船影：請離開廟前開放區域，前往譚公廟。",
+          "skip_text": "阿蓮幫你把可查資料和信俗分欄。你仍然補上【海】。工作簿的下一頁出現一條船影：請離開廟前開放區域，前往譚公廟。",
+          "reward": {
+            "id": "record_sea",
+            "kind": "stamp",
+            "name": "海記錄",
+            "text": "海不是遠處的藍色，是人們每天必須回答的未知。下一站：譚公廟，去看船、平安與地方信俗怎樣連在一起。"
+          }
+        }
+      },
+      {
+        "id": "chapter_coloane_boat",
+        "order": 2,
+        "kind": "puzzle",
+        "title": "第二章：一條鯨骨做的船",
+        "location_name": "譚公廟",
+        "story_time": "11:10",
+        "poi_id": "poi_0240",
+        "scene": "工作簿第二頁寫著：如果船已不在水上，它還能不能繼續載人？",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-BOAT-01",
+            "alt": "譚公廟附近的濱海街巷",
+            "caption": "有些船不再航行，卻仍把人的願望帶過時間。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-boat-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "鯨骨做成龍舟，這件事本身已經像傳說。"
+          },
+          {
+            "id": "cat-boat-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "像傳說，不代表沒有事實。我們要分清楚它是甚麼，以及人們相信甚麼。",
+            "portrait_asset_id": "V4-CHAR-02"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "譚公廟與鯨骨龍舟",
+            "text": "譚公廟建於清同治年間，廟內保存以鯨骨雕製、已有百年以上歷史的龍舟。",
+            "source_label": "澳門旅遊局及公開文化資料",
+            "confidence": "high"
+          },
+          {
+            "kind": "folklore",
+            "title": "觸摸鯨骨",
+            "text": "觸摸鯨骨求好運屬於地方信俗，是人們賦予文物的意義之一。",
+            "source_label": "地方信俗整理",
+            "confidence": "medium"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "譚公廟",
+          "chapter_goal": "幫助玩家區分文物事實、信俗和地方意義，補上工作簿的船欄。",
+          "known_facts": [
+            "譚公廟建於清同治年間",
+            "廟內保存百年以上鯨骨龍舟",
+            "觸摸鯨骨求好運屬於信俗"
+          ],
+          "fiction_boundaries": [
+            "工作簿問題和船記錄章為劇情創作"
+          ],
+          "suggested_questions": [
+            "譚公廟和出海平安有甚麼關係？",
+            "文物事實和信俗意義怎樣分開？"
+          ],
+          "do_not_reveal": [
+            "不要直接說出欄目配對答案"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-BOAT-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p2-transition",
+            "kind": "transition",
+            "title": "從古廟走向譚公廟",
+            "text": "帶著【海】記錄離開古廟，你們往譚公廟方向走。工作簿上的海字旁邊出現一條細線，像船槳划過水面。阿蓮說：如果海是未知，那船就是人走向未知的方法。"
+          },
+          {
+            "id": "p2-scene",
+            "kind": "narrative",
+            "title": "一條鯨骨做的船",
+            "text": "你們來到譚公廟。工作簿第二頁問：如果船已不在水上，它還能不能繼續載人？",
+            "asset_id": "CAT-BOAT-01"
+          },
+          {
+            "id": "p2-puzzle",
+            "kind": "puzzle",
+            "title": "補上「船」",
+            "text": "把三條記錄放入正確欄目。解開後，工作簿會把你帶回村心廣場，因為船的記憶不只在廟裡，也在人生活的地方。"
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "不觸碰文物；若廟內活動或開放情況不適合停留，可在外圍閱讀內容。"
+        },
+        "puzzle": {
+          "id": "puzzle_coloane_boat_layers",
+          "type": "mapping",
+          "prompt": "把三條記錄放入正確欄目。",
+          "fields": [
+            {
+              "id": "fact",
+              "label": "史實"
+            },
+            {
+              "id": "belief",
+              "label": "信俗"
+            },
+            {
+              "id": "meaning",
+              "label": "地方意義"
+            }
+          ],
+          "options": [
+            {
+              "id": "whale_bone_dragon_boat",
+              "text": "廟內保存鯨骨龍舟"
+            },
+            {
+              "id": "touch_for_luck",
+              "text": "觸摸鯨骨求好運"
+            },
+            {
+              "id": "safe_voyage_memory",
+              "text": "出海平安的共同願望"
+            }
+          ],
+          "solution": {
+            "fact": "whale_bone_dragon_boat",
+            "belief": "touch_for_luck",
+            "meaning": "safe_voyage_memory"
+          },
+          "hints": [
+            "先找可被描述為文物本身的內容。",
+            "再分辨人們相信甚麼，以及這種信仰反映了甚麼願望。"
+          ],
+          "explanation": "鯨骨龍舟保存至今是文物事實；觸摸求好運是信俗；出海平安的願望則說明這件物如何承載地方意義。你補上【船】後，工作簿把線拉回聖方濟各聖堂及廣場：下一站去看同一個村心如何保存不同記憶。",
+          "skip_text": "阿蓮把三條記錄分欄，提醒你不要把信俗寫成史實，也不要把信俗從地方記憶中抹去。你補上【船】後，下一站回到聖方濟各聖堂及廣場，看村心如何保存不同記憶。",
+          "reward": {
+            "id": "record_boat",
+            "kind": "stamp",
+            "name": "船記錄",
+            "text": "有些船不再航行，卻仍把人的願望帶過時間。下一站：聖方濟各聖堂及廣場，回到村心看多重歷史。"
+          }
+        }
+      },
+      {
+        "id": "chapter_coloane_village",
+        "order": 3,
+        "kind": "puzzle",
+        "title": "第三章：同一個廣場的不同記憶",
+        "location_name": "聖方濟各聖堂及廣場",
+        "story_time": "12:00",
+        "poi_id": "poi_0241",
+        "scene": "工作簿沒有立刻指向船廠，而是圈回村心：一個地方，能不能同時記住幾種過去？",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-VILLAGE-01",
+            "alt": "路環村廣場與聖堂輪廓",
+            "caption": "村不是地圖上的一塊地，而是不同記憶暫時聚在一起的地方。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-village-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "這裡不像船廠，為什麼是路環故事的一部分？"
+          },
+          {
+            "id": "cat-village-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "因為社區不是單一身份。建築、事件、遷走的記憶，都可能留在同一個廣場。",
+            "portrait_asset_id": "V4-CHAR-01"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "聖方濟各聖堂",
+            "text": "聖方濟各聖堂建於1928年；堂前紀念碑與1910年當地抗擊海盜事件有關。",
+            "source_label": "澳門旅遊局公開資料",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "多重記憶",
+            "text": "一個地點的歷史不等於今天可見的全部。建築、紀念事件和曾經在此的物件可分層理解。",
+            "source_label": "故事導覽整理",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "聖方濟各聖堂及廣場",
+          "chapter_goal": "幫助玩家把建築、紀念事件與不可完全由今日現場所見概括的記憶分層。",
+          "known_facts": [
+            "聖方濟各聖堂建於1928年",
+            "堂前紀念碑與1910年抗擊海盜事件有關",
+            "地點歷史不等於今天可見的全部"
+          ],
+          "fiction_boundaries": [
+            "工作簿問題和村記錄章為劇情創作"
+          ],
+          "suggested_questions": [
+            "聖方濟各聖堂有哪些公開歷史資料？",
+            "為什麼要把建築和事件分開理解？"
+          ],
+          "do_not_reveal": [
+            "不要直接給出配對答案"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-VILLAGE-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p3-transition",
+            "kind": "transition",
+            "title": "回到村心",
+            "text": "從譚公廟出來，你們沿路回到聖方濟各聖堂及廣場。工作簿沒有立刻指向船廠，而是在地圖上圈回村心。船不是孤零零停在海上的東西，它從村裡出發，也回到村裡被記住。"
+          },
+          {
+            "id": "p3-scene",
+            "kind": "narrative",
+            "title": "同一個廣場的不同記憶",
+            "text": "教堂、廣場、紀念碑和街巷聚在一起。這一頁問：一個地方，能不能同時記住幾種過去？",
+            "asset_id": "CAT-VILLAGE-01"
+          },
+          {
+            "id": "p3-puzzle",
+            "kind": "puzzle",
+            "title": "補上「村」",
+            "text": "把三條線索放到正確歷史層。完成後，再從村心走向荔枝碗船廠片區，去看手藝和產業如何留下痕跡。"
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "教堂開放、宗教活動及廣場人流以現場安排為準；不需要進入非開放空間。"
+        },
+        "puzzle": {
+          "id": "puzzle_coloane_village_layers",
+          "type": "mapping",
+          "prompt": "把三條線索放到正確歷史層。",
+          "fields": [
+            {
+              "id": "building",
+              "label": "建築"
+            },
+            {
+              "id": "event",
+              "label": "事件"
+            },
+            {
+              "id": "memory",
+              "label": "記憶"
+            }
+          ],
+          "options": [
+            {
+              "id": "church_1928",
+              "text": "聖方濟各聖堂建於1928年"
+            },
+            {
+              "id": "anti_pirate_1910",
+              "text": "堂前紀念碑與1910年抗擊海盜事件有關"
+            },
+            {
+              "id": "not_all_visible_today",
+              "text": "地點歷史不等於今天可見的全部"
+            }
+          ],
+          "solution": {
+            "building": "church_1928",
+            "event": "anti_pirate_1910",
+            "memory": "not_all_visible_today"
+          },
+          "hints": [
+            "先找建築本身的年代。",
+            "紀念碑指向一件事件；剩下的是理解地點的方法。"
+          ],
+          "explanation": "聖堂年代屬於建築層，抗擊海盜紀念屬於事件層；而不可完全由今日現場所見概括，是理解社區記憶的方法。你補上【村】後，工作簿的紙頁浮出木紋：下一站前往荔枝碗船廠片區。",
+          "skip_text": "阿蓮把廣場分成建築、事件和記憶三層。你仍然補上【村】。工作簿的紙頁浮出木紋：下一站前往荔枝碗船廠片區。",
+          "reward": {
+            "id": "record_village",
+            "kind": "stamp",
+            "name": "村記錄",
+            "text": "村不是地圖上的一塊地，而是不同記憶暫時聚在一起的地方。下一站：荔枝碗船廠片區，去看船如何被做出來，又如何不再下水。"
+          }
+        }
+      },
+      {
+        "id": "chapter_coloane_craft",
+        "order": 4,
+        "kind": "puzzle",
+        "title": "第四章：船下不了水以後",
+        "location_name": "荔枝碗船廠片區",
+        "story_time": "13:20",
+        "poi_id": "poi_0330",
+        "scene": "工作簿紙頁出現木紋。廣場人聲漸遠，想像中的鋸木聲和水拍木樁聲浮起。",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-CRAFT-01",
+            "alt": "荔枝碗船廠片區佔位圖",
+            "caption": "手藝不只在成品裏，也在場地、工具、工序和沉默裏。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-craft-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "我們要復原一艘船嗎？"
+          },
+          {
+            "id": "cat-craft-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "佔位版先不假裝懂完整工藝。我們只記可靠的三件事：空間、手藝、變化。",
+            "portrait_asset_id": "V4-CHAR-02"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "荔枝碗船廠片區",
+            "text": "荔枝碗船廠片區主要形成於20世紀中期，沿海岸聯排展開，部分延伸至水面。",
+            "source_label": "澳門文化遺產公開資料",
+            "confidence": "high"
+          },
+          {
+            "kind": "historical_fact",
+            "title": "造船業式微",
+            "text": "澳門傳統造船業於20世紀90年代後逐漸式微；荔枝碗船廠片區於2018年依法評定為場所。",
+            "source_label": "澳門文化遺產公開資料",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "荔枝碗船廠片區",
+          "chapter_goal": "幫助玩家用空間、工藝、變化三段證據理解船廠片區，不假裝掌握未核實的完整造船工序。",
+          "known_facts": [
+            "荔枝碗船廠片區主要形成於20世紀中期",
+            "船廠沿海岸聯排展開，部分延伸至水面",
+            "20世紀90年代後造船業逐漸式微",
+            "片區於2018年依法評定為場所"
+          ],
+          "fiction_boundaries": [
+            "看不見的船和工記錄章為劇情創作",
+            "正式造船工序謎題需待專業資料再細化"
+          ],
+          "suggested_questions": [
+            "荔枝碗船廠片區為什麼重要？",
+            "為什麼佔位版不細拆造船工序？"
+          ],
+          "do_not_reveal": [
+            "不要直接列出三段證據答案"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-CRAFT-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p4-transition",
+            "kind": "transition",
+            "title": "從村心走向船廠",
+            "text": "帶着【村】記錄離開廣場，你們往荔枝碗船廠片區走。前面幾站說明船為何重要；現在，工作簿要你去看船怎樣被做出來，又怎樣慢慢不再下水。"
+          },
+          {
+            "id": "p4-scene",
+            "kind": "narrative",
+            "title": "船下不了水以後",
+            "text": "船廠沿水邊展開。工作簿第四頁寫着：會造船的人少了以後，船廠留下些什麼？",
+            "asset_id": "CAT-CRAFT-01"
+          },
+          {
+            "id": "p4-puzzle",
+            "kind": "puzzle",
+            "title": "補上「工」",
+            "text": "選出構成看不見的船的三段可靠證據。完成後，路線會從近代產業推向更早的黑沙時間層。"
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "以當前開放區域和現場標識為準；不進入封閉、施工或危險臨水區域。"
+        },
+        "puzzle": {
+          "id": "puzzle_coloane_craft_evidence",
+          "type": "evidence_chain",
+          "prompt": "選出可構成「看不見的船」的三段證據。",
+          "required_count": 3,
+          "options": [
+            {
+              "id": "space_by_water",
+              "text": "臨水展開的船廠空間"
+            },
+            {
+              "id": "wooden_boat_craft",
+              "text": "傳統木製漁船工藝"
+            },
+            {
+              "id": "industry_decline",
+              "text": "20世紀90年代後行業式微"
+            },
+            {
+              "id": "random_food_memory",
+              "text": "附近小吃很好吃"
+            }
+          ],
+          "solution": [
+            "space_by_water",
+            "wooden_boat_craft",
+            "industry_decline"
+          ],
+          "hints": [
+            "佔位版只找空間、工藝、變化三段證據。",
+            "不要選與造船業證據鏈無關的生活偏好。"
+          ],
+          "explanation": "臨水空間、木製漁船工藝和行業式微構成最低限度的證據鏈。小吃記憶可以留作旅行體驗，但不能替代船廠工藝證據。你補上【工】後，阿蓮提醒：只寫造船會把路環寫得太晚，下一站進入黑沙知識層。",
+          "skip_text": "阿蓮把三段證據寫入工作簿：空間、手藝、變化。你仍然補上【工】。她提醒：只寫造船會把路環寫得太晚，下一站進入黑沙知識層。",
+          "reward": {
+            "id": "record_craft",
+            "kind": "stamp",
+            "name": "工記錄",
+            "text": "手藝不只在成品裏，也在場地、工具、工序和沉默裏。下一站：黑沙知識層，把路環的時間往更早處翻。"
+          }
+        }
+      },
+      {
+        "id": "chapter_coloane_soil",
+        "order": 5,
+        "kind": "puzzle",
+        "title": "第五章：在澳門出現以前",
+        "location_name": "黑沙知識層",
+        "story_time": "14:30",
+        "poi_id": "poi_0024",
+        "scene": "如果只寫造船，路環會被寫得太晚。最後一欄是土，它比船廠更早。",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-SOIL-01",
+            "alt": "黑沙與遠程考古時間層佔位圖",
+            "caption": "土地比城市更早記住人，也比人更慢說話。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-soil-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "所以不是去找遺物？"
+          },
+          {
+            "id": "cat-soil-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "不是。知道一個地方更早，不代表我們可以打擾它。你要做的是把時間放回正確位置。",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "黑沙考古",
+            "text": "1973至2006年，黑沙曾進行五次考古發掘，出土文物跨越數千年，並包括新石器時代遺存。",
+            "source_label": "路氹歷史館及公開展覽資料",
+            "confidence": "high"
+          },
+          {
+            "kind": "dynamic_operational_info",
+            "title": "安全邊界",
+            "text": "本章以遠程知識層完成，不鼓勵進入敏感考古點或自行尋找遺物。",
+            "source_label": "故事安全設計",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "黑沙",
+          "chapter_goal": "幫助玩家理解黑沙考古時間層，同時遵守不進入敏感點、不自行尋找遺物的安全邊界。",
+          "known_facts": [
+            "黑沙在1973至2006年間曾進行五次考古發掘",
+            "出土文物跨越數千年",
+            "相關內容包括新石器時代遺存"
+          ],
+          "fiction_boundaries": [
+            "土記錄章為劇情創作",
+            "本章不設現場尋找遺物任務"
+          ],
+          "suggested_questions": [
+            "黑沙考古發現說明了什麼？",
+            "為什麼不鼓勵進入敏感考古點？"
+          ],
+          "do_not_reveal": [
+            "不要直接列出謎題正確選項"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-SOIL-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p5-transition",
+            "kind": "transition",
+            "title": "從近代產業推向更早時間",
+            "text": "離開荔枝碗後，玩家以為工作簿快寫完了。但阿蓮把地圖往更遠處推開：如果只寫造船，路環會被寫得太晚。接下來不進入敏感考古點，只用黑沙知識層把時間排回正確位置。"
+          },
+          {
+            "id": "p5-scene",
+            "kind": "narrative",
+            "title": "在澳門出現以前",
+            "text": "本章不引導進入敏感考古點，只以遠程知識層完成。工作簿第五頁寫著：如果把時間再往前翻，路環還屬於誰？",
+            "asset_id": "CAT-SOIL-01"
+          },
+          {
+            "id": "p5-puzzle",
+            "kind": "puzzle",
+            "title": "補上「土」",
+            "text": "把可寫入土欄的考古時間線索選出來。完成後，請回到可安全停留的公共空間，整理五個記錄章。"
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "本章不要求進入任何敏感或非開放考古點；以公共資料完成即可。"
+        },
+        "puzzle": {
+          "id": "puzzle_coloane_soil_facts",
+          "type": "multi_select",
+          "prompt": "哪些可寫入《潮汐工作簿》的【土】欄？",
+          "options": [
+            {
+              "id": "five_excavations",
+              "text": "1973至2006年黑沙曾進行五次考古發掘"
+            },
+            {
+              "id": "neolithic_remains",
+              "text": "出土內容包括新石器時代遺存"
+            },
+            {
+              "id": "dig_to_verify",
+              "text": "玩家應自行尋找遺物來驗證"
+            },
+            {
+              "id": "thousands_years",
+              "text": "相關文物時間跨度可達數千年"
+            }
+          ],
+          "solution": [
+            "five_excavations",
+            "neolithic_remains",
+            "thousands_years"
+          ],
+          "hints": [
+            "找公開資料中可寫入時間線的內容。",
+            "自行尋找遺物不符合安全與倫理邊界。"
+          ],
+          "explanation": "五次考古發掘、新石器時代遺存和數千年時間跨度都可寫入土欄；自行尋找遺物不應作為遊戲任務。你補上【土】後，五個空欄終於齊了：下一步回到可安全停留的公共空間，完成最後一頁。",
+          "skip_text": "阿蓮幫你把黑沙時間線寫進土欄，也劃下不進入敏感點的安全邊界。五個空欄終於齊了：下一步回到可安全停留的公共空間，完成最後一頁。",
+          "reward": {
+            "id": "record_soil",
+            "kind": "stamp",
+            "name": "土記錄",
+            "text": "土地比城市更早記住人，也比人更慢說話。下一站：安全公共空間，整理海、船、村、工、土，完成路環聲音明信片。"
+          }
+        }
+      },
+      {
+        "id": "ending_coloane_after_tide",
+        "order": 6,
+        "kind": "ending",
+        "title": "終章：潮退之後",
+        "location_name": "安全公共空間",
+        "story_time": "15:20",
+        "poi_id": "poi_0286",
+        "scene": "路環村的聲音、廟前的香火、譚公廟裡的龍舟、廣場的鐘聲、荔枝碗的木船影子，最後都被海風帶到這裡。",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-END-01",
+            "alt": "路環聲音明信片佔位圖",
+            "caption": "最後一頁不是問過去留下什麼，而是問你希望未來記住什麼。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-ending-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "工作簿五欄都填上了。可是最後一頁還是空著。"
+          },
+          {
+            "id": "cat-ending-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "因為最後一頁不是問過去留下什麼，而是問你希望未來記住什麼。",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "cat-ending-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "景點、行業、信俗、社區、土地，好像都不是單獨存在的。"
+          },
+          {
+            "id": "cat-ending-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "所以選一種你最想留下的聲音吧。不是讓它永遠不變，而是讓後來的人知道它曾經怎樣生活。",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "fictional_story",
+            "title": "路環聲音明信片",
+            "text": "聲音明信片是結局道具，會把玩家的選擇和反思保存為本次故事完成記錄。",
+            "source_label": "《潮退之後》劇情設定",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "路環安全公共空間",
+          "chapter_goal": "幫助玩家回顧海、船、村、工、土五欄，完成路環聲音明信片。",
+          "known_facts": [
+            "本路線以路環村、古廟、譚公廟、聖堂廣場、荔枝碗和黑沙知識層串聯",
+            "最後反思由玩家自行撰寫"
+          ],
+          "fiction_boundaries": [
+            "聲音明信片和最後一頁問題為劇情創作"
+          ],
+          "suggested_questions": [
+            "五個記錄章如何串成同一條故事線？",
+            "我可以怎樣寫結局反思？"
+          ],
+          "do_not_reveal": [
+            "不要代替玩家撰寫最終反思"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-END-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p6-scene",
+            "kind": "narrative",
+            "title": "潮退之後",
+            "text": "你回到可安全停留的公共空間，重新翻開工作簿：海、船、村、工、土五欄已填滿，但最後一頁仍空白。現在回答最後的問題：如果未來的人只能帶走一種路環記憶，你希望是哪一種？",
+            "asset_id": "CAT-END-01"
+          },
+          {
+            "id": "p6-dialogue",
+            "kind": "dialogue",
+            "speaker": "阿蓮",
+            "text": "不是讓它永遠不變，而是讓後來的人知道它曾經怎樣生活。"
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "可在任何安全、可停留的公共空間完成結局，不要求靠近危險海岸。"
+        }
+      }
+    ],
+    "endings": [
+      {
+        "id": "make_sound_postcard",
+        "title": "路環聲音明信片",
+        "choice_text": "完成聲音明信片",
+        "text": "潮退以後，海留下岸；行業退去以後，人留下手藝；人離開以後，地方留下故事。保存不是讓一切停止改變，而是讓改變發生以後，我們仍知道這裡曾經怎樣生活。",
+        "condition": "完成終章並保存聲音明信片反思",
+        "rewards": [
+          {
+            "id": "coloane_sound_postcard",
+            "kind": "collection",
+            "name": "路環聲音明信片",
+            "text": "你把今天希望留下的一種路環記憶寫進最後一頁。"
+          },
+          {
+            "id": "after_tide_reflection",
+            "kind": "reflection",
+            "name": "潮退之後的回答",
+            "text": "你為後來的人留下了自己的選擇。"
+          }
+        ]
+      }
+    ]
+  },
+  "en": {
+    "id": "coloane_after_tide",
+    "version": 4,
+    "title": "After the Tide",
+    "subtitle": "Along Coloane Village, old temples, shipyards and Hac Sa, complete an unfinished tidal workbook",
+    "summary": "You and A Lin open a fictional Tidal Workbook in Coloane. The last page leaves only a question: after the boats stop launching, what should this workbook record? You make your way through the village center, old temples, Tam Kung Temple, St. Francis Square, Lai Chi Vun and Hac Sa, adding the five kinds of evidence still found today: sea, boat, village, work, and earth.",
+    "route_id": "coloane_leisure_halfday",
+    "estimated_hours": 4,
+    "product_mode": "mobile_portrait_web",
+    "presentation": {
+      "default_orientation": "portrait",
+      "max_content_width_px": 480,
+      "cover_asset_id": "CAT-COVER-01",
+      "asset_base_path": "/story/coloane-after-tide/"
+    },
+    "identity": {
+      "id": "tide_workbook_keeper",
+      "name": "Tidal Workbook Recorder",
+      "description": "You are not a guide who already knows the answers. You use on-site observation, public materials, A Lin's fact-checking, and your own judgment to complete a fictional workbook."
+    },
+    "content_notice": "The Tidal Workbook, fictional recorder, page questions, record stamps, and audio postcards are all created for the story. Content about Coloane's old temples, Tam Kung Temple, the Lai Chi Vun shipyard area, St. Francis Church, and Hac Sa archaeology is based on public materials; beliefs, local memory, and historical facts are presented in separate columns in the story.",
+    "content_labels": {
+      "historical_fact": "Historical fact",
+      "folklore": "Folk belief / local memory",
+      "contextual_reconstruction": "Contextual reconstruction",
+      "fictional_story": "Fictional story",
+      "dynamic_operational_info": "Dynamic operational information"
+    },
+    "characters": [
+      {
+        "id": "player",
+        "name": "You",
+        "role": "The person adding today's Coloane records to the Tidal Workbook",
+        "fictional": true
+      },
+      {
+        "id": "alian",
+        "name": "A Lin",
+        "role": "Local classmate and knowledge agent, helping to distinguish historical facts, folk beliefs, and fictional story",
+        "fictional": true
+      },
+      {
+        "id": "alan",
+        "name": "Recorder",
+        "role": "The fictional previous recorder of the Tidal Workbook, appearing only on text pages",
+        "fictional": true
+      },
+      {
+        "id": "m",
+        "name": "The person who comes later",
+        "role": "The imagined future reader of the workbook",
+        "fictional": true
+      }
+    ],
+    "props": [
+      "Tidal Workbook",
+      "Sea Record",
+      "Boat Record",
+      "Village Record",
+      "Work Record",
+      "Earth Record",
+      "Coloane Sound Postcard"
+    ],
+    "nodes": [
+      {
+        "id": "prologue_tide_workbook",
+        "order": 0,
+        "kind": "prologue",
+        "title": "Prologue: The Last Page Is Blank",
+        "story_time": "10:00",
+        "scene": "You open an old workbook in a public space in Coloane Village. The cover reads 'The Tide Workbook', but the last page is blank.",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-PROP-01",
+            "alt": "Cover and blank page of the Tide Workbook",
+            "caption": "This is not a treasure map, but a workbook waiting to be filled with today's records."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-prologue-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "This is not a treasure map; it has only five blanks: sea, boat, village, work, earth."
+          },
+          {
+            "id": "cat-prologue-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Maybe it's not asking you to find treasure, but to decide what Coloane should keep.",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "cat-prologue-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "Then where do we start?"
+          },
+          {
+            "id": "cat-prologue-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Don't rush to the shipyard. Coloane doesn't begin with a boat; it begins with the everyday sounds of the village. After listening here, let's walk to the ancient temple in the village and see where the people who live by the sea place their unease.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "fictional_story",
+            "title": "Tide Workbook",
+            "text": "The workbook, the previous recorder, and the five blank slots are all story props used to organize the observational clues of Coloane.",
+            "source_label": "Plot setting of 'After the Tide Recedes'",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Coloane Village",
+          "chapter_goal": "Help You understand the fictional setup of the Tide Workbook and enter the Coloane story through sound and observation.",
+          "known_facts": [
+            "Coloane Village retains seaside streets and alleys, religious sites, and community public spaces.",
+            "This story connects Coloane through observation, sound, craftsmanship, and community memory."
+          ],
+          "fiction_boundaries": [
+            "The Tide Workbook and the previous recorder are fictional."
+          ],
+          "suggested_questions": [
+            "How is this story line different from the two maps of Lotus City?",
+            "Why is Coloane suitable for slow-paced observation?"
+          ],
+          "do_not_reveal": [
+            "Do not reveal the answers to later puzzles in advance."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-COVER-01",
+            "CAT-PROP-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p0-cover",
+            "kind": "title",
+            "title": "After the Tide Recedes",
+            "text": "An unfinished Tide Workbook is waiting for today's Coloane.",
+            "asset_id": "CAT-COVER-01"
+          },
+          {
+            "id": "p0-book",
+            "kind": "narrative",
+            "title": "The Last Page Is Blank",
+            "text": "You open an old workbook in a public space in Coloane Village. The cover reads 'The Tide Workbook', but the last page is blank.",
+            "asset_id": "CAT-PROP-01"
+          },
+          {
+            "id": "p0-dialogue",
+            "kind": "dialogue",
+            "speaker": "A Lin",
+            "text": "Don't rush to the shipyard. Coloane doesn't begin with a boat; it begins with the everyday sounds of the village. After listening here, let's walk to the ancient temple in the village and see where the people who live by the sea place their unease."
+          },
+          {
+            "id": "p0-sound",
+            "kind": "narrative",
+            "title": "Listen for Thirty Seconds First",
+            "text": "Please do not look at the screen for thirty seconds. You can note down three sounds in your mind: sea breeze, voices, footsteps, car sounds, birdsong, or the incense in front of the temple. This step is not about right or wrong; it simply writes today's Coloane into the first page. After noting them, follow the village lanes to the Tin Hau Temple / Kun Iam Temple. The first blank is [Sea]."
+          }
+        ],
+        "reward": {
+          "id": "tide_workbook",
+          "kind": "story_prop",
+          "name": "Tide Workbook",
+          "text": "You and A Lin decide to walk around Coloane, starting with the ancient temple in the village, and fill in the first blank [Sea]."
+        }
+      },
+      {
+        "id": "chapter_coloane_sea",
+        "order": 1,
+        "kind": "puzzle",
+        "title": "Chapter 1: Waiting for the Tide Before the Temple",
+        "location_name": "Tin Hau Temple / Kun Iam Temple",
+        "story_time": "10:30",
+        "poi_id": "poi_0236",
+        "scene": "A sentence surfaces on the first page of the workbook: Before going to sea, where do people first place their unease?",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-SEA-01",
+            "alt": "Ancient temples and lanes in Coloane Village",
+            "caption": "The sea is not just a distant scenery; it was also the unknown the community faced every day."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-sea-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "So the sea isn't just the blue in the distance?"
+          },
+          {
+            "id": "cat-sea-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Right. For those who live by the sea, it's an unknown they must answer every day.",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "cat-sea-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "Then the ancient temple is not just architecture; it's a record left by the community."
+          },
+          {
+            "id": "cat-sea-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Yes. But we need to distinguish which are verifiable historical facts and which are folk beliefs people have attached to them.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Coloane Ancient Temples",
+            "text": "The Kun Iam Temple was built around 1800, and inscriptions record that it was funded by boat households; the Tin Hau Temple was built around 1763, one of the earliest temples in Coloane.",
+            "source_label": "Macau Government Tourism Office and public cultural sources",
+            "confidence": "high"
+          },
+          {
+            "kind": "folklore",
+            "title": "Safe Sea Voyages",
+            "text": "Praying for safe voyages is part of folk belief and local life memory; it should be respected but not written as verifiable historical fact.",
+            "source_label": "Compilation of local folk beliefs",
+            "confidence": "medium"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Tin Hau Temple and Kun Iam Temple in Coloane",
+          "chapter_goal": "Help the player distinguish historical facts from folk belief expressions related to the temples, and fill in the sea column of the workbook.",
+          "known_facts": [
+            "Coloane's Tin Hau Temple was built around 1763",
+            "Coloane's Kun Iam Temple was built around 1800, related to fundraising by boat households",
+            "Praying for safety is folk belief, not a verifiable historical event"
+          ],
+          "fiction_boundaries": [
+            "The workbook questions and sea record chapter are fictional creations"
+          ],
+          "suggested_questions": [
+            "What are the backgrounds of the Tin Hau Temple and Kun Iam Temple respectively?",
+            "How should historical facts and folk beliefs be separated?"
+          ],
+          "do_not_reveal": [
+            "Do not directly list the correct puzzle options"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-SEA-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p1-transition",
+            "kind": "transition",
+            "title": "From the Village Center to the Ancient Temples",
+            "text": "Setting off from the public space where you just stopped to listen, you slowly walk along the lanes of Coloane Village toward Tin Hau Temple / Kun Iam Temple. A sentence surfaces on the first page of the workbook: Before going to sea, where do people first place their unease?"
+          },
+          {
+            "id": "p1-scene",
+            "kind": "narrative",
+            "title": "Waiting for the Tide Before the Temple",
+            "text": "The ancient temples are hidden in the village. Incense, inscriptions, prayer pavilions, and lanes turn the sea into a part of daily life.",
+            "asset_id": "CAT-SEA-01"
+          },
+          {
+            "id": "p1-dialogue",
+            "kind": "dialogue",
+            "speaker": "A Lin",
+            "text": "For those who live by the sea, the sea is not just the blue in the distance; it is an unknown they must answer every day. At this stop, we first distinguish historical facts from folk beliefs; after that, we'll go to Tam Kung Temple to see how a boat that never goes to sea still carries people's wishes."
+          },
+          {
+            "id": "p1-puzzle",
+            "kind": "puzzle",
+            "title": "Fill in 'Sea'",
+            "text": "Write the statements that can be verified by sources into the historical facts column."
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "During religious activities, crowd restrictions, or site limitations, only read content in open areas; do not enter enclosed spaces."
+        },
+        "puzzle": {
+          "id": "puzzle_coloane_sea_facts",
+          "type": "multi_select",
+          "prompt": "Which are suitable for the 'Sea' column of the 'Tide Workbook'?",
+          "options": [
+            {
+              "id": "kuan_yin_1800",
+              "text": "The Kun Iam Temple was built around 1800"
+            },
+            {
+              "id": "boat_households_funded",
+              "text": "The Kun Iam Temple was related to fundraising by boat households"
+            },
+            {
+              "id": "wish_always_comes_true",
+              "text": "Prayers will always come true"
+            },
+            {
+              "id": "tin_hau_1763",
+              "text": "The Tin Hau Temple was built around 1763"
+            }
+          ],
+          "solution": [
+            "kuan_yin_1800",
+            "boat_households_funded",
+            "tin_hau_1763"
+          ],
+          "hints": [
+            "Look for statements that can be verified by sources.",
+            "Folk belief can be respected, but it cannot be written as historical fact that is guaranteed to have happened."
+          ],
+          "explanation": "The Kun Iam Temple's date, the boat households' fundraising, and the Tin Hau Temple's date are all verifiable sources; the belief that prayers will surely be answered is an expression of folk belief and should not be written in the historical facts column. After you fill in 'Sea', a boat shadow appears on the next page of the workbook: please leave the open area in front of the temple and head to Tam Kung Temple.",
+          "skip_text": "A Lin helps you separate the verifiable sources from the folk beliefs. You still fill in 'Sea'. A boat shadow appears on the next page of the workbook: please leave the open area in front of the temple and head to Tam Kung Temple.",
+          "reward": {
+            "id": "record_sea",
+            "kind": "stamp",
+            "name": "Sea Record",
+            "text": "The sea is not the blue in the distance; it is the unknown people must answer every day. Next stop: Tam Kung Temple, to see how boats, safety, and local folk beliefs are linked together."
+          }
+        }
+      },
+      {
+        "id": "chapter_coloane_boat",
+        "order": 2,
+        "kind": "puzzle",
+        "title": "Chapter 2: A Boat Made of Whalebone",
+        "location_name": "Tam Kung Temple",
+        "story_time": "11:10",
+        "poi_id": "poi_0240",
+        "scene": "The workbook’s second page reads: If a boat is no longer on the water, can it still carry people?",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-BOAT-01",
+            "alt": "Seaside alleys near Tam Kung Temple",
+            "caption": "Some boats no longer sail, yet they still carry people’s wishes across time."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-boat-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "A dragon boat made from whalebone—that itself already sounds like a legend."
+          },
+          {
+            "id": "cat-boat-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Being like a legend doesn’t mean it isn’t fact. We have to separate what it is from what people believe.",
+            "portrait_asset_id": "V4-CHAR-02"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Tam Kung Temple and the Whalebone Dragon Boat",
+            "text": "Tam Kung Temple was built during the Tongzhi reign of the Qing dynasty. The temple preserves a dragon boat carved from whalebone that is over a hundred years old.",
+            "source_label": "Macao Government Tourism Office and public cultural materials",
+            "confidence": "high"
+          },
+          {
+            "kind": "folklore",
+            "title": "Touching the Whalebone",
+            "text": "Touching the whalebone for good luck is a local folk belief; it is one of the meanings people give to the relic.",
+            "source_label": "Compilation of local folk beliefs",
+            "confidence": "medium"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Tam Kung Temple",
+          "chapter_goal": "Help You distinguish among facts about the relic, folk beliefs, and local meanings, and fill in the boat column of the workbook.",
+          "known_facts": [
+            "Tam Kung Temple was built during the Tongzhi reign of the Qing dynasty.",
+            "It preserves a whalebone dragon boat over a hundred years old.",
+            "Touching the whalebone for good luck is a folk belief."
+          ],
+          "fiction_boundaries": [
+            "The workbook question and the boat-record chapter are fictional creations."
+          ],
+          "suggested_questions": [
+            "What does Tam Kung Temple have to do with safe voyages?",
+            "How can you separate the facts of the relic from the meaning of folk beliefs?"
+          ],
+          "do_not_reveal": [
+            "Do not directly give away the column-matching answer."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-BOAT-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p2-transition",
+            "kind": "transition",
+            "title": "From the Old Temple to Tam Kung Temple",
+            "text": "Carrying the [Sea] record, you leave the old temple and head toward Tam Kung Temple. Beside the character for sea in the workbook, a thin line appears, like an oar cutting through water. A Lin says: “If the sea is the unknown, then a boat is the way people move into the unknown.”"
+          },
+          {
+            "id": "p2-scene",
+            "kind": "narrative",
+            "title": "A Boat Made of Whalebone",
+            "text": "You arrive at Tam Kung Temple. The second page of the workbook asks: If a boat is no longer on the water, can it still carry people?",
+            "asset_id": "CAT-BOAT-01"
+          },
+          {
+            "id": "p2-puzzle",
+            "kind": "puzzle",
+            "title": "Fill in “Boat”",
+            "text": "Place the three records in the correct columns. Once solved, the workbook will bring you back to Village Center Square, because the memory of the boat lives not only in the temple but also in the place where people make their lives."
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "Do not touch the relics; if temple activities or opening conditions do not permit you to stay, you may read the content from the perimeter."
+        },
+        "puzzle": {
+          "id": "puzzle_coloane_boat_layers",
+          "type": "mapping",
+          "prompt": "Place the three records in the correct columns.",
+          "fields": [
+            {
+              "id": "fact",
+              "label": "Historical fact"
+            },
+            {
+              "id": "belief",
+              "label": "Folk belief"
+            },
+            {
+              "id": "meaning",
+              "label": "Local meaning"
+            }
+          ],
+          "options": [
+            {
+              "id": "whale_bone_dragon_boat",
+              "text": "The temple preserves a whalebone dragon boat"
+            },
+            {
+              "id": "touch_for_luck",
+              "text": "Touch the whalebone for good luck"
+            },
+            {
+              "id": "safe_voyage_memory",
+              "text": "A shared wish for safe voyages"
+            }
+          ],
+          "solution": {
+            "fact": "whale_bone_dragon_boat",
+            "belief": "touch_for_luck",
+            "meaning": "safe_voyage_memory"
+          },
+          "hints": [
+            "First find the content that can be described as the relic itself.",
+            "Then sort out what people believe and what wish that belief reflects."
+          ],
+          "explanation": "The whalebone dragon boat surviving until today is a historical fact; touching it for luck is a folk belief; the wish for safe voyages shows how this object carries local meaning. After you fill in “Boat”, the workbook draws the line back to St. Francis Xavier Church and Square: the next stop is to see how the same village heart preserves different memories.",
+          "skip_text": "A Lin sorts the three records into columns, reminding you not to write folk belief as historical fact, and not to erase folk belief from local memory. After you fill in “Boat”, the next stop returns to St. Francis Xavier Church and Square to see how the village heart preserves different memories.",
+          "reward": {
+            "id": "record_boat",
+            "kind": "stamp",
+            "name": "Boat Record",
+            "text": "Some boats no longer sail, yet they still carry people’s wishes across time. Next stop: St. Francis Xavier Church and Square, returning to the village heart to see multiple histories."
+          }
+        }
+      },
+      {
+        "id": "chapter_coloane_village",
+        "order": 3,
+        "kind": "puzzle",
+        "title": "Chapter 3: Different Memories of the Same Square",
+        "location_name": "St. Francis Xavier Church and Square",
+        "story_time": "12:00",
+        "poi_id": "poi_0241",
+        "scene": "The workbook does not point directly to the shipyard; instead it circles back to the village heart: can one place hold several pasts at once?",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-VILLAGE-01",
+            "alt": "Coloane village square and church silhouette",
+            "caption": "A village is not just a patch on a map; it is where different memories gather temporarily."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-village-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "This doesn't look like a shipyard. Why is it part of Coloane's story?"
+          },
+          {
+            "id": "cat-village-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Because a community is not a single identity. Buildings, events, memories that have moved away can all remain in the same square.",
+            "portrait_asset_id": "V4-CHAR-01"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "St. Francis Xavier Church",
+            "text": "St. Francis Xavier Church was built in 1928; the monument in front of the church relates to the local anti-piracy incident of 1910.",
+            "source_label": "Public information from the Macau Government Tourism Office",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "Multiple Memories",
+            "text": "The history of a place is not the same as everything visible today. Buildings, commemorated events, and objects once here can be understood in layers.",
+            "source_label": "Compiled from the story guide",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "St. Francis Xavier Church and Square",
+          "chapter_goal": "Help You separate the layers of buildings, commemorated events, and memories that cannot be fully captured by what is visible on site today.",
+          "known_facts": [
+            "St. Francis Xavier Church was built in 1928",
+            "The monument in front of the church relates to the 1910 anti-piracy incident",
+            "A place's history is not everything visible today"
+          ],
+          "fiction_boundaries": [
+            "The workbook questions and the village record chapter are created for the storyline."
+          ],
+          "suggested_questions": [
+            "What public historical materials are available about St. Francis Xavier Church?",
+            "Why separate buildings from events when understanding a place?"
+          ],
+          "do_not_reveal": [
+            "Do not directly give the matching answers."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-VILLAGE-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p3-transition",
+            "kind": "transition",
+            "title": "Back to the Village Heart",
+            "text": "Leaving Tam Kung Temple, you walk back along the road to St. Francis Xavier Church and Square. The workbook does not point directly to the shipyard; instead it circles the village heart on the map. A boat is not something that sits alone at sea—it sets out from the village and is remembered when it returns to the village."
+          },
+          {
+            "id": "p3-scene",
+            "kind": "narrative",
+            "title": "Different Memories of the Same Square",
+            "text": "A church, a square, a monument and lanes gather together. This page asks: can one place hold several pasts at once?",
+            "asset_id": "CAT-VILLAGE-01"
+          },
+          {
+            "id": "p3-puzzle",
+            "kind": "puzzle",
+            "title": "Complete the 'Village'",
+            "text": "Place the three clues in the correct historical layers. When you finish, walk from the village heart to the Lai Chi Vun Shipyards area to see how craft and industry left their traces."
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "Church opening hours, religious services and crowd conditions in the square follow on-site arrangements; there is no need to enter non-public spaces."
+        },
+        "puzzle": {
+          "id": "puzzle_coloane_village_layers",
+          "type": "mapping",
+          "prompt": "Place the three clues in the correct historical layers.",
+          "fields": [
+            {
+              "id": "building",
+              "label": "Building"
+            },
+            {
+              "id": "event",
+              "label": "Event"
+            },
+            {
+              "id": "memory",
+              "label": "Memory"
+            }
+          ],
+          "options": [
+            {
+              "id": "church_1928",
+              "text": "St. Francis Xavier Church was built in 1928"
+            },
+            {
+              "id": "anti_pirate_1910",
+              "text": "The monument in front of the church relates to the 1910 anti-piracy incident"
+            },
+            {
+              "id": "not_all_visible_today",
+              "text": "A place's history is not everything visible today"
+            }
+          ],
+          "solution": {
+            "building": "church_1928",
+            "event": "anti_pirate_1910",
+            "memory": "not_all_visible_today"
+          },
+          "hints": [
+            "Start by finding the date of the building itself.",
+            "The monument points to an event; what remains is a way of understanding the place."
+          ],
+          "explanation": "The church's date belongs to the building layer, the anti-piracy commemoration belongs to the event layer, and what cannot be fully captured by today's site is a way of understanding community memory. After you complete [Village], the workbook's pages reveal a wood-grain pattern: next stop is the Lai Chi Vun Shipyards area.",
+          "skip_text": "A Lin divides the square into three layers: building, event and memory. You still complete [Village]. The workbook's pages reveal a wood-grain pattern: next stop is the Lai Chi Vun Shipyards area.",
+          "reward": {
+            "id": "record_village",
+            "kind": "stamp",
+            "name": "Village Record",
+            "text": "A village is not just a patch on a map; it is where different memories gather temporarily. Next stop: the Lai Chi Vun Shipyards area, to see how boats were built and how they no longer go to sea."
+          }
+        }
+      },
+      {
+        "id": "chapter_coloane_craft",
+        "order": 4,
+        "kind": "puzzle",
+        "title": "Chapter 4: After the Boats Could No Longer Launch",
+        "location_name": "Lai Chi Vun Shipyards",
+        "story_time": "13:20",
+        "poi_id": "poi_0330",
+        "scene": "The workbook page takes on a wood-grain texture. The sounds of the square fade, and imagined sawing and water lapping against wooden piles rise up.",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-CRAFT-01",
+            "alt": "Placeholder image of Lai Chi Vun Shipyards",
+            "caption": "Craftsmanship lives not just in the finished object, but in the site, the tools, the process, and the silence."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-craft-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "Are we going to reconstruct a boat?"
+          },
+          {
+            "id": "cat-craft-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "The placeholder version won't pretend to know the full craft. We only record three reliable things: space, craftsmanship, and change.",
+            "portrait_asset_id": "V4-CHAR-02"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Lai Chi Vun Shipyards",
+            "text": "The Lai Chi Vun Shipyards mainly took shape in the mid-20th century, stretched in a row along the coast, with parts extending over the water.",
+            "source_label": "Macau Cultural Heritage public information",
+            "confidence": "high"
+          },
+          {
+            "kind": "historical_fact",
+            "title": "Decline of the Shipbuilding Industry",
+            "text": "Macau's traditional shipbuilding industry gradually declined after the 1990s; the Lai Chi Vun Shipyards were legally designated as a site in 2018.",
+            "source_label": "Macau Cultural Heritage public information",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Lai Chi Vun Shipyards",
+          "chapter_goal": "Help You understand the shipyards through three pieces of evidence—space, craftsmanship, and change—without pretending to master the unverified full shipbuilding process.",
+          "known_facts": [
+            "The Lai Chi Vun Shipyards mainly took shape in the mid-20th century.",
+            "The shipyards stretched in a row along the coast, with parts extending over the water.",
+            "After the 1990s, the shipbuilding industry gradually declined.",
+            "The area was legally designated as a site in 2018."
+          ],
+          "fiction_boundaries": [
+            "The invisible boat and the 'craft record' stamp are fictional creations.",
+            "The formal shipbuilding process puzzle requires professional materials to be further refined."
+          ],
+          "suggested_questions": [
+            "Why are the Lai Chi Vun Shipyards important?",
+            "Why doesn't the placeholder version break down the shipbuilding process in detail?"
+          ],
+          "do_not_reveal": [
+            "Don't directly list the answers to the three pieces of evidence."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-CRAFT-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p4-transition",
+            "kind": "transition",
+            "title": "From the Village Heart to the Shipyards",
+            "text": "Carrying the 'Village' record, you leave the square and head toward the Lai Chi Vun Shipyards. The earlier stops explained why boats mattered; now the workbook asks you to see how boats were made, and how they gradually stopped being launched."
+          },
+          {
+            "id": "p4-scene",
+            "kind": "narrative",
+            "title": "After the Boats Could No Longer Launch",
+            "text": "The shipyards stretch along the waterfront. Page 4 of the workbook asks: When fewer people know how to build boats, what remains of the shipyards?",
+            "asset_id": "CAT-CRAFT-01"
+          },
+          {
+            "id": "p4-puzzle",
+            "kind": "puzzle",
+            "title": "Fill in 'Craft'",
+            "text": "Choose the three reliable pieces of evidence that make up the invisible boat. When done, the route will move from modern industry to the earlier Hac Sa time layer."
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "Refer to the currently open areas and on-site signs; do not enter enclosed, under-construction, or dangerous waterfront areas."
+        },
+        "puzzle": {
+          "id": "puzzle_coloane_craft_evidence",
+          "type": "evidence_chain",
+          "prompt": "Choose the three pieces of evidence that can form the 'invisible boat'.",
+          "required_count": 3,
+          "options": [
+            {
+              "id": "space_by_water",
+              "text": "Shipyard spaces stretching along the water"
+            },
+            {
+              "id": "wooden_boat_craft",
+              "text": "Traditional wooden fishing boat craftsmanship"
+            },
+            {
+              "id": "industry_decline",
+              "text": "Industry decline after the 1990s"
+            },
+            {
+              "id": "random_food_memory",
+              "text": "The nearby snacks are delicious"
+            }
+          ],
+          "solution": [
+            "space_by_water",
+            "wooden_boat_craft",
+            "industry_decline"
+          ],
+          "hints": [
+            "The placeholder version only looks for three pieces of evidence: space, craftsmanship, and change.",
+            "Don't choose lifestyle preferences unrelated to the shipbuilding evidence chain."
+          ],
+          "explanation": "The waterside spaces, wooden fishing boat craftsmanship, and industry decline form the minimal evidence chain. The snack memory can stay as a travel experience, but it cannot replace shipyard craft evidence. Once you fill in 'Craft', A Lin reminds you: focusing only on shipbuilding would date Coloane too late; the next stop enters the Hac Sa knowledge layer.",
+          "skip_text": "A Lin writes the three pieces of evidence into the workbook: space, craftsmanship, and change. You still fill in 'Craft'. She reminds you: focusing only on shipbuilding would date Coloane too late; the next stop enters the Hac Sa knowledge layer.",
+          "reward": {
+            "id": "record_craft",
+            "kind": "stamp",
+            "name": "Craft Record",
+            "text": "Craftsmanship lives not just in the finished object, but in the site, the tools, the process, and the silence. Next stop: the Hac Sa knowledge layer, to turn Coloane's timeline further back."
+          }
+        }
+      },
+      {
+        "id": "chapter_coloane_soil",
+        "order": 5,
+        "kind": "puzzle",
+        "title": "Chapter 5: Before Macau Appeared",
+        "location_name": "Hac Sa Knowledge Layer",
+        "story_time": "14:30",
+        "poi_id": "poi_0024",
+        "scene": "If we only wrote about shipbuilding, Coloane would be chronicled too late. The last column is soil, and it is older than the shipyard.",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-SOIL-01",
+            "alt": "Placeholder for Hac Sa and the remote archaeology time layer",
+            "caption": "The land remembers people earlier than the city does, and it speaks more slowly than people do."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-soil-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "So we're not going to look for relics?"
+          },
+          {
+            "id": "cat-soil-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "No. Knowing a place is older doesn't mean we can disturb it. What you need to do is put time back in its correct place.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Hac Sa Archaeology",
+            "text": "From 1973 to 2006, five archaeological excavations were conducted at Hac Sa. The unearthed artifacts span thousands of years and include Neolithic remains.",
+            "source_label": "Taipa and Coloane Historical Museum and public exhibition materials",
+            "confidence": "high"
+          },
+          {
+            "kind": "dynamic_operational_info",
+            "title": "Safety Boundary",
+            "text": "This chapter is completed through the remote knowledge layer. Entering sensitive archaeological sites or searching for artifacts on your own is not encouraged.",
+            "source_label": "Story safety design",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Hac Sa",
+          "chapter_goal": "Help You understand Hac Sa's archaeological time layer while observing the safety boundary of not entering sensitive sites or searching for artifacts on your own.",
+          "known_facts": [
+            "Between 1973 and 2006, Hac Sa underwent five archaeological excavations.",
+            "The unearthed artifacts span thousands of years.",
+            "The related content includes Neolithic remains."
+          ],
+          "fiction_boundaries": [
+            "The soil record chapter is a fictional creation.",
+            "This chapter does not include a task to search for artifacts on site."
+          ],
+          "suggested_questions": [
+            "What do the Hac Sa archaeological discoveries show?",
+            "Why is entering sensitive archaeological sites discouraged?"
+          ],
+          "do_not_reveal": [
+            "Do not directly list the correct puzzle options."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-SOIL-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p5-transition",
+            "kind": "transition",
+            "title": "From Modern Industry to an Earlier Time",
+            "text": "After leaving Lai Chi Vun, You thought the workbook was nearly finished. But A Lin pushed the map further out: if we wrote only about shipbuilding, Coloane would be recorded too late. Next, without entering sensitive archaeological sites, we use only the Hac Sa knowledge layer to put time back in its rightful place."
+          },
+          {
+            "id": "p5-scene",
+            "kind": "narrative",
+            "title": "Before Macau Appeared",
+            "text": "This chapter does not lead into sensitive archaeological sites; it is completed only through the remote knowledge layer. The fifth page of the workbook asks: If we turn time further back, to whom did Coloane belong?",
+            "asset_id": "CAT-SOIL-01"
+          },
+          {
+            "id": "p5-puzzle",
+            "kind": "puzzle",
+            "title": "Fill in 'Soil'",
+            "text": "Select the archaeological time clues that can be written into the soil column. When finished, return to a public space where you can safely stay and organize the five record chapters."
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "This chapter does not require entering any sensitive or non-open archaeological site; it can be completed using public materials."
+        },
+        "puzzle": {
+          "id": "puzzle_coloane_soil_facts",
+          "type": "multi_select",
+          "prompt": "Which of the following can be written into the 'Soil' column of the Tide Workbook?",
+          "options": [
+            {
+              "id": "five_excavations",
+              "text": "From 1973 to 2006, Hac Sa had five archaeological excavations."
+            },
+            {
+              "id": "neolithic_remains",
+              "text": "The unearthed content includes Neolithic remains."
+            },
+            {
+              "id": "dig_to_verify",
+              "text": "You should search for relics yourself to verify."
+            },
+            {
+              "id": "thousands_years",
+              "text": "The related artifacts may span thousands of years."
+            }
+          ],
+          "solution": [
+            "five_excavations",
+            "neolithic_remains",
+            "thousands_years"
+          ],
+          "hints": [
+            "Look for content in public materials that can be written into the timeline.",
+            "Searching for artifacts on your own does not comply with safety and ethical boundaries."
+          ],
+          "explanation": "Five archaeological excavations, Neolithic remains, and a time span of thousands of years can all be written into the soil column; searching for artifacts on your own should not be a game task. Once you fill in 'Soil', the five empty columns are finally complete: next, return to a public space where you can safely stay and complete the final page.",
+          "skip_text": "A Lin helps you write the Hac Sa timeline into the soil column and also marks the safety boundary of not entering sensitive sites. The five empty columns are finally complete: next, return to a public space where you can safely stay and complete the final page.",
+          "reward": {
+            "id": "record_soil",
+            "kind": "stamp",
+            "name": "Soil Record",
+            "text": "The land remembers people before the city does, and it speaks more slowly than people do. Next stop: a public space where you can safely stay. Organize sea, ship, village, craft, and soil, and complete the Coloane sound postcard."
+          }
+        }
+      },
+      {
+        "id": "ending_coloane_after_tide",
+        "order": 6,
+        "kind": "ending",
+        "title": "Final Chapter: After the Tide Recedes",
+        "location_name": "Safe Public Space",
+        "story_time": "15:20",
+        "poi_id": "poi_0286",
+        "scene": "The sounds of Coloane Village, the incense in front of the temples, the dragon boat inside Tam Kung Temple, the bell of the square, and the shadows of the wooden boats at Lai Chi Vun are all carried here by the sea breeze.",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-END-01",
+            "alt": "Placeholder image of the Coloane Sound Postcard",
+            "caption": "The last page doesn't ask what the past leaves behind, but what you hope the future will remember."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-ending-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "All five columns of the workbook are filled in. But the last page is still blank."
+          },
+          {
+            "id": "cat-ending-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Because the last page doesn't ask what the past leaves behind, but what you hope the future will remember.",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "cat-ending-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "Sights, industries, folk beliefs, community, land—none of these seem to exist alone."
+          },
+          {
+            "id": "cat-ending-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "So choose one sound you most want to leave behind. Not to keep it unchanged forever, but so that later generations know how it once lived.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "fictional_story",
+            "title": "Coloane Sound Postcard",
+            "text": "The sound postcard is an ending item that saves your choice and reflection as the completion record of this story.",
+            "source_label": "Story setting of After the Tide Recedes",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Coloane Safe Public Space",
+          "chapter_goal": "Help you review the five columns—Sea, Boat, Village, Craft, Land—and complete the Coloane Sound Postcard.",
+          "known_facts": [
+            "This route connects Coloane Village, ancient temples, Tam Kung Temple, Church Square, Lai Chi Vun, and Hac Sa through knowledge layers.",
+            "The final reflection is written by you yourself."
+          ],
+          "fiction_boundaries": [
+            "The sound postcard and the final-page question are fictional creations."
+          ],
+          "suggested_questions": [
+            "How do the five record chapters connect into one storyline?",
+            "How can I write the ending reflection?"
+          ],
+          "do_not_reveal": [
+            "Do not write the final reflection in your place."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-END-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p6-scene",
+            "kind": "narrative",
+            "title": "After the Tide Recedes",
+            "text": "You return to a safe public space where you can stay, and reopen the workbook: the five columns—Sea, Boat, Village, Craft, Land—are full, but the last page is still blank. Now answer the final question: if future people can take away only one memory of Coloane, which one do you hope it is?",
+            "asset_id": "CAT-END-01"
+          },
+          {
+            "id": "p6-dialogue",
+            "kind": "dialogue",
+            "speaker": "A Lin",
+            "text": "Not to keep it unchanged forever, but so that later generations know how it once lived."
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "You can complete the ending in any safe, stayable public space; it does not require approaching dangerous coastline."
+        }
+      }
+    ],
+    "endings": [
+      {
+        "id": "make_sound_postcard",
+        "title": "Coloane Sound Postcard",
+        "choice_text": "Complete the sound postcard",
+        "text": "After the tide recedes, the sea leaves the shore; after the industry retreats, people leave crafts; after people leave, places leave stories. Preservation is not about stopping all change, but about ensuring that after change happens, we still know how life was lived here.",
+        "condition": "Complete the final chapter and save the sound postcard reflection",
+        "rewards": [
+          {
+            "id": "coloane_sound_postcard",
+            "kind": "collection",
+            "name": "Coloane Sound Postcard",
+            "text": "You write into the last page a memory of Coloane you wish to keep from today."
+          },
+          {
+            "id": "after_tide_reflection",
+            "kind": "reflection",
+            "name": "Answer after the tide",
+            "text": "You have left your own choice for those who come later."
+          }
+        ]
+      }
+    ]
+  },
+  "pt": {
+    "id": "coloane_after_tide",
+    "version": 4,
+    "title": "Depois da Maré Baixa",
+    "subtitle": "Ao longo da vila de Coloane, dos templos antigos, dos estaleiros e de Hac Sá, completar um caderno de marés que ficou por escrever.",
+    "summary": "Você e A Lin abrem em Coloane um fictício Caderno de Marés. A última página deixa apenas a pergunta: depois de os barcos deixarem de ir ao mar, o que deve este caderno registar? Ao longo do centro da aldeia, dos templos antigos, do Templo de Tam Kung, da Praça de São Francisco, de Estaleiros de Lai Chi Vun e de Hac Sá, vocês acrescentam cinco evidências que ainda hoje podem encontrar: o mar, os barcos, a aldeia, o trabalho e a terra.",
+    "route_id": "coloane_leisure_halfday",
+    "estimated_hours": 4,
+    "product_mode": "mobile_portrait_web",
+    "presentation": {
+      "default_orientation": "portrait",
+      "max_content_width_px": 480,
+      "cover_asset_id": "CAT-COVER-01",
+      "asset_base_path": "/story/coloane-after-tide/"
+    },
+    "identity": {
+      "id": "tide_workbook_keeper",
+      "name": "Registador do Caderno de Marés",
+      "description": "Você não é um guia que já sabe as respostas. Você vai usar a observação no local, fontes públicas, as verificações de A Lin e o seu próprio julgamento para completar um caderno de trabalho fictício."
+    },
+    "content_notice": "O Caderno de Marés, o registador fictício, as perguntas das páginas, os carimbos de registo e os postais sonoros são criações da história. Os conteúdos relacionados com os templos antigos de Coloane, o Templo de Tam Kung, a zona dos estaleiros de Lai Chi Vun, a Igreja de São Francisco e a arqueologia de Hac Sá foram organizados com base em fontes públicas; as crenças, as memórias locais e os factos históricos são apresentados em separado na história.",
+    "content_labels": {
+      "historical_fact": "Facto histórico",
+      "folklore": "Crença popular / Memória local",
+      "contextual_reconstruction": "Reconstrução contextual",
+      "fictional_story": "Ficção da história",
+      "dynamic_operational_info": "Informação operacional dinâmica"
+    },
+    "characters": [
+      {
+        "id": "player",
+        "name": "Você",
+        "role": "A pessoa que completa o registo atual de Coloane no Caderno de Marés",
+        "fictional": true
+      },
+      {
+        "id": "alian",
+        "name": "A Lin",
+        "role": "Colega local e agente de conhecimento, ajuda a distinguir factos históricos, crenças populares e ficção narrativa.",
+        "fictional": true
+      },
+      {
+        "id": "alan",
+        "name": "Registador",
+        "role": "O anterior registador fictício do Caderno de Marés, que aparece apenas em páginas de texto.",
+        "fictional": true
+      },
+      {
+        "id": "m",
+        "name": "A Pessoa do Futuro",
+        "role": "O futuro leitor imaginado no caderno de trabalho.",
+        "fictional": true
+      }
+    ],
+    "props": [
+      "Caderno de Marés",
+      "Registo do Mar",
+      "Registo dos Barcos",
+      "Registo da Aldeia",
+      "Registo do Trabalho",
+      "Registo da Terra",
+      "Postal Sonoro de Coloane"
+    ],
+    "nodes": [
+      {
+        "id": "prologue_tide_workbook",
+        "order": 0,
+        "kind": "prologue",
+        "title": "Prólogo: A última página está em branco",
+        "story_time": "10:00",
+        "scene": "Você abre um caderno de trabalho antigo no espaço público da aldeia de Coloane. A capa diz «Caderno de Marés», mas a última página está em branco.",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-PROP-01",
+            "alt": "Capa do Caderno de Marés e página em branco",
+            "caption": "Isto não é um mapa de tesouro, mas sim um caderno de trabalho à espera de ser preenchido hoje."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-prologue-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Isto não é um mapa de tesouro, tem apenas cinco espaços em branco: Mar, Barco, Aldeia, Trabalho, Terra."
+          },
+          {
+            "id": "cat-prologue-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Talvez não seja para procurares tesouros, mas para decidires o que deve ficar em Coloane.",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "cat-prologue-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Então, por onde começamos?"
+          },
+          {
+            "id": "cat-prologue-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Não tenhas pressa de ir para o estaleiro. Coloane não começa com um barco, começa com os sons do dia a dia na aldeia. Depois de ouvires isto, vamos primeiro ao templo antigo da aldeia, para ver onde quem vive do mar coloca as suas inquietações.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "fictional_story",
+            "title": "Caderno de Marés",
+            "text": "O caderno, o registador anterior e as cinco colunas em branco são elementos fictícios para organizar as pistas de observação de Coloane.",
+            "source_label": "Definição da história de «Depois da Maré Baixa»",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Aldeia de Coloane",
+          "chapter_goal": "Ajudar Você a compreender a definição ficcional do «Caderno de Marés» e a entrar na história de Coloane a partir do som e da observação.",
+          "known_facts": [
+            "A aldeia de Coloane preserva ruelas junto ao mar, lugares religiosos e espaços comunitários",
+            "Esta história liga Coloane através da observação, do som, do artesanato e da memória comunitária"
+          ],
+          "fiction_boundaries": [
+            "O «Caderno de Marés» e o registador anterior são fictícios"
+          ],
+          "suggested_questions": [
+            "Em que é que esta linha de história se distingue dos dois mapas de Liancheng?",
+            "Porque é que Coloane é adequada para uma observação a um ritmo lento?"
+          ],
+          "do_not_reveal": [
+            "Não revelar antecipadamente as respostas aos enigmas seguintes"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-COVER-01",
+            "CAT-PROP-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p0-cover",
+            "kind": "title",
+            "title": "Depois da Maré Baixa",
+            "text": "Um caderno de marés inacabado está à espera do Coloane de hoje.",
+            "asset_id": "CAT-COVER-01"
+          },
+          {
+            "id": "p0-book",
+            "kind": "narrative",
+            "title": "A última página está em branco",
+            "text": "Você abre um caderno de trabalho antigo no espaço público da aldeia de Coloane. A capa diz «Caderno de Marés», mas a última página está em branco.",
+            "asset_id": "CAT-PROP-01"
+          },
+          {
+            "id": "p0-dialogue",
+            "kind": "dialogue",
+            "speaker": "A Lin",
+            "text": "Não tenhas pressa de ir para o estaleiro. Coloane não começa com um barco, começa com os sons do dia a dia na aldeia. Depois de ouvires isto, vamos primeiro ao templo antigo da aldeia, para ver onde quem vive do mar coloca as suas inquietações."
+          },
+          {
+            "id": "p0-sound",
+            "kind": "narrative",
+            "title": "Primeiro, ouve durante trinta segundos",
+            "text": "Primeiro, não olhes para o ecrã durante trinta segundos. Podes anotar mentalmente três sons: brisa do mar, vozes, passos, carros, pássaros, ou incenso diante do templo. Este passo não é certo ou errado, apenas serve para escrever o Coloane de hoje na primeira página. Depois de anotares, segue pelas ruelas da aldeia até ao Templo de A-Má / Templo de Kun Iam. A primeira coluna em branco é «Mar»."
+          }
+        ],
+        "reward": {
+          "id": "tide_workbook",
+          "kind": "story_prop",
+          "name": "Caderno de Marés",
+          "text": "Você e A Lin decidem dar uma volta por Coloane, começando pelo templo antigo da aldeia, para preencher a primeira coluna em branco, «Mar»."
+        }
+      },
+      {
+        "id": "chapter_coloane_sea",
+        "order": 1,
+        "kind": "puzzle",
+        "title": "Capítulo 1: Esperar a Maré em Frente ao Templo",
+        "location_name": "Templo de Tin Hau / Templo de Kun Iam",
+        "story_time": "10:30",
+        "poi_id": "poi_0236",
+        "scene": "Na primeira página do caderno de trabalho aparece uma frase: Antes de ir para o mar, onde é que as pessoas põem as suas preocupações?",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-SEA-01",
+            "alt": "Templos e ruas da aldeia de Coloane",
+            "caption": "O mar não é apenas uma paisagem distante; também era o desconhecido que a comunidade enfrentava todos os dias."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-sea-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Então o mar não é o azul distante?"
+          },
+          {
+            "id": "cat-sea-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Sim. Para quem vive do mar, o mar é o desconhecido a que é preciso responder todos os dias.",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "cat-sea-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Então o templo antigo não é apenas um edifício, mas também um registo deixado pela comunidade."
+          },
+          {
+            "id": "cat-sea-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Sim. Mas temos de distinguir entre os factos históricos que podem ser verificados e o significado de crença popular que as pessoas lhe atribuem.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Templos Antigos de Coloane",
+            "text": "O Templo de Kun Iam foi construído por volta de 1800, segundo a inscrição, financiado colectivamente pelos habitantes das casas de barco; o Templo de Tin Hau foi construído por volta de 1763, sendo um dos templos mais antigos de Coloane.",
+            "source_label": "Direcção dos Serviços de Turismo de Macau e materiais culturais públicos",
+            "confidence": "high"
+          },
+          {
+            "kind": "folklore",
+            "title": "Segurança no Mar",
+            "text": "A oração pela segurança no mar pertence às crenças populares e à memória da vida local; deve ser respeitada, mas não deve ser apresentada como facto histórico verificável.",
+            "source_label": "Compilação de crenças populares locais",
+            "confidence": "medium"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Templo de Tin Hau e Templo de Kun Iam de Coloane",
+          "chapter_goal": "Ajudar o/a Você a distinguir entre factos históricos e expressões de crença popular relacionados com os templos, e preencher a coluna do mar no caderno de trabalho.",
+          "known_facts": [
+            "O Templo de Tin Hau de Coloane foi construído por volta de 1763",
+            "O Templo de Kun Iam de Coloane foi construído por volta de 1800, relacionado com a contribuição colectiva dos habitantes das casas de barco",
+            "Orar por segurança é uma crença popular, não equivale a um acontecimento histórico verificável"
+          ],
+          "fiction_boundaries": [
+            "As perguntas do caderno de trabalho e o capítulo de registo do mar são ficção"
+          ],
+          "suggested_questions": [
+            "Que antecedentes têm o Templo de Tin Hau e o Templo de Kun Iam?",
+            "Como distinguir entre factos históricos e crenças populares?"
+          ],
+          "do_not_reveal": [
+            "Não liste directamente as opções correctas do enigma"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-SEA-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p1-transition",
+            "kind": "transition",
+            "title": "Do centro da aldeia para os templos",
+            "text": "A partir do espaço público onde pararam para ouvir, vocês seguem lentamente pelas ruas da aldeia de Coloane até ao Templo de Tin Hau / Templo de Kun Iam. Na primeira página do caderno de trabalho aparece uma frase: Antes de ir para o mar, onde é que as pessoas põem as suas preocupações?"
+          },
+          {
+            "id": "p1-scene",
+            "kind": "narrative",
+            "title": "Esperar a Maré em Frente ao Templo",
+            "text": "O templo antigo esconde-se na aldeia. Incenso, inscrições, pavilhões de culto e ruas transformam o mar numa vida quotidiana.",
+            "asset_id": "CAT-SEA-01"
+          },
+          {
+            "id": "p1-dialogue",
+            "kind": "dialogue",
+            "speaker": "A Lin",
+            "text": "Para quem vive do mar, o mar não é o azul distante, mas o desconhecido a que é preciso responder todos os dias. Nesta etapa, vamos primeiro distinguir entre factos históricos e crenças populares; depois, vamos ao Templo de Tam Kung ver como um barco que não vai ao mar continua a transportar desejos."
+          },
+          {
+            "id": "p1-puzzle",
+            "kind": "puzzle",
+            "title": "Preencher «Mar»",
+            "text": "Escreve na coluna dos factos históricos as afirmações que podem ser verificadas por documentos."
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "Durante actividades religiosas, multidões ou limitações no local, leia apenas nas áreas abertas e não entre em espaços fechados."
+        },
+        "puzzle": {
+          "id": "puzzle_coloane_sea_facts",
+          "type": "multi_select",
+          "prompt": "Quais são adequados para escrever na coluna [Mar] do «Caderno de Trabalho das Marés»?",
+          "options": [
+            {
+              "id": "kuan_yin_1800",
+              "text": "O Templo de Kun Iam foi construído por volta de 1800."
+            },
+            {
+              "id": "boat_households_funded",
+              "text": "O Templo de Kun Iam está relacionado com a contribuição colectiva dos habitantes das casas de barco."
+            },
+            {
+              "id": "wish_always_comes_true",
+              "text": "Os desejos pedidos certamente serão realizados."
+            },
+            {
+              "id": "tin_hau_1763",
+              "text": "O Templo de Tin Hau foi construído por volta de 1763."
+            }
+          ],
+          "solution": [
+            "kuan_yin_1800",
+            "boat_households_funded",
+            "tin_hau_1763"
+          ],
+          "hints": [
+            "Procura afirmações que possam ser verificadas por documentos.",
+            "As crenças populares podem ser respeitadas, mas não devem ser apresentadas como factos históricos inevitáveis."
+          ],
+          "explanation": "A data do Templo de Kun Iam, a contribuição colectiva dos habitantes das casas de barco e a data do Templo de Tin Hau são informações verificáveis; a ideia de que os desejos certamente se realizam é uma expressão de crença popular e não deve ser escrita na coluna dos factos históricos. Depois de preencheres [Mar], na página seguinte do caderno de trabalho aparece a sombra de um barco: por favor, sai da área aberta em frente ao templo e dirige-te ao Templo de Tam Kung.",
+          "skip_text": "A Lin ajuda-te a separar as informações verificáveis das crenças populares. Ainda assim, preenches [Mar]. Na página seguinte do caderno de trabalho aparece a sombra de um barco: por favor, sai da área aberta em frente ao templo e dirige-te ao Templo de Tam Kung.",
+          "reward": {
+            "id": "record_sea",
+            "kind": "stamp",
+            "name": "Registo do Mar",
+            "text": "O mar não é o azul distante; é o desconhecido a que as pessoas têm de responder todos os dias. Próxima paragem: Templo de Tam Kung, para ver como o barco, a segurança e as crenças populares locais estão ligados."
+          }
+        }
+      },
+      {
+        "id": "chapter_coloane_boat",
+        "order": 2,
+        "kind": "puzzle",
+        "title": "Capítulo II: Um barco feito de osso de baleia",
+        "location_name": "Templo de Tam Kung",
+        "story_time": "11:10",
+        "poi_id": "poi_0240",
+        "scene": "Na segunda página do caderno está escrito: se o barco já não está na água, ainda pode continuar a transportar pessoas?",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-BOAT-01",
+            "alt": "Ruas e becos à beira-mar perto do Templo de Tam Kung",
+            "caption": "Alguns barcos já não navegam, mas ainda levam os desejos das pessoas através do tempo."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-boat-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Fazer um barco-dragão com ossos de baleia já é, por si só, quase uma lenda."
+          },
+          {
+            "id": "cat-boat-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Parecer lenda não significa que não haja factos. Temos de distinguir o que é, e aquilo em que as pessoas acreditam.",
+            "portrait_asset_id": "V4-CHAR-02"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Templo de Tam Kung e o barco-dragão de osso de baleia",
+            "text": "O Templo de Tam Kung foi construído durante o reinado de Tongzhi da dinastia Qing. No seu interior preserva-se um barco-dragão esculpido em osso de baleia, com mais de cem anos de história.",
+            "source_label": "Direcção dos Serviços de Turismo de Macau e materiais culturais públicos",
+            "confidence": "high"
+          },
+          {
+            "kind": "folklore",
+            "title": "Tocar no osso de baleia",
+            "text": "Tocar no osso de baleia para ter boa sorte é uma crença popular local, um dos significados que as pessoas atribuem ao objecto.",
+            "source_label": "Compilação de crenças populares locais",
+            "confidence": "medium"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Templo de Tam Kung",
+          "chapter_goal": "Ajudar o Você a distinguir os factos sobre o objecto, as crenças populares e os significados locais, e a preencher a coluna do barco no caderno.",
+          "known_facts": [
+            "O Templo de Tam Kung foi construído durante o reinado de Tongzhi da dinastia Qing",
+            "No templo preserva-se um barco-dragão de osso de baleia com mais de cem anos",
+            "Tocar no osso de baleia para ter boa sorte é uma crença popular"
+          ],
+          "fiction_boundaries": [
+            "As perguntas do caderno e o capítulo do registo do barco são criações ficcionais"
+          ],
+          "suggested_questions": [
+            "Que relação existe entre o Templo de Tam Kung e a segurança no mar?",
+            "Como distinguir os factos sobre o objecto das crenças populares?"
+          ],
+          "do_not_reveal": [
+            "Não revelar directamente as respostas do emparelhamento das colunas"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-BOAT-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p2-transition",
+            "kind": "transition",
+            "title": "Do templo antigo ao Templo de Tam Kung",
+            "text": "Ao sair do templo antigo com o registo 【Mar】, vocês seguem em direcção ao Templo de Tam Kung. Ao lado do carácter «mar» no caderno, aparece uma linha fina, como uma remada a cortar a superfície da água. A Lin diz: se o mar é o desconhecido, então o barco é a forma de o homem caminhar rumo ao desconhecido."
+          },
+          {
+            "id": "p2-scene",
+            "kind": "narrative",
+            "title": "Um barco feito de osso de baleia",
+            "text": "Vocês chegam ao Templo de Tam Kung. Na segunda página do caderno pergunta-se: se o barco já não está na água, ainda pode continuar a transportar pessoas?",
+            "asset_id": "CAT-BOAT-01"
+          },
+          {
+            "id": "p2-puzzle",
+            "kind": "puzzle",
+            "title": "Preencher o «Barco»",
+            "text": "Coloquem os três registos nas colunas correctas. Depois de desvendado, o caderno levar-vos-á de volta à Praça do Centro da Aldeia, porque a memória do barco não está apenas no templo, mas também no lugar onde as pessoas vivem."
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "Não tocar nos objectos; se as actividades no templo ou as condições de abertura não forem adequadas para permanecer, pode ler o conteúdo a partir do exterior."
+        },
+        "puzzle": {
+          "id": "puzzle_coloane_boat_layers",
+          "type": "mapping",
+          "prompt": "Coloque os três registos nas colunas correctas.",
+          "fields": [
+            {
+              "id": "fact",
+              "label": "Facto histórico"
+            },
+            {
+              "id": "belief",
+              "label": "Crença popular"
+            },
+            {
+              "id": "meaning",
+              "label": "Significado local"
+            }
+          ],
+          "options": [
+            {
+              "id": "whale_bone_dragon_boat",
+              "text": "O templo guarda um barco-dragão de osso de baleia"
+            },
+            {
+              "id": "touch_for_luck",
+              "text": "Tocar no osso de baleia para ter boa sorte"
+            },
+            {
+              "id": "safe_voyage_memory",
+              "text": "O desejo comum de segurança no mar"
+            }
+          ],
+          "solution": {
+            "fact": "whale_bone_dragon_boat",
+            "belief": "touch_for_luck",
+            "meaning": "safe_voyage_memory"
+          },
+          "hints": [
+            "Primeiro, procure o que pode ser descrito como o próprio objecto.",
+            "Depois, distinga aquilo em que as pessoas acreditam e que desejo essa crença reflecte."
+          ],
+          "explanation": "O facto histórico é que o barco-dragão de osso de baleia se preserva até hoje; tocar no osso para ter boa sorte é uma crença popular; o desejo de segurança no mar mostra como este objecto carrega um significado local. Depois de preencher 【Barco】, o caderno leva a linha de volta à Igreja de São Francisco Xavier e ao Largo: na próxima paragem, vamos ver como o mesmo centro da aldeia guarda diferentes memórias.",
+          "skip_text": "A Lin separa os três registos em colunas e lembra o Você de não confundir crenças populares com factos históricos, nem de as apagar da memória local. Depois de preencher 【Barco】, a próxima paragem é a Igreja de São Francisco Xavier e o Largo, para ver como o centro da aldeia guarda diferentes memórias.",
+          "reward": {
+            "id": "record_boat",
+            "kind": "stamp",
+            "name": "Registo do Barco",
+            "text": "Alguns barcos já não navegam, mas ainda levam os desejos das pessoas através do tempo. Próxima paragem: Igreja de São Francisco Xavier e Largo, voltar ao centro da aldeia para ver as múltiplas histórias."
+          }
+        }
+      },
+      {
+        "id": "chapter_coloane_village",
+        "order": 3,
+        "kind": "puzzle",
+        "title": "Capítulo 3: O mesmo largo, memórias diferentes",
+        "location_name": "Igreja de São Francisco Xavier e Largo",
+        "story_time": "12:00",
+        "poi_id": "poi_0241",
+        "scene": "O caderno não apontava directamente para os estaleiros, mas voltou a marcar o coração da vila: será que um lugar consegue lembrar vários passados ao mesmo tempo?",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-VILLAGE-01",
+            "alt": "Largo da Vila de Coloane e contorno da igreja",
+            "caption": "Uma vila não é um pedaço de terra no mapa; é um lugar onde diferentes memórias se reúnem temporariamente."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-village-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Aqui não parece um estaleiro. Porque faz parte da história de Coloane?"
+          },
+          {
+            "id": "cat-village-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Porque a comunidade não tem uma identidade única. Edifícios, acontecimentos e memórias deslocadas podem ficar no mesmo largo.",
+            "portrait_asset_id": "V4-CHAR-01"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Igreja de São Francisco Xavier",
+            "text": "A Igreja de São Francisco Xavier foi construída em 1928; o monumento em frente está ligado ao episódio de 1910 de combate aos piratas na região.",
+            "source_label": "Informações públicas da Direcção dos Serviços de Turismo de Macau",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "Memórias múltiplas",
+            "text": "A história de um lugar não se limita ao que é visível hoje. Edifícios, acontecimentos comemorados e objectos que ali existiram podem ser compreendidos em camadas.",
+            "source_label": "Compilação do guia da narrativa",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Igreja de São Francisco Xavier e Largo",
+          "chapter_goal": "Ajudar Você a organizar em camadas os edifícios, os eventos comemorados e as memórias que não se resumem inteiramente ao que é visível hoje.",
+          "known_facts": [
+            "A Igreja de São Francisco Xavier foi construída em 1928",
+            "O monumento em frente está ligado ao combate contra piratas em 1910",
+            "A história do lugar não é igual a tudo o que é visível hoje"
+          ],
+          "fiction_boundaries": [
+            "As perguntas do caderno e o capítulo do registo da vila são criação ficcional"
+          ],
+          "suggested_questions": [
+            "Que informações históricas públicas existem sobre a Igreja de São Francisco Xavier?",
+            "Porque é que se deve separar os edifícios dos acontecimentos?"
+          ],
+          "do_not_reveal": [
+            "Não dar directamente a resposta do emparelhamento"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-VILLAGE-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p3-transition",
+            "kind": "transition",
+            "title": "Regresso ao coração da vila",
+            "text": "Ao saírem do Templo de Tam Kung, vocês voltaram pela estrada até à Igreja de São Francisco Xavier e ao Largo. O caderno não apontou logo para os estaleiros, mas voltou a assinalar no mapa o coração da vila. Um barco não é uma coisa isolada no mar; parte da vila e volta a ser lembrado na vila."
+          },
+          {
+            "id": "p3-scene",
+            "kind": "narrative",
+            "title": "Memórias diferentes no mesmo largo",
+            "text": "A igreja, o largo, o monumento e as ruas reúnem-se. Esta página pergunta: um lugar consegue recordar vários passados ao mesmo tempo?",
+            "asset_id": "CAT-VILLAGE-01"
+          },
+          {
+            "id": "p3-puzzle",
+            "kind": "puzzle",
+            "title": "Completar a «vila»",
+            "text": "Coloque as três pistas na camada histórica correcta. Depois de completar, caminhe do coração da vila para a zona dos Estaleiros de Lai Chi Vun, para ver como o artesanato e a indústria deixaram marcas."
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "A abertura da igreja, as actividades religiosas e a afluência ao largo dependem da organização no local; não é necessário entrar em áreas não abertas ao público."
+        },
+        "puzzle": {
+          "id": "puzzle_coloane_village_layers",
+          "type": "mapping",
+          "prompt": "Coloque as três pistas na camada histórica correcta.",
+          "fields": [
+            {
+              "id": "building",
+              "label": "Edifício"
+            },
+            {
+              "id": "event",
+              "label": "Acontecimento"
+            },
+            {
+              "id": "memory",
+              "label": "Memória"
+            }
+          ],
+          "options": [
+            {
+              "id": "church_1928",
+              "text": "A Igreja de São Francisco Xavier foi construída em 1928"
+            },
+            {
+              "id": "anti_pirate_1910",
+              "text": "O monumento em frente está ligado ao combate contra piratas em 1910"
+            },
+            {
+              "id": "not_all_visible_today",
+              "text": "A história do lugar não é igual a tudo o que é visível hoje"
+            }
+          ],
+          "solution": {
+            "building": "church_1928",
+            "event": "anti_pirate_1910",
+            "memory": "not_all_visible_today"
+          },
+          "hints": [
+            "Comece por encontrar a data do edifício em si.",
+            "O monumento aponta para um acontecimento; o restante é uma forma de compreender o lugar."
+          ],
+          "explanation": "A data da igreja pertence à camada do edifício; a memória do combate aos piratas pertence à camada do acontecimento; e o que não pode ser totalmente resumido pelo que se vê hoje é o método para compreender a memória da comunidade. Depois de completar a «vila», as páginas do caderno revelam veios de madeira: o próximo destino é a zona dos Estaleiros de Lai Chi Vun.",
+          "skip_text": "A Lin dividiu o largo em três camadas: edifício, acontecimento e memória. Você ainda completa a «vila». As páginas do caderno revelam veios de madeira: o próximo destino é a zona dos Estaleiros de Lai Chi Vun.",
+          "reward": {
+            "id": "record_village",
+            "kind": "stamp",
+            "name": "Registo da Vila",
+            "text": "Uma vila não é um pedaço de terra no mapa; é um lugar onde diferentes memórias se reúnem temporariamente. Próxima paragem: zona dos Estaleiros de Lai Chi Vun, para ver como os barcos eram feitos e como deixaram de ser lançados à água."
+          }
+        }
+      },
+      {
+        "id": "chapter_coloane_craft",
+        "order": 4,
+        "kind": "puzzle",
+        "title": "Capítulo IV: Depois de o barco não poder ser lançado à água",
+        "location_name": "Zona dos Estaleiros de Lai Chi Vun",
+        "story_time": "13:20",
+        "poi_id": "poi_0330",
+        "scene": "As páginas do caderno de trabalho ganham textura de madeira. Os sons da praça vão ficando distantes, e erguem-se os sons imaginados de serrar madeira e de água a bater nas estacas.",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-CRAFT-01",
+            "alt": "Imagem provisória da Zona dos Estaleiros de Lai Chi Vun",
+            "caption": "A arte não está apenas no produto acabado, mas também no espaço, nas ferramentas, no processo e no silêncio."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-craft-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Vamos reconstruir um barco?"
+          },
+          {
+            "id": "cat-craft-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "A versão provisória não finge entender todo o processo artesanal. Vamos apenas registar três coisas fiáveis: o espaço, a arte e a mudança.",
+            "portrait_asset_id": "V4-CHAR-02"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Zona dos Estaleiros de Lai Chi Vun",
+            "text": "A Zona dos Estaleiros de Lai Chi Vun formou-se principalmente em meados do século XX, desenvolvendo-se em banda ao longo da costa, com uma parte a estender-se até à água.",
+            "source_label": "Informação pública do Património Cultural de Macau",
+            "confidence": "high"
+          },
+          {
+            "kind": "historical_fact",
+            "title": "Declínio da indústria de construção naval",
+            "text": "A indústria tradicional de construção naval de Macau entrou gradualmente em declínio após a década de 1990; a Zona dos Estaleiros de Lai Chi Vun foi classificada por lei como lugar em 2018.",
+            "source_label": "Informação pública do Património Cultural de Macau",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Zona dos Estaleiros de Lai Chi Vun",
+          "chapter_goal": "Ajudar Você a usar as três partes de evidência — espaço, arte e mudança — para compreender a zona dos estaleiros, sem fingir dominar o processo completo de construção naval não verificado.",
+          "known_facts": [
+            "A Zona dos Estaleiros de Lai Chi Vun formou-se principalmente em meados do século XX.",
+            "Os estaleiros desenvolvem-se em banda ao longo da costa, com parte a estender-se até à água.",
+            "Após a década de 1990, a indústria de construção naval entrou gradualmente em declínio.",
+            "A zona foi classificada por lei como lugar em 2018."
+          ],
+          "fiction_boundaries": [
+            "O barco invisível e o carimbo de registo do ofício são criação ficcional.",
+            "O puzzle sobre o processo formal de construção naval necessita de ser detalhado com informações profissionais."
+          ],
+          "suggested_questions": [
+            "Porque é importante a Zona dos Estaleiros de Lai Chi Vun?",
+            "Porque é que a versão provisória não detalha o processo de construção naval?"
+          ],
+          "do_not_reveal": [
+            "Não revelar diretamente a resposta das três partes de evidência."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-CRAFT-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p4-transition",
+            "kind": "transition",
+            "title": "Do centro do povoado para os estaleiros",
+            "text": "Levando o registo 【Aldeia】, saem da praça e dirigem-se para a Zona dos Estaleiros de Lai Chi Vun. As paragens anteriores explicaram porque é que o barco era importante; agora, o caderno de trabalho pede-vos para ver como o barco era feito e como, pouco a pouco, deixou de ser lançado à água."
+          },
+          {
+            "id": "p4-scene",
+            "kind": "narrative",
+            "title": "Depois de o barco não poder ser lançado à água",
+            "text": "Os estaleiros desenvolvem-se ao longo da água. Na quarta página do caderno escreve-se: depois de haver menos pessoas que sabiam construir barcos, o que é que os estaleiros deixaram?",
+            "asset_id": "CAT-CRAFT-01"
+          },
+          {
+            "id": "p4-puzzle",
+            "kind": "puzzle",
+            "title": "Completar o «Ofício»",
+            "text": "Seleciona as três partes de evidência fiáveis que constituem o barco invisível. Ao completar, o percurso irá da indústria moderna para uma camada temporal mais antiga de Hac Sá."
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "Prevalece a área atualmente aberta e a sinalização no local; não entre em zonas fechadas, em obras ou perigosas junto à água."
+        },
+        "puzzle": {
+          "id": "puzzle_coloane_craft_evidence",
+          "type": "evidence_chain",
+          "prompt": "Seleciona as três partes de evidência que podem constituir o «barco invisível».",
+          "required_count": 3,
+          "options": [
+            {
+              "id": "space_by_water",
+              "text": "Espaço dos estaleiros desenvolvido junto à água"
+            },
+            {
+              "id": "wooden_boat_craft",
+              "text": "Arte tradicional de construção de barcos de madeira"
+            },
+            {
+              "id": "industry_decline",
+              "text": "Declínio da indústria após a década de 1990"
+            },
+            {
+              "id": "random_food_memory",
+              "text": "Os snacks nas proximidades são muito bons"
+            }
+          ],
+          "solution": [
+            "space_by_water",
+            "wooden_boat_craft",
+            "industry_decline"
+          ],
+          "hints": [
+            "A versão provisória procura apenas as três partes de evidência: espaço, arte e mudança.",
+            "Não escolhas preferências de vida que não estejam relacionadas com a cadeia de evidências da construção naval."
+          ],
+          "explanation": "O espaço junto à água, a arte dos barcos de madeira e o declínio da indústria constituem a cadeia mínima de evidências. A memória dos snacks pode ficar como experiência de viagem, mas não substitui as evidências da arte dos estaleiros. Depois de completares o «Ofício», A Lin lembra: escrever apenas sobre a construção naval tornaria Coloane demasiado tardia na história; a próxima paragem entra na camada de conhecimento de Hac Sá.",
+          "skip_text": "A Lin escreve as três partes de evidência no caderno: espaço, arte e mudança. Ainda assim completas o «Ofício». Ela lembra: escrever apenas sobre a construção naval tornaria Coloane demasiado tardia na história; a próxima paragem entra na camada de conhecimento de Hac Sá.",
+          "reward": {
+            "id": "record_craft",
+            "kind": "stamp",
+            "name": "Registo do Ofício",
+            "text": "A arte não está apenas no produto acabado, mas também no espaço, nas ferramentas, no processo e no silêncio. Próxima paragem: camada de conhecimento de Hac Sá, para recuar ainda mais no tempo de Coloane."
+          }
+        }
+      },
+      {
+        "id": "chapter_coloane_soil",
+        "order": 5,
+        "kind": "puzzle",
+        "title": "Capítulo 5: Antes do Surgimento de Macau",
+        "location_name": "Camada de Conhecimento de Hac Sá",
+        "story_time": "14:30",
+        "poi_id": "poi_0024",
+        "scene": "Se escrevermos apenas sobre construção naval, Coloane será registado tarde demais. A última coluna é a terra, que é mais antiga do que os estaleiros.",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-SOIL-01",
+            "alt": "Imagem de substituição da camada temporal de Hac Sá e arqueologia remota",
+            "caption": "A terra lembra-se das pessoas mais cedo do que a cidade, e fala mais devagar do que elas."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-soil-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Então não vamos procurar relíquias?"
+          },
+          {
+            "id": "cat-soil-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Não. Saber que um lugar é mais antigo não significa que podemos perturbá-lo. O que você tem de fazer é colocar o tempo na posição correta.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Arqueologia de Hac Sá",
+            "text": "Entre 1973 e 2006, realizaram-se cinco escavações arqueológicas em Hac Sá; os artefactos exumados abrangem milhares de anos, incluindo vestígios do Neolítico.",
+            "source_label": "Museu da História de Taipa e Coloane e dados de exposições públicas",
+            "confidence": "high"
+          },
+          {
+            "kind": "dynamic_operational_info",
+            "title": "Limite de Segurança",
+            "text": "Este capítulo é concluído com a camada de conhecimento remoto; não se incentiva a entrada em locais arqueológicos sensíveis nem a procura de relíquias por conta própria.",
+            "source_label": "Design de Segurança da História",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Hac Sá",
+          "chapter_goal": "Ajudar o jogador a compreender a camada temporal arqueológica de Hac Sá, respeitando ao mesmo tempo os limites de segurança de não entrar em locais sensíveis nem procurar relíquias por conta própria.",
+          "known_facts": [
+            "Em Hac Sá, entre 1973 e 2006, foram realizadas cinco escavações arqueológicas",
+            "Os artefactos descobertos abrangem vários milénios",
+            "O conteúdo inclui vestígios do Neolítico"
+          ],
+          "fiction_boundaries": [
+            "O capítulo do registo da terra é parte da ficção narrativa",
+            "Este capítulo não define tarefas de procura de relíquias no local"
+          ],
+          "suggested_questions": [
+            "O que dizem as descobertas arqueológicas de Hac Sá?",
+            "Por que razão não é incentivado entrar em locais arqueológicos sensíveis?"
+          ],
+          "do_not_reveal": [
+            "Não revelar diretamente as opções corretas do puzzle"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-SOIL-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p5-transition",
+            "kind": "transition",
+            "title": "Da indústria moderna para um tempo mais antigo",
+            "text": "Depois de sair de Lai Chi Vun, o jogador pensa que o caderno de trabalho está quase preenchido. Mas A Lin empurra o mapa para mais longe: se apenas escrevermos sobre construção naval, Coloane será registado tarde demais. A seguir, não entramos em locais arqueológicos sensíveis; usamos apenas a camada de conhecimento de Hac Sá para voltar a pôr o tempo na posição correta."
+          },
+          {
+            "id": "p5-scene",
+            "kind": "narrative",
+            "title": "Antes de Macau Existir",
+            "text": "Este capítulo não conduz os jogadores a entrar em locais arqueológicos sensíveis; é concluído com a camada de conhecimento remoto. A quinta página do caderno de trabalho diz: se continuarmos a virar o tempo para trás, a quem pertencia Coloane?",
+            "asset_id": "CAT-SOIL-01"
+          },
+          {
+            "id": "p5-puzzle",
+            "kind": "puzzle",
+            "title": "Completar a coluna «Terra»",
+            "text": "Selecione as pistas cronológicas arqueológicas que podem ser escritas na coluna da terra. Depois de concluído, por favor volte ao espaço público seguro e organize os cinco capítulos de registo."
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "Este capítulo não exige a entrada em qualquer local arqueológico sensível ou não aberto; pode ser concluído com materiais públicos."
+        },
+        "puzzle": {
+          "id": "puzzle_coloane_soil_facts",
+          "type": "multi_select",
+          "prompt": "Quais podem ser escritos na coluna «Terra» do Caderno de Marés?",
+          "options": [
+            {
+              "id": "five_excavations",
+              "text": "Entre 1973 e 2006, foram realizadas cinco escavações arqueológicas em Hac Sá"
+            },
+            {
+              "id": "neolithic_remains",
+              "text": "Os artefactos descobertos incluem vestígios do Neolítico"
+            },
+            {
+              "id": "dig_to_verify",
+              "text": "Você deve procurar relíquias por conta própria para verificar"
+            },
+            {
+              "id": "thousands_years",
+              "text": "A escala temporal dos artefactos relacionados pode chegar a vários milénios"
+            }
+          ],
+          "solution": [
+            "five_excavations",
+            "neolithic_remains",
+            "thousands_years"
+          ],
+          "hints": [
+            "Encontre o conteúdo de fontes públicas que possa ser escrito na linha do tempo.",
+            "Procurar relíquias por conta própria não cumpre os limites de segurança e ética."
+          ],
+          "explanation": "As cinco escavações arqueológicas, os vestígios do Neolítico e a abrangência temporal de vários milénios podem ser escritos na coluna da terra; procurar relíquias por conta própria não deve ser uma tarefa do jogo. Depois de preencher a coluna «Terra», os cinco espaços vazios estão finalmente completos: o próximo passo é regressar a um espaço público seguro e concluir a última página.",
+          "skip_text": "A Lin ajudou-o a escrever a linha do tempo de Hac Sá na coluna da terra e traçou o limite de segurança de não entrar em locais sensíveis. Os cinco espaços vazios estão finalmente completos: o próximo passo é regressar a um espaço público seguro e concluir a última página.",
+          "reward": {
+            "id": "record_soil",
+            "kind": "stamp",
+            "name": "Registo da Terra",
+            "text": "A terra lembra-se das pessoas mais cedo do que a cidade, e fala mais devagar do que elas. Próxima paragem: espaço público seguro, para reunir mar, barcos, aldeia, indústria e terra, e completar o postal sonoro de Coloane."
+          }
+        }
+      },
+      {
+        "id": "ending_coloane_after_tide",
+        "order": 6,
+        "kind": "ending",
+        "title": "Capítulo Final: Depois da Maré Baixa",
+        "location_name": "Espaço público seguro",
+        "story_time": "15:20",
+        "poi_id": "poi_0286",
+        "scene": "Os sons da Vila de Coloane, o incenso diante do templo, o barco-dragão no Templo de Tam Kung, os sinos do largo, as sombras dos barcos de madeira de Lai Chi Vun, tudo trazido pela brisa do mar até aqui.",
+        "arrival_comic": [
+          {
+            "asset_id": "CAT-END-01",
+            "alt": "Imagem provisória do Cartão Postal Sonoro de Coloane",
+            "caption": "A última página não pergunta o que o passado deixou, mas o que esperas que o futuro recorde."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "cat-ending-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "As cinco colunas do caderno de trabalho estão preenchidas. Mas a última página ainda está em branco."
+          },
+          {
+            "id": "cat-ending-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Porque a última página não pergunta o que o passado deixou, mas o que esperas que o futuro recorde.",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "cat-ending-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Os pontos turísticos, as indústrias, as crenças populares, as comunidades e a terra parecem não existir isoladamente."
+          },
+          {
+            "id": "cat-ending-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Então escolhe um som que queiras deixar. Não é para que permaneça sempre igual, mas para que os que vierem depois saibam como viveu.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "fictional_story",
+            "title": "Cartão Postal Sonoro de Coloane",
+            "text": "O cartão postal sonoro é um item de desfecho que guarda as escolhas e reflexões do jogador como registo de conclusão desta história.",
+            "source_label": "Definição da história de «Depois da Maré Baixa»",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Espaço Público Seguro de Coloane",
+          "chapter_goal": "Ajudar o jogador a rever as cinco colunas (mar, barco, aldeia, trabalho, terra) e concluir o Cartão Postal Sonoro de Coloane.",
+          "known_facts": [
+            "Este percurso liga a Vila de Coloane, o templo antigo, o Templo de Tam Kung, o Largo da Igreja, Lai Chi Vun e as camadas de conhecimento de Hac Sá",
+            "A reflexão final é escrita pelo próprio jogador."
+          ],
+          "fiction_boundaries": [
+            "O cartão postal sonoro e a questão da última página são elementos fictícios do enredo."
+          ],
+          "suggested_questions": [
+            "Como é que os cinco capítulos de registo se ligam numa única linha narrativa?",
+            "Como posso escrever a reflexão final?"
+          ],
+          "do_not_reveal": [
+            "Não escreva a reflexão final pelo jogador."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_pages",
+          "assets": [
+            "CAT-END-01"
+          ]
+        },
+        "pages": [
+          {
+            "id": "p6-scene",
+            "kind": "narrative",
+            "title": "Depois da Maré Baixa",
+            "text": "Voltas a um espaço público seguro onde podes permanecer, abres novamente o caderno de trabalho: as cinco colunas – mar, barco, aldeia, trabalho, terra – estão preenchidas, mas a última página continua em branco. Agora responde à questão final: se as gerações futuras só pudessem levar uma memória de Coloane, qual gostarias que fosse?",
+            "asset_id": "CAT-END-01"
+          },
+          {
+            "id": "p6-dialogue",
+            "kind": "dialogue",
+            "speaker": "A Lin",
+            "text": "Não é para que permaneça sempre igual, mas para que os que vierem depois saibam como viveu."
+          }
+        ],
+        "fallback": {
+          "type": "content_only",
+          "text": "O final pode ser concluído em qualquer espaço público seguro e permanecível, não sendo necessário aproximar-se da costa perigosa."
+        }
+      }
+    ],
+    "endings": [
+      {
+        "id": "make_sound_postcard",
+        "title": "Cartão Postal Sonoro de Coloane",
+        "choice_text": "Concluir o cartão postal sonoro",
+        "text": "Depois da maré baixa, o mar deixa a costa; depois de as indústrias desaparecerem, as pessoas deixam as suas artes; depois de as pessoas partirem, o lugar deixa as suas histórias. Preservar não é impedir a mudança, mas sim, depois de a mudança ocorrer, ainda sabermos como aqui se vivia.",
+        "condition": "Concluir o capítulo final e guardar a reflexão do cartão postal sonoro",
+        "rewards": [
+          {
+            "id": "coloane_sound_postcard",
+            "kind": "collection",
+            "name": "Cartão Postal Sonoro de Coloane",
+            "text": "Você escreveu na última página uma memória de Coloane que espera deixar hoje."
+          },
+          {
+            "id": "after_tide_reflection",
+            "kind": "reflection",
+            "name": "A resposta depois da maré baixa",
+            "text": "Você deixou a sua própria escolha para os que virão depois."
+          }
+        ]
+      }
+    ]
+  }
+}

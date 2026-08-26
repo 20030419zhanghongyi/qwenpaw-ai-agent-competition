@@ -134,6 +134,13 @@ _THEME_COTAI = (
 )
 _THEME_HERITAGE = ("历史城区", "旧城", "世遗", "heritage", "historic")
 _THEME_FAMILY = ("亲子", "带小孩", "family theme")
+_STORY_YES = ("参加故事", "故事线", "故事路线", "愿意参加", "story walk", "join a story", "participar")
+_STORY_NO = ("不参加故事", "不要故事", "跳过故事", "no story", "skip the story", "sem história")
+_STORY_NAMES = (
+    (("莲城双图", "蓮城雙圖", "two maps", "dois mapas"), "lotus_city_double_map"),
+    (("海风寄来的信", "海風寄來的信", "sea breeze", "brisa do mar"), "taipa_letters"),
+    (("潮退之后", "潮退之後", "after the tide", "depois da maré"), "coloane_after_tide"),
+)
 
 # (keywords, poi_id) — order matters for first match
 _PORT_ENTRIES: tuple[tuple[tuple[str, ...], str], ...] = (
@@ -262,6 +269,19 @@ def parse_intent_rules(text: str) -> Preference:
     _append_if_any(pref, t, _THEME_FAMILY, "themes", "family")
 
     _infer_ports(pref, t)
+    lower = t.lower()
+    if any(keyword in lower for keyword in _STORY_NO):
+        pref.story_opt_in = False
+    elif any(keyword in lower for keyword in _STORY_YES):
+        pref.story_opt_in = True
+    for names, story_id in _STORY_NAMES:
+        if any(name in lower for name in names):
+            pref.story_opt_in = True
+            pref.story_id = story_id
+            break
+    day_match = re.search(r"第\s*([1-5])\s*[天日]|day\s*([1-5])|dia\s*([1-5])", lower)
+    if day_match:
+        pref.story_day = int(next(group for group in day_match.groups() if group))
     return pref
 
 
@@ -292,8 +312,14 @@ _OPENERS: dict[str, str] = {
 
 
 def _preference_ready(pref: Preference) -> bool:
-    """至少有兴趣或行走偏好或同行类型之一，才算可回填。"""
-    return bool(pref.interests or pref.physical or pref.travel_type)
+    """基础偏好与故事决定都明确后，才结束 AI 引导。"""
+    basics_ready = bool(pref.interests or pref.physical or pref.travel_type)
+    story_ready = pref.story_opt_in is False or (
+        pref.story_opt_in is True
+        and bool(pref.story_id)
+        and (pref.duration != "multi-day" or pref.story_day is not None)
+    )
+    return basics_ready and story_ready
 
 
 def _guide_with_qwenpaw(
@@ -348,6 +374,11 @@ def _merge_preferences(base: Preference, overlay: Preference) -> Preference:
         exit_port=overlay.exit_port or base.exit_port,
         travel_date=overlay.travel_date or base.travel_date,
         trip_days=overlay.trip_days if overlay.trip_days is not None else base.trip_days,
+        story_opt_in=(
+            overlay.story_opt_in if overlay.story_opt_in is not None else base.story_opt_in
+        ),
+        story_id=overlay.story_id or base.story_id,
+        story_day=overlay.story_day if overlay.story_day is not None else base.story_day,
     )
 
 
@@ -365,6 +396,9 @@ def _soft_preference_from_transcript(transcript: str, language: str) -> Preferen
         or soft.themes
         or soft.entry_port
         or soft.exit_port
+        or soft.story_opt_in is not None
+        or soft.story_id
+        or soft.story_day
     )
     lower = transcript.lower()
     duration_hit = any(
@@ -400,6 +434,7 @@ def _guide_scripted_fallback(
             "ports": "记下了。那你是一个人，还是和朋友/家人一起？",
             "travel": "想多看哪一类？历史、建筑、美食、摄影，还是轻松逛逛？",
             "interest": "步行上有没有偏好？例如少走路、少爬坡、避免回头路。",
+            "story": "你愿意参加一条沉浸式故事路线吗？可以选择《莲城双图》《海风寄来的信》或《潮退之后》，也可以不参加。多日行程请同时告诉我安排在第几天。",
             "done": "明白了，我已记下你的偏好，可以点下方生成路线；也可继续补充。",
         },
         "zh-TW": {
@@ -407,6 +442,7 @@ def _guide_scripted_fallback(
             "ports": "記下了。那你是一個人，還是和朋友／家人一起？",
             "travel": "想多看哪一類？歷史、建築、美食、攝影，還是輕鬆逛逛？",
             "interest": "步行上有沒有偏好？例如少走路、少爬坡、避免回頭路。",
+            "story": "你願意參加一條沉浸式故事路線嗎？可以選擇《蓮城雙圖》《海風寄來的信》或《潮退之後》，也可以不參加。多日行程請同時告訴我安排在第幾天。",
             "done": "明白了，我已記下你的偏好，可以點下方生成路線；也可繼續補充。",
         },
         "en": {
@@ -414,6 +450,7 @@ def _guide_scripted_fallback(
             "ports": "Noted. Are you solo, or with friends/family?",
             "travel": "What draws you most — history, architecture, food, photo, or a relaxed wander?",
             "interest": "Any walking preferences — less walking, fewer hills, or no backtracking?",
+            "story": "Would you like to join an immersive story walk? Choose Two Maps of the Lotus City, Letters Carried by the Sea Breeze, or After the Tide, or decline. For a multi-day trip, please include the day.",
             "done": "Perfect — I’ve noted your preferences. You can generate a route below, or keep refining.",
         },
         "pt": {
@@ -421,6 +458,7 @@ def _guide_scripted_fallback(
             "ports": "Anotado. Vai sozinho, ou com amigos/família?",
             "travel": "O que mais lhe interessa — história, arquitetura, comida, foto, ou um passeio calmo?",
             "interest": "Alguma preferência de caminhada — menos andar, menos subidas, ou sem voltar atrás?",
+            "story": "Gostaria de participar num percurso narrativo? Escolha Dois Mapas da Cidade de Lótus, Cartas trazidas pela brisa do mar ou Depois da Maré, ou recuse. Numa viagem de vários dias, indique também o dia.",
             "done": "Ótimo — anotei as preferências. Pode gerar o percurso abaixo, ou continuar a afinar.",
         },
     }
@@ -434,6 +472,8 @@ def _guide_scripted_fallback(
         return copy["travel"], None, "script"
     if turn_count == 4:
         return copy["interest"], None, "script"
+    if turn_count == 5:
+        return copy["story"], pref, "script"
     return copy["done"], pref if _preference_ready(pref) else pref, "script"
 
 
@@ -497,9 +537,7 @@ def guide(request: IntentGuideRequest) -> dict[str, Any]:
         )
 
     ready = False
-    if preference is not None and source == "agent":
-        ready = True
-    elif preference is not None and source == "script" and _preference_ready(preference):
+    if preference is not None and _preference_ready(preference):
         ready = True
 
     # 每轮用累计 transcript 软解析，保证下方选项实时联动
@@ -512,6 +550,8 @@ def guide(request: IntentGuideRequest) -> dict[str, Any]:
         preview = soft
     elif preference:
         preview = preference
+    if preview is not None:
+        ready = _preference_ready(preview)
 
     record_trace(
         kind="intent.guide",

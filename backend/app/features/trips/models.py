@@ -42,6 +42,14 @@ class TripCreateRequest(BaseModel):
     )
 
 
+class ClaimGuestTripsRequest(BaseModel):
+    guest_user_id: str = Field(min_length=7)
+
+
+class ClaimGuestTripsResponse(BaseModel):
+    claimed_trips: int = Field(ge=0)
+
+
 class CheckinRequest(BaseModel):
     poi_id: str = Field(min_length=1)
 

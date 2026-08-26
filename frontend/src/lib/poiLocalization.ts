@@ -57,6 +57,7 @@ const NAMES: Record<string, PoiNames> = {
   poi_0059: { "zh-CN": "东望洋炮台", "zh-TW": "東望洋炮台", en: "Guia Fortress", pt: "Fortaleza da Guia" },
   poi_0060: { "zh-CN": "澳门科学馆", "zh-TW": "澳門科學館", en: "Macao Science Center", pt: "Centro de Ciência de Macau" },
   poi_0071: { "zh-CN": "内港客运码头", "zh-TW": "內港客運碼頭", en: "Inner Harbour Ferry Terminal", pt: "Terminal Marítimo do Porto Interior" },
+  poi_0100: { "zh-CN": "北帝庙", "zh-TW": "北帝廟", en: "Pak Tai Temple", pt: "Templo de Pak Tai" },
   poi_0115: { "zh-CN": "澳门大赛车博物馆", "zh-TW": "澳門大賽車博物館", en: "Macao Grand Prix Museum", pt: "Museu do Grande Prémio de Macau" },
   poi_0118: { "zh-CN": "益隆炮竹厂旧址", "zh-TW": "益隆炮竹廠舊址", en: "Former Iec Long Firecracker Factory", pt: "Antiga Fábrica de Panchões Iec Long" },
   poi_0126: { "zh-CN": "天主教圣安多尼堂", "zh-TW": "天主教聖安多尼堂", en: "St. Anthony's Church", pt: "Igreja de Santo António" },
@@ -179,7 +180,11 @@ export function localizedPoiName(
   language: LanguageCode,
 ) {
   const id = canonicalId(poi.poi_id);
-  const translated = NAMES[id]?.[language] || GENERATED_NAMES[id]?.[language];
+  const translated =
+    NAMES[poi.poi_id]?.[language] ||
+    GENERATED_NAMES[poi.poi_id]?.[language] ||
+    NAMES[id]?.[language] ||
+    GENERATED_NAMES[id]?.[language];
   if (translated) return translated;
   if (language === "zh-CN") return poi.poi_name;
   if (language === "zh-TW") return toTraditionalText(poi.poi_name);
@@ -194,7 +199,13 @@ export function localizedPoiIdName(
   fallback = "",
 ) {
   const id = canonicalId(poiId);
-  return NAMES[id]?.[language] || GENERATED_NAMES[id]?.[language] || fallback;
+  return (
+    NAMES[poiId]?.[language] ||
+    GENERATED_NAMES[poiId]?.[language] ||
+    NAMES[id]?.[language] ||
+    GENERATED_NAMES[id]?.[language] ||
+    fallback
+  );
 }
 
 export function localizedPoiMeta(

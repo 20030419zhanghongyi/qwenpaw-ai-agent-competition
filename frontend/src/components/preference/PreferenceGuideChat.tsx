@@ -151,8 +151,8 @@ export function PreferenceGuideChat({
       // 后端 preference 先合并；再用全文推断盖住缺省/弱信号（如默认 half-day）
       if (res.preference) onApplyPreference(res.preference);
       onApplyPreference(inferPreferenceFromText(transcript, language));
-      // agent 宣布 ready，或聊满 3 轮后自动展开微调区
-      if (res.ready || nextTurn >= 3) {
+      // 故事参与是最后一项必问信息；仅由后端确认完整后自动展开。
+      if (res.ready) {
         markReady(true);
       }
     } catch (err) {

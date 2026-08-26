@@ -4,7 +4,7 @@ import { listPois, matchRoutes } from "@/api/client";
 import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { TripDaysStepper } from "@/components/preference/TripDaysStepper";
-import { TravelHistoryPanel } from "@/components/profile/TravelHistoryPanel";
+import { ProfileSidebar } from "@/components/profile/ProfileSidebar";
 import { t } from "@/i18n";
 import { getLastTripId } from "@/lib/lastTrip";
 import {
@@ -17,7 +17,6 @@ import {
 } from "@/lib/preference";
 import { PORT_OPTIONS, portLabel } from "@/lib/ports";
 import { useAuth } from "@/state/AuthContext";
-import { useTrip } from "@/state/TripContext";
 import { useWalk } from "@/state/WalkContext";
 import type { LanguageCode } from "@/types";
 
@@ -78,12 +77,14 @@ const emptyForm = (language: LanguageCode): PreferenceFormState => ({
   entryPort: null,
   exitPort: null,
   travelDate: null,
+  storyOptIn: null,
+  storyId: null,
+  storyDay: null,
 });
 
 export function ProfilePage() {
   const navigate = useNavigate();
-  const { isAuthenticated, user, token, logout } = useAuth();
-  const { trip } = useTrip();
+  const { isAuthenticated, user, logout } = useAuth();
   const { language, setLanguage, preference, session, updatePreference, saveMatch } =
     useWalk();
   const [duration, setDuration] = useState<PreferenceFormState["duration"]>("half");
@@ -98,7 +99,7 @@ export function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const formRef = useRef<PreferenceFormState>(emptyForm(language));
-  const postcardTripId = trip?.trip_id || getLastTripId();
+  const postcardTripId = getLastTripId();
 
   useEffect(() => {
     formRef.current = {
@@ -113,6 +114,9 @@ export function ProfilePage() {
       entryPort,
       exitPort,
       travelDate: preference?.travel_date ?? null,
+      storyOptIn: preference?.story_opt_in ?? null,
+      storyId: preference?.story_id ?? null,
+      storyDay: preference?.story_day ?? null,
     };
   }, [
     duration,
@@ -169,6 +173,9 @@ export function ProfilePage() {
     entryPort,
     exitPort,
     travelDate: preference?.travel_date ?? null,
+    storyOptIn: preference?.story_opt_in ?? null,
+    storyId: preference?.story_id ?? null,
+    storyDay: preference?.story_day ?? null,
   });
 
   const savePrefs = () => {
@@ -219,7 +226,7 @@ export function ProfilePage() {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(ellipse_at_top,_oklch(0.62_0.038_145_/_0.12),_transparent_65%)]"
       />
-      <div className="relative mx-auto max-w-3xl px-5 pt-8 lg:px-0">
+      <div className="relative mx-auto max-w-6xl px-5 pt-8 lg:px-8">
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-sage-deep">
           {t(language, "profileEyebrow")}
         </p>
@@ -230,6 +237,10 @@ export function ProfilePage() {
           {t(language, "profileLead")}
         </p>
 
+        <div className="grid min-w-0 gap-8 lg:grid-cols-[13rem_minmax(0,1fr)]">
+          <ProfileSidebar language={language} />
+          <div className="min-w-0">
+
         <section className="mb-8 rounded-2xl border border-line bg-card px-5 py-4 shadow-[var(--shadow-soft)]">
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-sage-deep">
             {t(language, "authAccount")}
@@ -237,7 +248,10 @@ export function ProfilePage() {
           {isAuthenticated && user ? (
             <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm text-ink">
-                {t(language, "authSignedInAs").replace("{id}", user.user_id)}
+                {t(language, "authSignedInAs").replace(
+                  "{id}",
+                  user.email ?? user.phone ?? user.user_id,
+                )}
               </p>
               <button
                 type="button"
@@ -251,7 +265,7 @@ export function ProfilePage() {
             <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm text-ink-soft">{t(language, "authPrompt")}</p>
               <Link
-                to="/auth"
+                to="/auth?returnTo=%2Fprofile"
                 className="rounded-full bg-sage-deep px-4 py-2 text-sm font-medium text-paper transition hover:bg-moss"
               >
                 {t(language, "authLink")}
@@ -269,7 +283,7 @@ export function ProfilePage() {
           <p className="mt-2 text-sm text-ink-soft">{t(language, "profilePostcardsLead")}</p>
           <Link
             to={
-              postcardTripId
+              !isAuthenticated && postcardTripId
                 ? `/postcards?trip=${encodeURIComponent(postcardTripId)}`
                 : "/postcards"
             }
@@ -278,8 +292,6 @@ export function ProfilePage() {
             {t(language, "postcardOpenGallery")}
           </Link>
         </section>
-
-        <TravelHistoryPanel userId={user?.user_id ?? null} token={token} language={language} />
 
         <div className="overflow-hidden rounded-[1.75rem] border border-sage-deep/25 bg-gradient-to-b from-card via-card to-paper-warm shadow-[var(--shadow-soft)]">
           <div className="border-b border-line/80 bg-sage-deep/[0.06] px-5 py-4 sm:px-7">
@@ -528,6 +540,8 @@ export function ProfilePage() {
               </Link>
             </p>
           ) : null}
+        </div>
+          </div>
         </div>
       </div>
     </main>

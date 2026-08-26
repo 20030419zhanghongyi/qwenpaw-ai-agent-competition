@@ -11,7 +11,8 @@ import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { PreferenceGuideChat } from "@/components/preference/PreferenceGuideChat";
 import { TripDaysStepper } from "@/components/preference/TripDaysStepper";
-import { StoryInvitationCard } from "@/features/story/components/StoryInvitationCard";
+import { StoryChoiceSection } from "@/features/story/components/StoryChoiceSection";
+import type { StoryId } from "@/features/story/components/StoryChoiceSection";
 import { t } from "@/i18n";
 import {
   applyPreferenceToForm,
@@ -25,16 +26,8 @@ import {
   type WalkTag,
 } from "@/lib/preference";
 import { PORT_OPTIONS, portLabel } from "@/lib/ports";
-import { useAuth } from "@/state/AuthContext";
 import { useWalk } from "@/state/WalkContext";
 import type { Preference } from "@/types";
-import { matchStory } from "@/story-discovery/storyMatcher";
-import {
-  hasActiveInvitationSuppression,
-  markInvitationAccepted,
-  markInvitationDeclined,
-} from "@/story-discovery/invitationState";
-import type { StoryDiscoveryPreference, StoryMatchResult } from "@/story-discovery/types";
 
 const THEME_OPTIONS: Array<{
   id: ThemeTag;
@@ -83,7 +76,6 @@ const WALK_OPTIONS: Array<{
 
 export function PreferencePage() {
   const navigate = useNavigate();
-  const { userId, isRestoring: authRestoring } = useAuth();
   const { language, saveMatch } = useWalk();
   const [duration, setDuration] = useState<PreferenceFormState["duration"]>("half");
   const [tripDays, setTripDays] = useState(TRIP_DAYS_DEFAULT);
@@ -94,17 +86,18 @@ export function PreferencePage() {
   const [entryPort, setEntryPort] = useState<string | null>(null);
   const [exitPort, setExitPort] = useState<string | null>(null);
   const [travelDate, setTravelDate] = useState(() => todayIso());
+  const [storyOptIn, setStoryOptIn] = useState<boolean | null>(null);
+  const [storyId, setStoryId] = useState<StoryId | null>(null);
+  const [storyDay, setStoryDay] = useState<number | null>(null);
   const [customNote, setCustomNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [liveAdvice, setLiveAdvice] = useState<LiveTravelAdviceResponse | null>(null);
   const [liveAdviceLoading, setLiveAdviceLoading] = useState(false);
   const [liveAdviceError, setLiveAdviceError] = useState<string | null>(null);
-  const [storyInvitation, setStoryInvitation] = useState<StoryMatchResult | null>(null);
   const [flash, setFlash] = useState<Set<string>>(new Set());
   const [showAdjusters, setShowAdjusters] = useState(false);
   const adjustersRef = useRef<HTMLDivElement>(null);
-  const invitationRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<PreferenceFormState>({
     duration: "half",
     tripDays: TRIP_DAYS_DEFAULT,
@@ -117,6 +110,9 @@ export function PreferencePage() {
     entryPort: null,
     exitPort: null,
     travelDate,
+    storyOptIn: null,
+    storyId: null,
+    storyDay: null,
   });
 
   useEffect(() => {
@@ -132,6 +128,9 @@ export function PreferencePage() {
       entryPort,
       exitPort,
       travelDate,
+      storyOptIn,
+      storyId,
+      storyDay,
     };
   }, [
     duration,
@@ -145,6 +144,9 @@ export function PreferencePage() {
     entryPort,
     exitPort,
     travelDate,
+    storyOptIn,
+    storyId,
+    storyDay,
   ]);
 
   useEffect(() => {
@@ -182,25 +184,6 @@ export function PreferencePage() {
   }, [flash]);
 
   useEffect(() => {
-    if (authRestoring) {
-      setStoryInvitation(null);
-      return;
-    }
-    const match = matchStory({
-      duration,
-      interests,
-      themes,
-      walkTags,
-    });
-    setStoryInvitation(
-      match.matched &&
-        !hasActiveInvitationSuppression(match.storyId, userId)
-        ? match
-        : null,
-    );
-  }, [authRestoring, duration, interests, themes, userId, walkTags]);
-
-  useEffect(() => {
     if (!showAdjusters) return;
     // 展开时强制用累计回填结果刷一遍，避免对话阶段的 setState 与首屏不同步
     const snapshot = formRef.current;
@@ -213,6 +196,9 @@ export function PreferencePage() {
     setEntryPort(snapshot.entryPort);
     setExitPort(snapshot.exitPort);
     setTravelDate(snapshot.travelDate || todayIso());
+    setStoryOptIn(snapshot.storyOptIn);
+    setStoryId(snapshot.storyId ?? null);
+    setStoryDay(snapshot.storyDay);
     adjustersRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [showAdjusters]);
 
@@ -244,6 +230,9 @@ export function PreferencePage() {
     setEntryPort(next.entryPort);
     setExitPort(next.exitPort);
     setTravelDate(next.travelDate || travelDate);
+    setStoryOptIn(next.storyOptIn);
+    setStoryId(next.storyId ?? null);
+    setStoryDay(next.storyDay);
   };
 
   const flashClass = (key: string, active: boolean) =>
@@ -260,8 +249,12 @@ export function PreferencePage() {
   };
 
   const selectTripDays = (n: number) => {
-    formRef.current = { ...formRef.current, tripDays: n };
+    const nextStoryDay = formRef.current.storyDay && formRef.current.storyDay <= n
+      ? formRef.current.storyDay
+      : null;
+    formRef.current = { ...formRef.current, tripDays: n, storyDay: nextStoryDay };
     setTripDays(n);
+    setStoryDay(nextStoryDay);
   };
 
   const selectTravelDate = (value: string) => {
@@ -298,33 +291,22 @@ export function PreferencePage() {
 
   const generate = async () => {
     setError(null);
+    if (storyOptIn === null) {
+      setError(language === "en" ? "Please choose whether to join a story." : language === "pt" ? "Escolha se pretende participar numa história." : language === "zh-TW" ? "請選擇是否參加故事體驗。" : "请选择是否参加故事体验。");
+      return;
+    }
+    if (storyOptIn && !storyId) {
+      setError(language === "en" ? "Please choose a story." : language === "pt" ? "Escolha uma história." : language === "zh-TW" ? "請選擇一條故事線。" : "请选择一条故事线。");
+      return;
+    }
+    if (storyOptIn && duration === "multi" && !storyDay) {
+      setError(language === "en" ? "Please choose which day includes the story." : language === "pt" ? "Escolha o dia da história." : language === "zh-TW" ? "請選擇故事安排在第幾天。" : "请选择故事安排在第几天。");
+      return;
+    }
     setLoading(true);
     try {
       const snapshot = formSnapshot();
       const preference = toPreference(snapshot);
-
-      // ── Story Discovery (before parseIntent — uses form state only) ──
-      const discoveryPref: StoryDiscoveryPreference = {
-        duration: snapshot.duration,
-        interests: snapshot.interests,
-        themes: snapshot.themes,
-        walkTags: snapshot.walkTags,
-      };
-      const storyMatch = matchStory(discoveryPref);
-      const suppressed =
-        storyMatch.matched &&
-        hasActiveInvitationSuppression(storyMatch.storyId, userId);
-
-      if (storyMatch.matched && !suppressed) {
-        setStoryInvitation(storyMatch);
-        window.requestAnimationFrame(() =>
-          invitationRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          }),
-        );
-        return;
-      }
 
       if (customNote.trim()) {
         try {
@@ -349,6 +331,11 @@ export function PreferencePage() {
           if (typeof parsed.preference.trip_days === "number") {
             preference.trip_days = parsed.preference.trip_days;
           }
+          if (parsed.preference.story_opt_in !== undefined) {
+            preference.story_opt_in = parsed.preference.story_opt_in;
+          }
+          if (parsed.preference.story_id) preference.story_id = parsed.preference.story_id;
+          if (parsed.preference.story_day) preference.story_day = parsed.preference.story_day;
           if (parsed.preference.entry_port) {
             preference.entry_port = parsed.preference.entry_port;
           }
@@ -403,23 +390,6 @@ export function PreferencePage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // ── Story invitation handlers ───────────────────────────────────────────
-
-  const handleStoryAccept = () => {
-    if (!storyInvitation) return;
-
-    const coverPath = `/stories/${storyInvitation.storyId}`;
-    markInvitationAccepted(storyInvitation.storyId, userId);
-    setStoryInvitation(null);
-    navigate(coverPath);
-  };
-
-  const handleStoryDecline = () => {
-    if (!storyInvitation) return;
-    markInvitationDeclined(storyInvitation.storyId, userId);
-    setStoryInvitation(null);
   };
 
   return (
@@ -550,6 +520,33 @@ export function PreferencePage() {
               ) : null}
             </Section>
 
+            <StoryChoiceSection
+              language={language}
+              multiDay={duration === "multi"}
+              tripDays={tripDays}
+              arrivalDate={travelDate}
+              storyOptIn={storyOptIn}
+              storyId={storyId}
+              storyDay={storyDay}
+              disabled={loading}
+              onDecline={() => {
+                formRef.current = { ...formRef.current, storyOptIn: false, storyId: null, storyDay: null };
+                setStoryOptIn(false);
+                setStoryId(null);
+                setStoryDay(null);
+              }}
+              onSelectStory={(nextStoryId) => {
+                formRef.current = { ...formRef.current, storyOptIn: true, storyId: nextStoryId, storyDay: duration === "multi" ? formRef.current.storyDay : 1 };
+                setStoryOptIn(true);
+                setStoryId(nextStoryId);
+                if (duration !== "multi") setStoryDay(1);
+              }}
+              onDayChange={(day) => {
+                formRef.current = { ...formRef.current, storyDay: day };
+                setStoryDay(day);
+              }}
+            />
+
             <Section title={t(language, "portsTitle")} caption={t(language, "portsCaption")}>
               <div className="space-y-4">
                 <div>
@@ -670,16 +667,6 @@ export function PreferencePage() {
                 })}
               </div>
             </Section>
-
-            {storyInvitation && (
-              <div ref={invitationRef}>
-                <StoryInvitationCard
-                  storyId={storyInvitation.storyId}
-                  onAccept={handleStoryAccept}
-                  onDecline={handleStoryDecline}
-                />
-              </div>
-            )}
 
             <Section
               title={t(language, "companionTitle")}
@@ -897,6 +884,9 @@ function LiveAdvicePanel({
       {advice.weather.source?.name ? (
         <p className="mt-3 text-[10px] text-ink-soft">
           {t(language, "weatherSource")}: {advice.weather.source.name}
+          {advice.weather.source.issued_at
+            ? ` · ${t(language, "weatherIssuedAt")}: ${advice.weather.source.issued_at}`
+            : ""}
         </p>
       ) : null}
 

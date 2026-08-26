@@ -8,14 +8,24 @@ from sqlalchemy.orm import Session
 from app.db.models import Postcard
 from app.db.session import SessionLocal
 
+CURRENT_POSTCARD_RENDER_VERSION = 2
+
 
 class PostcardRepository:
     def __init__(self, session_factory: Callable[[], Session] = SessionLocal) -> None:
         self._session_factory = session_factory
 
-    def get(self, postcard_id: str) -> Postcard | None:
+    def get(
+        self, postcard_id: str, *, artifact_kind: str = "postcard"
+    ) -> Postcard | None:
         with self._session_factory() as session:
-            return session.get(Postcard, postcard_id)
+            return session.scalar(
+                select(Postcard).where(
+                    Postcard.id == postcard_id,
+                    Postcard.artifact_kind == artifact_kind,
+                    Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
+                )
+            )
 
     def get_for_trip_poi(
         self,
@@ -30,6 +40,7 @@ class PostcardRepository:
                     Postcard.trip_id == trip_id,
                     Postcard.poi_id == poi_id,
                     Postcard.artifact_kind == artifact_kind,
+                    Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
                 )
             )
 
@@ -43,8 +54,26 @@ class PostcardRepository:
                     .where(
                         Postcard.trip_id == trip_id,
                         Postcard.artifact_kind == artifact_kind,
+                        Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
                     )
                     .order_by(Postcard.stop_order, Postcard.created_at, Postcard.id)
+                )
+            )
+
+    def list_reusable_scene_candidates(self, poi_id: str, limit: int = 10) -> list[Postcard]:
+        """Return recent no-upload cards that may contain a reusable AI scene."""
+        with self._session_factory() as session:
+            return list(
+                session.scalars(
+                    select(Postcard)
+                    .where(
+                        Postcard.poi_id == poi_id,
+                        Postcard.artifact_kind == "postcard",
+                        Postcard.photo_scrubbed.is_(False),
+                        Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
+                    )
+                    .order_by(Postcard.created_at.desc(), Postcard.id.desc())
+                    .limit(limit)
                 )
             )
 
@@ -55,9 +84,17 @@ class PostcardRepository:
             session.refresh(postcard)
             return postcard
 
-    def delete(self, postcard_id: str) -> bool:
+    def delete(
+        self, postcard_id: str, *, artifact_kind: str = "postcard"
+    ) -> bool:
         with self._session_factory() as session:
-            record = session.get(Postcard, postcard_id)
+            record = session.scalar(
+                select(Postcard).where(
+                    Postcard.id == postcard_id,
+                    Postcard.artifact_kind == artifact_kind,
+                    Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
+                )
+            )
             if record is None:
                 return False
             session.delete(record)
@@ -77,6 +114,7 @@ class PostcardRepository:
                     Postcard.trip_id == trip_id,
                     Postcard.poi_id == poi_id,
                     Postcard.artifact_kind == artifact_kind,
+                    Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
                 )
             )
             if record is None:

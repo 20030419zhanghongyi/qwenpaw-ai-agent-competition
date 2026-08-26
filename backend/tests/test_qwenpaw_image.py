@@ -354,6 +354,30 @@ def test_qwenpaw_scene_is_normalized_and_cached(monkeypatch, tmp_path):
         assert image.format == "JPEG"
 
 
+def test_scene_cache_key_reuses_same_poi_across_languages():
+    simplified = scene_image._cache_key(
+        poi_id="poi_0001",
+        poi_name="大三巴牌坊",
+        district="花王堂区",
+        language="zh-CN",
+    )
+    english = scene_image._cache_key(
+        poi_id="poi_0001",
+        poi_name="Ruins of St. Paul's",
+        district="Santo António Parish",
+        language="en",
+    )
+    another_poi = scene_image._cache_key(
+        poi_id="poi_0002",
+        poi_name="Ruins of St. Paul's",
+        district="Santo António Parish",
+        language="en",
+    )
+
+    assert simplified == english
+    assert simplified != another_poi
+
+
 def test_qwenpaw_photo_style_uploads_scrubbed_reference(monkeypatch):
     output = BytesIO()
     Image.new("RGB", (800, 600), (120, 90, 70)).save(output, format="PNG")

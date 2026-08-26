@@ -92,6 +92,9 @@ export interface PreferenceFormState {
   entryPort: string | null;
   exitPort: string | null;
   travelDate: string | null;
+  storyOptIn: boolean | null;
+  storyId: Preference["story_id"];
+  storyDay: number | null;
 }
 
 export function todayIso(): string {
@@ -127,6 +130,10 @@ export function toPreference(form: PreferenceFormState): Preference {
     exit_port: form.exitPort,
     travel_date: form.travelDate || todayIso(),
     trip_days: duration === "multi-day" ? clampTripDays(form.tripDays) : null,
+    story_opt_in: form.storyOptIn,
+    story_id: form.storyOptIn ? form.storyId : null,
+    story_day:
+      form.storyOptIn && duration === "multi-day" ? form.storyDay : form.storyOptIn ? 1 : null,
   };
 }
 
@@ -188,6 +195,9 @@ export function applyPreferenceToForm(
     entryPort: pref.entry_port ?? current.entryPort,
     exitPort: pref.exit_port ?? current.exitPort,
     travelDate: pref.travel_date ?? current.travelDate,
+    storyOptIn: pref.story_opt_in ?? current.storyOptIn,
+    storyId: pref.story_id ?? current.storyId,
+    storyDay: pref.story_day ?? current.storyDay,
   };
 }
 
@@ -304,6 +314,23 @@ export function inferPreferenceFromText(
     if (!pref.physical.includes("less-walk")) pref.physical.push("less-walk");
   }
 
+  const declinesStory = /不参加故事|不要故事|跳过故事|不想参加|no story|skip (?:the )?story|sem hist[oó]ria/.test(t);
+  const wantsStory = /参加故事|故事线|故事路[线線]|想玩故事|愿意参加|願意參加|join (?:a |the )?story|story walk|participar.*hist[oó]ria/.test(t);
+  if (declinesStory) pref.story_opt_in = false;
+  else if (wantsStory) pref.story_opt_in = true;
+  if (/莲城双图|蓮城雙圖|two maps|dois mapas/.test(t)) {
+    pref.story_opt_in = true;
+    pref.story_id = "lotus_city_double_map";
+  } else if (/海风寄来的信|海風寄來的信|sea breeze|brisa do mar/.test(t)) {
+    pref.story_opt_in = true;
+    pref.story_id = "taipa_letters";
+  } else if (/潮退之后|潮退之後|after the tide|depois da mar[eé]/.test(t)) {
+    pref.story_opt_in = true;
+    pref.story_id = "coloane_after_tide";
+  }
+  const storyDay = t.match(/第\s*([1-5])\s*[天日]|day\s*([1-5])|dia\s*([1-5])/i);
+  if (storyDay) pref.story_day = Number(storyDay[1] || storyDay[2] || storyDay[3]);
+
   const portHits: string[] = [];
   if (/关闸|拱北|gongbei|portas\s*do\s*cerco/.test(t)) portHits.push("poi_port_guanja");
   if (/青茂|qingmao/.test(t)) portHits.push("poi_port_qingmao");
@@ -350,6 +377,9 @@ export function changedFormKeys(
   if (before.exitPort !== after.exitPort && after.exitPort) {
     keys.push(`exitPort:${after.exitPort}`);
   }
+  if (before.storyOptIn !== after.storyOptIn) keys.push("storyOptIn");
+  if (before.storyId !== after.storyId && after.storyId) keys.push(`story:${after.storyId}`);
+  if (before.storyDay !== after.storyDay && after.storyDay) keys.push("storyDay");
   return keys;
 }
 

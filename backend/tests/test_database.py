@@ -175,12 +175,13 @@ def test_postcards_unique_constraint():
         item
         for item in Postcard.__table__.constraints
         if isinstance(item, UniqueConstraint)
-        and item.name == "uq_postcards_trip_poi_kind"
+        and item.name == "uq_postcards_trip_poi_kind_version"
     )
     assert [column.name for column in constraint.columns] == [
         "trip_id",
         "poi_id",
         "artifact_kind",
+        "render_version",
     ]
 
 

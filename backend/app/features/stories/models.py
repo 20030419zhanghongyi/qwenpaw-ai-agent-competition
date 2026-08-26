@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 from typing import Any
 
@@ -34,6 +34,8 @@ class StoryReward(BaseModel):
 
 class StorySessionState(BaseModel):
     content_version: int = Field(default=1, ge=1)
+    scheduled_day: int | None = Field(default=None, ge=1, le=5)
+    scheduled_date: date | None = None
     arrived_chapter_ids: list[str] = Field(default_factory=list)
     completed_chapter_ids: list[str] = Field(default_factory=list)
     hinted_chapter_ids: list[str] = Field(default_factory=list)

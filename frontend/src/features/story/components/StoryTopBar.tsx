@@ -11,6 +11,8 @@ interface StoryTopBarProps {
   totalPetals?: number;
   onAskAgent?: () => void;
   agentLabel?: string;
+  onHome?: () => void;
+  homeLabel?: string;
   trailing?: ReactNode;
 }
 
@@ -23,11 +25,14 @@ export function StoryTopBar({
   totalPetals = 5,
   onAskAgent,
   agentLabel,
+  onHome,
+  homeLabel,
   trailing,
 }: StoryTopBarProps) {
   const st = useStoryMessages();
   const resolvedBackLabel = backLabel ?? st("back");
   const resolvedAgentLabel = agentLabel ?? st("askAlian");
+  const resolvedHomeLabel = homeLabel ?? "Home";
   return (
     <header
       className="sticky top-0 z-30 border-b border-line/80 bg-paper/95 px-4 pb-3 backdrop-blur-md"
@@ -58,7 +63,18 @@ export function StoryTopBar({
             </div>
           )}
         </div>
-        <div className="flex min-w-11 justify-end">
+        <div className="flex min-w-11 items-center justify-end gap-1">
+          {onHome ? (
+            <button
+              type="button"
+              onClick={onHome}
+              className="grid size-11 shrink-0 place-items-center rounded-full border border-line bg-card text-lg text-sage-deep transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage"
+              aria-label={resolvedHomeLabel}
+              title={resolvedHomeLabel}
+            >
+              <span aria-hidden>⌂</span>
+            </button>
+          ) : null}
           {onAskAgent ? (
             <button
               type="button"
@@ -67,9 +83,7 @@ export function StoryTopBar({
             >
               {resolvedAgentLabel}
             </button>
-          ) : (
-            trailing ?? <span className="block min-w-11" aria-hidden />
-          )}
+          ) : trailing ?? (!onHome ? <span className="block min-w-11" aria-hidden /> : null)}
         </div>
       </div>
     </header>

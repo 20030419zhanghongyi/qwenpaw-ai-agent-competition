@@ -17,7 +17,7 @@ from .live_context import get_live_route_context
 from .port_events import event_constraint_notes, score_template_for_entry_port
 from .route_constructor import construct_route
 from .route_research import research_route_tips
-from .repository import list_templates, upsert_constructed_template
+from .repository import get_template, list_templates, upsert_constructed_template
 from .theme_days import (
     allocate_theme_days,
     build_candidate_pool_for_shell,
@@ -29,6 +29,11 @@ from app.db.data import load_weights
 
 # Fixed story routes have authored chapter order and must only be started explicitly.
 NON_RECOMMENDABLE_TEMPLATE_IDS = {"lotus_city_double_map"}
+STORY_ROUTE_IDS = {
+    "lotus_city_double_map": "lotus_city_double_map",
+    "taipa_letters": "taipa_hotspot_halfday",
+    "coloane_after_tide": "coloane_leisure_halfday",
+}
 
 
 def resolve_match_top_k(pref: Preference, default: int = 3) -> int:
@@ -406,6 +411,50 @@ def _match_preset_templates(
     return [result for _, _, result in top]
 
 
+def _story_match(pref: Preference, research_tips: list[str], live_context: dict) -> dict | None:
+    """Build a match from the authored story route without reordering its chapters."""
+    route_id = STORY_ROUTE_IDS.get(pref.story_id or "")
+    if not route_id:
+        return None
+    route = get_template(route_id)
+    if route is None:
+        return None
+    candidate_pois = build_candidate_pool(route)
+    return _finalize_match(
+        route=route,
+        score=200,
+        reasons=["用户已选择故事体验", "保留故事章节的作者编排顺序"],
+        applied_constraints=["故事路线已纳入普通行程；地图、到站、讲解与明信片服务保持可用"],
+        selected_template=route_id,
+        candidate_pois=candidate_pois,
+        research_tips=research_tips,
+        pref=pref,
+        live_context=live_context,
+    )
+
+
+def _insert_story_day(
+    matches: list[dict],
+    pref: Preference,
+    research_tips: list[str],
+    live_context: dict,
+) -> list[dict]:
+    if pref.story_opt_in is not True or not pref.story_id:
+        return matches
+    story_match = _story_match(pref, research_tips, live_context)
+    if story_match is None:
+        return matches
+    index = 0
+    if pref.duration == "multi-day":
+        day_count = clamp_trip_days(pref.trip_days) or TRIP_DAYS_DEFAULT
+        index = max(0, min(day_count - 1, (pref.story_day or 1) - 1))
+    result = list(matches)
+    while len(result) <= index:
+        result.append(story_match)
+    result[index] = story_match
+    return result
+
+
 def match_routes(pref: Preference, top_k: int | None = None) -> list[dict]:
     """根据偏好返回路线结果。
 
@@ -420,8 +469,10 @@ def match_routes(pref: Preference, top_k: int | None = None) -> list[dict]:
 
     if should_use_theme_days(pref):
         try:
-            return _match_theme_days(pref, research_tips, live_context)
+            matches = _match_theme_days(pref, research_tips, live_context)
+            return _insert_story_day(matches, pref, research_tips, live_context)
         except Exception:  # noqa: BLE001
             # Fall through to legacy presets only if POI-pool matching blows up.
             pass
-    return _match_preset_templates(pref, resolved_k, research_tips, live_context)
+    matches = _match_preset_templates(pref, resolved_k, research_tips, live_context)
+    return _insert_story_day(matches, pref, research_tips, live_context)

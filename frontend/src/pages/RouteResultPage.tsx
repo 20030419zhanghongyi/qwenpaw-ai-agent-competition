@@ -23,6 +23,11 @@ import {
   type WalkLeg,
 } from "@/components/route/RouteNodeList";
 import { TripControls } from "@/components/trip/TripControls";
+import {
+  isStoryId,
+  localizedStoryTitle,
+  storyUsesRoute,
+} from "@/features/story/storyMetadata";
 import { t } from "@/i18n";
 import { getLastTripId } from "@/lib/lastTrip";
 import { resolveTripUserId } from "@/lib/guestUser";
@@ -302,6 +307,12 @@ export function RouteResultPage() {
   const poisById = session?.poisById ?? {};
   const route = match?.route;
   const isMultiDay = (dayMatches.length > 1) || preference?.duration === "multi-day";
+  const scheduledStoryDayIndex = isMultiDay ? (preference?.story_day ?? 1) - 1 : 0;
+  const isScheduledStoryDay =
+    preference?.story_opt_in === true &&
+    isStoryId(preference.story_id) &&
+    dayIndex === scheduledStoryDayIndex &&
+    storyUsesRoute(preference.story_id, match?.selected_template ?? route?.id);
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -547,6 +558,10 @@ export function RouteResultPage() {
   }
 
   const localizedRouteCopy = localizedRoute(route, language);
+  const routeTitle =
+    isScheduledStoryDay && isStoryId(preference?.story_id)
+      ? localizedStoryTitle(preference.story_id, language)
+      : localizedRouteCopy.name;
   const localizedReasons = localizedRouteReasons(route, match.reasons, language);
   const explanation =
     language === "zh-CN"
@@ -972,7 +987,7 @@ export function RouteResultPage() {
 
         <aside className="relative z-10 hidden border-l border-line/70 bg-paper lg:sticky lg:top-[7.25rem] lg:block lg:max-h-[calc(100dvh-7.25rem)] lg:overflow-y-auto lg:overscroll-contain">
           <RouteInfoPanel
-            title={localizedRouteCopy.name}
+            title={routeTitle}
             theme={localizedRouteCopy.theme}
             meta={meta}
             reasons={localizedReasons}
@@ -1056,7 +1071,7 @@ export function RouteResultPage() {
         </button>
         <div className="min-h-0 flex-1">
           <RouteInfoPanel
-            title={localizedRouteCopy.name}
+            title={routeTitle}
             theme={localizedRouteCopy.theme}
             meta={meta}
             reasons={localizedReasons}

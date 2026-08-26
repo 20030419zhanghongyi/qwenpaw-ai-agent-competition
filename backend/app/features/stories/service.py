@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any
 from uuid import uuid4
 
@@ -23,6 +23,7 @@ from .models import (
     StoryActionRequest,
     StoryActionResponse,
     StoryProgressResponse,
+    StoryReward,
     StorySession,
     StorySessionResponse,
     StorySessionState,
@@ -57,7 +58,13 @@ class StoryService:
         return story_overview(localize_story(load_story(story_id), language))
 
     def start(
-        self, story_id: str, user_id: str, *, language: str = "zh-CN"
+        self,
+        story_id: str,
+        user_id: str,
+        *,
+        language: str = "zh-CN",
+        scheduled_day: int | None = None,
+        scheduled_date: date | None = None,
     ) -> StorySessionResponse:
         story = load_story(story_id)
         existing = self._repository.get_active(user_id, story_id)
@@ -65,6 +72,11 @@ class StoryService:
             existing is not None
             and existing.state.content_version == story["version"]
         ):
+            if scheduled_day is not None or scheduled_date is not None:
+                existing.state.scheduled_day = scheduled_day
+                existing.state.scheduled_date = scheduled_date
+                existing.updated_at = datetime.now(timezone.utc)
+                existing = self._repository.save(existing)
             return self._response(story, existing, language=language)
 
         story_stop_poi_ids = [
@@ -86,7 +98,11 @@ class StoryService:
             trip_id=trip.trip.trip_id,
             current_chapter_id=first_chapter["id"],
             status=StorySessionStatus.ACTIVE,
-            state=StorySessionState(content_version=story["version"]),
+            state=StorySessionState(
+                content_version=story["version"],
+                scheduled_day=scheduled_day,
+                scheduled_date=scheduled_date,
+            ),
             created_at=now,
             updated_at=now,
         )
@@ -104,6 +120,18 @@ class StoryService:
             raise StorySessionNotFoundError(f"Story session not found: {session_id}")
         self._require_owner(story_session, user_id)
         story = load_story(story_session.story_id)
+        self._require_current_version(story, story_session)
+        return self._response(story, story_session, language=language)
+
+    def get_active_session(
+        self, story_id: str, user_id: str, *, language: str = "zh-CN"
+    ) -> StorySessionResponse:
+        story_session = self._repository.get_active(user_id, story_id)
+        if story_session is None:
+            raise StorySessionNotFoundError(
+                f"Active story session not found: {story_id}"
+            )
+        story = load_story(story_id)
         self._require_current_version(story, story_session)
         return self._response(story, story_session, language=language)
 
@@ -185,6 +213,15 @@ class StoryService:
             )
             if current["kind"] == "ending":
                 current["ending_options"] = story_overview(display_story)["endings"]
+        display_state = story_session.state.model_copy(
+            update={
+                "rewards": self._localized_rewards(
+                    display_story,
+                    story_session.state.rewards,
+                )
+            },
+            deep=True,
+        )
         return StorySessionResponse(
             session_id=story_session.session_id,
             user_id=story_session.user_id,
@@ -192,7 +229,7 @@ class StoryService:
             trip_id=story_session.trip_id,
             current_chapter_id=story_session.current_chapter_id,
             status=story_session.status,
-            state=story_session.state,
+            state=display_state,
             current_chapter=current,
             ending=self._ending(story, story_session, language=language),
             allowed_actions=allowed_actions(story, story_session),
@@ -224,14 +261,48 @@ class StoryService:
         *,
         language: str = "zh-CN",
     ) -> StoryActionResponse:
+        display_story = localize_story(story, normalize_story_language(language))
         return StoryActionResponse(
             accepted=result.accepted,
             message=result.message,
             hint=result.hint,
             new_clues=result.new_clues,
-            new_rewards=result.new_rewards,
+            new_rewards=self._localized_rewards(display_story, result.new_rewards),
             session=self._response(story, story_session, language=language),
         )
+
+    @staticmethod
+    def _localized_rewards(
+        display_story: dict[str, Any],
+        rewards: list[StoryReward],
+    ) -> list[StoryReward]:
+        catalog: dict[str, StoryReward] = {}
+
+        def collect(value: Any) -> None:
+            if isinstance(value, dict):
+                for key in ("reward", "reward_clue"):
+                    candidate = value.get(key)
+                    if isinstance(candidate, dict) and candidate.get("id"):
+                        localized = StoryReward.model_validate(
+                            {"kind": "stamp", **candidate}
+                            if "kind" not in candidate
+                            else candidate
+                        )
+                        catalog[localized.id] = localized
+                candidates = value.get("rewards")
+                if isinstance(candidates, list):
+                    for candidate in candidates:
+                        if isinstance(candidate, dict) and candidate.get("id"):
+                            localized = StoryReward.model_validate(candidate)
+                            catalog[localized.id] = localized
+                for child in value.values():
+                    collect(child)
+            elif isinstance(value, list):
+                for child in value:
+                    collect(child)
+
+        collect(display_story)
+        return [catalog.get(reward.id, reward).model_copy(deep=True) for reward in rewards]
 
 
 story_service = StoryService(story_session_repository, trip_service)

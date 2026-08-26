@@ -1,59 +1,3317 @@
 {
   "zh-TW": {
+    "id": "lotus_city_double_map",
+    "version": 4,
     "title": "蓮城雙圖：未竟之圖",
     "subtitle": "沿六處真實地點，讀懂兩張記錄不同真實的澳門地圖",
-    "summary": "為研究澳門城市沿革，你向本地同學阿蓮借來家藏的1923年《香山縣志續編》。從書頁間掉出的信封、城市雙圖、六組地點局部雙圖和五張秘密紙條，引你們踏上一天的城市考察。",
-    "identity": { "name": "城市研究者", "description": "你不是預先知道答案的專家；要依靠現場、雙圖、紙條、阿蓮的查證，以及已取得的證據作出判斷。" },
-    "content_notice": "真實地點知識分為史實、民間信俗或地方記憶、語境化重建、劇情虛構及動態營運資訊。阿瀾、M先生、兩張虛構地圖、六組局部雙圖、五張秘密紙條及謎題均屬劇情創作。",
-    "content_labels": { "historical_fact": "史實", "folklore": "民間信俗／地方記憶", "contextual_reconstruction": "語境化重建", "fictional_story": "劇情虛構", "dynamic_operational_info": "動態營運資訊" },
-    "props": ["1923年《香山縣志續編》", "城市測繪圖", "蓮城脈圖", "六組地點局部雙圖", "五張秘密紙條"],
-    "nodes": [
-      { "title": "開場：從舊書掉出的路線", "scene": "你為研究澳門城市沿革，向本地同學阿蓮借來家藏的1923年《香山縣志續編》。翻到有關澳門地理、輿圖和地方沿革的書頁時，一隻舊信封和成套摺疊圖紙從頁間滑落。", "dialogue": [{"speaker":"玩家","text":"這兩張澳門地圖畫得不同。我們應先相信哪一張？"},{"speaker":"阿蓮","text":"先別選。阿瀾和M先生記錄的，可能本來就不是同一種事物。你負責懷疑，我負責陪你查清楚。"},{"speaker":"玩家","text":"第一張紙條沒有寫地點，只說要找一個在城名以前已被記住的地方。"},{"speaker":"阿蓮","text":"山不離海，香不離風，而且與澳門名稱的地方傳說有關。我們先到媽閣廟。"}], "reward":{"name":"成套雙圖與五張紙條","text":"你和阿蓮決定按紙條次序親自走一遍。"} },
-      { "title": "第一章：海從哪裡開始", "location_name":"媽閣廟", "scene":"舊地圖的海岸更貼近山腳，今天的海岸已向外延伸；兩張圖卻都保留了廟宇和山體的大致位置。" },
-      { "title": "第二章：缺失的第五行", "location_name":"鄭家大屋", "scene":"從入口望進去，視線不能直達深處。沿牆轉身後，樑柱、天井、院心和門件依次出現；紙條上第五個孔仍是空白。" },
-      { "title": "第三章：後來多出的城市", "location_name":"議事亭前地", "scene":"阿瀾的舊廣場草圖沒有噴水池，也沒有今天的黑白波浪形鋪地。她問後來的人：舊地圖沒有畫出後來出現的東西，能算畫錯嗎？" },
-      { "title":"第四章：少掉的兩包貨", "location_name":"三街會館", "scene":"三街會館附近的舊商業街提醒你：建築之外還有商情、糾紛、互助和看不見的社會網絡。阿瀾留下三份互相補充的記錄。" },
-      { "title":"第五章：一扇窗該畫在哪張圖上", "location_name":"盧家大屋", "scene":"天井引入光線，青磚、木構和窗戶共同組織人的日常生活。阿瀾把一扇窗拆成多個構件，問它究竟屬於建築形狀，還是人的生活。" },
-      { "title":"最終章：留給後來人的一筆", "location_name":"大炮台", "scene":"你和阿蓮登上大炮台。歷史城區、山體、海岸和現代城市同時展開。城市雙圖與今日景象無法完全重合，卻也不再互相否定。" }
+    "summary": "你為了研究澳門城市沿革，向本地同學阿蓮借來家藏的1923年《香山縣志續編》。從書頁間掉出的信封、城市雙圖、六組地點局部雙圖和五張秘密紙條，將你們引向一場持續一天的城市調查。",
+    "route_id": "lotus_city_double_map",
+    "estimated_hours": 7,
+    "product_mode": "mobile_portrait_web",
+    "presentation": {
+      "default_orientation": "portrait",
+      "max_content_width_px": 480,
+      "cover_asset_id": "V4-COVER-01",
+      "asset_base_path": "/story/v4/"
+    },
+    "identity": {
+      "id": "young_researcher",
+      "name": "城市研究者",
+      "description": "你不是預先知道答案的專家。你要依靠現場、雙圖、紙條、阿蓮的查證和自己已經獲得的證據作出判斷。"
+    },
+    "content_notice": "真實地點知識分為史實、民間信俗或地方記憶、語境化重建、劇情虛構和動態運營信息。阿瀾、M先生、兩張虛構地圖、六組局部雙圖、五張秘密紙條及謎題均為劇情創作。",
+    "content_labels": {
+      "historical_fact": "史實",
+      "folklore": "民間信俗／地方記憶",
+      "contextual_reconstruction": "語境化重建",
+      "fictional_story": "劇情虛構",
+      "dynamic_operational_info": "動態運營信息"
+    },
+    "characters": [
+      {
+        "id": "player",
+        "name": "玩家",
+        "role": "研究澳門城市沿革、舊地圖或地方記憶的學生或年輕研究者",
+        "fictional": true
+      },
+      {
+        "id": "alian",
+        "name": "阿蓮",
+        "role": "澳門本地同學、阿瀾的後人、全天地陪與知識Agent",
+        "fictional": true
+      },
+      {
+        "id": "alan",
+        "name": "阿瀾",
+        "role": "阿蓮的祖先，《蓮城脈圖》和五張紙條的主要留下者",
+        "fictional": true
+      },
+      {
+        "id": "m",
+        "name": "M先生",
+        "role": "《城市測繪圖》的主要作者，與阿瀾共同核對澳門街巷",
+        "fictional": true
+      }
     ],
-    "endings": [{ "title":"城由人共寫", "text":"你沒有找到唯一正確的澳門地圖。你為兩張圖補上年代、來源和用途，也把今天看見的城市寫進新的空白。地圖不是最後判決；一座城市，由不同時代、不同用途和不同的人共同寫成。", "choice_text":"完成今日補記" }]
+    "props": [
+      "1923年《香山縣志續編》",
+      "城市測繪圖",
+      "蓮城脈圖",
+      "六組地點局部雙圖",
+      "五張秘密紙條"
+    ],
+    "nodes": [
+      {
+        "id": "prologue_old_book",
+        "order": 0,
+        "kind": "prologue",
+        "title": "開場：從舊書裡掉出的路線",
+        "story_time": "08:00",
+        "scene": "你為研究澳門城市沿革向本地同學阿蓮借來家藏的1923年《香山縣志續編》。翻到澳門地理、輿圖和地方沿革相關書頁時，一隻舊信封和成套摺疊圖紙從書頁間滑落。",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-PRO-01",
+            "alt": "阿蓮把家藏舊書借給玩家",
+            "caption": "阿蓮說，這本書在家裡放了很多年，她也沒有認真翻過夾圖的這幾頁。"
+          },
+          {
+            "asset_id": "V4-PRO-02",
+            "alt": "信封與地圖從舊書中滑落",
+            "caption": "信封上沒有寶藏或密令，只留下一句普通提醒：給後來還願意親自走一遍的人。"
+          },
+          {
+            "asset_id": "V4-PRO-03",
+            "alt": "古書、城市雙圖、六組局部雙圖和五張紙條在桌面展開",
+            "caption": "城市雙圖提供整體參照，六組局部雙圖細化每個點位，五張紙條決定實地閱讀順序。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "prologue-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "這兩張澳門地圖畫得不一樣。我們應該先相信哪一張？"
+          },
+          {
+            "id": "prologue-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "先別選。阿瀾和M先生記錄的可能本來就不是同一種東西。你負責懷疑，我負責幫你查清楚。",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "prologue-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "第一張紙條沒有寫地點，只說要找一個在城名以前已經被記住的地方。"
+          },
+          {
+            "id": "prologue-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "山不離海，香不離風，而且與澳門名稱的地方傳說有關。我們從媽閣廟開始。",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "家藏舊書的真實原型",
+            "text": "1923年《香山縣志續編》是真實存在的地方志；本故事中的家藏版本和夾藏資料為劇情虛構。",
+            "source_label": "地方志公開資料",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "夾藏資料",
+            "text": "信封、城市雙圖、局部雙圖、紙條、阿瀾與M先生均為遊戲創作。",
+            "source_label": "V4劇情設定",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "舊書與城市雙圖",
+          "chapter_goal": "幫助玩家理解舊書、雙圖和第一張密箋的用途",
+          "known_facts": [
+            "1923年《香山縣志續編》是真實存在的地方志",
+            "故事中的家藏版本、信封、雙圖、紙條、阿瀾與M先生均為劇情虛構",
+            "雙圖記錄的側重點不同，後續需要結合現場逐站核對"
+          ],
+          "fiction_boundaries": [
+            "不得把劇情中的夾藏材料、人物和地圖描述成真實文物或史實"
+          ],
+          "suggested_questions": [
+            "這本古書是什麼？",
+            "兩張地圖應該怎樣一起使用？",
+            "為什麼第一站要去媽閣廟？"
+          ],
+          "do_not_reveal": [
+            "不得提前說明後續謎題答案",
+            "不得提前透露未到達章節的劇情發現"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_comic",
+          "assets": [
+            "V4-PROP-01",
+            "V4-PROP-02",
+            "V4-PROP-03",
+            "V4-PROP-04",
+            "V4-PRO-01",
+            "V4-PRO-02",
+            "V4-PRO-03"
+          ]
+        },
+        "reward": {
+          "id": "research_materials",
+          "kind": "story_prop",
+          "name": "成套雙圖與五張紙條",
+          "text": "你與阿蓮決定按紙條順序親自走一遍。"
+        }
+      },
+      {
+        "id": "chapter_ama",
+        "order": 1,
+        "kind": "puzzle",
+        "title": "第一章：海從哪裡開始",
+        "location_name": "媽閣廟",
+        "story_time": "09:00",
+        "poi_id": "poi_0011",
+        "scene": "舊地圖上的海岸更貼近山腳，今天的海岸已經向外移動；兩張圖卻都保留了廟宇和山體的大致位置。",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-AMA-01",
+            "alt": "從石階下方觀察依山而建的媽閣廟",
+            "caption": "山體、岩石、石階和廟宇仍能互相對應。"
+          },
+          {
+            "asset_id": "V4-AMA-02",
+            "alt": "從媽閣廟方向觀察今天較遠的海岸",
+            "caption": "城市和道路改變了山與海的直接關係。"
+          },
+          {
+            "asset_id": "V4-AMA-03",
+            "alt": "媽閣廟局部雙圖中的兩條海岸線",
+            "caption": "如果先找穩定參照，兩張不同海岸線仍然指向同一地點。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "ama-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "可兩張圖上的海岸不一樣。是不是至少有一張畫錯了？"
+          },
+          {
+            "id": "ama-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "紙條沒有讓我們先找正確海岸，而是先找不容易移動的東西。你在兩張圖裡都看見了甚麼？",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "ama-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "廟宇和山體。海岸才是發生變化的部分。"
+          },
+          {
+            "id": "ama-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "對。地圖畫下的不是永遠不變的澳門，而是製圖者當時能夠看見的澳門。",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "媽閣廟與近海生活",
+            "text": "媽閣廟依山而建，與澳門早期近海社區和航海信俗關係密切。",
+            "source_label": "澳門世界遺產及文化資料",
+            "confidence": "high"
+          },
+          {
+            "kind": "folklore",
+            "title": "媽祖與澳門名稱",
+            "text": "媽閣與澳門名稱相關的解釋屬於廣為流傳的地方敘事，展示了地點、語言與記憶的關係。",
+            "source_label": "地方傳說與公開文化資料",
+            "confidence": "medium"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "第一張紙條",
+            "text": "紙條、水痕花瓣和阿瀾補記均為劇情虛構。",
+            "source_label": "V4劇情設定",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "媽閣廟",
+          "chapter_goal": "幫助玩家區分穩定地點錨點與會隨年代變化的海岸線",
+          "known_facts": [
+            "媽閣廟依山而建",
+            "澳門海岸線隨填海和城市建設發生變化",
+            "舊圖與新圖差異必須結合繪製年代解釋"
+          ],
+          "fiction_boundaries": [
+            "兩張地圖、阿瀾、M先生和紙條為虛構"
+          ],
+          "suggested_questions": [
+            "媽閣廟為甚麼建在這裡？",
+            "澳門海岸線發生過哪些變化？",
+            "媽閣與澳門名稱有甚麼關係？"
+          ],
+          "do_not_reveal": [
+            "不要直接列出謎題的正確選項"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_chapter",
+          "assets": [
+            "V4-AMA-01",
+            "V4-AMA-02",
+            "V4-AMA-03",
+            "V4-AMA-04",
+            "V4-AMA-05"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "遇到天氣、宗教活動、人流或現場限制時，可在允許區域閱讀圖文，不需要進入限制空間。"
+        },
+        "puzzle": {
+          "id": "puzzle_stable_anchors",
+          "type": "multi_select",
+          "prompt": "在比較兩個年代的海岸線之前，應該先固定哪兩個較穩定的參照？",
+          "options": [
+            {
+              "id": "temple",
+              "text": "廟宇位置"
+            },
+            {
+              "id": "hill",
+              "text": "山體與岩石"
+            },
+            {
+              "id": "coast",
+              "text": "海岸線"
+            },
+            {
+              "id": "modern_road",
+              "text": "今天的道路"
+            }
+          ],
+          "solution": [
+            "temple",
+            "hill"
+          ],
+          "hints": [
+            "紙條讓你先找比海岸更不容易移動的東西。",
+            "觀察兩張圖中廟宇與山體的位置。"
+          ],
+          "explanation": "先固定媽閣廟和山體，兩張圖仍指向同一地點；發生顯著變化的是海岸。舊地圖記錄的是當時的城市，而不是一個不完整的今天。",
+          "skip_text": "阿蓮在兩張圖上圈出廟宇與山體，再讓你觀察兩條海岸線。你們仍然獲得第一片花瓣並繼續。",
+          "reward": {
+            "id": "note_petal_1",
+            "kind": "note_petal",
+            "name": "潮線花瓣",
+            "text": "水痕、潮線和地圖邊緣形成第一片市花花瓣。"
+          }
+        }
+      },
+      {
+        "id": "chapter_mandarin_house",
+        "order": 2,
+        "kind": "puzzle",
+        "title": "第二章：缺失的第五行",
+        "location_name": "鄭家大屋",
+        "story_time": "10:20",
+        "poi_id": "poi_0015",
+        "scene": "從入口望進去，視線無法直接抵達深處。沿牆轉身後，梁柱、天井、院心和門件依次出現；紙條上第五個孔仍然空白。",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-MAN-01",
+            "alt": "鄭家大屋入口與被遮擋的深處",
+            "caption": "門在眼前，真正的路卻要在牆邊轉身。"
+          },
+          {
+            "asset_id": "V4-MAN-02",
+            "alt": "沿牆轉折進入鄭家大屋的動線",
+            "caption": "紙條所說的轉身不是暗號，而是建築真實動線。"
+          },
+          {
+            "asset_id": "V4-MAN-03",
+            "alt": "木梁、天井日光、院心地面與金屬門件",
+            "caption": "阿瀾用五行幫助自己記住空間關係，並不聲稱這是建造者的設計意圖。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "mandarin-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "梁上有木，天井有光，院心是土，門上有金。可是第五樣不在房間裏。"
+          },
+          {
+            "id": "mandarin-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "先用這四處把紙條放正。第五個空孔會落在兩座屋都沒有佔去的位置。",
+            "portrait_asset_id": "V4-CHAR-02"
+          },
+          {
+            "id": "mandarin-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "它落在兩座主要院落之間的狹長空隙。"
+          },
+          {
+            "id": "mandarin-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "官方參觀資料把兩座主院落之間的空間稱為水巷。測繪圖畫出了形狀，卻沒有寫這個名稱。",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "鄭家大屋",
+            "text": "鄭家大屋是澳門重要歷史建築，空間包含多個院落、天井和中西建築元素。",
+            "source_label": "澳門世界遺產與官方參觀資料",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "阿瀾的五行觀察",
+            "text": "木、火、土、金、水是阿瀾為了記憶空間而使用的劇情方法，不是已證實的建造意圖。",
+            "source_label": "V4劇情設定",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "鄭家大屋",
+          "chapter_goal": "幫助玩家觀察建築動線、院落和水巷名稱",
+          "known_facts": [
+            "鄭家大屋包含多個院落與天井",
+            "兩座主要院落之間存在被稱為水巷的空間",
+            "空間形狀與生活稱呼屬於不同記錄層面"
+          ],
+          "fiction_boundaries": [
+            "五行對應關係是阿瀾的記憶方法",
+            "不得聲稱鄭觀應因為風水來到澳門",
+            "不得把五行解釋稱為已證實的建造意圖"
+          ],
+          "suggested_questions": [
+            "鄭家大屋的水巷是什麼？",
+            "為什麼入口後要轉折？",
+            "這裡有哪些中西結合的建築特徵？"
+          ],
+          "do_not_reveal": [
+            "不要直接說第五項是水巷"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_chapter",
+          "assets": [
+            "V4-MAN-01",
+            "V4-MAN-02",
+            "V4-MAN-03",
+            "V4-MAN-04",
+            "V4-MAN-05",
+            "V4-MAN-06"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "以現場開放區域和官方導覽為準；不進入封閉房間，不觸碰建築構件。"
+        },
+        "puzzle": {
+          "id": "puzzle_missing_fifth_line",
+          "type": "mapping",
+          "prompt": "把阿瀾的五項觀察與現場位置對應，補出沒有寫下的第五行。",
+          "fields": [
+            {
+              "id": "wood",
+              "label": "木"
+            },
+            {
+              "id": "fire",
+              "label": "火"
+            },
+            {
+              "id": "earth",
+              "label": "土"
+            },
+            {
+              "id": "metal",
+              "label": "金"
+            },
+            {
+              "id": "water",
+              "label": "水"
+            }
+          ],
+          "options": [
+            {
+              "id": "beam",
+              "text": "梁柱"
+            },
+            {
+              "id": "skylight",
+              "text": "天井日光"
+            },
+            {
+              "id": "courtyard",
+              "text": "院心地面"
+            },
+            {
+              "id": "door_fitting",
+              "text": "金屬門件"
+            },
+            {
+              "id": "water_lane",
+              "text": "兩座院落之間的水巷"
+            }
+          ],
+          "solution": {
+            "wood": "beam",
+            "fire": "skylight",
+            "earth": "courtyard",
+            "metal": "door_fitting",
+            "water": "water_lane"
+          },
+          "hints": [
+            "先完成紙條已經給出線索的前四項。",
+            "第五項不在房間裏，而在兩座主要院落之間。"
+          ],
+          "explanation": "測繪圖準確畫出了建築之間的空隙，阿瀾則補上住在這裏的人怎樣稱呼和理解它。空白可以準確，卻仍然需要解釋。",
+          "skip_text": "阿蓮用前四項校正紙條方向，第五個孔落在兩座院落之間。你們查到「水巷」的稱呼並繼續。",
+          "reward": {
+            "id": "note_petal_2",
+            "kind": "note_petal",
+            "name": "水巷花瓣",
+            "text": "水巷波紋與紙條孔洞邊緣形成第二片花瓣。"
+          }
+        }
+      },
+      {
+        "id": "chapter_senado",
+        "order": 3,
+        "kind": "puzzle",
+        "title": "第三章：後來多出的城市",
+        "location_name": "議事亭前地",
+        "story_time": "12:00",
+        "poi_id": "poi_0004",
+        "scene": "阿瀾的舊廣場草圖沒有噴水池，也沒有今天的黑白波浪形鋪地。她問後來的人：舊地圖沒有畫出後來出現的東西，能不能算畫錯？",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-SEN-01",
+            "alt": "今天的議事亭前地",
+            "caption": "同一個開闊空間，在後來增加了新的構件、鋪地與生活稱呼。"
+          },
+          {
+            "asset_id": "V4-SEN-02",
+            "alt": "議事亭前地噴水池",
+            "caption": "這是阿瀾繪圖年代不可能見過的元素。"
+          },
+          {
+            "asset_id": "V4-SEN-03",
+            "alt": "議事亭前地波浪形鋪地",
+            "caption": "今天熟悉的地面同樣來自後來的重整。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "senado-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "阿瀾的圖裡沒有噴水池，也沒有現在的波浪形地面。"
+          },
+          {
+            "id": "senado-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "這一次先別說她漏畫了。找出兩樣她不可能見過的東西，再回答紙條上的問題。",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "senado-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "舊地圖記錄的不是一個不完整的今天，而是一個已經過去的完整時刻。"
+          },
+          {
+            "id": "senado-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "所以後來的人可以補上變化和新的稱呼，但不必把舊記錄擦掉。",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "廣場的後來變化",
+            "text": "今天可見的噴水池與波浪形鋪地形成於比阿瀾虛構年代更晚的城市建設與重整階段。",
+            "source_label": "澳門市政與文化公開資料",
+            "confidence": "high"
+          },
+          {
+            "kind": "folklore",
+            "title": "“噴水池”這一生活稱呼",
+            "text": "地點的正式名稱之外，居民常用稱呼也記錄了城市生活。",
+            "source_label": "澳門地方生活稱呼",
+            "confidence": "medium"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "議事亭前地",
+          "chapter_goal": "幫助玩家識別不同時代增加的廣場元素和生活稱呼",
+          "known_facts": [
+            "今天的噴水池晚於阿瀾的虛構年代",
+            "今天的波浪形鋪地來自後來的重整",
+            "舊地圖不能記錄繪製之後才出現的城市元素"
+          ],
+          "fiction_boundaries": [
+            "阿瀾的舊廣場草圖和問題為虛構"
+          ],
+          "suggested_questions": [
+            "噴水池是什麼時候出現的？",
+            "波浪形鋪地是什麼時候形成的？",
+            "為什麼澳門人也會把這裡叫噴水池？"
+          ],
+          "do_not_reveal": [
+            "不要直接列出謎題的兩個正確選項"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_chapter",
+          "assets": [
+            "V4-SEN-01",
+            "V4-SEN-02",
+            "V4-SEN-03",
+            "V4-SEN-04",
+            "V4-SEN-05"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "廣場人流密集時可在邊緣觀察，不必進入人群中心。"
+        },
+        "puzzle": {
+          "id": "puzzle_later_city",
+          "type": "multi_select",
+          "prompt": "找出阿瀾繪圖年代不可能見過、後來才出現在廣場的兩樣東西。",
+          "options": [
+            {
+              "id": "fountain",
+              "text": "噴水池"
+            },
+            {
+              "id": "wave_paving",
+              "text": "黑白波浪形鋪地"
+            },
+            {
+              "id": "open_square",
+              "text": "開闊的廣場空間"
+            },
+            {
+              "id": "historic_facade",
+              "text": "周邊歷史建築立面"
+            }
+          ],
+          "solution": [
+            "fountain",
+            "wave_paving"
+          ],
+          "hints": [
+            "不要找一直存在的空間關係，找後來增設或重整的元素。",
+            "觀察廣場中央和腳下。"
+          ],
+          "explanation": "舊圖沒有畫出繪製年代以後才出現的噴水池和鋪地，不能因此判定舊圖錯誤。應當保留舊記錄，再註明後來的變化與稱呼。",
+          "skip_text": "阿蓮帶你分別觀察廣場中央和腳下，並把兩個後來元素加入今日補記。",
+          "reward": {
+            "id": "note_petal_3",
+            "kind": "note_petal",
+            "name": "年代花瓣",
+            "text": "舊圖線與後來添加的城市線條形成第三片花瓣。"
+          }
+        }
+      },
+      {
+        "id": "chapter_sam_kai",
+        "order": 4,
+        "kind": "puzzle",
+        "title": "第四章：少掉的兩包貨",
+        "location_name": "三街會館",
+        "story_time": "13:30",
+        "poi_id": "poi_0136",
+        "scene": "三街會館附近的舊商業街提醒你，建築之外還有商情、糾紛、互助和看不見的社會網絡。阿瀾留下三份互相補充的記錄。",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-SAM-01",
+            "alt": "三街會館與舊商業街",
+            "caption": "這裡不僅是一棟建築，也與商人溝通和商業活動有關。"
+          },
+          {
+            "asset_id": "V4-SAM-02",
+            "alt": "梁掌櫃交付貨物",
+            "caption": "交貨單記錄貨物從哪裡來。"
+          },
+          {
+            "asset_id": "V4-SAM-03",
+            "alt": "陳掌櫃核對入店簿",
+            "caption": "入店簿記錄真正進店的貨物。"
+          },
+          {
+            "asset_id": "V4-SAM-04",
+            "alt": "腳夫留下臨時存條",
+            "caption": "存條解釋兩包貨為什麼沒有立刻入店。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "sam-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "三份記錄互相不完全一樣。只選一份當真相，好像都會漏掉一段。"
+          },
+          {
+            "id": "sam-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "那就別替它們互相淘汰。先說清楚每一份記錄回答什麼問題。",
+            "portrait_asset_id": "V4-CHAR-02"
+          },
+          {
+            "id": "sam-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "交貨單說明發出了什麼，入店簿說明收進了什麼，存條解釋中間少掉的兩包去了哪裡。"
+          },
+          {
+            "id": "sam-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "對。不是選一張最權威的紙，而是讓三張紙組成完整證據鏈。",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "三街會館與商業活動",
+            "text": "三街會館曾與華商溝通商情、調節商業事務和商人社群活動相關，後來也因供奉關帝而廣為人知。",
+            "source_label": "澳門文化遺產公開資料",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "少掉的兩包貨",
+            "text": "梁掌櫃、陳掌櫃、腳夫阿成和三份記錄均為虛構案例，用於表現不同記錄的用途。",
+            "source_label": "V4劇情設定",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "三街會館",
+          "chapter_goal": "幫助玩家理解建築背後的商業社群與證據鏈",
+          "known_facts": [
+            "三街會館與華商議事和商業事務有關",
+            "不同記錄可以分別描述交付、接收和臨時處置"
+          ],
+          "fiction_boundaries": [
+            "具體賬簿糾紛、人物和兩包貨為虛構"
+          ],
+          "suggested_questions": [
+            "三街會館過去有什麼作用？",
+            "為什麼這裡也供奉關帝？",
+            "舊商業街與會館有什麼關係？"
+          ],
+          "do_not_reveal": [
+            "不要直接替玩家選出三份證據"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_chapter",
+          "assets": [
+            "V4-SAM-01",
+            "V4-SAM-02",
+            "V4-SAM-03",
+            "V4-SAM-04",
+            "V4-SAM-05",
+            "V4-SAM-06"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "場所關閉、宗教活動或擁擠時，在外部閱讀圖文即可，不打擾現場活動。"
+        },
+        "puzzle": {
+          "id": "puzzle_evidence_chain",
+          "type": "evidence_chain",
+          "prompt": "要完整解釋兩包貨為什麼沒有出現在入店簿中，需要保留哪幾份記錄？",
+          "options": [
+            {
+              "id": "delivery_order",
+              "text": "梁掌櫃交貨單"
+            },
+            {
+              "id": "store_ledger",
+              "text": "陳掌櫃入店簿"
+            },
+            {
+              "id": "porter_receipt",
+              "text": "腳夫阿成存條"
+            },
+            {
+              "id": "single_summary",
+              "text": "後來人寫的一份概括"
+            }
+          ],
+          "solution": [
+            "delivery_order",
+            "store_ledger",
+            "porter_receipt"
+          ],
+          "hints": [
+            "不要問哪一份最權威，先問每份記錄覆蓋哪一步。",
+            "交付、入店和中途寄存三個環節都需要證據。"
+          ],
+          "explanation": "三份記錄分別說明發出、入店和臨時寄存。任何一份單獨看都不完整；把來源和用途說明清楚，才能補回缺少的解釋。",
+          "skip_text": "阿蓮把交付、入店和臨時寄存排成一條證據鏈，你們保留三份記錄並繼續。",
+          "reward": {
+            "id": "note_petal_4",
+            "kind": "note_petal",
+            "name": "賬格花瓣",
+            "text": "三份記錄的格線交疊成第四片花瓣。"
+          }
+        }
+      },
+      {
+        "id": "chapter_lou_kau",
+        "order": 5,
+        "kind": "puzzle",
+        "title": "第五章：一扇窗應該畫在哪張圖上",
+        "location_name": "盧家大屋",
+        "story_time": "15:00",
+        "poi_id": "poi_0057",
+        "scene": "天井引入光線，青磚、木構和窗戶共同組織人的日常生活。阿蓮把一扇窗拆成多個構件，問它究竟屬於建築形狀，還是屬於人的生活。",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-LOU-01",
+            "alt": "盧家大屋天井與青磚空間",
+            "caption": "光線、通風和構件共同決定人如何使用室內。"
+          },
+          {
+            "asset_id": "V4-LOU-02",
+            "alt": "盧家大屋窗戶構造",
+            "caption": "只畫外牆輪廓，會漏掉窗戶如何讓光與風進入生活。"
+          },
+          {
+            "asset_id": "V4-LOU-03",
+            "alt": "被拆開的窗戶構件",
+            "caption": "紙條要求把正確構件重新裝回同一扇窗。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "lou-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "測繪圖能畫窗戶的位置，蓮城脈圖能畫它怎麼影響生活。那它應該屬於哪一張？"
+          },
+          {
+            "id": "lou-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "先別急著分。把窗戶裝完整，再看看少了任何一部分會失去什麼。",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "lou-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "位置、形狀、透光和開合都屬於同一扇窗，只是兩張圖分別記錄了不同部分。"
+          },
+          {
+            "id": "lou-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "所以不必把它判給某一張圖。兩張圖放在一起，才更接近人真正住過的空間。",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "盧家大屋的建築融合",
+            "text": "盧家大屋以中式住宅空間為基礎，並可觀察到與澳門城市文化交流相關的裝飾和構件特徵。",
+            "source_label": "澳門世界遺產與官方建築資料",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "窗戶拼合關卡",
+            "text": "構件拆分、紙條提問和花瓣機關是依據建築觀察設計的遊戲，不是歷史檔案中的真實謎題。",
+            "source_label": "V4劇情設定",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "盧家大屋",
+          "chapter_goal": "幫助玩家觀察窗戶構件如何同時屬於建築形態與生活使用",
+          "known_facts": [
+            "盧家大屋是澳門重要歷史住宅建築",
+            "窗戶構件與採光、通風、開合和空間使用相關",
+            "中西建築元素可以在同一住宅中共存"
+          ],
+          "fiction_boundaries": [
+            "窗戶拼合謎題並非真實歷史檔案"
+          ],
+          "suggested_questions": [
+            "盧家大屋有哪些中西結合特徵？",
+            "這些窗戶構件有什麼用途？",
+            "天井怎樣影響採光和通風？"
+          ],
+          "do_not_reveal": [
+            "不要直接列出全部正確構件"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_chapter",
+          "assets": [
+            "V4-LOU-01",
+            "V4-LOU-02",
+            "V4-LOU-03",
+            "V4-LOU-04",
+            "V4-LOU-05",
+            "V4-LOU-06"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "只觀察開放區域的構件，不觸摸、不拆卸任何現場設施。"
+        },
+        "puzzle": {
+          "id": "puzzle_window_assembly",
+          "type": "assembly",
+          "prompt": "選擇能組成紙條所示完整窗戶的四個構件。",
+          "options": [
+            {
+              "id": "upper_frame",
+              "text": "上部窗框"
+            },
+            {
+              "id": "lower_frame",
+              "text": "下部窗框"
+            },
+            {
+              "id": "oyster_shell_panel",
+              "text": "透光窗片"
+            },
+            {
+              "id": "wooden_shutter",
+              "text": "木製開合窗扇"
+            },
+            {
+              "id": "stone_battlement",
+              "text": "石製垛口"
+            },
+            {
+              "id": "ship_porthole",
+              "text": "船用舷窗"
+            }
+          ],
+          "solution": [
+            "upper_frame",
+            "lower_frame",
+            "oyster_shell_panel",
+            "wooden_shutter"
+          ],
+          "hints": [
+            "只選擇能在住宅窗戶上共同工作的構件。",
+            "考慮支撐、透光與開合三個功能。"
+          ],
+          "explanation": "完整窗戶同時具有位置、形狀、透光和開合功能。測繪圖與生活觀察圖各自記錄一部分，合起來才更接近真實使用。",
+          "skip_text": "阿蓮按支撐、透光和開合功能把四個構件重新歸組。你們完成紙條重合併繼續前往大炮台。",
+          "reward": {
+            "id": "note_petal_5",
+            "kind": "note_petal",
+            "name": "窗格花瓣",
+            "text": "四個正確構件的窗格線形成第五片花瓣。五張紙條迎光重合，顯出完整市花。"
+          }
+        }
+      },
+      {
+        "id": "chapter_mount_fortress",
+        "order": 6,
+        "kind": "ending",
+        "title": "最終章：留給後來人的一筆",
+        "location_name": "大炮台",
+        "story_time": "17:00",
+        "poi_id": "poi_0003",
+        "scene": "你與阿蓮登上大炮台。歷史城區、山體、海岸和現代城市在視野中同時展開。城市雙圖與今天的景象無法完全重合，卻也不再互相否定。",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-FOR-01",
+            "alt": "從大炮台俯瞰澳門城市",
+            "caption": "這裡適合把沿途收集的五種證據放回城市整體。"
+          },
+          {
+            "asset_id": "V4-FOR-02",
+            "alt": "歷史城區與現代城市共同展開",
+            "caption": "今天的城市沒有停在任何一張舊地圖的年代。"
+          },
+          {
+            "asset_id": "V4-FOR-03",
+            "alt": "城市雙圖與今天的澳門重疊",
+            "caption": "兩張圖都記錄了真實，但記錄的不是同一種真實。"
+          },
+          {
+            "asset_id": "V4-FOR-04",
+            "alt": "前五站獲得的五組證據",
+            "caption": "海岸會變，空白需要解釋，城市會增加新事物，記錄需要證據鏈，建築也屬於人的生活。"
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "fortress-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "我們一路都沒有找出哪一張才是唯一正確的地圖。"
+          },
+          {
+            "id": "fortress-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "也許阿瀾最後要問的，本來就不是讓你二選一。把五站的證據放回兩張圖旁邊看看。",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "fortress-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "M先生畫出城市的形狀，阿瀾記錄人怎樣在裡面生活。用途不同，遺漏也不同。"
+          },
+          {
+            "id": "fortress-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "M先生的回信也承認，一張圖若只剩骨架，後來的人仍會問：誰住在這裡，他們怎樣稱呼這裡。",
+            "portrait_asset_id": "V4-CHAR-03"
+          },
+          {
+            "id": "fortress-dialogue-05",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "那我們不把今天改回過去，也不為了證明今天正確就擦掉舊記錄。我們補上來源、年代和用途。"
+          },
+          {
+            "id": "fortress-dialogue-06",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "text": "最後一筆留給你。寫下今天看見的澳門，讓下一位後來人知道你站在哪一年。",
+            "portrait_asset_id": "V4-CHAR-01"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "大炮台與城市視野",
+            "text": "大炮台是澳門歷史城區的重要組成部分，高處視野適合觀察歷史建築、山體與現代城市的層次。",
+            "source_label": "澳門世界遺產與官方文化資料",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "M先生回信與阿瀾留言",
+            "text": "回信、留言及「城由人共寫」的紙條機關為V4劇情創作。",
+            "source_label": "V4劇情設定",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "阿蓮",
+          "poi_name": "大炮台",
+          "chapter_goal": "幫助玩家綜合五站證據，為兩張地圖補上年代、來源和用途說明",
+          "known_facts": [
+            "大炮台屬於澳門歷史城區重要遺產",
+            "今天的城市同時包含歷史建築和現代建設",
+            "地圖必須結合製圖年代、來源和用途閱讀"
+          ],
+          "fiction_boundaries": [
+            "M先生回信、阿瀾留言和五瓣紙條機關為虛構"
+          ],
+          "suggested_questions": [
+            "從大炮台可以怎樣觀察澳門的城市層次？",
+            "兩張地圖為什麼都值得保留？",
+            "今日補記應該寫些什麼？"
+          ],
+          "do_not_reveal": [
+            "不要代替玩家撰寫最終反思"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_ending",
+          "assets": [
+            "V4-FOR-01",
+            "V4-FOR-02",
+            "V4-FOR-03",
+            "V4-FOR-04",
+            "V4-FOR-05",
+            "V4-FOR-06",
+            "V4-FOR-07",
+            "V4-FOR-08",
+            "V4-FOR-09"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "天氣、能見度或現場限制不影響結局；可使用預置城市視野圖完成綜合判斷。"
+        }
+      }
+    ],
+    "endings": [
+      {
+        "id": "complete_today_note",
+        "title": "城由人共寫",
+        "choice_text": "完成今日補記",
+        "text": "你沒有找到唯一正確的澳門地圖。你為兩張圖補上年代、來源和用途，也把今天看見的城市寫進新的空白。地圖不是最後的判決；一座城市，由不同時代、不同用途和不同的人共同寫成。",
+        "condition": "完成大炮台綜合判斷並保存今日補記",
+        "rewards": [
+          {
+            "id": "complete_city_flower",
+            "kind": "collection",
+            "name": "完整澳門市花",
+            "text": "五張紙條迎光重合，五片花瓣組成完整市花。"
+          },
+          {
+            "id": "today_note",
+            "kind": "reflection",
+            "name": "今日補記",
+            "text": "你為下一位後來人留下了今天的記錄。"
+          }
+        ]
+      }
+    ]
   },
   "en": {
+    "id": "lotus_city_double_map",
+    "version": 4,
     "title": "Lotus City, Two Maps: The Map Still Unfinished",
-    "subtitle": "Follow six real places to read two maps that preserve different truths about Macau",
-    "summary": "While researching Macau’s changing cityscape, you borrow a family copy of the 1923 Continuation of the Xiangshan County Gazetteer from your local classmate, A Lin. An envelope, two city maps, six paired map fragments and five private notes slip from its pages, setting the two of you on a day-long urban investigation.",
-    "identity": { "name": "Urban researcher", "description": "You are not an expert who already knows the answer. Use the places before you, the paired maps, the notes, A Lin’s checking, and the evidence you have earned to make your own judgement." },
-    "content_notice": "Knowledge about real places is identified as historical fact, folk belief or local memory, contextual reconstruction, fictional narrative, or changing operational information. A Lan, Mr M, the two fictional maps, six paired fragments, five notes and all puzzles are created for this story.",
-    "content_labels": { "historical_fact": "Historical fact", "folklore": "Folk belief / local memory", "contextual_reconstruction": "Contextual reconstruction", "fictional_story": "Fictional narrative", "dynamic_operational_info": "Changing visitor information" },
-    "props": ["1923 Continuation of the Xiangshan County Gazetteer", "Survey Map of the City", "Lotus City Living Map", "Six paired map fragments", "Five private notes"],
-    "nodes": [
-      { "title":"Opening: A route falls from an old book", "scene":"For your research on Macau’s urban history, you borrow A Lin’s family copy of the 1923 Continuation of the Xiangshan County Gazetteer. As you turn pages on Macau’s geography, maps and local history, an old envelope and a set of folded maps slide out.", "dialogue":[{"speaker":"You","text":"These two maps of Macau do not show the same city. Which one should we trust first?"},{"speaker":"A Lin","text":"Neither—yet. A Lan and Mr M may have been recording different kinds of truth. You keep questioning; I will help us check."},{"speaker":"You","text":"The first note names no place. It only says to find somewhere remembered before the city had its name."},{"speaker":"A Lin","text":"Mountain by the sea, fragrance in the wind, and a local story tied to Macau’s name. We begin at A-Ma Temple."}], "reward":{"name":"The paired maps and five notes","text":"You and A Lin decide to walk the route in the notes’ order."} },
-      { "title":"Chapter 1: Where does the sea begin?", "location_name":"A-Ma Temple", "scene":"On the older map, the shoreline lies much closer to the foot of the hill; today it reaches farther out. Both maps, however, keep the temple and hill in roughly the same relationship." },
-      { "title":"Chapter 2: The missing fifth line", "location_name":"Mandarin’s House", "scene":"From the entrance, the deeper spaces remain out of sight. Turn along the wall and beams, skylights, courtyards and door fittings appear one by one; the fifth hole in the note is still blank." },
-      { "title":"Chapter 3: A city added later", "location_name":"Senado Square", "scene":"A Lan’s older sketch has neither the fountain nor today’s black-and-white wave paving. She asks a later visitor: if an old map cannot show what appeared later, is it wrong?" },
-      { "title":"Chapter 4: Two missing parcels", "location_name":"Sam Kai Vui Kun", "scene":"The old commercial streets near Sam Kai Vui Kun remind you that a city is more than its buildings: trade, disputes, mutual aid and invisible social ties also leave traces. A Lan has left three records that complete one another." },
-      { "title":"Chapter 5: Which map should hold a window?", "location_name":"Lou Kau Mansion", "scene":"A courtyard brings in light; grey brick, timber and windows organise daily life together. A Lan separates one window into its parts and asks whether it belongs to architectural form or to lived experience." },
-      { "title":"Final chapter: A line for those who come after", "location_name":"Mount Fortress", "scene":"You and A Lin climb Mount Fortress. The historic centre, hills, coastline and modern city unfold at once. The paired maps cannot perfectly coincide with what you see today, yet neither cancels the other." }
+    "subtitle": "Follow six real sites to read two Macau maps that record different truths",
+    "summary": "To research the urban evolution of Macau, you borrow from your local classmate A Lin a family-held 1923 supplement to the Xiangshan County Gazetteer. An envelope that falls from its pages, the twin city maps, six sets of location map details, and five secret notes lead you two into a day-long city investigation.",
+    "route_id": "lotus_city_double_map",
+    "estimated_hours": 7,
+    "product_mode": "mobile_portrait_web",
+    "presentation": {
+      "default_orientation": "portrait",
+      "max_content_width_px": 480,
+      "cover_asset_id": "V4-COVER-01",
+      "asset_base_path": "/story/v4/"
+    },
+    "identity": {
+      "id": "young_researcher",
+      "name": "Urban Researcher",
+      "description": "You are not an expert who already knows the answers. You must rely on the sites, the twin maps, the notes, A Lin's verification, and the evidence you have gathered to make judgments."
+    },
+    "content_notice": "Real-site knowledge is divided into historical fact, folk belief or local memory, contextual reconstruction, fictional story, and dynamic operational information. A Lan, Mr M, the two fictional maps, the six sets of partial double maps, the five secret notes, and the puzzles are all fictional creations.",
+    "content_labels": {
+      "historical_fact": "Historical fact",
+      "folklore": "Folk belief / local memory",
+      "contextual_reconstruction": "Contextual reconstruction",
+      "fictional_story": "Fictional story",
+      "dynamic_operational_info": "Dynamic operational information"
+    },
+    "characters": [
+      {
+        "id": "player",
+        "name": "You",
+        "role": "A student or young researcher studying Macau's urban evolution, old maps, or local memory",
+        "fictional": true
+      },
+      {
+        "id": "alian",
+        "name": "A Lin",
+        "role": "A local Macau classmate, a descendant of A Lan, and a full-day guide and knowledge agent",
+        "fictional": true
+      },
+      {
+        "id": "alan",
+        "name": "A Lan",
+        "role": "A Lin's ancestor, the principal author of the Lotus City Pulse Map and the five notes",
+        "fictional": true
+      },
+      {
+        "id": "m",
+        "name": "Mr M",
+        "role": "The principal author of the City Survey Map, who together with A Lan checked Macau's streets and lanes",
+        "fictional": true
+      }
     ],
-    "endings":[{ "title":"A city is written by its people", "text":"You have not found the one correct map of Macau. You have added dates, sources and purposes to both maps, and entered the city you saw today into a new blank space. A map is not a final verdict: a city is written together by different times, different uses and different people.", "choice_text":"Complete today’s note" }]
+    "props": [
+      "1923 Supplement to the Xiangshan County Gazetteer",
+      "City Survey Map",
+      "Lotus City Pulse Map",
+      "Six sets of partial location double maps",
+      "Five secret notes"
+    ],
+    "nodes": [
+      {
+        "id": "prologue_old_book",
+        "order": 0,
+        "kind": "prologue",
+        "title": "Prologue: A Route Dropped from an Old Book",
+        "story_time": "08:00",
+        "scene": "While researching Macau's urban evolution, you borrow a family-owned 1923 copy of the Continued Edition of Xiangshan County Gazetteer from your local classmate A Lin. As you flip to the pages on Macau's geography, maps, and local history, an old envelope and a set of folded drawings slip out from between the pages.",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-PRO-01",
+            "alt": "A Lin lends the family's old book to the player",
+            "caption": "A Lin says the book has been kept at home for many years, and she has never carefully flipped through the pages with the inserted illustrations."
+          },
+          {
+            "asset_id": "V4-PRO-02",
+            "alt": "Envelope and maps slip out of the old book",
+            "caption": "The envelope contains no treasure or secret orders, only an ordinary reminder: for those who are still willing to walk the route themselves."
+          },
+          {
+            "asset_id": "V4-PRO-03",
+            "alt": "Old book, paired city maps, six paired local maps, and five notes laid out on the table",
+            "caption": "The paired city maps provide an overall reference, the six paired local maps detail each point, and the five notes determine the order of the on-site reading."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "prologue-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "These two Macau maps are drawn differently. Which one should we trust first?"
+          },
+          {
+            "id": "prologue-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Don't choose yet. Maybe A Lan and Mr M recorded different things in the first place. You do the doubting, and I'll help you check the facts.",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "prologue-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "The first note doesn't mention a location. It only says to find a place remembered before the city had its name."
+          },
+          {
+            "id": "prologue-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Mountains never leave the sea, fragrance never leaves the wind, and it is connected to the local legend behind the name of Macau. We start from A-Ma Temple.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "The Real Prototype of the Family-Owned Old Book",
+            "text": "The 1923 Continued Edition of Xiangshan County Gazetteer is a real local gazetteer; the family-owned copy and the hidden materials in this story are fictional plot elements.",
+            "source_label": "Public gazetteer materials",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "Hidden Materials",
+            "text": "The envelope, paired city maps, paired local maps, notes, A Lan, and Mr M are all game creations.",
+            "source_label": "V4 storyline setting",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Old Book and Paired City Maps",
+          "chapter_goal": "Help the player understand the old book, the paired maps, and the purpose of the first secret note",
+          "known_facts": [
+            "The 1923 Continued Edition of Xiangshan County Gazetteer is a real local gazetteer",
+            "The family-owned copy, envelope, paired maps, notes, A Lan, and Mr M in the story are all fictional plot elements",
+            "The paired maps emphasize different aspects, and later you will need to check them against the actual sites one by one"
+          ],
+          "fiction_boundaries": [
+            "Do not describe the hidden materials, characters, or maps in the plot as real artifacts or historical facts"
+          ],
+          "suggested_questions": [
+            "What is this old book?",
+            "How should the two maps be used together?",
+            "Why is the first stop A-Ma Temple?"
+          ],
+          "do_not_reveal": [
+            "Do not reveal the answers to later puzzles in advance",
+            "Do not reveal plot discoveries from chapters not yet reached"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_comic",
+          "assets": [
+            "V4-PROP-01",
+            "V4-PROP-02",
+            "V4-PROP-03",
+            "V4-PROP-04",
+            "V4-PRO-01",
+            "V4-PRO-02",
+            "V4-PRO-03"
+          ]
+        },
+        "reward": {
+          "id": "research_materials",
+          "kind": "story_prop",
+          "name": "Paired Maps and Five Notes",
+          "text": "You and A Lin decide to walk the route in person, following the order of the notes."
+        }
+      },
+      {
+        "id": "chapter_ama",
+        "order": 1,
+        "kind": "puzzle",
+        "title": "Chapter 1: Where Does the Sea Begin?",
+        "location_name": "A-Ma Temple",
+        "story_time": "09:00",
+        "poi_id": "poi_0011",
+        "scene": "On the old map, the coastline hugs the foot of the hill; today's coastline has moved outward. Yet both maps keep the temple and the hill in roughly the same position.",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-AMA-01",
+            "alt": "Looking up from the stone steps at A-Ma Temple built into the hillside",
+            "caption": "The hill, rocks, stone steps, and temple still correspond to one another."
+          },
+          {
+            "asset_id": "V4-AMA-02",
+            "alt": "Viewing today's more distant coastline from A-Ma Temple",
+            "caption": "The city and roads have changed the direct relationship between hill and sea."
+          },
+          {
+            "asset_id": "V4-AMA-03",
+            "alt": "The two coastlines shown in the paired map details of A-Ma Temple",
+            "caption": "If you first find stable references, the two different coastlines still point to the same place."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "ama-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "But the coastlines on the two maps are different. Does that mean at least one map is wrong?"
+          },
+          {
+            "id": "ama-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "The note doesn't ask us to find the correct coastline first, but to find what is hard to move. What do you see in both maps?",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "ama-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "The temple and the hill. The coastline is the part that changed."
+          },
+          {
+            "id": "ama-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Exactly. What the map records is not an unchanging Macau, but the Macau that the mapmaker could see at that time.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "A-Ma Temple and Coastal Life",
+            "text": "A-Ma Temple was built against the hill and is closely connected to Macau's early coastal community and maritime beliefs.",
+            "source_label": "Macau World Heritage and cultural materials",
+            "confidence": "high"
+          },
+          {
+            "kind": "folklore",
+            "title": "A-Ma and the Name of Macau",
+            "text": "The explanation linking A-Ma and the name of Macau is a widely told local narrative, showing the relationship between place, language, and memory.",
+            "source_label": "Local legends and public cultural materials",
+            "confidence": "medium"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "The First Note",
+            "text": "The note, the water-stained petal, and A Lan's annotation are fictional plot elements.",
+            "source_label": "V4 story setting",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "A-Ma Temple",
+          "chapter_goal": "Help the player distinguish stable place anchors from a coastline that changes with the times",
+          "known_facts": [
+            "A-Ma Temple is built against the hill",
+            "Macau's coastline has changed through land reclamation and urban development",
+            "Differences between the old and new maps must be explained by their dates of creation"
+          ],
+          "fiction_boundaries": [
+            "The two maps, A Lan, Mr M, and the note are fictional"
+          ],
+          "suggested_questions": [
+            "Why was A-Ma Temple built here?",
+            "What changes has Macau's coastline undergone?",
+            "What is the relationship between A-Ma and the name Macau?"
+          ],
+          "do_not_reveal": [
+            "Do not directly list the correct puzzle choices"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_chapter",
+          "assets": [
+            "V4-AMA-01",
+            "V4-AMA-02",
+            "V4-AMA-03",
+            "V4-AMA-04",
+            "V4-AMA-05"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "In case of weather, religious events, crowds, or site restrictions, you may read the pictures and text in permitted areas; no need to enter restricted spaces."
+        },
+        "puzzle": {
+          "id": "puzzle_stable_anchors",
+          "type": "multi_select",
+          "prompt": "Before comparing the coastlines of two eras, which two relatively stable references should you fix first?",
+          "options": [
+            {
+              "id": "temple",
+              "text": "Temple location"
+            },
+            {
+              "id": "hill",
+              "text": "Hill and rocks"
+            },
+            {
+              "id": "coast",
+              "text": "Coastline"
+            },
+            {
+              "id": "modern_road",
+              "text": "Today's roads"
+            }
+          ],
+          "solution": [
+            "temple",
+            "hill"
+          ],
+          "hints": [
+            "The note asks you to find something harder to move than the coastline.",
+            "Observe the positions of the temple and the hill on both maps."
+          ],
+          "explanation": "By first fixing A-Ma Temple and the hill, the two maps still point to the same place; what has changed significantly is the coastline. The old map records the city as it was then, not an incomplete version of today.",
+          "skip_text": "A Lin circles the temple and the hill on both maps, then lets you observe the two coastlines. You still receive the first petal and continue.",
+          "reward": {
+            "id": "note_petal_1",
+            "kind": "note_petal",
+            "name": "Tide-line Petal",
+            "text": "The water stain, the tide line, and the map edge form the first petal of the city flower."
+          }
+        }
+      },
+      {
+        "id": "chapter_mandarin_house",
+        "order": 2,
+        "kind": "puzzle",
+        "title": "Chapter 2: The Missing Fifth Line",
+        "location_name": "Mandarin's House",
+        "story_time": "10:20",
+        "poi_id": "poi_0015",
+        "scene": "From the entrance, the view cannot reach the depths directly. Turning along the wall, the beams, skylight, courtyard center, and door fittings appear in sequence; the fifth hole on the note remains blank.",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-MAN-01",
+            "alt": "Mandarin's House entrance and the hidden depths",
+            "caption": "The door is before you, but the real path requires turning at the wall."
+          },
+          {
+            "asset_id": "V4-MAN-02",
+            "alt": "The route of turning along the wall into Mandarin's House",
+            "caption": "The 'turn' mentioned in the note is not a code word, but the building's actual circulation path."
+          },
+          {
+            "asset_id": "V4-MAN-03",
+            "alt": "Wooden beams, skylight daylight, courtyard ground, and metal door fittings",
+            "caption": "A Lan uses the Five Elements as a way to remember spatial relationships, and does not claim this as the builder's design intent."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "mandarin-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "The beams have wood, the skylight has light, the courtyard center has earth, the door has metal. But the fifth one is not in the room."
+          },
+          {
+            "id": "mandarin-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "First use these four places to align the note. The fifth empty hole will land in a position not occupied by either of the two houses.",
+            "portrait_asset_id": "V4-CHAR-02"
+          },
+          {
+            "id": "mandarin-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "It falls in the narrow gap between the two main courtyards."
+          },
+          {
+            "id": "mandarin-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Official visitor materials refer to the space between the two main courtyards as the Water Lane. The survey drawing shows its shape but does not include this name.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Mandarin's House",
+            "text": "Mandarin's House is an important historical building in Macau, with spaces comprising multiple courtyards, skylights, and Sino-Western architectural elements.",
+            "source_label": "Macau World Heritage and official visitor materials",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "A Lan's Five Elements Observation",
+            "text": "Wood, fire, earth, metal, and water are a narrative device A Lan uses to remember the space, not a confirmed construction intention.",
+            "source_label": "V4 narrative setting",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Mandarin's House",
+          "chapter_goal": "Help the player observe the building's circulation, courtyards, and the name of the Water Lane.",
+          "known_facts": [
+            "Mandarin's House contains multiple courtyards and skylights.",
+            "There is a space between the two main courtyards called the Water Lane.",
+            "Spatial shape and colloquial naming belong to different levels of documentation."
+          ],
+          "fiction_boundaries": [
+            "The Five Elements correspondence is A Lan's memory method.",
+            "Do not claim that Zheng Guanying came to Macau because of feng shui.",
+            "Do not call the Five Elements explanation a confirmed construction intention."
+          ],
+          "suggested_questions": [
+            "What is the Water Lane in Mandarin's House?",
+            "Why is there a turn after the entrance?",
+            "What Sino-Western architectural features are here?"
+          ],
+          "do_not_reveal": [
+            "Do not directly say the fifth item is the Water Lane."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_chapter",
+          "assets": [
+            "V4-MAN-01",
+            "V4-MAN-02",
+            "V4-MAN-03",
+            "V4-MAN-04",
+            "V4-MAN-05",
+            "V4-MAN-06"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "Follow the on-site open areas and official guided tour; do not enter closed rooms or touch building components."
+        },
+        "puzzle": {
+          "id": "puzzle_missing_fifth_line",
+          "type": "mapping",
+          "prompt": "Match A Lan's five observations with the on-site locations and fill in the unwritten fifth line.",
+          "fields": [
+            {
+              "id": "wood",
+              "label": "Wood"
+            },
+            {
+              "id": "fire",
+              "label": "Fire"
+            },
+            {
+              "id": "earth",
+              "label": "Earth"
+            },
+            {
+              "id": "metal",
+              "label": "Metal"
+            },
+            {
+              "id": "water",
+              "label": "Water"
+            }
+          ],
+          "options": [
+            {
+              "id": "beam",
+              "text": "Beams"
+            },
+            {
+              "id": "skylight",
+              "text": "Skylight daylight"
+            },
+            {
+              "id": "courtyard",
+              "text": "Courtyard ground"
+            },
+            {
+              "id": "door_fitting",
+              "text": "Metal door fittings"
+            },
+            {
+              "id": "water_lane",
+              "text": "Water Lane between the two courtyards"
+            }
+          ],
+          "solution": {
+            "wood": "beam",
+            "fire": "skylight",
+            "earth": "courtyard",
+            "metal": "door_fitting",
+            "water": "water_lane"
+          },
+          "hints": [
+            "First complete the first four items for which the note already gives clues.",
+            "The fifth item is not in the room, but between the two main courtyards."
+          ],
+          "explanation": "The survey drawing accurately depicts the gaps between the buildings, and A Lan adds how the people who lived here named and understood it. A blank can be accurate, yet it still requires explanation.",
+          "skip_text": "A Lin uses the first four items to correct the note's orientation, and the fifth hole falls between the two courtyards. You find the name 'Water Lane' and continue.",
+          "reward": {
+            "id": "note_petal_2",
+            "kind": "note_petal",
+            "name": "Water Lane Petal",
+            "text": "The ripples of the Water Lane and the edge of the note's hole form the second petal."
+          }
+        }
+      },
+      {
+        "id": "chapter_senado",
+        "order": 3,
+        "kind": "puzzle",
+        "title": "Chapter 3: The City That Appeared Later",
+        "location_name": "Senado Square",
+        "story_time": "12:00",
+        "poi_id": "poi_0004",
+        "scene": "A Lan's old sketch of the square shows neither a fountain nor today's black-and-white wavy paving. She asks people who came later: can an old map be considered wrong if it doesn't show things that didn't exist yet?",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-SEN-01",
+            "alt": "Today's Senado Square",
+            "caption": "The same open space later gained new features, paving, and everyday names."
+          },
+          {
+            "asset_id": "V4-SEN-02",
+            "alt": "Fountain at Senado Square",
+            "caption": "This is an element A Lan could not have seen in her time of drawing."
+          },
+          {
+            "asset_id": "V4-SEN-03",
+            "alt": "Wave-pattern paving at Senado Square",
+            "caption": "The ground familiar today also came from a later renovation."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "senado-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "A Lan's drawing has neither a fountain nor the current wavy ground."
+          },
+          {
+            "id": "senado-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "This time, don't say she missed drawing them. Find two things she could not have seen, then answer the question on the note.",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "senado-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "An old map records not an incomplete present, but a complete moment that has passed."
+          },
+          {
+            "id": "senado-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "So people of today can add changes and new names, but they don't have to erase the old record.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "The Square's Later Changes",
+            "text": "The fountain and wave-pattern paving visible today came into being during a stage of city construction and redevelopment later than A Lan's fictional era.",
+            "source_label": "Macau public municipal and cultural sources",
+            "confidence": "high"
+          },
+          {
+            "kind": "folklore",
+            "title": "The everyday name 'Fountain'",
+            "text": "Beyond the place's official name, the name commonly used by residents also records urban life.",
+            "source_label": "Macau local colloquial place names",
+            "confidence": "medium"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Senado Square",
+          "chapter_goal": "Help the player identify square elements and everyday names added in different eras",
+          "known_facts": [
+            "Today's fountain is later than A Lan's fictional era",
+            "Today's wave-pattern paving came from a later renovation",
+            "An old map cannot record urban elements that appeared after it was drawn"
+          ],
+          "fiction_boundaries": [
+            "A Lan's old square sketch and question are fictional"
+          ],
+          "suggested_questions": [
+            "When did the fountain appear?",
+            "When was the wave-pattern paving created?",
+            "Why do Macau people also call this place the fountain?"
+          ],
+          "do_not_reveal": [
+            "Do not directly list the two correct options for the puzzle"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_chapter",
+          "assets": [
+            "V4-SEN-01",
+            "V4-SEN-02",
+            "V4-SEN-03",
+            "V4-SEN-04",
+            "V4-SEN-05"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "When the square is crowded, you can observe from the edge; no need to go into the centre of the crowd."
+        },
+        "puzzle": {
+          "id": "puzzle_later_city",
+          "type": "multi_select",
+          "prompt": "Find two things that appeared in the square after A Lan's time of drawing and that she could not have seen.",
+          "options": [
+            {
+              "id": "fountain",
+              "text": "The fountain"
+            },
+            {
+              "id": "wave_paving",
+              "text": "The black-and-white wave-pattern paving"
+            },
+            {
+              "id": "open_square",
+              "text": "The open square space"
+            },
+            {
+              "id": "historic_facade",
+              "text": "Surrounding historic building facades"
+            }
+          ],
+          "solution": [
+            "fountain",
+            "wave_paving"
+          ],
+          "hints": [
+            "Look for later additions or renovations, not elements that have always existed.",
+            "Observe the centre of the square and the ground beneath your feet."
+          ],
+          "explanation": "The old drawing does not show the fountain and paving that appeared after it was made, so it cannot be judged wrong for that reason. The old record should be kept, with later changes and names noted.",
+          "skip_text": "A Lin guides you to look at the square's centre and underfoot, and adds the two later elements to a modern addendum.",
+          "reward": {
+            "id": "note_petal_3",
+            "kind": "note_petal",
+            "name": "Era Petal",
+            "text": "The old drawing line and the city lines added later form the third petal."
+          }
+        }
+      },
+      {
+        "id": "chapter_sam_kai",
+        "order": 4,
+        "kind": "puzzle",
+        "title": "Chapter 4: The Two Missing Bales",
+        "location_name": "Sam Kai Association",
+        "story_time": "13:30",
+        "poi_id": "poi_0136",
+        "scene": "The old commercial street near Sam Kai Association reminds you that beyond the architecture lie trade information, disputes, mutual aid, and an invisible social network. A Lan left three complementary records.",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-SAM-01",
+            "alt": "Sam Kai Association and the old commercial street",
+            "caption": "This is not just a building; it also relates to merchant communication and commercial activity."
+          },
+          {
+            "asset_id": "V4-SAM-02",
+            "alt": "Manager Liang delivers the goods",
+            "caption": "The delivery order records where the goods came from."
+          },
+          {
+            "asset_id": "V4-SAM-03",
+            "alt": "Manager Chen checks the store ledger",
+            "caption": "The store ledger records the goods that actually entered the store."
+          },
+          {
+            "asset_id": "V4-SAM-04",
+            "alt": "The porter leaves a temporary storage slip",
+            "caption": "The slip explains why the two bales were not brought into the store immediately."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "sam-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "The three records are not entirely the same. Choosing only one as the truth seems to miss a piece."
+          },
+          {
+            "id": "sam-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Then don't pit them against each other. First clarify what question each record answers.",
+            "portrait_asset_id": "V4-CHAR-02"
+          },
+          {
+            "id": "sam-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "The delivery order shows what was dispatched, the store ledger shows what was received, and the slip explains where the two missing bales went in between."
+          },
+          {
+            "id": "sam-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Right. It's not about picking the most authoritative paper, but letting the three papers form a complete chain of evidence.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Sam Kai Association and Commercial Activity",
+            "text": "Sam Kai Association was once associated with Chinese merchants exchanging business information, mediating commercial affairs, and merchant community activities, and later became widely known for worshipping Kuan Tai.",
+            "source_label": "Public information from Macau cultural heritage",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "The Two Missing Bales",
+            "text": "Manager Liang, Manager Chen, porter A Cheng, and the three records are all fictional cases used to illustrate the uses of different records.",
+            "source_label": "V4 storyline setting",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Sam Kai Association",
+          "chapter_goal": "Help You understand the business community and the chain of evidence behind the building",
+          "known_facts": [
+            "Sam Kai Association was related to Chinese merchants' deliberations and commercial affairs",
+            "Different records can separately describe delivery, reception, and temporary disposal"
+          ],
+          "fiction_boundaries": [
+            "The specific ledger dispute, characters, and the two bales are fictional"
+          ],
+          "suggested_questions": [
+            "What role did Sam Kai Association play in the past?",
+            "Why is Kuan Tai also worshipped here?",
+            "What is the relationship between the old commercial street and the association?"
+          ],
+          "do_not_reveal": [
+            "Do not directly select the three pieces of evidence for You"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_chapter",
+          "assets": [
+            "V4-SAM-01",
+            "V4-SAM-02",
+            "V4-SAM-03",
+            "V4-SAM-04",
+            "V4-SAM-05",
+            "V4-SAM-06"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "If the site is closed, during religious activities, or when crowded, read the text and images outside without disturbing on-site activities."
+        },
+        "puzzle": {
+          "id": "puzzle_evidence_chain",
+          "type": "evidence_chain",
+          "prompt": "To fully explain why the two bales did not appear in the store ledger, which records need to be kept?",
+          "options": [
+            {
+              "id": "delivery_order",
+              "text": "Manager Liang's delivery order"
+            },
+            {
+              "id": "store_ledger",
+              "text": "Manager Chen's store ledger"
+            },
+            {
+              "id": "porter_receipt",
+              "text": "Porter A Cheng's storage slip"
+            },
+            {
+              "id": "single_summary",
+              "text": "A summary written later"
+            }
+          ],
+          "solution": [
+            "delivery_order",
+            "store_ledger",
+            "porter_receipt"
+          ],
+          "hints": [
+            "Don't ask which one is most authoritative; first ask which step each record covers.",
+            "The three stages—delivery, store entry, and temporary storage—all need evidence."
+          ],
+          "explanation": "The three records respectively account for dispatch, store entry, and temporary storage. Any one alone is incomplete; only by clarifying the source and purpose of each can the missing explanation be restored.",
+          "skip_text": "A Lin arranges delivery, store entry, and temporary storage into a chain of evidence; you keep all three records and continue.",
+          "reward": {
+            "id": "note_petal_4",
+            "kind": "note_petal",
+            "name": "Ledger Petal",
+            "text": "The grid lines of the three records overlap to form a fourth petal."
+          }
+        }
+      },
+      {
+        "id": "chapter_lou_kau",
+        "order": 5,
+        "kind": "puzzle",
+        "title": "Chapter Five: Which Map Should a Window Be Drawn On?",
+        "location_name": "Lou Kau Mansion",
+        "story_time": "15:00",
+        "poi_id": "poi_0057",
+        "scene": "The light well brings in light; grey bricks, timber structure, and windows together organize daily life. A Lan takes a window apart into several components and asks whether it belongs to the building's shape or to people's lives.",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-LOU-01",
+            "alt": "Lou Kau Mansion's light well and grey-brick space",
+            "caption": "Light, ventilation, and structural components together determine how people use the interior."
+          },
+          {
+            "asset_id": "V4-LOU-02",
+            "alt": "Window structure at Lou Kau Mansion",
+            "caption": "Drawing only the exterior wall outline would miss how windows let light and wind into daily life."
+          },
+          {
+            "asset_id": "V4-LOU-03",
+            "alt": "Disassembled window components",
+            "caption": "The note asks to reassemble the correct components onto the same window."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "lou-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "The measured drawing can capture the window's position, and the Lotus City Pulse Map can capture how it affects life. Then which map should it belong to?"
+          },
+          {
+            "id": "lou-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Don't rush to categorize. Assemble the window completely, then see what is lost if any part is missing.",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "lou-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "Position, shape, light transmission, and opening/closing all belong to the same window; the two maps just record different aspects."
+          },
+          {
+            "id": "lou-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "So there's no need to assign it to one map. Only when the two maps are together do they come closer to the space where people actually lived.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Architectural Fusion at Lou Kau Mansion",
+            "text": "Lou Kau Mansion is based on a Chinese residential space, and it is possible to observe decorative and structural features related to Macau's urban cultural exchanges.",
+            "source_label": "Macau World Heritage and Official Architectural Materials",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "Window Assembly Challenge",
+            "text": "The component disassembly, note questions, and petal mechanism are a game designed based on architectural observation, not a real puzzle found in historical archives.",
+            "source_label": "V4 Story Design",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Lou Kau Mansion",
+          "chapter_goal": "Help the player observe how window components belong to both the building's form and its everyday use.",
+          "known_facts": [
+            "Lou Kau Mansion is an important historical residential building in Macau.",
+            "Window components are related to lighting, ventilation, opening/closing, and spatial use.",
+            "Chinese and Western architectural elements can coexist in the same residence."
+          ],
+          "fiction_boundaries": [
+            "The window assembly puzzle is not from real historical archives."
+          ],
+          "suggested_questions": [
+            "What Chinese-Western fusion features does Lou Kau Mansion have?",
+            "What are the functions of these window components?",
+            "How does the light well affect lighting and ventilation?"
+          ],
+          "do_not_reveal": [
+            "Do not directly list all the correct components."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_chapter",
+          "assets": [
+            "V4-LOU-01",
+            "V4-LOU-02",
+            "V4-LOU-03",
+            "V4-LOU-04",
+            "V4-LOU-05",
+            "V4-LOU-06"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "Only observe components in open areas; do not touch or disassemble any on-site facilities."
+        },
+        "puzzle": {
+          "id": "puzzle_window_assembly",
+          "type": "assembly",
+          "prompt": "Select four components that can form the complete window shown in the note.",
+          "options": [
+            {
+              "id": "upper_frame",
+              "text": "Upper window frame"
+            },
+            {
+              "id": "lower_frame",
+              "text": "Lower window frame"
+            },
+            {
+              "id": "oyster_shell_panel",
+              "text": "Light-transmitting window panel"
+            },
+            {
+              "id": "wooden_shutter",
+              "text": "Wooden opening/shutting shutter"
+            },
+            {
+              "id": "stone_battlement",
+              "text": "Stone crenellation"
+            },
+            {
+              "id": "ship_porthole",
+              "text": "Ship's porthole"
+            }
+          ],
+          "solution": [
+            "upper_frame",
+            "lower_frame",
+            "oyster_shell_panel",
+            "wooden_shutter"
+          ],
+          "hints": [
+            "Only choose components that can work together on a residential window.",
+            "Consider the three functions: support, light transmission, and opening/closing."
+          ],
+          "explanation": "A complete window simultaneously has position, shape, light transmission, and opening/closing functions. The measured drawing and the life observation map each record a part; together they come closer to real use.",
+          "skip_text": "A Lin regroups the four components according to the functions of support, light transmission, and opening/closing. You complete the note assembly and continue to Mount Fortress.",
+          "reward": {
+            "id": "note_petal_5",
+            "kind": "note_petal",
+            "name": "Window-Pane Petal",
+            "text": "The lattice lines of the four correct components form the fifth petal. The five notes overlap against the light to reveal the complete city flower."
+          }
+        }
+      },
+      {
+        "id": "chapter_mount_fortress",
+        "order": 6,
+        "kind": "ending",
+        "title": "Final Chapter: A Stroke Left for Those Who Come Later",
+        "location_name": "Mount Fortress",
+        "story_time": "17:00",
+        "poi_id": "poi_0003",
+        "scene": "You and A Lin ascend Mount Fortress. The historic city centre, hillsides, coastline, and the modern city unfold simultaneously in view. The city's two maps cannot fully coincide with today's scene, yet they no longer contradict each other.",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-FOR-01",
+            "alt": "View of Macau city from Mount Fortress",
+            "caption": "This is a good place to put the five kinds of evidence collected along the way back into the city as a whole."
+          },
+          {
+            "asset_id": "V4-FOR-02",
+            "alt": "The historic city centre and the modern city unfolding together",
+            "caption": "Today's city has not stopped at the era of any single old map."
+          },
+          {
+            "asset_id": "V4-FOR-03",
+            "alt": "The two maps of the city overlapping with today's Macau",
+            "caption": "Both maps record reality, but they record different kinds of reality."
+          },
+          {
+            "asset_id": "V4-FOR-04",
+            "alt": "The five sets of evidence obtained at the previous five stops",
+            "caption": "The coastline changes, blanks need explanation, the city gains new things, records need a chain of evidence, and buildings belong to people's lives."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "fortress-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "We never found out which map was the only correct one."
+          },
+          {
+            "id": "fortress-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Perhaps what A Lan ultimately wanted to ask was never for you to choose between the two. Put the evidence from the five stops beside the two maps and see.",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "fortress-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "Mr M drew the shape of the city; A Lan recorded how people live within it. Different purposes, different omissions."
+          },
+          {
+            "id": "fortress-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Mr M's reply also admits that if a map is left only as a skeleton, later people will still ask: who lived here, and what did they call this place.",
+            "portrait_asset_id": "V4-CHAR-03"
+          },
+          {
+            "id": "fortress-dialogue-05",
+            "speaker_id": "player",
+            "speaker": "You",
+            "text": "Then we won't turn today back into the past, nor erase old records just to prove today is correct. We'll add the source, the date, and the purpose."
+          },
+          {
+            "id": "fortress-dialogue-06",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Leave the last stroke to you. Write down the Macau you see today, so that the next person will know which year you stood in.",
+            "portrait_asset_id": "V4-CHAR-01"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Mount Fortress and the City View",
+            "text": "Mount Fortress is an important part of the Historic Centre of Macau; its elevated view is suitable for observing the layers of historic buildings, hillsides, and the modern city.",
+            "source_label": "Macau World Heritage and official cultural materials",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "Mr M's Reply Letter and A Lan's Message",
+            "text": "The reply letter, the message, and the note mechanism 'the city is co-written by people' are creations of the V4 storyline.",
+            "source_label": "V4 storyline setting",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Mount Fortress",
+          "chapter_goal": "Help the player synthesise evidence from the five stops and add dates, sources, and purpose notes to the two maps.",
+          "known_facts": [
+            "Mount Fortress is an important heritage site within the Historic Centre of Macau.",
+            "Today's city includes both historic buildings and modern construction.",
+            "Maps must be read in light of their date of creation, source, and purpose."
+          ],
+          "fiction_boundaries": [
+            "Mr M's reply letter, A Lan's message, and the five-petal note mechanism are fictional."
+          ],
+          "suggested_questions": [
+            "How can you observe the city's layers from Mount Fortress?",
+            "Why are both maps worth keeping?",
+            "What should today's added note say?"
+          ],
+          "do_not_reveal": [
+            "Do not write the final reflection on behalf of the player."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_ending",
+          "assets": [
+            "V4-FOR-01",
+            "V4-FOR-02",
+            "V4-FOR-03",
+            "V4-FOR-04",
+            "V4-FOR-05",
+            "V4-FOR-06",
+            "V4-FOR-07",
+            "V4-FOR-08",
+            "V4-FOR-09"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "Weather, visibility, or site restrictions do not affect the ending; pre-loaded city views can be used to complete the overall assessment."
+        }
+      }
+    ],
+    "endings": [
+      {
+        "id": "complete_today_note",
+        "title": "A City Written by Its People",
+        "choice_text": "Complete Today's Note",
+        "text": "You didn't find a single correct map of Macau. You added dates, sources, and purposes to the two maps, and wrote the city you saw today into a new blank. A map is not the final verdict; a city is written together by different eras, uses, and people.",
+        "condition": "Complete the Mount Fortress comprehensive assessment and save today's note",
+        "rewards": [
+          {
+            "id": "complete_city_flower",
+            "kind": "collection",
+            "name": "Complete Macau City Flower",
+            "text": "Five slips overlap in the light; five petals form the complete city flower."
+          },
+          {
+            "id": "today_note",
+            "kind": "reflection",
+            "name": "Today's Note",
+            "text": "You left today's record for the next person."
+          }
+        ]
+      }
+    ]
   },
   "pt": {
+    "id": "lotus_city_double_map",
+    "version": 4,
     "title": "Cidade de Lótus, Dois Mapas: O Mapa Inacabado",
-    "subtitle": "Percorra seis lugares reais para ler dois mapas que guardam verdades diferentes sobre Macau",
-    "summary": "Enquanto estuda as transformações urbanas de Macau, pede emprestado à sua colega local, A Lin, um exemplar de família da Continuação da Gazeta do Condado de Xiangshan, de 1923. Entre as páginas caem um envelope, dois mapas da cidade, seis pares de mapas locais e cinco bilhetes, iniciando uma investigação urbana de um dia.",
-    "identity": { "name":"Investigador urbano", "description":"Não é um especialista com a resposta pronta. Use o que observa no local, os dois mapas, os bilhetes, as verificações de A Lin e as provas já reunidas para formar o seu juízo." },
-    "content_notice":"O conhecimento sobre lugares reais é assinalado como facto histórico, crença popular ou memória local, reconstrução contextual, narrativa ficcional ou informação operacional variável. A Lan, o Sr. M, os dois mapas ficcionais, seis pares de mapas locais, cinco bilhetes e todos os enigmas são criações desta história.",
-    "content_labels": { "historical_fact":"Facto histórico", "folklore":"Crença popular / memória local", "contextual_reconstruction":"Reconstrução contextual", "fictional_story":"Narrativa ficcional", "dynamic_operational_info":"Informação operacional variável" },
-    "props":["Continuação da Gazeta do Condado de Xiangshan (1923)", "Mapa de Levantamento da Cidade", "Mapa Vivo da Cidade de Lótus", "Seis pares de mapas locais", "Cinco bilhetes secretos"],
-    "nodes":[
-      { "title":"Abertura: um percurso cai de um livro antigo", "scene":"Para a sua investigação sobre a história urbana de Macau, pede emprestada a A Lin a Continuação da Gazeta do Condado de Xiangshan, de 1923, guardada pela família. Ao folhear as páginas sobre geografia, cartografia e história local de Macau, caem um envelope antigo e um conjunto de mapas dobrados.", "dialogue":[{"speaker":"Você","text":"Estes dois mapas de Macau não desenham a mesma cidade. Em qual devemos confiar primeiro?"},{"speaker":"A Lin","text":"Ainda não escolha. A Lan e o Sr. M podem ter registado coisas de natureza diferente. Você questiona; eu ajudo a confirmar."},{"speaker":"Você","text":"O primeiro bilhete não indica um lugar; diz apenas para encontrar algo lembrado antes de a cidade ter o seu nome."},{"speaker":"A Lin","text":"Montanha junto ao mar, perfume no vento, e uma tradição ligada ao nome de Macau. Começamos no Templo de A-Má."}], "reward":{"name":"Os mapas emparelhados e cinco bilhetes","text":"Você e A Lin decidem percorrer a ordem deixada nos bilhetes."} },
-      { "title":"Capítulo 1: Onde começa o mar?", "location_name":"Templo de A-Má", "scene":"No mapa mais antigo, a linha de costa está mais perto da encosta; hoje avançou para fora. Ainda assim, ambos conservam aproximadamente a posição do templo e da montanha." },
-      { "title":"Capítulo 2: A quinta linha em falta", "location_name":"Casa do Mandarim", "scene":"Da entrada, não se alcança diretamente o interior. Ao virar junto à parede, surgem vigas, pátios de luz, núcleos de pátio e ferragens; o quinto espaço do bilhete continua vazio." },
-      { "title":"Capítulo 3: A cidade que veio depois", "location_name":"Largo do Senado", "scene":"O esboço antigo de A Lan não tem a fonte nem o pavimento ondulado preto e branco de hoje. Ela pergunta: se um mapa antigo não mostra o que surgiu depois, estará errado?" },
-      { "title":"Capítulo 4: Dois volumes em falta", "location_name":"Sam Kai Vui Kun", "scene":"As antigas ruas comerciais junto ao Sam Kai Vui Kun lembram que uma cidade é feita também de comércio, conflitos, ajuda mútua e redes sociais invisíveis. A Lan deixou três registos que se completam." },
-      { "title":"Capítulo 5: Em que mapa cabe uma janela?", "location_name":"Casa de Lou Kau", "scene":"O pátio introduz a luz; tijolo cinzento, madeira e janelas organizam juntos a vida quotidiana. A Lan separa uma janela em componentes e pergunta se ela pertence à forma arquitectónica ou à vida das pessoas." },
-      { "title":"Capítulo final: uma linha para quem vier depois", "location_name":"Fortaleza do Monte", "scene":"Você e A Lin sobem à Fortaleza do Monte. Centro histórico, colinas, costa e cidade moderna abrem-se ao mesmo tempo. Os dois mapas não coincidem por completo com a paisagem de hoje, mas também já não se negam." }
+    "subtitle": "Através de seis locais reais, leia dois mapas de Macau que registam realidades diferentes.",
+    "summary": "Para estudar a evolução urbana de Macau, você pediu emprestado à sua colega local A Lin o exemplar familiar das Crónicas do Condado de Heong San – Suplemento de 1923. Do meio das páginas caíram um envelope, dois mapas da cidade, seis conjuntos de mapas parciais de locais e cinco bilhetes secretos, que vos conduzem a uma investigação urbana que dura um dia.",
+    "route_id": "lotus_city_double_map",
+    "estimated_hours": 7,
+    "product_mode": "mobile_portrait_web",
+    "presentation": {
+      "default_orientation": "portrait",
+      "max_content_width_px": 480,
+      "cover_asset_id": "V4-COVER-01",
+      "asset_base_path": "/story/v4/"
+    },
+    "identity": {
+      "id": "young_researcher",
+      "name": "Investigador Urbano",
+      "description": "Você não é um especialista que já sabe as respostas. Deve apoiar-se no terreno, nos mapas duplos, nos bilhetes, na verificação da A Lin e nas provas que já obteve para formar um julgamento."
+    },
+    "content_notice": "O conhecimento sobre os locais reais está dividido em factos históricos, crença popular / memória local, reconstrução contextualizada, ficção dramática e informação operacional dinâmica. A Lan, o Sr. M, os dois mapas fictícios, os seis conjuntos de mapas parciais duplos, os cinco bilhetes secretos e os enigmas são todos criações da história.",
+    "content_labels": {
+      "historical_fact": "Facto Histórico",
+      "folklore": "Crença Popular / Memória Local",
+      "contextual_reconstruction": "Reconstrução Contextualizada",
+      "fictional_story": "Ficção Dramática",
+      "dynamic_operational_info": "Informação Operacional Dinâmica"
+    },
+    "characters": [
+      {
+        "id": "player",
+        "name": "Você",
+        "role": "Estudante ou jovem investigador que estuda a evolução urbana de Macau, mapas antigos ou memória local",
+        "fictional": true
+      },
+      {
+        "id": "alian",
+        "name": "A Lin",
+        "role": "Colega local de Macau, descendente de A Lan, acompanhante durante todo o dia e agente de conhecimento",
+        "fictional": true
+      },
+      {
+        "id": "alan",
+        "name": "A Lan",
+        "role": "Ancestral de A Lin, principal autor do Mapa das Veias da Cidade de Lótus e dos cinco bilhetes",
+        "fictional": true
+      },
+      {
+        "id": "m",
+        "name": "Sr. M",
+        "role": "Principal autor da Carta de Levantamento da Cidade e, com A Lan, conferiu as ruas de Macau",
+        "fictional": true
+      }
     ],
-    "endings":[{ "title":"A cidade é escrita por quem a vive", "text":"Não encontrou o único mapa correto de Macau. Acrescentou datas, fontes e usos aos dois mapas e escreveu a cidade de hoje num novo espaço em branco. Um mapa não é uma sentença final: uma cidade é escrita em conjunto por tempos, usos e pessoas diferentes.", "choice_text":"Concluir a nota de hoje" }]
+    "props": [
+      "Crónicas do Condado de Heong San – Suplemento de 1923",
+      "Carta de Levantamento da Cidade",
+      "Mapa das Veias da Cidade de Lótus",
+      "Seis conjuntos de mapas parciais de locais",
+      "Cinco bilhetes secretos"
+    ],
+    "nodes": [
+      {
+        "id": "prologue_old_book",
+        "order": 0,
+        "kind": "prologue",
+        "title": "Prólogo: a rota que caiu de um livro antigo",
+        "story_time": "08:00",
+        "scene": "Para estudar a evolução urbana de Macau, você pediu emprestado à sua colega local A Lin a edição familiar de 1923 do 'Suplemento à Monografia do Distrito de Heong San'. Ao folhear as páginas relativas à geografia, cartografia e evolução local de Macau, um envelope antigo e um conjunto de mapas dobrados caíram das páginas.",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-PRO-01",
+            "alt": "A Lin empresta o livro antigo da família a Você.",
+            "caption": "A Lin diz que este livro esteve em casa durante muitos anos e que também nunca folheou atentamente as páginas com as ilustrações."
+          },
+          {
+            "asset_id": "V4-PRO-02",
+            "alt": "O envelope e os mapas caem do livro antigo.",
+            "caption": "No envelope não há tesouros nem ordens secretas, apenas um aviso simples: para aqueles que, mais tarde, ainda estejam dispostos a percorrer o caminho pessoalmente."
+          },
+          {
+            "asset_id": "V4-PRO-03",
+            "alt": "O livro antigo, os dois mapas da cidade, seis pares de mapas locais e cinco bilhetes estão espalhados sobre a mesa.",
+            "caption": "Os dois mapas da cidade fornecem uma referência geral, os seis pares de mapas locais detalham cada ponto, e os cinco bilhetes determinam a ordem da leitura no terreno."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "prologue-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Estes dois mapas de Macau estão desenhados de forma diferente. Em qual devemos confiar primeiro?"
+          },
+          {
+            "id": "prologue-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Não escolha ainda. O que A Lan e o Sr. M registaram pode não ser a mesma coisa. Você fica com a tarefa de duvidar, e eu com a de ajudar você a esclarecer.",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "prologue-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "O primeiro bilhete não indica um local, apenas diz que devemos encontrar um lugar que já era recordado antes do nome da cidade."
+          },
+          {
+            "id": "prologue-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "A montanha não se separa do mar, o perfume não se separa do vento, e está relacionado com a lenda local do nome de Macau. Começamos pelo Templo de A-Má.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "O verdadeiro original do livro antigo de família",
+            "text": "A 'Continuação da Monografia do Distrito de Heong San' de 1923 é uma monografia local real; a versão familiar e os materiais intercalados nesta história são ficcionais.",
+            "source_label": "Informações públicas da monografia local",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "Materiais intercalados",
+            "text": "O envelope, os dois mapas da cidade, os mapas locais, os bilhetes, A Lan e o Sr. M são todos criações do jogo.",
+            "source_label": "Definições do enredo V4",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "O livro antigo e os dois mapas da cidade",
+          "chapter_goal": "Ajudar Você a compreender a utilidade do livro antigo, dos dois mapas e do primeiro bilhete secreto.",
+          "known_facts": [
+            "A 'Continuação da Monografia do Distrito de Heong San' de 1923 é uma monografia local real.",
+            "A versão de família, o envelope, os dois mapas, os bilhetes, A Lan e o Sr. M na história são ficção do enredo.",
+            "Os dois mapas têm focos de registo diferentes; mais tarde, é necessário verificar ponto a ponto no local."
+          ],
+          "fiction_boundaries": [
+            "Não descrever os materiais intercalados, as personagens e os mapas da trama como relíquias reais ou factos históricos."
+          ],
+          "suggested_questions": [
+            "O que é este livro antigo?",
+            "Como devem ser usados os dois mapas em conjunto?",
+            "Porque é que a primeira paragem é no Templo de A-Má?"
+          ],
+          "do_not_reveal": [
+            "Não revelar antecipadamente as respostas dos enigmas seguintes.",
+            "Não revelar antecipadamente as descobertas da trama de capítulos ainda não alcançados."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_comic",
+          "assets": [
+            "V4-PROP-01",
+            "V4-PROP-02",
+            "V4-PROP-03",
+            "V4-PROP-04",
+            "V4-PRO-01",
+            "V4-PRO-02",
+            "V4-PRO-03"
+          ]
+        },
+        "reward": {
+          "id": "research_materials",
+          "kind": "story_prop",
+          "name": "Conjunto dos dois mapas e cinco bilhetes",
+          "text": "Você e A Lin decidem percorrer pessoalmente o caminho na ordem dos bilhetes."
+        }
+      },
+      {
+        "id": "chapter_ama",
+        "order": 1,
+        "kind": "puzzle",
+        "title": "Capítulo 1: Onde começa o mar",
+        "location_name": "Templo de A-Má",
+        "story_time": "09:00",
+        "poi_id": "poi_0011",
+        "scene": "Nos mapas antigos, a costa ficava mais próxima do sopé da colina; hoje, a costa já se deslocou para fora. No entanto, ambos os mapas mantêm a posição aproximada do templo e do relevo.",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-AMA-01",
+            "alt": "Vista do Templo de A-Má construído na encosta, a partir da base das escadas de pedra.",
+            "caption": "O relevo, as rochas, as escadas e o templo ainda se correspondem mutuamente."
+          },
+          {
+            "asset_id": "V4-AMA-02",
+            "alt": "Observação da costa atual, mais afastada, a partir do Templo de A-Má.",
+            "caption": "A cidade e as estradas alteraram a relação direta entre o monte e o mar."
+          },
+          {
+            "asset_id": "V4-AMA-03",
+            "alt": "As duas linhas de costa nos dois mapas, com detalhe do Templo de A-Má.",
+            "caption": "Se primeiro procuramos pontos de referência estáveis, as duas costas diferentes apontam ainda para o mesmo local."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "ama-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Mas as costas nos dois mapas são diferentes. Será que pelo menos um está errado?"
+          },
+          {
+            "id": "ama-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "O bilhete não nos pede para procurar primeiro a costa correta, mas sim para procurar primeiro as coisas que não se movem facilmente. O que é que vês em ambos os mapas?",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "ama-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "O templo e o relevo. A costa é que é a parte que mudou."
+          },
+          {
+            "id": "ama-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Exato. O mapa não registou um Macau eterno, mas sim o Macau que o cartógrafo conseguia ver naquela época.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "O Templo de A-Má e a vida junto à costa",
+            "text": "O Templo de A-Má foi construído na encosta, estando intimamente ligado às primeiras comunidades costeiras de Macau e às práticas de fé marítima.",
+            "source_label": "Dados culturais e património mundial de Macau",
+            "confidence": "high"
+          },
+          {
+            "kind": "folklore",
+            "title": "A-Má e o nome de Macau",
+            "text": "As explicações que associam A-Má ao nome de Macau são narrativas locais amplamente difundidas, que mostram a relação entre lugar, língua e memória.",
+            "source_label": "Lendas locais e dados culturais públicos",
+            "confidence": "medium"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "O primeiro bilhete",
+            "text": "O bilhete, a pétala com marcas de água e a nota adicional de A Lan são ficção da história.",
+            "source_label": "Contexto narrativo V4",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Templo de A-Má",
+          "chapter_goal": "Ajudar o jogador a distinguir pontos de referência estáveis de uma linha de costa que muda com o tempo",
+          "known_facts": [
+            "O Templo de A-Má foi construído na encosta.",
+            "A linha de costa de Macau mudou com os aterros e a construção urbana.",
+            "As diferenças entre o mapa antigo e o novo têm de ser explicadas tendo em conta a data em que foram desenhados."
+          ],
+          "fiction_boundaries": [
+            "Os dois mapas, A Lan, o Sr. M e o bilhete são fictícios."
+          ],
+          "suggested_questions": [
+            "Porque é que o Templo de A-Má foi construído aqui?",
+            "Que mudanças sofreu a linha de costa de Macau?",
+            "Que relação existe entre A-Má e o nome de Macau?"
+          ],
+          "do_not_reveal": [
+            "Não revelar diretamente as opções corretas do enigma."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_chapter",
+          "assets": [
+            "V4-AMA-01",
+            "V4-AMA-02",
+            "V4-AMA-03",
+            "V4-AMA-04",
+            "V4-AMA-05"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "Em caso de condições meteorológicas adversas, atividades religiosas, multidões ou restrições no local, pode ler os materiais nas áreas permitidas, sem necessidade de entrar em espaços limitados."
+        },
+        "puzzle": {
+          "id": "puzzle_stable_anchors",
+          "type": "multi_select",
+          "prompt": "Antes de comparar as duas linhas de costa de épocas diferentes, quais são os dois pontos de referência mais estáveis que devem ser fixados primeiro?",
+          "options": [
+            {
+              "id": "temple",
+              "text": "A posição do templo"
+            },
+            {
+              "id": "hill",
+              "text": "O relevo e as rochas"
+            },
+            {
+              "id": "coast",
+              "text": "A linha de costa"
+            },
+            {
+              "id": "modern_road",
+              "text": "As estradas atuais"
+            }
+          ],
+          "solution": [
+            "temple",
+            "hill"
+          ],
+          "hints": [
+            "O bilhete pede-te para procurares primeiro algo que se move menos do que a costa.",
+            "Observa a posição do templo e do relevo nos dois mapas."
+          ],
+          "explanation": "Se fixarmos primeiro o Templo de A-Má e o relevo, os dois mapas continuam a apontar para o mesmo lugar; o que mudou significativamente foi a costa. O mapa antigo registava a cidade de então, e não uma versão incompleta do presente.",
+          "skip_text": "A Lin circula o templo e o relevo nos dois mapas e depois pede-te para observares as duas linhas de costa. Mesmo assim, recebem a primeira pétala e seguem em frente.",
+          "reward": {
+            "id": "note_petal_1",
+            "kind": "note_petal",
+            "name": "Pétala da linha de maré",
+            "text": "As marcas de água, a linha de maré e o limite do mapa formam a primeira pétala da flor da cidade."
+          }
+        }
+      },
+      {
+        "id": "chapter_mandarin_house",
+        "order": 2,
+        "kind": "puzzle",
+        "title": "Capítulo 2: A Quinta Linha em Falta",
+        "location_name": "Casa do Mandarim",
+        "story_time": "10:20",
+        "poi_id": "poi_0015",
+        "scene": "Olhando da entrada, a vista não alcança diretamente o fundo. Depois de virar ao longo da parede, as colunas, o pátio interior, o centro do pátio e os elementos das portas aparecem sucessivamente; o quinto buraco do papel continua vazio.",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-MAN-01",
+            "alt": "Entrada da Casa do Mandarim e o fundo oculto",
+            "caption": "A porta está diante de nós, mas o verdadeiro caminho exige virar junto à parede."
+          },
+          {
+            "asset_id": "V4-MAN-02",
+            "alt": "Percurso de entrada na Casa do Mandarim com viragem ao longo da parede",
+            "caption": "A 'viragem' referida no papel não é um código secreto, mas o percurso real do edifício."
+          },
+          {
+            "asset_id": "V4-MAN-03",
+            "alt": "Vigas de madeira, luz do pátio interior, chão do centro do pátio e ferragens das portas",
+            "caption": "A Lan utiliza os cinco elementos para se lembrar das relações espaciais, sem afirmar que essa seja a intenção do construtor."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "mandarin-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Nas vigas há madeira, no pátio interior há luz, no centro do pátio há terra, nas portas há metal. Mas o quinto elemento não está na sala."
+          },
+          {
+            "id": "mandarin-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Primeiro usa estes quatro pontos para alinhar o papel. O quinto buraco vazio cairá na posição que nenhuma das duas casas ocupa.",
+            "portrait_asset_id": "V4-CHAR-02"
+          },
+          {
+            "id": "mandarin-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Fica no estreito vão entre os dois pátios principais."
+          },
+          {
+            "id": "mandarin-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Os materiais oficiais de visita designam o espaço entre os dois pátios principais por 'canal de água'. A planta mostra a forma, mas não indica este nome.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Casa do Mandarim",
+            "text": "A Casa do Mandarim é um importante edifício histórico de Macau, com vários pátios, pátios interiores e elementos arquitetónicos chineses e ocidentais.",
+            "source_label": "Património Mundial de Macau e materiais oficiais de visita",
+            "confidence": "high"
+          },
+          {
+            "kind": "contextual_reconstruction",
+            "title": "A observação dos cinco elementos por A Lan",
+            "text": "Madeira, fogo, terra, metal e água são um método narrativo usado por A Lan para memorizar o espaço, e não uma intenção construtiva comprovada.",
+            "source_label": "Configuração da história V4",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Casa do Mandarim",
+          "chapter_goal": "Ajudar o Você a observar o percurso do edifício, os pátios e o nome do canal de água",
+          "known_facts": [
+            "A Casa do Mandarim tem vários pátios e pátios interiores",
+            "Entre os dois pátios principais existe um espaço chamado 'canal de água'",
+            "A forma do espaço e a designação do quotidiano pertencem a níveis diferentes de registo"
+          ],
+          "fiction_boundaries": [
+            "A correspondência dos cinco elementos é um método de memória da A Lan",
+            "Não se pode afirmar que Zheng Guanying veio para Macau por causa do feng shui",
+            "Não se pode classificar a interpretação dos cinco elementos como uma intenção construtiva comprovada"
+          ],
+          "suggested_questions": [
+            "O que é o canal de água da Casa do Mandarim?",
+            "Porque é que é preciso virar depois da entrada?",
+            "Que características arquitetónicas sino-ocidentais existem aqui?"
+          ],
+          "do_not_reveal": [
+            "Não diga diretamente que o quinto elemento é o canal de água"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_chapter",
+          "assets": [
+            "V4-MAN-01",
+            "V4-MAN-02",
+            "V4-MAN-03",
+            "V4-MAN-04",
+            "V4-MAN-05",
+            "V4-MAN-06"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "Tome como referência as áreas abertas no local e a visita oficial; não entre em salas fechadas e não toque nos elementos arquitetónicos."
+        },
+        "puzzle": {
+          "id": "puzzle_missing_fifth_line",
+          "type": "mapping",
+          "prompt": "Relacione as cinco observações de A Lan com as posições no local e preencha a quinta linha que não foi escrita.",
+          "fields": [
+            {
+              "id": "wood",
+              "label": "Madeira"
+            },
+            {
+              "id": "fire",
+              "label": "Fogo"
+            },
+            {
+              "id": "earth",
+              "label": "Terra"
+            },
+            {
+              "id": "metal",
+              "label": "Metal"
+            },
+            {
+              "id": "water",
+              "label": "Água"
+            }
+          ],
+          "options": [
+            {
+              "id": "beam",
+              "text": "Vigas e colunas"
+            },
+            {
+              "id": "skylight",
+              "text": "Luz do pátio interior"
+            },
+            {
+              "id": "courtyard",
+              "text": "Chão do centro do pátio"
+            },
+            {
+              "id": "door_fitting",
+              "text": "Ferragens metálicas das portas"
+            },
+            {
+              "id": "water_lane",
+              "text": "O canal de água entre os dois pátios"
+            }
+          ],
+          "solution": {
+            "wood": "beam",
+            "fire": "skylight",
+            "earth": "courtyard",
+            "metal": "door_fitting",
+            "water": "water_lane"
+          },
+          "hints": [
+            "Complete primeiro os quatro primeiros elementos que o papel já dá como pistas.",
+            "O quinto elemento não está na sala, mas entre os dois pátios principais."
+          ],
+          "explanation": "A planta desenha com precisão o vão entre os edifícios, e a A Lan acrescenta a forma como os moradores o designam e compreendem. O espaço em branco pode ser exato, mas continua a exigir interpretação.",
+          "skip_text": "A Lin usa os quatro primeiros elementos para corrigir a orientação do papel, e o quinto buraco cai entre os dois pátios. Vocês descobrem o termo 'canal de água' e continuam.",
+          "reward": {
+            "id": "note_petal_2",
+            "kind": "note_petal",
+            "name": "Pétala do Canal de Água",
+            "text": "As ondulações do canal de água e o bordo do buraco do papel formam a segunda pétala."
+          }
+        }
+      },
+      {
+        "id": "chapter_senado",
+        "order": 3,
+        "kind": "puzzle",
+        "title": "Capítulo 3: A cidade que surgiu depois",
+        "location_name": "Largo do Senado",
+        "story_time": "12:00",
+        "poi_id": "poi_0004",
+        "scene": "O esboço antigo da praça de A Lan não tem o chafariz, nem o atual pavimento ondulado a preto e branco. Ela pergunta aos que vieram depois: se o mapa antigo não desenhou as coisas que apareceram depois, pode ser considerado errado?",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-SEN-01",
+            "alt": "O Largo do Senado de hoje",
+            "caption": "O mesmo espaço amplo, que mais tarde foi acrescentado com novos elementos, pavimento e designações do quotidiano."
+          },
+          {
+            "asset_id": "V4-SEN-02",
+            "alt": "Chafariz do Largo do Senado",
+            "caption": "Este é um elemento que A Lan não poderia ter visto na época em que desenhou."
+          },
+          {
+            "asset_id": "V4-SEN-03",
+            "alt": "Pavimento ondulado do Largo do Senado",
+            "caption": "O pavimento hoje familiar também resultou de uma requalificação posterior."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "senado-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "O desenho de A Lan não tem o chafariz, nem o atual pavimento ondulado."
+          },
+          {
+            "id": "senado-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Desta vez não diga que ela se esqueceu de desenhar. Encontre duas coisas que ela não poderia ter visto e responda à pergunta no papel.",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "senado-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "O mapa antigo não regista um presente incompleto, mas sim um momento completo que já passou."
+          },
+          {
+            "id": "senado-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Portanto, as pessoas de hoje podem acrescentar as mudanças e as novas designações, mas não precisam de apagar os registos antigos.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "As mudanças posteriores do Largo",
+            "text": "O chafariz e o pavimento ondulado que hoje se veem foram criados numa fase de urbanização e requalificação posterior à época fictícia de A Lan.",
+            "source_label": "Informações públicas municipais e culturais de Macau",
+            "confidence": "high"
+          },
+          {
+            "kind": "folklore",
+            "title": "A designação do quotidiano 'Chafariz'",
+            "text": "Para além do nome oficial do local, as designações comuns dos residentes também registam a vida urbana.",
+            "source_label": "Designações locais do quotidiano de Macau",
+            "confidence": "medium"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Largo do Senado",
+          "chapter_goal": "Ajudar o jogador a identificar os elementos da praça e as designações do quotidiano acrescentados em diferentes épocas.",
+          "known_facts": [
+            "O chafariz atual é posterior à época fictícia de A Lan.",
+            "O pavimento ondulado atual resulta de uma requalificação posterior.",
+            "Um mapa antigo não pode registar elementos urbanos que surgiram depois de ter sido desenhado."
+          ],
+          "fiction_boundaries": [
+            "O esboço antigo da praça e a pergunta de A Lan são fictícios."
+          ],
+          "suggested_questions": [
+            "Quando apareceu o chafariz?",
+            "Quando foi criado o pavimento ondulado?",
+            "Porque é que os macaenses também chamam a este local 'Chafariz'?"
+          ],
+          "do_not_reveal": [
+            "Não revelar diretamente as duas opções corretas do enigma."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_chapter",
+          "assets": [
+            "V4-SEN-01",
+            "V4-SEN-02",
+            "V4-SEN-03",
+            "V4-SEN-04",
+            "V4-SEN-05"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "Quando o Largo estiver muito movimentado, pode observar a partir da lateral, sem entrar no centro da multidão."
+        },
+        "puzzle": {
+          "id": "puzzle_later_city",
+          "type": "multi_select",
+          "prompt": "Identifique as duas coisas que A Lan não poderia ter visto na época do desenho e que só apareceram mais tarde no Largo.",
+          "options": [
+            {
+              "id": "fountain",
+              "text": "Chafariz"
+            },
+            {
+              "id": "wave_paving",
+              "text": "Pavimento ondulado a preto e branco"
+            },
+            {
+              "id": "open_square",
+              "text": "Espaço amplo do Largo"
+            },
+            {
+              "id": "historic_facade",
+              "text": "Fachadas dos edifícios históricos à volta"
+            }
+          ],
+          "solution": [
+            "fountain",
+            "wave_paving"
+          ],
+          "hints": [
+            "Não procure as relações espaciais que sempre existiram; procure os elementos acrescentados ou requalificados posteriormente.",
+            "Observe o centro do Largo e o chão."
+          ],
+          "explanation": "A antiga planta não desenhou o chafariz e o pavimento que surgiram depois da época em que foi feita; isso não significa que a planta esteja errada. Deve-se manter os registos antigos e anotar as mudanças e designações posteriores.",
+          "skip_text": "A Lin leva-o a observar o centro do Largo e o chão, e acrescenta os dois elementos posteriores às notas de hoje.",
+          "reward": {
+            "id": "note_petal_3",
+            "kind": "note_petal",
+            "name": "Pétala da época",
+            "text": "As linhas do mapa antigo e as linhas urbanas acrescentadas posteriormente formam a terceira pétala."
+          }
+        }
+      },
+      {
+        "id": "chapter_sam_kai",
+        "order": 4,
+        "kind": "puzzle",
+        "title": "Capítulo 4: Dois Fardos em Falta",
+        "location_name": "Templo de Sam Kai Vui Kun",
+        "story_time": "13:30",
+        "poi_id": "poi_0136",
+        "scene": "A antiga rua comercial perto do Templo de Sam Kai Vui Kun lembra-o de que, para além do edifício, há também informações comerciais, disputas, ajuda mútua e redes sociais invisíveis. A Lan deixou três registos complementares.",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-SAM-01",
+            "alt": "Templo de Sam Kai Vui Kun e a antiga rua comercial",
+            "caption": "Isto não é apenas um edifício; está também relacionado com a comunicação entre comerciantes e actividades comerciais."
+          },
+          {
+            "asset_id": "V4-SAM-02",
+            "alt": "O Gerente Leong entrega as mercadorias",
+            "caption": "A guia de entrega regista de onde vêm as mercadorias."
+          },
+          {
+            "asset_id": "V4-SAM-03",
+            "alt": "O Gerente Chan confere o livro de entrada",
+            "caption": "O livro de entrada regista as mercadorias que efectivamente entram na loja."
+          },
+          {
+            "asset_id": "V4-SAM-04",
+            "alt": "O carregador deixa um comprovativo provisório",
+            "caption": "O comprovativo explica porque é que os dois fardos não deram entrada imediatamente."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "sam-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Os três registos não são completamente iguais. Se escolhermos apenas um como verdade, parece que vai faltar uma parte."
+          },
+          {
+            "id": "sam-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Então não os deixe eliminar-se mutuamente. Primeiro, esclareça a que pergunta cada registo responde.",
+            "portrait_asset_id": "V4-CHAR-02"
+          },
+          {
+            "id": "sam-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "A guia de entrega mostra o que foi expedido, o livro de entrada mostra o que foi recebido, e o comprovativo explica para onde foram os dois fardos que faltaram no meio."
+          },
+          {
+            "id": "sam-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Certo. Não é escolher o papel mais autoritário, mas sim fazer com que os três papéis formem uma cadeia de provas completa.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Templo de Sam Kai Vui Kun e actividades comerciais",
+            "text": "O Templo de Sam Kai Vui Kun esteve associado à troca de informações comerciais entre comerciantes chineses, à mediação de assuntos comerciais e às actividades da comunidade mercantil; mais tarde, tornou-se também conhecido por venerar Kuan Tai.",
+            "source_label": "Informações públicas do Património Cultural de Macau",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "Os dois fardos em falta",
+            "text": "O Gerente Leong, o Gerente Chan, o carregador A Seng e os três registos são um caso fictício, usado para ilustrar as diferentes funções dos registos.",
+            "source_label": "Definição do enredo V4",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Templo de Sam Kai Vui Kun",
+          "chapter_goal": "Ajudar você a compreender a comunidade comercial e a cadeia de provas por trás do edifício",
+          "known_facts": [
+            "O Templo de Sam Kai Vui Kun está relacionado com as reuniões dos comerciantes chineses e com os assuntos comerciais.",
+            "Diferentes registos podem descrever respectivamente a entrega, a recepção e o tratamento provisório."
+          ],
+          "fiction_boundaries": [
+            "O litígio específico dos livros de contas, as personagens e os dois fardos são fictícios."
+          ],
+          "suggested_questions": [
+            "Qual era a função do Templo de Sam Kai Vui Kun?",
+            "Porque é que aqui também se venera Kuan Tai?",
+            "Qual é a relação entre a antiga rua comercial e o templo?"
+          ],
+          "do_not_reveal": [
+            "Não escolha as três provas em vez de você."
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_chapter",
+          "assets": [
+            "V4-SAM-01",
+            "V4-SAM-02",
+            "V4-SAM-03",
+            "V4-SAM-04",
+            "V4-SAM-05",
+            "V4-SAM-06"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "Quando o local estiver fechado, ou durante actividades religiosas ou em caso de multidão, basta ler as imagens e textos no exterior, sem perturbar as actividades no local."
+        },
+        "puzzle": {
+          "id": "puzzle_evidence_chain",
+          "type": "evidence_chain",
+          "prompt": "Para explicar por que razão os dois fardos não aparecem no livro de entrada, que registos precisam de ser mantidos?",
+          "options": [
+            {
+              "id": "delivery_order",
+              "text": "Guia de entrega do Gerente Leong"
+            },
+            {
+              "id": "store_ledger",
+              "text": "Livro de entrada do Gerente Chan"
+            },
+            {
+              "id": "porter_receipt",
+              "text": "Comprovativo de depósito do carregador A Seng"
+            },
+            {
+              "id": "single_summary",
+              "text": "Um resumo escrito posteriormente"
+            }
+          ],
+          "solution": [
+            "delivery_order",
+            "store_ledger",
+            "porter_receipt"
+          ],
+          "hints": [
+            "Não pergunte qual é o registo mais autoritário; primeiro pergunte que passo cada registo cobre.",
+            "Os três elos, entrega, entrada na loja e depósito a meio do caminho, precisam de provas."
+          ],
+          "explanation": "Os três registos explicam respectivamente a expedição, a entrada na loja e o depósito temporário. Qualquer um deles, visto isoladamente, é incompleto; só clarificando a origem e a função de cada um é que se pode completar a explicação em falta.",
+          "skip_text": "A Lin organiza a entrega, a entrada na loja e o depósito temporário numa cadeia de provas, e vocês ficam com os três registos e continuam.",
+          "reward": {
+            "id": "note_petal_4",
+            "kind": "note_petal",
+            "name": "Pétala de grelha de contas",
+            "text": "As linhas de grelha dos três registos sobrepõem-se e formam a quarta pétala."
+          }
+        }
+      },
+      {
+        "id": "chapter_lou_kau",
+        "order": 5,
+        "kind": "puzzle",
+        "title": "Capítulo 5: Em que desenho deve ser representada uma janela?",
+        "location_name": "Casa de Lou Kau",
+        "story_time": "15:00",
+        "poi_id": "poi_0057",
+        "scene": "O pátio interior traz luz; os tijolos cinzentos, a estrutura de madeira e as janelas organizam em conjunto a vida quotidiana das pessoas. A Lan desmonta uma janela em vários componentes e pergunta se ela pertence à forma arquitetónica ou à vida das pessoas.",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-LOU-01",
+            "alt": "Pátio interior e espaço de tijolos cinzentos da Casa de Lou Kau",
+            "caption": "A luz, a ventilação e os componentes determinam em conjunto como as pessoas usam o interior."
+          },
+          {
+            "asset_id": "V4-LOU-02",
+            "alt": "Estrutura da janela da Casa de Lou Kau",
+            "caption": "Desenhar apenas o contorno das paredes exteriores omite como as janelas deixam entrar a luz e o vento na vida."
+          },
+          {
+            "asset_id": "V4-LOU-03",
+            "alt": "Componentes de janela desmontados",
+            "caption": "A nota exige que os componentes corretos sejam recolocados na mesma janela."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "lou-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "O desenho de levantamento pode desenhar a posição da janela; o mapa das veias da Cidade de Lótus pode desenhar como ela afeta a vida. Então a que desenho deve pertencer?"
+          },
+          {
+            "id": "lou-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Não tenhas pressa em separar. Monta a janela completa e vê o que se perde se faltar qualquer parte.",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "lou-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Posição, forma, transmissão de luz e abertura/fecho pertencem à mesma janela; apenas os dois desenhos registam partes diferentes."
+          },
+          {
+            "id": "lou-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Portanto, não é preciso atribuí-la a um único desenho. Juntando os dois desenhos, aproximamo-nos mais do espaço onde as pessoas realmente viveram.",
+            "portrait_asset_id": "V4-CHAR-03"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Fusão arquitetónica da Casa de Lou Kau",
+            "text": "A Casa de Lou Kau baseia-se no espaço residencial chinês e apresentam-se características decorativas e de componentes relacionadas com o intercâmbio cultural urbano de Macau.",
+            "source_label": "Património Mundial de Macau e documentação oficial de arquitetura",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "Nível de montagem da janela",
+            "text": "A desmontagem dos componentes, as perguntas nas notas e o mecanismo das pétalas são um jogo concebido com base na observação arquitetónica, não um enigma real dos arquivos históricos.",
+            "source_label": "Definição do enredo V4",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Casa de Lou Kau",
+          "chapter_goal": "Ajudar Você a observar como os componentes da janela pertencem simultaneamente à forma arquitetónica e ao uso diário",
+          "known_facts": [
+            "A Casa de Lou Kau é um importante edifício residencial histórico de Macau",
+            "Os componentes das janelas estão relacionados com a iluminação, ventilação, abertura/fecho e uso do espaço",
+            "Elementos arquitetónicos chineses e ocidentais podem coexistir na mesma residência"
+          ],
+          "fiction_boundaries": [
+            "O puzzle de montagem da janela não é um arquivo histórico real"
+          ],
+          "suggested_questions": [
+            "Que características de fusão sino-ocidental existem na Casa de Lou Kau?",
+            "Qual é a função destes componentes de janela?",
+            "Como é que o pátio interior influencia a iluminação e a ventilação?"
+          ],
+          "do_not_reveal": [
+            "Não listar diretamente todos os componentes corretos"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_chapter",
+          "assets": [
+            "V4-LOU-01",
+            "V4-LOU-02",
+            "V4-LOU-03",
+            "V4-LOU-04",
+            "V4-LOU-05",
+            "V4-LOU-06"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "Observar apenas os componentes nas áreas abertas; não tocar nem desmontar quaisquer instalações no local."
+        },
+        "puzzle": {
+          "id": "puzzle_window_assembly",
+          "type": "assembly",
+          "prompt": "Escolhe os quatro componentes que formam a janela completa indicada na nota.",
+          "options": [
+            {
+              "id": "upper_frame",
+              "text": "Parte superior do caixilho"
+            },
+            {
+              "id": "lower_frame",
+              "text": "Parte inferior do caixilho"
+            },
+            {
+              "id": "oyster_shell_panel",
+              "text": "Painel translúcido de concha de ostra"
+            },
+            {
+              "id": "wooden_shutter",
+              "text": "Persiana de madeira de abrir e fechar"
+            },
+            {
+              "id": "stone_battlement",
+              "text": "Ameia de pedra"
+            },
+            {
+              "id": "ship_porthole",
+              "text": "Vigia de navio"
+            }
+          ],
+          "solution": [
+            "upper_frame",
+            "lower_frame",
+            "oyster_shell_panel",
+            "wooden_shutter"
+          ],
+          "hints": [
+            "Seleciona apenas os componentes que podem funcionar em conjunto na janela de uma casa.",
+            "Considera as três funções: suporte, transmissão de luz e abertura/fecho."
+          ],
+          "explanation": "A janela completa tem simultaneamente funções de posição, forma, transmissão de luz e abertura/fecho. O desenho de levantamento e o desenho de observação da vida registam cada um uma parte; juntos, aproximam-se mais do uso real.",
+          "skip_text": "A Lin reagrupa os quatro componentes pelas funções de suporte, transmissão de luz e abertura/fecho. Vocês completam a sobreposição das notas e continuam para a Fortaleza do Monte.",
+          "reward": {
+            "id": "note_petal_5",
+            "kind": "note_petal",
+            "name": "Pétala de caixilho",
+            "text": "As linhas dos caixilhos dos quatro componentes corretos formam a quinta pétala. As cinco notas sobrepostas à luz revelam a flor oficial completa da cidade."
+          }
+        }
+      },
+      {
+        "id": "chapter_mount_fortress",
+        "order": 6,
+        "kind": "ending",
+        "title": "Capítulo Final: Uma Nota para os que Virão Depois",
+        "location_name": "Fortaleza do Monte",
+        "story_time": "17:00",
+        "poi_id": "poi_0003",
+        "scene": "Você e a A Lin sobem à Fortaleza do Monte. O centro histórico, as colinas, a costa e a cidade moderna desdobram-se ao mesmo tempo na paisagem. Os dois mapas da cidade não coincidem totalmente com a vista de hoje, mas também já não se negam mutuamente.",
+        "arrival_comic": [
+          {
+            "asset_id": "V4-FOR-01",
+            "alt": "Vista da cidade de Macau a partir da Fortaleza do Monte",
+            "caption": "Aqui é o lugar para integrar as cinco provas recolhidas ao longo do percurso na imagem geral da cidade."
+          },
+          {
+            "asset_id": "V4-FOR-02",
+            "alt": "O centro histórico e a cidade moderna desdobram-se em conjunto",
+            "caption": "A cidade de hoje não parou na época de nenhum dos mapas antigos."
+          },
+          {
+            "asset_id": "V4-FOR-03",
+            "alt": "Os dois mapas da cidade sobrepõem-se ao Macau de hoje",
+            "caption": "Ambos os mapas registam a realidade, mas não registam o mesmo tipo de realidade."
+          },
+          {
+            "asset_id": "V4-FOR-04",
+            "alt": "Os cinco conjuntos de evidências obtidos nas cinco estações anteriores",
+            "caption": "A costa muda, os espaços em branco precisam de explicação, a cidade ganha novas coisas, os registos precisam de uma cadeia de evidências, e os edifícios também pertencem à vida das pessoas."
+          }
+        ],
+        "dialogue": [
+          {
+            "id": "fortress-dialogue-01",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Ao longo do caminho, não encontrámos qual é o único mapa correcto."
+          },
+          {
+            "id": "fortress-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "Talvez o que a A Lan queria perguntar no final não fosse, desde o início, para você escolher entre as duas. Coloque as evidências das cinco estações ao lado dos dois mapas e observe.",
+            "portrait_asset_id": "V4-CHAR-01"
+          },
+          {
+            "id": "fortress-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "O Sr. M desenhou a forma da cidade, e a A Lan registou como as pessoas vivem nela. Os propósitos são diferentes, e as omissões também são diferentes."
+          },
+          {
+            "id": "fortress-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "A resposta do Sr. M também reconhece que, se um mapa ficar apenas com o esqueleto, as pessoas que vierem depois ainda perguntarão: quem viveu aqui, como chamavam a este lugar?",
+            "portrait_asset_id": "V4-CHAR-03"
+          },
+          {
+            "id": "fortress-dialogue-05",
+            "speaker_id": "player",
+            "speaker": "Você",
+            "text": "Então não vamos mudar o presente para o passado, nem apagar os registos antigos para provar que o presente está correcto. Vamos acrescentar a origem, a data e a finalidade."
+          },
+          {
+            "id": "fortress-dialogue-06",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "text": "A última nota fica para você. Escreva o Macau que vê hoje, para que a próxima pessoa saiba em que ano você se encontra.",
+            "portrait_asset_id": "V4-CHAR-01"
+          }
+        ],
+        "knowledge_cards": [
+          {
+            "kind": "historical_fact",
+            "title": "Fortaleza do Monte e a Vista da Cidade",
+            "text": "A Fortaleza do Monte é uma parte importante do centro histórico de Macau, e a sua vista elevada é adequada para observar as camadas de edifícios históricos, colinas e cidade moderna.",
+            "source_label": "Património Mundial de Macau e materiais culturais oficiais",
+            "confidence": "high"
+          },
+          {
+            "kind": "fictional_story",
+            "title": "A Resposta do Sr. M e a Mensagem da A Lan",
+            "text": "A resposta, a mensagem e o mecanismo do bilhete de papel com a frase \"a cidade é escrita em conjunto pelas pessoas\" são criações do enredo V4.",
+            "source_label": "Definição do enredo V4",
+            "confidence": "high"
+          }
+        ],
+        "agent_context": {
+          "persona": "A Lin",
+          "poi_name": "Fortaleza do Monte",
+          "chapter_goal": "Ajudar o jogador a sintetizar as evidências das cinco estações e a acrescentar explicações sobre data, origem e finalidade aos dois mapas",
+          "known_facts": [
+            "A Fortaleza do Monte pertence ao importante património do centro histórico de Macau",
+            "A cidade de hoje inclui simultaneamente edifícios históricos e construções modernas",
+            "Os mapas devem ser lidos em conjunto com a data de criação, a origem e a finalidade"
+          ],
+          "fiction_boundaries": [
+            "A resposta do Sr. M, a mensagem da A Lan e o mecanismo dos cinco papéis são fictícios"
+          ],
+          "suggested_questions": [
+            "Como se pode observar as camadas da cidade de Macau a partir da Fortaleza do Monte?",
+            "Porque é que os dois mapas merecem ser preservados?",
+            "O que deve ser escrito na nota adicional de hoje?"
+          ],
+          "do_not_reveal": [
+            "Não substituir o jogador na escrita da reflexão final"
+          ]
+        },
+        "presentation": {
+          "layout": "portrait_ending",
+          "assets": [
+            "V4-FOR-01",
+            "V4-FOR-02",
+            "V4-FOR-03",
+            "V4-FOR-04",
+            "V4-FOR-05",
+            "V4-FOR-06",
+            "V4-FOR-07",
+            "V4-FOR-08",
+            "V4-FOR-09"
+          ]
+        },
+        "fallback": {
+          "type": "content_only",
+          "text": "O clima, a visibilidade ou as limitações do local não afectam o final; é possível usar a imagem pré-definida da vista da cidade para fazer a avaliação integrada."
+        }
+      }
+    ],
+    "endings": [
+      {
+        "id": "complete_today_note",
+        "title": "A cidade é escrita em conjunto",
+        "choice_text": "Concluir a nota de hoje",
+        "text": "Você não encontrou o único mapa correto de Macau. Você adicionou época, origem e finalidade aos dois mapas, e também escreveu a cidade que viu hoje num novo espaço em branco. O mapa não é o veredicto final; uma cidade é escrita em conjunto por diferentes épocas, diferentes propósitos e diferentes pessoas.",
+        "condition": "Concluir a avaliação integrada da Fortaleza do Monte e guardar a nota de hoje",
+        "rewards": [
+          {
+            "id": "complete_city_flower",
+            "kind": "collection",
+            "name": "Flor completa da cidade de Macau",
+            "text": "Cinco tiras de papel sobrepõem-se à luz, e cinco pétalas formam a flor completa da cidade."
+          },
+          {
+            "id": "today_note",
+            "kind": "reflection",
+            "name": "Nota de hoje",
+            "text": "Você deixou o registo de hoje para a próxima pessoa que vier."
+          }
+        ]
+      }
+    ]
   }
 }

@@ -13,6 +13,12 @@ from xml.etree import ElementTree
 import httpx
 
 SMG_CURRENT_WEATHER_URL = "https://www.smg.gov.mo/webdiss/c_actualweather_xml.php"
+SMG_7DAY_FORECAST_URLS = {
+    "zh-CN": "https://xml.smg.gov.mo/c_7daysforecast.xml",
+    "zh-TW": "https://xml.smg.gov.mo/c_7daysforecast.xml",
+    "en": "https://xml.smg.gov.mo/e_7daysforecast.xml",
+    "pt": "https://xml.smg.gov.mo/p_7daysforecast.xml",
+}
 MGTO_EVENT_CALENDAR_URL = "https://www.macaotourism.gov.mo/en/events/calendar"
 MGTO_WHATSON_URL = "https://www.macaotourism.gov.mo/en/events/whatson"
 OPEN_METEO_FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
@@ -278,7 +284,83 @@ def _daily_value(daily: dict[str, Any], key: str, index: int) -> Any:
         return None
 
 
-def _forecast(target: date, trip_days: int) -> dict[str, Any]:
+def _smg_source(language: str, issued_at: str | None = None) -> dict[str, Any]:
+    names = {
+        "zh-CN": "澳门地球物理气象局",
+        "zh-TW": "澳門地球物理氣象局",
+        "en": "Macao Meteorological and Geophysical Bureau",
+        "pt": "Direcção dos Serviços Meteorológicos e Geofísicos de Macau",
+    }
+    source: dict[str, Any] = {
+        "name": names.get(language, names["en"]),
+        "url": SMG_7DAY_FORECAST_URLS.get(language, SMG_7DAY_FORECAST_URLS["en"]),
+    }
+    if issued_at:
+        source["issued_at"] = issued_at
+    return source
+
+
+def _smg_forecast(target: date, trip_days: int, language: str) -> dict[str, Any]:
+    end = target + timedelta(days=max(1, min(5, trip_days)) - 1)
+    source_url = SMG_7DAY_FORECAST_URLS.get(language, SMG_7DAY_FORECAST_URLS["en"])
+    raw = _fetch(source_url)
+    if not raw:
+        return {"status": "unavailable", "days": [], "source": _smg_source(language)}
+    try:
+        root = ElementTree.fromstring(raw)
+    except ElementTree.ParseError:
+        return {"status": "unavailable", "days": [], "source": _smg_source(language)}
+
+    issued_at = root.findtext(".//IssuedTime") or root.findtext(".//SysPubdate")
+    days: list[dict[str, Any]] = []
+    for item in root.findall(".//WeatherForecast"):
+        day_text = (item.findtext("ValidFor") or "").strip()
+        try:
+            forecast_date = date.fromisoformat(day_text)
+        except ValueError:
+            continue
+        if not target <= forecast_date <= end:
+            continue
+
+        temperatures: dict[str, float | None] = {}
+        for temperature in item.findall("Temperature"):
+            kind = (temperature.findtext("Type") or "").strip()
+            temperatures[kind] = _parse_float(temperature.findtext("Value"))
+        description = " ".join((item.findtext("WeatherDescription") or "").split())
+        days.append(
+            {
+                "date": day_text,
+                "weather_code": None,
+                "source_weather_code": _parse_float(item.findtext("WeatherStatus")),
+                "temperature_max_c": temperatures.get("1"),
+                "temperature_min_c": temperatures.get("2"),
+                "precipitation_probability_percent": None,
+                "precipitation_sum_mm": None,
+                "wind_speed_max_kmh": None,
+                "condition": description or None,
+                "rain_signal": any(
+                    term in description.lower()
+                    for term in ("rain", "shower", "雨", "aguaceiro", "chuva")
+                ),
+                "storm_signal": any(
+                    term in description.lower()
+                    for term in ("thunder", "雷", "trovoada")
+                ),
+            }
+        )
+
+    expected_days = (end - target).days + 1
+    if len(days) != expected_days:
+        return {"status": "unavailable", "days": [], "source": _smg_source(language, issued_at)}
+    return {
+        "status": "ok",
+        "days": days,
+        "source": _smg_source(language, issued_at),
+        "fetched_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+def _open_meteo_forecast(target: date, trip_days: int) -> dict[str, Any]:
     end = target + timedelta(days=max(1, min(5, trip_days)) - 1)
     params = {
         "latitude": 22.1987,
@@ -329,6 +411,13 @@ def _forecast(target: date, trip_days: int) -> dict[str, Any]:
         "source": source,
         "fetched_at": datetime.now(timezone.utc).isoformat(),
     }
+
+
+def _forecast(target: date, trip_days: int, language: str) -> dict[str, Any]:
+    official = _smg_forecast(target, trip_days, language)
+    if official.get("status") == "ok":
+        return official
+    return _open_meteo_forecast(target, trip_days)
 
 
 def _weather_advice_text(
@@ -398,21 +487,23 @@ def get_weather_advice(
         target = date.today()
     days_count = max(1, min(5, int(trip_days or 1)))
     forecast = _cached(
-        f"forecast:{target.isoformat()}:{days_count}",
-        lambda: _forecast(target, days_count),
+        f"forecast:{target.isoformat()}:{days_count}:{language}",
+        lambda: _forecast(target, days_count, language),
     )
 
     days = forecast.get("days") or []
     source_status = "ok" if forecast.get("status") == "ok" and days else "unavailable"
     umbrella = any(
-        (day.get("weather_code") in _RAIN_CODES)
+        day.get("rain_signal")
+        or (day.get("weather_code") in _RAIN_CODES)
         or ((day.get("precipitation_probability_percent") or 0) >= 40)
         or ((day.get("precipitation_sum_mm") or 0) >= 0.5)
         for day in days
     )
     sunscreen = any((day.get("temperature_max_c") or 0) >= 30 for day in days)
     indoor_backup = any(
-        day.get("weather_code") in {65, 82, 95, 96, 99}
+        day.get("storm_signal")
+        or day.get("weather_code") in {65, 82, 95, 96, 99}
         or ((day.get("precipitation_sum_mm") or 0) >= 10)
         for day in days
     )
@@ -420,7 +511,8 @@ def get_weather_advice(
     display_days = [
         {
             **day,
-            "condition": _condition_label(day.get("weather_code"), language),
+            "condition": day.get("condition")
+            or _condition_label(day.get("weather_code"), language),
         }
         for day in days
     ]

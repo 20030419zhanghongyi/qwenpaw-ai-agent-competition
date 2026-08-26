@@ -16,6 +16,9 @@ import { LocalSpeechPlayer } from "@/components/guide/LocalSpeechPlayer";
 import { PhotoRecognitionPanel } from "@/components/guide/PhotoRecognitionPanel";
 import { t } from "@/i18n";
 import { resolvePoiImage, curatedPoiImage } from "@/lib/poiImage";
+import { getLastTripId } from "@/lib/lastTrip";
+import { useAuth } from "@/state/AuthContext";
+import { useTrip } from "@/state/TripContext";
 import { localizedPoiMeta, localizedPoiName, localizedPoiSearchText } from "@/lib/poiLocalization";
 import { useWalk } from "@/state/WalkContext";
 import type { POI } from "@/types";
@@ -29,6 +32,8 @@ interface ChatTurn {
 
 export function GuidePage() {
   const { language, preference, session } = useWalk();
+  const { token } = useAuth();
+  const { trip } = useTrip();
   const [searchParams, setSearchParams] = useSearchParams();
   const deepPoi = searchParams.get("poi") ?? "";
   const deepName = searchParams.get("name") ?? "";
@@ -488,6 +493,9 @@ export function GuidePage() {
 
               <PhotoRecognitionPanel
                 language={language}
+                tripId={trip?.trip_id ?? getLastTripId()}
+                poiId={selected?.poi_id ?? deepPoi}
+                token={token}
                 onRecognized={onPhotoRecognized}
                 onManualSelect={clearGuideSelection}
               />

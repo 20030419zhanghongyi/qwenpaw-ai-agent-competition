@@ -43,6 +43,7 @@ _VALID_PORTS = {
     "poi_port_outer_harbor",
     "poi_0071",
 }
+_VALID_STORIES = {"lotus_city_double_map", "taipa_letters", "coloane_after_tide"}
 
 
 def _build_prompt(text: str) -> str:
@@ -113,6 +114,15 @@ def _coerce(obj: dict[str, Any]) -> Preference:
     trip_days = obj.get("trip_days")
     if not isinstance(trip_days, int):
         trip_days = None
+    story_opt_in = obj.get("story_opt_in")
+    if not isinstance(story_opt_in, bool):
+        story_opt_in = None
+    story_id = obj.get("story_id")
+    if story_id not in _VALID_STORIES:
+        story_id = None
+    story_day = obj.get("story_day")
+    if not isinstance(story_day, int) or not 1 <= story_day <= 5:
+        story_day = None
     # Preference validator clamps / drops invalid values
 
     return Preference(
@@ -126,6 +136,9 @@ def _coerce(obj: dict[str, Any]) -> Preference:
         exit_port=exit_port,
         travel_date=travel_date,
         trip_days=trip_days,
+        story_opt_in=story_opt_in,
+        story_id=story_id,
+        story_day=story_day,
     )
 
 

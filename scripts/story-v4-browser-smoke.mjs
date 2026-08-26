@@ -1094,9 +1094,7 @@ async function dismissRewardAndReturnToMap(sessionId, index) {
           const dialog = document.querySelector('[role="dialog"]');
           const scroll = document.querySelector("[data-reward-scroll]");
           const button = [...document.querySelectorAll("button")].find(
-            (element) =>
-              element.textContent?.includes("收下第五瓣") &&
-              element.textContent?.includes("完整市花")
+            (element) => element.textContent?.includes("收下第五瓣")
           );
           return {
             hasPetalDetail: dialog?.textContent?.includes("窗格花瓣"),
@@ -1126,9 +1124,7 @@ async function dismissRewardAndReturnToMap(sessionId, index) {
     const scrolledState = await evaluate(`(() => {
       const scroll = document.querySelector("[data-reward-scroll]");
       const button = [...document.querySelectorAll("button")].find(
-        (element) =>
-          element.textContent?.includes("收下第五瓣") &&
-          element.textContent?.includes("完整市花")
+        (element) => element.textContent?.includes("收下第五瓣")
       );
       if (!scroll || !button) return null;
       scroll.scrollTop = scroll.scrollHeight;
@@ -1145,7 +1141,7 @@ async function dismissRewardAndReturnToMap(sessionId, index) {
     await sleep(100);
     await screenshot("08-05-fifth-petal-scroll");
     await waitAndClick(
-      ["收下第五瓣，查看完整市花"],
+      ["收下第五瓣密笺", "收下第五瓣，查看完整市花"],
       "确认收下第五瓣并进入完整市花展示",
     );
     await setMobileViewport(390, 844);
@@ -1287,56 +1283,33 @@ async function runStoryFlow() {
   });
   const coverPath = `/stories/${STORY_ID}`;
   if (skipPreferenceEntry) {
-    log("按 STORY_SKIP_PREFERENCE_ENTRY=1 跳过偏好 Agent 与邀请入口");
+    log("按 STORY_SKIP_PREFERENCE_ENTRY=1 跳过偏好 Agent 与故事选择入口");
     await navigate(`${baseUrl}${coverPath}`);
   } else {
     await navigate(`${baseUrl}/preferences`);
-    await evaluate(`(() => {
-      const record = JSON.stringify({
-        storyId: ${JSON.stringify(STORY_ID)},
-        status: "accepted",
-        timestamp: Date.now(),
-      });
-      sessionStorage.setItem(
-        ${JSON.stringify(`${INVITATION_STORAGE_PREFIX}${STORY_ID}`)},
-        record
-      );
-      sessionStorage.setItem(
-        ${JSON.stringify(`${INVITATION_STORAGE_PREFIX}user-previous-account-${STORY_ID}`)},
-        JSON.stringify({
-          scope: "user-previous-account",
-          storyId: ${JSON.stringify(STORY_ID)},
-          status: "accepted",
-          timestamp: Date.now(),
-        })
-      );
-    })()`);
     await waitAndClick(
       ["跳过对话，直接微调偏好 →", "直接微调偏好", "跳过"],
       "偏好微调入口",
     );
     await waitAndClick(["历史"], "历史兴趣标签");
     await waitFor(
-      "偏好页故事邀请",
+      "偏好页故事选择",
       async () =>
         normalizeText(await bodyText()).includes(
-          "跟着两张旧地图，重新认识澳门",
+          "莲城双图：未尽之图",
         ),
     );
-    await evaluate(`(() => {
-      const button = [...document.querySelectorAll("button")].find((element) =>
-        element.textContent?.includes("进入《莲城双图》")
-      );
-      button?.closest("section")?.scrollIntoView({ block: "center" });
-      return Boolean(button);
-    })()`);
-    await sleep(500);
-    await screenshot("00-preference-story-invitation");
-    await waitAndClick(["进入《莲城双图》"], "故事邀请入口");
-    await waitForPath(
-      (url) => url.pathname === coverPath,
-      "从偏好页进入故事封面",
+    await waitAndClick(["选择这条故事线"], "莲城双图选择按钮");
+    await waitFor("莲城双图已选中", () =>
+      evaluate(`(() => {
+        const button = [...document.querySelectorAll("button")].find(
+          (element) => element.textContent?.trim() === "选择这条故事线"
+        );
+        return button?.closest("article")?.className.includes("ring-2") ?? false;
+      })()`)
     );
+    await screenshot("00-preference-story-selection");
+    await navigate(`${baseUrl}${coverPath}`);
   }
   await waitFor(
     "故事封面",
@@ -1590,7 +1563,7 @@ async function runStoryFlow() {
   await screenshot("04b-six-stop-map-contained");
 
   const currentStationText = await evaluate(`(() => {
-    const controls = [...document.querySelectorAll("button")];
+    const controls = [...document.querySelectorAll("a, button, [role=button]")];
     return controls.find((element) =>
       element.textContent?.includes("当前站")
     )?.textContent ?? "";
@@ -1598,7 +1571,22 @@ async function runStoryFlow() {
   const resumedIndex = EXPECTED_NODES.findIndex((node) =>
     normalizeText(currentStationText).includes(node.name),
   );
-  const startIndex = resumedIndex >= 0 ? resumedIndex : 0;
+  let startIndex = resumedIndex >= 0 ? resumedIndex : 0;
+  let currentChapterAlreadyOpen = false;
+  if (resumedIndex < 0) {
+    await waitAndClick(
+      ["进入章节", "前往当前站", "进入当前章节", "继续当前章节"],
+      "探测服务端当前章节",
+    );
+    const activePath = new URL(await currentUrl()).pathname;
+    const pathIndex = EXPECTED_NODES.findIndex((node) =>
+      activePath.endsWith(`/nodes/${node.id}`),
+    );
+    if (pathIndex >= 0) {
+      startIndex = pathIndex;
+      currentChapterAlreadyOpen = true;
+    }
+  }
   if (startIndex > 0) {
     log(`从服务端当前第 ${startIndex + 1} 站继续`);
   }
@@ -1606,10 +1594,13 @@ async function runStoryFlow() {
   for (let index = startIndex; index < EXPECTED_NODES.length; index += 1) {
     const node = EXPECTED_NODES[index];
     const nodeNumber = index + 1;
-    await waitAndClick(
-      ["进入章节", "前往当前站", "进入当前章节", "继续当前章节"],
-      `进入第 ${nodeNumber} 站 ${node.name}`,
-    );
+    if (!currentChapterAlreadyOpen) {
+      await waitAndClick(
+        ["进入章节", "前往当前站", "进入当前章节", "继续当前章节"],
+        `进入第 ${nodeNumber} 站 ${node.name}`,
+      );
+    }
+    currentChapterAlreadyOpen = false;
     await waitForPath(
       (url) =>
         url.pathname ===
@@ -1866,19 +1857,20 @@ async function runStoryFlow() {
     "新账号偏好微调入口",
   );
   await waitAndClick(["历史"], "新账号历史兴趣标签");
-  await waitFor(
-    "新账号收到独立故事邀请",
-    async () =>
-      normalizeText(await bodyText()).includes(
-        "跟着两张旧地图，重新认识澳门",
-      ),
+  await waitFor("新账号收到独立故事选择", async () =>
+    normalizeText(await bodyText()).includes("莲城双图：未尽之图")
   );
-  await screenshot("14-invitation-after-account-switch");
-  await waitAndClick(["进入《莲城双图》"], "新账号故事邀请入口");
-  await waitForPath(
-    (url) => url.pathname === coverPath,
-    "新账号进入故事封面",
+  await waitAndClick(["选择这条故事线"], "新账号莲城双图选择按钮");
+  await waitFor("新账号莲城双图已选中", () =>
+    evaluate(`(() => {
+      const button = [...document.querySelectorAll("button")].find(
+        (element) => element.textContent?.trim() === "选择这条故事线"
+      );
+      return button?.closest("article")?.className.includes("ring-2") ?? false;
+    })()`)
   );
+  await screenshot("14-story-selection-after-account-switch");
+  await navigate(`${baseUrl}${coverPath}`);
   await waitFor("新账号不继承旧故事进度", async () => {
     const text = normalizeText(await bodyText());
     if (text.includes("继续上次进度") || text.includes("查看完成记录")) {
@@ -1894,7 +1886,7 @@ async function runStoryFlow() {
   }
   log(
     `PASS：${
-      skipPreferenceEntry ? "已按配置跳过偏好邀请，" : "偏好邀请、"
+      skipPreferenceEntry ? "已按配置跳过偏好故事选择，" : "偏好故事选择、"
     }登录回跳、真实会话、序章 Agent、单气泡对话、图片放大、` +
       "第五瓣动画、地图图层、六站跳关、今日补记、刷新恢复及账号隔离全部通过",
   );

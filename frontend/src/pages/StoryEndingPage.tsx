@@ -15,19 +15,10 @@ import { StoryImageViewer } from "@/features/story/components/StoryImageViewer";
 import { PetalProgress } from "@/features/story/components/PetalProgress";
 import { StoryTopBar } from "@/features/story/components/StoryTopBar";
 import { useStoryMessages } from "@/features/story/storyI18n";
+import { navigateBack } from "@/lib/backNavigation";
 import { useAuth } from "@/state/AuthContext";
 import { useStory, useStoryRestore } from "@/state/StoryContext";
 import type { FutureLetterResponse, StoryNodeOverview } from "@/types/stories";
-
-function futureLetterErrorMessage(error: unknown): string {
-  if (isStoryApiError(error, 503)) {
-    return "海风暂时没能送回配图。你的文字未来信已经保存，可以稍后重试。";
-  }
-  if (isStoryApiError(error, 409)) {
-    return "故事进度已经变化，请刷新完成页后再试。";
-  }
-  return error instanceof Error ? error.message : "未来信配图暂时无法生成";
-}
 
 export function StoryEndingPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -49,6 +40,11 @@ export function StoryEndingPage() {
   } = useStory();
   const { sessionId: effectiveId } = useStoryRestore(sessionId);
   const st = useStoryMessages();
+  const futureLetterErrorMessage = (requestError: unknown): string => {
+    if (isStoryApiError(requestError, 503)) return st("futureLetterUnavailable");
+    if (isStoryApiError(requestError, 409)) return st("futureLetterConflict");
+    return requestError instanceof Error ? requestError.message : st("futureLetterError");
+  };
   const [reflection, setReflection] = useState("");
   const [viewerAssetId, setViewerAssetId] = useState<string | null>(null);
   const [agentOpen, setAgentOpen] = useState(false);
@@ -149,14 +145,18 @@ export function StoryEndingPage() {
     session?.state.rewards.filter((reward) => reward.kind === "note_petal").length ?? 0;
   const completionAgentContext = useMemo(
     () => ({
-      persona: "阿莲",
-      poi_name: isLotusStory ? "澳门历史城区" : isTaipaStory ? "氹仔旧城" : "路环",
+      persona: st("alianName"),
+      poi_name: isLotusStory
+        ? st("macauHistoricCentre")
+        : isTaipaStory
+          ? st("taipaOldTown")
+          : st("coloanePlace"),
       chapter_title: story?.title ?? st("journeyComplete"),
       chapter_goal: isLotusStory
-        ? "回顾莲城双图六站旅程，并区分史实、地方记忆与剧情演绎。"
+        ? st("lotusReviewGoal")
         : isTaipaStory
-          ? "回顾海、钟、家、工、街五封来信，整理氹仔生活史与家园记忆。"
-          : "回顾海、船、村、工、土五项记录，整理潮退之后的路环记忆。",
+          ? st("taipaReviewGoal")
+          : st("coloaneReviewGoal"),
       known_facts: [
         story?.summary,
         session?.ending?.text,
@@ -164,18 +164,18 @@ export function StoryEndingPage() {
       fiction_boundaries: story?.content_notice ? [story.content_notice] : [],
       suggested_questions: isLotusStory
         ? [
-            "六站线索怎样共同说明澳门城市的变化？",
-            "两张地图分别适合记录哪些内容？",
-            "哪些内容属于史实，哪些属于剧情演绎？",
+            st("lotusReviewQuestion"),
+            st("mapReviewQuestion"),
+            st("factFictionQuestion"),
           ]
         : isTaipaStory
           ? [
-              "五封来信怎样串起氹仔生活的变化？",
-              "哪些内容属于史实，哪些属于剧情演绎？",
+              st("taipaReviewQuestion"),
+              st("factFictionQuestion"),
             ]
           : [
-              "五枚记录章怎样串成路环的故事？",
-              "哪些内容属于史实，哪些属于剧情演绎？",
+              st("coloaneReviewQuestion"),
+              st("factFictionQuestion"),
             ],
       do_not_reveal: [],
     }),
@@ -243,7 +243,7 @@ export function StoryEndingPage() {
           />
           <button
             type="button"
-            onClick={() => navigate("/stories")}
+            onClick={() => navigateBack(navigate, location.key)}
             className="mt-4 min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper"
           >
             {st("back")}
@@ -303,7 +303,7 @@ export function StoryEndingPage() {
           {isTaipaStory && futureLetterImageUrl ? (
             <img
               src={futureLetterImageUrl}
-              alt="由 AI 场景与玩家寄语合成的氹仔未来信"
+              alt={st("taipaFutureLetterAlt")}
               className="aspect-[9/16] w-full rounded-2xl border border-line bg-card object-contain shadow-[var(--shadow-soft)]"
             />
           ) : (
@@ -317,10 +317,10 @@ export function StoryEndingPage() {
               }
               alt={
                 isLotusStory
-                  ? "日落后的大炮台与澳门城市"
+                  ? st("lotusSunsetAlt")
                   : isTaipaStory
-                    ? "写给未来氹仔的信"
-                    : "路环声音明信片"
+                    ? st("taipaFutureLetterAlt")
+                    : st("coloanePostcardAlt")
               }
               eager
               onOpen={setViewerAssetId}
@@ -347,20 +347,20 @@ export function StoryEndingPage() {
               aria-labelledby="future-letter-art-title"
             >
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sage-deep">
-                Optional AI artwork
+                {st("futureLetterArtwork")}
               </p>
               <h2 id="future-letter-art-title" className="mt-1 font-serif text-xl font-semibold">
-                {futureLetter ? "未来信已经写成" : "让海风为未来信配一幅图"}
+                {futureLetter ? st("futureLetterReadyTitle") : st("futureLetterGenerateTitle")}
               </h2>
               <p className="mt-2 text-sm leading-6 text-ink-soft">
                 {futureLetter
-                  ? "画面由 Qwen-Image 生成，信中文字仍是你保存的原文。"
-                  : "这是可选体验，通常需要一至三分钟；生成失败不会影响已经完成的故事。"}
+                  ? st("futureLetterReadyBody")
+                  : st("futureLetterGenerateBody")}
               </p>
 
               {futureLetter?.reflection_truncated && (
                 <p className="mt-2 rounded-xl bg-ochre/10 px-3 py-2 text-xs leading-5 text-ink-soft">
-                  配图只排版了寄语摘要，完整文字仍保存在故事记录中。
+                  {st("futureLetterTruncated")}
                 </p>
               )}
 
@@ -378,18 +378,18 @@ export function StoryEndingPage() {
                   className="mt-4 min-h-12 w-full rounded-full bg-sage-deep px-5 font-medium text-paper disabled:cursor-wait disabled:opacity-55"
                 >
                   {futureLetterChecking
-                    ? "正在检查已有配图…"
+                    ? st("futureLetterChecking")
                     : futureLetterGenerating
-                      ? "海风正在整理信纸…"
+                      ? st("futureLetterGenerating")
                       : futureLetterError
-                        ? "重新生成未来信配图"
-                        : "生成我的未来信"}
+                        ? st("futureLetterRetry")
+                        : st("futureLetterGenerate")}
                 </button>
               )}
 
               {futureLetter && (
                 <p className="mt-3 text-xs text-ink-soft">
-                  AI 场景示意 · 信件人物与寄送关系均为剧情虚构
+                  {st("futureLetterDisclosure")}
                 </p>
               )}
             </section>
@@ -408,8 +408,8 @@ export function StoryEndingPage() {
                 isLotusStory
                   ? st("petalsComplete")
                   : isTaipaStory
-                    ? "氹仔未来信"
-                    : "路环声音明信片"
+                    ? st("taipaFutureLetterAlt")
+                    : st("coloanePostcardAlt")
               }
               onOpen={setViewerAssetId}
             />
@@ -421,7 +421,7 @@ export function StoryEndingPage() {
                     ? "TAI-PROP-01"
                     : "CAT-PROP-01"
               }
-              alt={isLotusStory ? st("secretNotes") : isTaipaStory ? "氹仔退信盒" : "潮汐工作簿"}
+              alt={isLotusStory ? st("secretNotes") : isTaipaStory ? st("taipaLetterBoxAlt") : st("tideWorkbook")}
               onOpen={setViewerAssetId}
             />
           </section>
@@ -429,7 +429,7 @@ export function StoryEndingPage() {
           <section className="mt-4 rounded-2xl border border-line bg-card p-4">
             <div className="flex items-center justify-between">
               <h2 className="font-serif text-lg font-semibold">
-                {isLotusStory ? st("secretNotes") : isTaipaStory ? "氹仔来信" : "路环记录章"}
+                {isLotusStory ? st("secretNotes") : isTaipaStory ? st("taipaLetters") : st("coloaneRecordStamps")}
               </h2>
               {isLotusStory && <PetalProgress collected={petalCount} />}
             </div>
@@ -551,8 +551,8 @@ export function StoryEndingPage() {
             isLotusStory
               ? st("noteToday")
               : isTaipaStory
-                ? "完成写给未来氹仔的信"
-                : "完成路环声音明信片"
+                ? st("completeTaipaLetterAlt")
+                : st("completeColoanePostcardAlt")
           }
           eager
           onOpen={setViewerAssetId}
@@ -563,22 +563,22 @@ export function StoryEndingPage() {
             {isLotusStory
               ? st("leaveReader")
               : isTaipaStory
-                ? "寄给未来氹仔"
-                : "完成潮汐工作簿"}
+                ? st("toFutureTaipa")
+                : st("completeTideWorkbook")}
           </p>
           <h1 className="mt-2 font-display text-2xl leading-tight">
             {isLotusStory
               ? st("noteHeading")
               : isTaipaStory
-                ? endingChoice?.choice_text ?? "保存并寄出未来信"
-                : "把路环的声音留在最后一页"}
+                ? endingChoice?.choice_text ?? st("saveFutureLetter")
+                : st("preserveColoaneSounds")}
           </h1>
           <p className="mt-3 text-base leading-7 text-ink-soft">
             {isLotusStory
               ? st("noteBody")
               : isTaipaStory
-                ? "回顾海、钟、家、工、街五封来信，写下你希望未来仍能记得的一种氹仔生活。"
-                : "回顾海、船、村、工、土五项记录，写下你此刻最想保留的一段路环记忆。"}
+                ? st("taipaReflectionBody")
+                : st("coloaneReflectionBody")}
           </p>
 
           <label htmlFor="today-note" className="mt-5 block text-sm font-semibold text-sage-deep">
@@ -604,9 +604,9 @@ export function StoryEndingPage() {
             className="mt-4 rounded-xl border border-clay/30 bg-clay/5 p-3 text-sm text-clay"
           >
             {errorStatus === 409
-              ? "进度已在其他页面更新，请先重新载入。"
+              ? st("endingConflict")
               : errorStatus === 422
-                ? "提交内容格式不正确，你的补记草稿仍然保留。"
+                ? st("endingInvalid")
                 : error}
             {errorStatus === 409 && (
               <button
@@ -614,7 +614,7 @@ export function StoryEndingPage() {
                 onClick={() => void refreshSession()}
                 className="ml-2 min-h-11 rounded-full border border-clay/30 px-3"
               >
-                重新载入
+                {st("reload")}
               </button>
             )}
           </div>

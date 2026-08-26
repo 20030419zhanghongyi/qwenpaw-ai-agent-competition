@@ -16,5 +16,7 @@ remains available under its source license.
 | `TAI-END-01_largo-dos-bombeiros.jpg` | Largo dos Bombeiros | LN9267 | [Largo dos Bombeiros Taipa 26-02-2024](https://commons.wikimedia.org/wiki/File:Largo_dos_Bombeiros_Taipa_26-02-2024.jpg) | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
 
 The fictional returned-letter-box illustration
-`TAI-PROP-01_returned-letter-box.svg` is a project-authored story prop, not a
-photograph or historical artifact.
+`TAI-PROP-01_returned-letter-box.webp` was generated for this project through
+the QwenPaw Scene Agent with the `gc-minimal-zine-poster` skill. It is a story
+prop, not a photograph or historical artifact. The bitmap intentionally contains
+no words so the application can render all story text in the selected language.

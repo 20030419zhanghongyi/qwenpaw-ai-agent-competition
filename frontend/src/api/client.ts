@@ -65,6 +65,7 @@ export interface WeatherAdviceResponse {
   source?: {
     name?: string;
     url?: string;
+    issued_at?: string;
   } | null;
   fetched_at?: string | null;
 }
@@ -386,19 +387,30 @@ export interface GuidePhotoResponse {
   next_actions?: string[];
   error?: string | null;
   source?: string;
+  saved_to_memoir?: boolean;
+  memoir_id?: string | null;
+  memoir_photo_id?: string | null;
+  memoir_save_error?: string | null;
 }
 
 export async function recognizeGuidePhoto(args: {
   file: File;
   language: string;
+  tripId?: string | null;
+  poiId?: string | null;
+  token?: string | null;
 }): Promise<GuidePhotoResponse> {
   const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
   const form = new FormData();
   form.append("file", args.file);
-  const response = await fetch(
-    `${API_BASE}/api/v1/guide/photo?language=${encodeURIComponent(args.language)}`,
-    { method: "POST", body: form },
-  );
+  const query = new URLSearchParams({ language: args.language });
+  if (args.tripId) query.set("trip_id", args.tripId);
+  if (args.poiId) query.set("poi_id", args.poiId);
+  const response = await fetch(`${API_BASE}/api/v1/guide/photo?${query.toString()}`, {
+    method: "POST",
+    body: form,
+    headers: args.token ? { Authorization: `Bearer ${args.token}` } : undefined,
+  });
   if (!response.ok) {
     let detail = `${response.status} ${response.statusText}`;
     try {
