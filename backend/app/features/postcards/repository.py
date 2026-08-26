@@ -15,32 +15,45 @@ class PostcardRepository:
     def __init__(self, session_factory: Callable[[], Session] = SessionLocal) -> None:
         self._session_factory = session_factory
 
-    def get(self, postcard_id: str) -> Postcard | None:
+    def get(
+        self, postcard_id: str, *, artifact_kind: str = "postcard"
+    ) -> Postcard | None:
         with self._session_factory() as session:
             return session.scalar(
                 select(Postcard).where(
                     Postcard.id == postcard_id,
+                    Postcard.artifact_kind == artifact_kind,
                     Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
                 )
             )
 
-    def get_for_trip_poi(self, trip_id: str, poi_id: str) -> Postcard | None:
+    def get_for_trip_poi(
+        self,
+        trip_id: str,
+        poi_id: str,
+        *,
+        artifact_kind: str = "postcard",
+    ) -> Postcard | None:
         with self._session_factory() as session:
             return session.scalar(
                 select(Postcard).where(
                     Postcard.trip_id == trip_id,
                     Postcard.poi_id == poi_id,
+                    Postcard.artifact_kind == artifact_kind,
                     Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
                 )
             )
 
-    def list_by_trip(self, trip_id: str) -> list[Postcard]:
+    def list_by_trip(
+        self, trip_id: str, *, artifact_kind: str = "postcard"
+    ) -> list[Postcard]:
         with self._session_factory() as session:
             return list(
                 session.scalars(
                     select(Postcard)
                     .where(
                         Postcard.trip_id == trip_id,
+                        Postcard.artifact_kind == artifact_kind,
                         Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
                     )
                     .order_by(Postcard.stop_order, Postcard.created_at, Postcard.id)
@@ -55,6 +68,7 @@ class PostcardRepository:
                     select(Postcard)
                     .where(
                         Postcard.poi_id == poi_id,
+                        Postcard.artifact_kind == "postcard",
                         Postcard.photo_scrubbed.is_(False),
                         Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
                     )
@@ -70,11 +84,14 @@ class PostcardRepository:
             session.refresh(postcard)
             return postcard
 
-    def delete(self, postcard_id: str) -> bool:
+    def delete(
+        self, postcard_id: str, *, artifact_kind: str = "postcard"
+    ) -> bool:
         with self._session_factory() as session:
             record = session.scalar(
                 select(Postcard).where(
                     Postcard.id == postcard_id,
+                    Postcard.artifact_kind == artifact_kind,
                     Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
                 )
             )
@@ -84,12 +101,19 @@ class PostcardRepository:
             session.commit()
             return True
 
-    def delete_for_trip_poi(self, trip_id: str, poi_id: str) -> bool:
+    def delete_for_trip_poi(
+        self,
+        trip_id: str,
+        poi_id: str,
+        *,
+        artifact_kind: str = "postcard",
+    ) -> bool:
         with self._session_factory() as session:
             record = session.scalar(
                 select(Postcard).where(
                     Postcard.trip_id == trip_id,
                     Postcard.poi_id == poi_id,
+                    Postcard.artifact_kind == artifact_kind,
                     Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
                 )
             )

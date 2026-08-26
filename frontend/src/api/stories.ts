@@ -1,4 +1,5 @@
 import type {
+  FutureLetterResponse,
   StoryActionRequest,
   StoryActionResponse,
   StoryOverview,
@@ -8,7 +9,7 @@ import type { LanguageCode } from "@/types";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
-export type StoryApiErrorStatus = 401 | 403 | 404 | 409 | 422;
+export type StoryApiErrorStatus = 401 | 403 | 404 | 409 | 422 | 503;
 
 interface StoryErrorBody {
   detail?: unknown;
@@ -174,4 +175,60 @@ export function applyStoryAction(
     },
     token,
   );
+}
+
+export async function fetchFutureLetter(
+  sessionId: string,
+  token: string,
+): Promise<FutureLetterResponse | null> {
+  try {
+    return await request<FutureLetterResponse>(
+      `/api/v1/story-sessions/${encodeURIComponent(sessionId)}/future-letter`,
+      undefined,
+      token,
+    );
+  } catch (error) {
+    if (isStoryApiError(error, 404)) return null;
+    throw error;
+  }
+}
+
+export function generateFutureLetter(
+  sessionId: string,
+  token: string,
+  language: LanguageCode,
+): Promise<FutureLetterResponse> {
+  return request<FutureLetterResponse>(
+    `/api/v1/story-sessions/${encodeURIComponent(sessionId)}/future-letter${languageQuery(language)}`,
+    { method: "POST" },
+    token,
+  );
+}
+
+export async function fetchFutureLetterImage(
+  sessionId: string,
+  token: string,
+  language: LanguageCode,
+): Promise<Blob> {
+  const path = `/api/v1/story-sessions/${encodeURIComponent(sessionId)}/future-letter/image${languageQuery(language)}`;
+  const response = await fetch(`${API_BASE}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    const fallback = `${response.status} ${response.statusText}`.trim();
+    let body: StoryErrorBody | null = null;
+    try {
+      body = (await response.json()) as StoryErrorBody;
+    } catch {
+      // Preserve the HTTP status for non-JSON image errors.
+    }
+    throw new StoryApiError({
+      message: detailMessage(body?.detail, fallback),
+      status: response.status,
+      detail: body?.detail,
+      body,
+      path,
+    });
+  }
+  return response.blob();
 }

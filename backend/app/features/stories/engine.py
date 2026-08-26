@@ -26,6 +26,7 @@ class TransitionResult:
     hint: str | None = None
     new_clues: list[str] = field(default_factory=list)
     new_rewards: list[StoryReward] = field(default_factory=list)
+    message_key: str | None = None
     changed: bool = True
 
 
@@ -160,7 +161,12 @@ def apply_action(
         request.action == StoryAction.ARRIVE
         and request.chapter_id in story_session.state.arrived_chapter_ids
     ):
-        return TransitionResult(True, "已经确认到达当前地点", changed=False)
+        return TransitionResult(
+            True,
+            "已经确认到达当前地点",
+            message_key="arrival_confirmed",
+            changed=False,
+        )
     permitted = allowed_actions(story, story_session)
     if request.action not in permitted:
         raise InvalidStoryActionError(
@@ -169,7 +175,11 @@ def apply_action(
 
     if request.action == StoryAction.ARRIVE:
         _append_unique(story_session.state.arrived_chapter_ids, request.chapter_id)
-        return TransitionResult(True, "已到达当前剧情地点")
+        return TransitionResult(
+            True,
+            "已到达当前剧情地点",
+            message_key="arrival_confirmed",
+        )
 
     if chapter.get("poi_id"):
         _require_arrival(story_session, request.chapter_id)

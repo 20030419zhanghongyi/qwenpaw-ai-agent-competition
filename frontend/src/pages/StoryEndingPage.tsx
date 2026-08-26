@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import {
+  fetchFutureLetter,
+  fetchFutureLetterImage,
+  generateFutureLetter,
+  isStoryApiError,
+} from "@/api/stories";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { StoryImage } from "@/features/story/assets";
 import { ChapterRecapDialog } from "@/features/story/components/ChapterRecapDialog";
@@ -12,7 +18,8 @@ import { useStoryMessages } from "@/features/story/storyI18n";
 import { navigateBack } from "@/lib/backNavigation";
 import { useAuth } from "@/state/AuthContext";
 import { useStory, useStoryRestore } from "@/state/StoryContext";
-import type { StoryNodeOverview } from "@/types/stories";
+import { useWalk } from "@/state/WalkContext";
+import type { FutureLetterResponse, StoryNodeOverview } from "@/types/stories";
 
 export function StoryEndingPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -32,12 +39,23 @@ export function StoryEndingPage() {
     loadStory,
     submitAction,
   } = useStory();
+  const { language } = useWalk();
   const { sessionId: effectiveId } = useStoryRestore(sessionId);
   const st = useStoryMessages();
+  const futureLetterErrorMessage = (requestError: unknown): string => {
+    if (isStoryApiError(requestError, 503)) return st("futureLetterUnavailable");
+    if (isStoryApiError(requestError, 409)) return st("futureLetterConflict");
+    return requestError instanceof Error ? requestError.message : st("futureLetterError");
+  };
   const [reflection, setReflection] = useState("");
   const [viewerAssetId, setViewerAssetId] = useState<string | null>(null);
   const [agentOpen, setAgentOpen] = useState(false);
   const [summaryNode, setSummaryNode] = useState<StoryNodeOverview | null>(null);
+  const [futureLetter, setFutureLetter] = useState<FutureLetterResponse | null>(null);
+  const [futureLetterImageUrl, setFutureLetterImageUrl] = useState<string | null>(null);
+  const [futureLetterChecking, setFutureLetterChecking] = useState(false);
+  const [futureLetterGenerating, setFutureLetterGenerating] = useState(false);
+  const [futureLetterError, setFutureLetterError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isRestoring && !token) {
@@ -93,6 +111,38 @@ export function StoryEndingPage() {
   const isCompleted = session?.status === "completed";
   const isLotusStory = session?.story_id === "lotus_city_double_map";
   const isTaipaStory = session?.story_id === "taipa_letters";
+
+  useEffect(() => {
+    if (!isCompleted || !isTaipaStory || !session || !token) return;
+    let cancelled = false;
+    setFutureLetterChecking(true);
+    setFutureLetterError(null);
+    void fetchFutureLetter(session.session_id, token)
+      .then(async (letter) => {
+        if (!letter || cancelled) return;
+        const image = await fetchFutureLetterImage(session.session_id, token, language);
+        if (cancelled) return;
+        setFutureLetter(letter);
+        setFutureLetterImageUrl(URL.createObjectURL(image));
+      })
+      .catch((requestError: unknown) => {
+        if (!cancelled) setFutureLetterError(futureLetterErrorMessage(requestError));
+      })
+      .finally(() => {
+        if (!cancelled) setFutureLetterChecking(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isCompleted, isTaipaStory, language, session, token]);
+
+  useEffect(
+    () => () => {
+      if (futureLetterImageUrl) URL.revokeObjectURL(futureLetterImageUrl);
+    },
+    [futureLetterImageUrl],
+  );
+
   const petalCount =
     session?.state.rewards.filter((reward) => reward.kind === "note_petal").length ?? 0;
   const completionAgentContext = useMemo(
@@ -153,6 +203,22 @@ export function StoryEndingPage() {
       });
     } catch {
       // Structured context error remains visible and the draft is preserved.
+    }
+  };
+
+  const generateTaipaFutureLetter = async () => {
+    if (!session || !token || futureLetterGenerating) return;
+    setFutureLetterGenerating(true);
+    setFutureLetterError(null);
+    try {
+      const letter = await generateFutureLetter(session.session_id, token, language);
+      const image = await fetchFutureLetterImage(session.session_id, token, language);
+      setFutureLetter(letter);
+      setFutureLetterImageUrl(URL.createObjectURL(image));
+    } catch (requestError) {
+      setFutureLetterError(futureLetterErrorMessage(requestError));
+    } finally {
+      setFutureLetterGenerating(false);
     }
   };
 
@@ -236,25 +302,33 @@ export function StoryEndingPage() {
         />
 
         <div className="flex-1 px-4 pb-28 pt-4">
-          <StoryImage
-            assetId={
-              isLotusStory
-                ? "V4-FOR-09"
-                : isTaipaStory
-                  ? activeEndingAsset
-                  : "CAT-END-01"
-            }
-            alt={
-              isLotusStory
-                ? st("lotusSunsetAlt")
-                : isTaipaStory
-                  ? st("taipaFutureLetterAlt")
-                  : st("coloanePostcardAlt")
-            }
-            eager
-            onOpen={setViewerAssetId}
-            imageClassName="object-contain"
-          />
+          {isTaipaStory && futureLetterImageUrl ? (
+            <img
+              src={futureLetterImageUrl}
+              alt={st("taipaFutureLetterAlt")}
+              className="aspect-[9/16] w-full rounded-2xl border border-line bg-card object-contain shadow-[var(--shadow-soft)]"
+            />
+          ) : (
+            <StoryImage
+              assetId={
+                isLotusStory
+                  ? "V4-FOR-09"
+                  : isTaipaStory
+                    ? activeEndingAsset
+                    : "CAT-END-01"
+              }
+              alt={
+                isLotusStory
+                  ? st("lotusSunsetAlt")
+                  : isTaipaStory
+                    ? st("taipaFutureLetterAlt")
+                    : st("coloanePostcardAlt")
+              }
+              eager
+              onOpen={setViewerAssetId}
+              imageClassName="object-contain"
+            />
+          )}
 
           <section className="relative mt-4 rounded-3xl border border-line bg-paper p-5 text-center shadow-[var(--shadow-lift)]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ochre">
@@ -268,6 +342,60 @@ export function StoryEndingPage() {
                 st("noteBody")}
             </p>
           </section>
+
+          {isTaipaStory && (
+            <section
+              className="mt-4 rounded-2xl border border-sage-deep/25 bg-sage-deep/5 p-4"
+              aria-labelledby="future-letter-art-title"
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sage-deep">
+                {st("futureLetterArtwork")}
+              </p>
+              <h2 id="future-letter-art-title" className="mt-1 font-serif text-xl font-semibold">
+                {futureLetter ? st("futureLetterReadyTitle") : st("futureLetterGenerateTitle")}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-ink-soft">
+                {futureLetter
+                  ? st("futureLetterReadyBody")
+                  : st("futureLetterGenerateBody")}
+              </p>
+
+              {futureLetter?.reflection_truncated && (
+                <p className="mt-2 rounded-xl bg-ochre/10 px-3 py-2 text-xs leading-5 text-ink-soft">
+                  {st("futureLetterTruncated")}
+                </p>
+              )}
+
+              {futureLetterError && (
+                <p role="alert" className="mt-3 rounded-xl bg-clay/10 px-3 py-2 text-sm text-clay">
+                  {futureLetterError}
+                </p>
+              )}
+
+              {!futureLetter && (
+                <button
+                  type="button"
+                  onClick={() => void generateTaipaFutureLetter()}
+                  disabled={futureLetterChecking || futureLetterGenerating}
+                  className="mt-4 min-h-12 w-full rounded-full bg-sage-deep px-5 font-medium text-paper disabled:cursor-wait disabled:opacity-55"
+                >
+                  {futureLetterChecking
+                    ? st("futureLetterChecking")
+                    : futureLetterGenerating
+                      ? st("futureLetterGenerating")
+                      : futureLetterError
+                        ? st("futureLetterRetry")
+                        : st("futureLetterGenerate")}
+                </button>
+              )}
+
+              {futureLetter && (
+                <p className="mt-3 text-xs text-ink-soft">
+                  {st("futureLetterDisclosure")}
+                </p>
+              )}
+            </section>
+          )}
 
           <section className="mt-4 grid grid-cols-2 gap-3">
             <StoryImage

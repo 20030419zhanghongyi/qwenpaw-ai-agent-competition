@@ -87,14 +87,18 @@ class Postcard(Base):
         UniqueConstraint(
             "trip_id",
             "poi_id",
+            "artifact_kind",
             "render_version",
-            name="uq_postcards_trip_poi_version",
+            name="uq_postcards_trip_poi_kind_version",
         ),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_string)
     trip_id: Mapped[str] = mapped_column(ForeignKey("trips.id"), index=True, nullable=False)
     poi_id: Mapped[str] = mapped_column(String(128), index=True, nullable=False)
+    artifact_kind: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="postcard", server_default="postcard"
+    )
     stop_order: Mapped[int] = mapped_column(Integer, nullable=False)
     caption: Mapped[str] = mapped_column(Text, nullable=False)
     caption_source: Mapped[str] = mapped_column(String(32), nullable=False)
