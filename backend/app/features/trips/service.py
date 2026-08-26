@@ -160,6 +160,9 @@ class TripService:
             raise TripNotFoundError(f"Active trip not found for user: {user_id}")
         return self._with_progress(trip)
 
+    def claim_guest_trips(self, guest_user_id: str, user_id: str) -> int:
+        return self._repository.claim_guest_trips(guest_user_id, user_id)
+
     def check_in(self, trip_id: str, poi_id: str) -> TripWithProgressResponse:
         trip = self._repository.get_trip(trip_id)
         if trip is None:

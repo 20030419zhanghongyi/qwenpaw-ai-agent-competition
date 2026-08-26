@@ -65,6 +65,7 @@ export interface WeatherAdviceResponse {
   source?: {
     name?: string;
     url?: string;
+    issued_at?: string;
   } | null;
   fetched_at?: string | null;
 }

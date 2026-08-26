@@ -107,6 +107,8 @@ def test_login_unknown_email_returns_404():
         json={"email": "no-such@test.com", "password": TEST_PASSWORD},
     )
     assert response.status_code == 404
+    assert response.json()["detail"] == "account not found"
+    assert "no-such@test.com" not in response.text
 
 
 def test_login_issues_token():
@@ -128,7 +130,9 @@ def test_login_with_wrong_password_returns_404():
         "/api/v1/users/login",
         json={"email": "wrong-password@test.com", "password": "WrongPassword123!"},
     )
-    assert response.status_code == 404
+    assert response.status_code == 401
+    assert response.json()["detail"] == "incorrect password"
+    assert "wrong-password@test.com" not in response.text
 
 
 def test_phone_registration_and_login():

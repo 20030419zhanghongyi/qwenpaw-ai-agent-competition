@@ -1,0 +1,30 @@
+{
+  "environment": "local-development-only",
+  "notice": "Synthetic StoryWalk test credentials. Never reuse these credentials in staging or production.",
+  "backend_url": "http://127.0.0.1:8001",
+  "accounts": [
+    {
+      "id": "login-smoke-test",
+      "email": "grace@example.com",
+      "password": "StoryWalk123!",
+      "name": "Grace Test",
+      "language": "en",
+      "country": "MO",
+      "expected_login_status": 200
+    }
+  ],
+  "negative_cases": {
+    "incorrect_password": {
+      "email": "grace@example.com",
+      "password": "WrongPassword123!",
+      "expected_status": 401,
+      "expected_detail": "incorrect password"
+    },
+    "account_not_found": {
+      "email": "missing-storywalk@example.com",
+      "password": "StoryWalk123!",
+      "expected_status": 404,
+      "expected_detail": "account not found"
+    }
+  }
+}

@@ -50,6 +50,7 @@ def test_event_parser_matches_monthly_concert_date_range(monkeypatch):
 
 
 def test_weather_advice_recommends_umbrella_for_rainy_arrival(monkeypatch):
+    monkeypatch.setattr(live_context, "_fetch", lambda _url: None)
     monkeypatch.setattr(
         live_context,
         "_fetch_json",
@@ -77,6 +78,7 @@ def test_weather_advice_recommends_umbrella_for_rainy_arrival(monkeypatch):
 
 
 def test_weather_advice_degrades_when_forecast_unavailable(monkeypatch):
+    monkeypatch.setattr(live_context, "_fetch", lambda _url: None)
     monkeypatch.setattr(live_context, "_fetch_json", lambda _url, _params: None)
     live_context._cache.clear()
 
@@ -86,6 +88,49 @@ def test_weather_advice_degrades_when_forecast_unavailable(monkeypatch):
     assert advice["days"] == []
     assert advice["flags"]["umbrella"] is False
     assert "temporarily unavailable" in advice["advice"][0]
+
+
+def test_weather_advice_prefers_official_smg_forecast(monkeypatch):
+    official = """
+        <SevenDaysForecast>
+          <System><SysPubdate>2026-08-25 14:00</SysPubdate></System>
+          <Custom>
+            <WeatherForecast>
+              <ValidFor>2026-08-28</ValidFor>
+              <WeatherStatus>18</WeatherStatus>
+              <Temperature><Type>1</Type><Value>33</Value></Temperature>
+              <Temperature><Type>2</Type><Value>27</Value></Temperature>
+              <WeatherDescription>
+                Very hot. Cloudy apart from sunny periods. A few thundery showers later.
+              </WeatherDescription>
+            </WeatherForecast>
+            <IssuedTime>2026-08-25 14:00</IssuedTime>
+          </Custom>
+        </SevenDaysForecast>
+    """
+    monkeypatch.setattr(
+        live_context,
+        "_fetch",
+        lambda url: official if url == live_context.SMG_7DAY_FORECAST_URLS["en"] else None,
+    )
+    monkeypatch.setattr(
+        live_context,
+        "_fetch_json",
+        lambda _url, _params: pytest.fail("Open-Meteo should not run when SMG has the date"),
+    )
+    live_context._cache.clear()
+
+    advice = live_context.get_weather_advice("2026-08-28", trip_days=1, language="en")
+
+    assert advice["status"] == "ok"
+    assert advice["days"][0]["temperature_min_c"] == 27
+    assert advice["days"][0]["temperature_max_c"] == 33
+    assert advice["days"][0]["precipitation_probability_percent"] is None
+    assert "thundery showers later" in advice["days"][0]["condition"]
+    assert advice["flags"]["umbrella"] is True
+    assert advice["flags"]["indoor_backup"] is True
+    assert advice["source"]["name"] == "Macao Meteorological and Geophysical Bureau"
+    assert advice["source"]["issued_at"] == "2026-08-25 14:00"
 
 
 def test_crowd_advice_flags_mainland_golden_week(monkeypatch):
@@ -123,6 +168,7 @@ def test_crowd_advice_flags_official_concert_signal(monkeypatch):
 
 
 def test_live_travel_advice_returns_realtime_bundle(monkeypatch):
+    monkeypatch.setattr(live_context, "_fetch", lambda _url: None)
     monkeypatch.setattr(live_context, "_fetch_json", lambda _url, _params: None)
     monkeypatch.setattr(
         live_context,
@@ -155,6 +201,7 @@ def test_live_travel_advice_localizes_operational_notes(
     transport_text,
     opening_text,
 ):
+    monkeypatch.setattr(live_context, "_fetch", lambda _url: None)
     monkeypatch.setattr(live_context, "_fetch_json", lambda _url, _params: None)
     monkeypatch.setattr(
         live_context,

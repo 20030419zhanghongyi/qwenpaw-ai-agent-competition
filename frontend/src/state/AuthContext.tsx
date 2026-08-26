@@ -9,6 +9,7 @@ import {
 } from "react";
 import {
   AuthApiError,
+  claimGuestTrips,
   getCurrentUser,
   loginUser,
   registerUser,
@@ -18,6 +19,7 @@ import {
   adoptGuestInvitationState,
   clearInvitationSession,
 } from "@/story-discovery/invitationState";
+import { clearGuestUserId, readGuestUserId } from "@/lib/guestUser";
 import type { Preference } from "@/types";
 import type { LoginInput, RegisterInput, UserProfile } from "@/types/auth";
 
@@ -62,6 +64,18 @@ function errorMessage(error: unknown): string {
   return "请求失败，请稍后重试";
 }
 
+async function adoptGuestTrips(token: string): Promise<void> {
+  const guestUserId = readGuestUserId();
+  if (!guestUserId) return;
+  try {
+    await claimGuestTrips(token, guestUserId);
+    clearGuestUserId();
+  } catch (claimError) {
+    // Authentication should still succeed. Keep the guest id so a later restore can retry.
+    console.warn("Could not attach guest trips to the account", claimError);
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => readToken());
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -86,12 +100,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     setIsRestoring(true);
     void getCurrentUser(token)
-      .then(({ user: restoredUser }) => {
+      .then(async ({ user: restoredUser }) => {
         if (cancelled) return;
         if (!restoredUser) {
           logout();
           return;
         }
+        await adoptGuestTrips(token);
+        if (cancelled) return;
         setUser(restoredUser);
         setError(null);
       })
@@ -117,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await registerUser(input);
       adoptGuestInvitationState(response.user.user_id);
+      await adoptGuestTrips(response.token);
       writeToken(response.token);
       setToken(response.token);
       setUser(response.user);
@@ -134,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { user: currentUser } = await getCurrentUser(response.token);
       if (!currentUser) throw new Error("用户资料不存在");
       adoptGuestInvitationState(currentUser.user_id);
+      await adoptGuestTrips(response.token);
       writeToken(response.token);
       setToken(response.token);
       setUser(currentUser);
