@@ -16,6 +16,10 @@ class PoiResponse(BaseModel):
     source: str
     created_at: datetime
     updated_at: datetime
+    summary_zh_cn: str | None = None
+    summary_zh_tw: str | None = None
+    summary_en: str | None = None
+    summary_pt: str | None = None
 
 
 class NearbyPoiResponse(PoiResponse):

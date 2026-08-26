@@ -12,6 +12,10 @@ from xml.etree import ElementTree
 
 import httpx
 
+from app.features.pois.knowledge import get_operational_metadata
+
+from .transit_live import get_bus_operations
+
 SMG_CURRENT_WEATHER_URL = "https://www.smg.gov.mo/webdiss/c_actualweather_xml.php"
 SMG_7DAY_FORECAST_URLS = {
     "zh-CN": "https://xml.smg.gov.mo/c_7daysforecast.xml",
@@ -708,6 +712,8 @@ def get_live_travel_advice(
     *,
     trip_days: int | None = None,
     language: str = "zh-CN",
+    poi_ids: list[str] | None = None,
+    bus_routes: list[str] | None = None,
 ) -> dict[str, Any]:
     """Return the current live-consultation bundle for route planning."""
     weather = get_weather_advice(travel_date, trip_days=trip_days, language=language)
@@ -736,21 +742,18 @@ def get_live_travel_advice(
             "consulte o site oficial da atração antes de partir."
         ),
     }.get(language, "景点开放时间会因场馆和假期变动，出发前建议查询景点官方网站。")
+    transport = get_bus_operations(routes=bus_routes or [], language=language)
+    transport["notes"] = [transport_note]
+    transport["sources"] = [transport.pop("source")]
+    opening_hours = get_operational_metadata(poi_ids or [], language)
+    opening_hours["notes"] = [opening_hours_note]
     return {
         "travel_date": weather["travel_date"],
         "trip_days": weather["trip_days"],
         "weather": weather,
         "crowd": crowd,
-        "transport": {
-            "status": "advice-only",
-            "notes": [transport_note],
-            "sources": [],
-        },
-        "opening_hours": {
-            "status": "advice-only",
-            "notes": [opening_hours_note],
-            "sources": [],
-        },
+        "transport": transport,
+        "opening_hours": opening_hours,
     }
 
 

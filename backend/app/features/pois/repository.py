@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.db.models import Poi
 
 from .models import NearbyPoiResponse, PoiResponse
+from .knowledge import get_poi_summary
 
 # Route templates and existing clients still expose these stable business IDs.
 # The mapping is identifier compatibility only; all POI content is read from PostgreSQL.
@@ -65,6 +66,7 @@ class PoiRepository:
             source=record.source,
             created_at=record.created_at,
             updated_at=record.updated_at,
+            **get_poi_summary(record.poi_id),
         )
 
     def list_pois(

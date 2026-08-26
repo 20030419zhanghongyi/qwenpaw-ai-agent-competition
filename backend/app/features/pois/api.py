@@ -10,8 +10,23 @@ from app.db.session import get_db
 
 from .models import NearbyPoiResponse, PoiResponse
 from .service import PoiNotFoundError, PoiService
+from .knowledge import get_knowledge_subgraph, get_operational_metadata
 
 router = APIRouter(prefix="/api/v1/pois", tags=["pois"])
+
+
+@router.get("/knowledge-graph", summary="Get the cultural knowledge subgraph for POIs")
+def knowledge_graph(poi_ids: str = "") -> dict:
+    return get_knowledge_subgraph([item for item in poi_ids.split(",") if item])
+
+
+@router.get("/opening-hours", summary="Get fixed, source-verified opening schedules")
+def opening_hours(poi_ids: str = "", language: str = "zh-CN") -> dict:
+    """Return the versioned backend registry; this endpoint performs no live scraping."""
+    return get_operational_metadata(
+        [item for item in poi_ids.split(",") if item],
+        language,
+    )
 
 
 @router.get(

@@ -842,6 +842,15 @@ function LiveAdvicePanel({
     firstDay?.precipitation_probability_percent != null
       ? `${Math.round(firstDay.precipitation_probability_percent)}%`
       : null;
+  const changedRoutes = advice.transport.alerts?.map((item) => item.route) ?? [];
+  const transportNote = changedRoutes.length
+    ? {
+        "zh-CN": `交通事务局实时资料显示 ${changedRoutes.length} 条线路有调整：${changedRoutes.slice(0, 8).join("、")}。请在出发前展开对应线路确认暂停站点。`,
+        "zh-TW": `交通事務局即時資料顯示 ${changedRoutes.length} 條路線有調整：${changedRoutes.slice(0, 8).join("、")}。請在出發前展開對應路線確認暫停站點。`,
+        en: `Live DSAT data shows changes on ${changedRoutes.length} routes: ${changedRoutes.slice(0, 8).join(", ")}. Check the relevant route before departure.`,
+        pt: `Os dados em tempo real da DSAT indicam alterações em ${changedRoutes.length} carreiras: ${changedRoutes.slice(0, 8).join(", ")}. Confirme a carreira antes de partir.`,
+      }[language]
+    : advice.transport.notes[0];
 
   return (
     <div className="mt-4 rounded-2xl border border-sage/30 bg-sage/5 p-4">
@@ -904,7 +913,8 @@ function LiveAdvicePanel({
       <div className="mt-4 grid gap-3 border-t border-sage/20 pt-4 sm:grid-cols-2">
         <OfficialLinkPanel
           title={t(language, "transportTitle")}
-          note={advice.transport.notes[0]}
+          note={transportNote}
+          source={advice.transport.sources[0]}
           language={language}
         />
         <OfficialLinkPanel
