@@ -6,6 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.agents.photo_agent import PhotoRecognition
+from app.core.security import create_access_token
 from app.features.guide import api as guide_api
 from app.features.guide import tts as guide_tts
 from app.features.intent import api as intent_api
@@ -65,6 +66,53 @@ def test_photo_high_confidence_keeps_identified_result(monkeypatch):
     assert response.status_code == 200
     assert response.json()["recognition_status"] == "identified"
     assert response.json()["candidate_poi"] == "大三巴牌坊"
+
+
+def test_identified_photo_is_scrubbed_and_saved_to_current_trip_memoir(monkeypatch):
+    user_id = "guide-photo-memoir-user"
+    created = client.post(
+        "/api/v1/trips",
+        json={"user_id": user_id, "route_id": "photo_halfday"},
+    )
+    assert created.status_code == 201, created.text
+    trip = created.json()["trip"]
+    poi_id = trip["stop_poi_ids"][0]
+    checkin = client.post(
+        f"/api/v1/trips/{trip['trip_id']}/checkins",
+        json={"poi_id": poi_id},
+    )
+    assert checkin.status_code == 200, checkin.text
+
+    monkeypatch.setattr(guide_api.settings, "photo_agent_enabled", True)
+    monkeypatch.setattr(guide_api, "scrub", lambda _raw: b"scrubbed-image")
+    monkeypatch.setattr(
+        guide_api.photo_agent,
+        "recognize",
+        lambda *_args, **_kwargs: PhotoRecognition(
+            description="recognized landmark",
+            candidate_poi="大三巴牌坊",
+            confidence=0.9,
+        ),
+    )
+    monkeypatch.setattr(guide_api, "_explain", lambda *_args, **_kwargs: None)
+    headers = {"Authorization": f"Bearer {create_access_token(user_id)}"}
+    response = client.post(
+        f"/api/v1/guide/photo?trip_id={trip['trip_id']}&poi_id={poi_id}&language=en",
+        files={"file": ("photo.jpg", b"raw-image", "image/jpeg")},
+        headers=headers,
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["saved_to_memoir"] is True
+    assert payload["memoir_id"]
+    assert payload["memoir_photo_id"]
+    stored = client.get(
+        f"/api/v1/memoirs/{payload['memoir_id']}/photos/{payload['memoir_photo_id']}",
+        headers=headers,
+    )
+    assert stored.status_code == 200
+    assert stored.content == b"scrubbed-image"
 
 
 def test_tts_contract_uses_fixed_voice_and_no_object_key(monkeypatch):

@@ -29,9 +29,16 @@ from sqlalchemy.orm import Session
 
 from app.agents import guide_agent, photo_agent
 from app.core.config import settings
+from app.core.security import optional_user_id
 from app.db.session import get_db
 from app.features.pois.models import NearbyPoiResponse
 from app.features.pois.service import PoiService
+from app.features.memoirs.models import MemoirCreateRequest
+from app.features.memoirs.service import (
+    MemoirError,
+    MemoirNotFoundError,
+    memoir_service,
+)
 from app.features.review.api import review_text
 from app.guardrails.runtime import rate_limit, record_audit, sanitize_untrusted_text
 from app.observability.trace import record_trace
@@ -827,6 +834,9 @@ def trigger(
 async def photo(
     file: UploadFile = File(..., description="用户在澳门街头拍的照片（jpeg/png/webp，≤8MB）"),
     language: str = Query("zh-CN", description="描述/讲解语言：zh-CN/zh-TW/en/pt"),
+    trip_id: str | None = Query(default=None, description="当前登录用户的行程 ID"),
+    poi_id: str | None = Query(default=None, description="Guide 当前 POI ID"),
+    user_id: str | None = Depends(optional_user_id),
 ) -> dict:
     """拍照 → 这是啥 + 讲解（photo agent 看图；guide agent 讲解，未启用则 explanation=null）。"""
     if not settings.photo_agent_enabled:
@@ -883,6 +893,38 @@ async def photo(
     if explanation and (explanation.get("text") or "").strip():
         explanation["text"], photo_review = _apply_review(explanation["text"], path="photo")
 
+    saved_to_memoir = False
+    memoir_id = None
+    memoir_photo_id = None
+    memoir_save_error = None
+    if not uncertain and user_id and trip_id and poi_id:
+        try:
+            try:
+                memoir = memoir_service.get_by_trip(trip_id, user_id)
+            except MemoirNotFoundError:
+                memoir = memoir_service.create(
+                    trip_id,
+                    user_id,
+                    MemoirCreateRequest(style="diary", language=language),
+                )
+            saved_photo = memoir_service.add_photo(
+                memoir.memoir_id,
+                user_id,
+                data=scrubbed,
+                filename=f"guide-{poi_id}.jpg",
+                content_type="image/jpeg",
+                poi_id=poi_id,
+                # Guide cannot reliably infer whether a blurred face was present.
+                # Keep these photos private in shared memoirs by default.
+                has_people=True,
+            )
+            saved_to_memoir = True
+            memoir_id = memoir.memoir_id
+            memoir_photo_id = saved_photo.photo_id
+        except MemoirError as exc:
+            memoir_save_error = str(exc)
+            logger.info("Guide photo was recognized but not saved to memoir: %s", exc)
+
     record_trace(
         kind="guide.photo",
         status=status,
@@ -914,6 +956,10 @@ async def photo(
         "low_confidence_hint": low_confidence_hint,
         "next_actions": next_actions,
         "manual_selection_endpoint": "/api/v1/pois?q=<keyword>",
+        "saved_to_memoir": saved_to_memoir,
+        "memoir_id": memoir_id,
+        "memoir_photo_id": memoir_photo_id,
+        "memoir_save_error": memoir_save_error,
     }
 
 

@@ -62,6 +62,39 @@ def test_create_memoir_uses_checkin_order_and_is_idempotent():
     assert repeated.json()["memoir_id"] == body["memoir_id"]
 
 
+def test_existing_memoir_adds_later_checkins_without_overwriting_chapters():
+    trip = _checked_in_trip()
+    created = client.post(
+        f"/api/v1/trips/{trip['trip_id']}/memoir",
+        json={"style": "diary", "language": "en"},
+        headers=_headers(),
+    ).json()
+    first = {**created["chapters"][0], "personal_note": "keep this note"}
+    updated = client.put(
+        f"/api/v1/memoirs/{created['memoir_id']}",
+        json={"chapters": [first]},
+        headers=_headers(),
+    )
+    assert updated.status_code == 200, updated.text
+
+    next_poi = next(
+        poi_id for poi_id in trip["stop_poi_ids"] if poi_id not in trip["checked_in_poi_ids"]
+    )
+    checked_in = client.post(
+        f"/api/v1/trips/{trip['trip_id']}/checkins",
+        json={"poi_id": next_poi},
+    )
+    assert checked_in.status_code == 200, checked_in.text
+
+    refreshed = client.get(
+        f"/api/v1/memoirs/{created['memoir_id']}", headers=_headers()
+    )
+    assert refreshed.status_code == 200, refreshed.text
+    chapters = refreshed.json()["chapters"]
+    assert [chapter["poi_id"] for chapter in chapters] == trip["checked_in_poi_ids"] + [next_poi]
+    assert chapters[0]["personal_note"] == "keep this note"
+
+
 def test_share_privacy_filters_people_date_route_and_notes_then_revokes():
     trip = _checked_in_trip()
     created = client.post(

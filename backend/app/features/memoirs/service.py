@@ -124,6 +124,34 @@ class MemoirService:
             result.append(chapter)
         return result
 
+    def _sync_checked_in_chapters(self, record: TravelMemoir) -> TravelMemoir:
+        """Append newly checked-in POIs without overwriting edited memoir chapters."""
+        trip = trip_repository.get_trip(record.trip_id)
+        if trip is None:
+            raise MemoirNotFoundError("Trip not found")
+        existing_ids = {chapter.get("poi_id") for chapter in (record.chapters or [])}
+        missing_ids = [poi_id for poi_id in trip.checked_in_poi_ids if poi_id not in existing_ids]
+        if not missing_ids:
+            return record
+
+        with SessionLocal() as session:
+            poi_map = PoiRepository(session).get_by_ids(missing_ids)
+        copy = self._copy(record.language)
+        chapters = list(record.chapters or [])
+        for poi_id in missing_ids:
+            order = trip.checked_in_poi_ids.index(poi_id)
+            name = poi_map[poi_id].poi_name if poi_id in poi_map else poi_id
+            chapters.append(
+                MemoirChapter(
+                    poi_id=poi_id,
+                    poi_name=name,
+                    stop_order=order,
+                    body=copy[record.style].format(name=name, number=order + 1),
+                ).model_dump()
+            )
+        updated = memoir_repository.update(record.id, {"chapters": chapters})
+        return self._owned(updated, record.user_id)
+
     def _response(self, record: TravelMemoir) -> MemoirResponse:
         trip = trip_repository.get_trip(record.trip_id)
         if trip is None:
@@ -164,7 +192,8 @@ class MemoirService:
             raise MemoirValidationError("At least one check-in is required")
         existing = memoir_repository.get_by_trip(trip_id)
         if existing is not None:
-            return self._response(self._owned(existing, user_id))
+            owned = self._owned(existing, user_id)
+            return self._response(self._sync_checked_in_chapters(owned))
 
         with SessionLocal() as session:
             poi_map = PoiRepository(session).get_by_ids(trip.checked_in_poi_ids)
@@ -196,13 +225,16 @@ class MemoirService:
         return self._response(record)
 
     def get_by_trip(self, trip_id: str, user_id: str) -> MemoirResponse:
-        return self._response(self._owned(memoir_repository.get_by_trip(trip_id), user_id))
+        record = self._owned(memoir_repository.get_by_trip(trip_id), user_id)
+        return self._response(self._sync_checked_in_chapters(record))
 
     def get(self, memoir_id: str, user_id: str) -> MemoirResponse:
-        return self._response(self._owned(memoir_repository.get(memoir_id), user_id))
+        record = self._owned(memoir_repository.get(memoir_id), user_id)
+        return self._response(self._sync_checked_in_chapters(record))
 
     def update(self, memoir_id: str, user_id: str, request: MemoirUpdateRequest) -> MemoirResponse:
         record = self._owned(memoir_repository.get(memoir_id), user_id)
+        record = self._sync_checked_in_chapters(record)
         values = request.model_dump(exclude_unset=True)
         if "chapters" in values:
             values["chapters"] = [
@@ -221,6 +253,7 @@ class MemoirService:
         content_type: str, poi_id: str | None, has_people: bool,
     ) -> MemoirPhotoResponse:
         record = self._owned(memoir_repository.get(memoir_id), user_id)
+        record = self._sync_checked_in_chapters(record)
         allowed = {"image/jpeg", "image/png", "image/webp"}
         if content_type not in allowed:
             raise MemoirValidationError("Only JPEG, PNG, and WebP photos are supported")

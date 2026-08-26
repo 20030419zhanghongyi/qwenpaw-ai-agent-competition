@@ -48,6 +48,20 @@ def require_user_id(
     return user_id
 
 
+def optional_user_id(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
+) -> str | None:
+    """Return the authenticated user when supplied, while allowing guest requests."""
+    if credentials is None:
+        return None
+    if credentials.scheme.lower() != "bearer":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid bearer token")
+    user_id = decode_access_token(credentials.credentials)
+    if user_id is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid or expired token")
+    return user_id
+
+
 def hash_password(password: str) -> str:
     """Hash a plaintext password with bcrypt."""
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
