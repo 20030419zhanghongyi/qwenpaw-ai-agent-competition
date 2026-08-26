@@ -4,7 +4,7 @@
     "version": 4,
     "title": "海風寄來的信",
     "subtitle": "沿著氹仔舊城的海風，替五封沒有收件人的信找回時代與歸處",
-    "summary": "你與阿蓮在氹仔舊城打開一隻虛構的退信盒。盒中五封信來自不同的生活背景，卻都遺失了地址。你們將走過北帝廟、嘉模聖母堂、龍環葡韻、益隆炮竹廠舊址和官也街，從信仰、居住、勞動與街巷日常留下的痕跡裡，為每封信找回屬於它的時代與地方。",
+    "summary": "你與阿蓮在氹仔舊城打開一隻滿載歲月痕跡的退信盒。盒中五封信都遺失了地址，只在信封上留下海、鐘、家、工、街五枚標籤。你們將走過北帝廟、嘉模聖母堂、龍環葡韻、益隆炮竹廠舊址和官也街，從信仰、居住、勞動與街巷日常留下的痕跡裏，為每封信找回屬於它的時代與地方。",
     "route_id": "taipa_hotspot_halfday",
     "estimated_hours": 4,
     "product_mode": "mobile_portrait_web",
@@ -17,9 +17,9 @@
     "identity": {
       "id": "returned_letter_keeper",
       "name": "退信盒保管人",
-      "description": "你不必證明一段並不存在的私人家史。你的任務，是藉現場觀察和公開資料，為五封情境復原信找回合適的時代與地方。"
+      "description": "你要循着海、鐘、家、工、街五枚標籤，在今日氹仔仍看得見、聽得到的線索裏，為五封退信找回時代與歸處。"
     },
-    "content_notice": "退信盒、全部寫信人、信件內容、寄送關係與未來信均為劇情虛構。故事涉及的建築年代、產業、宗教和社區背景依策劃所列公開資料整理；知識卡會分別標註史實、民間信俗、情境復原與劇情虛構。官也街相關任務不會採用未經核實的‘最早’或‘第一家’說法。",
+    "content_notice": "故事中的地點與歷史背景依據公開資料整理，人物和信件採用情境復原。知識卡會分別標註史實、民間信俗與劇情創作；官也街相關任務不採用未經核實的「最早」或「第一家」說法。",
     "content_labels": {
       "historical_fact": "史實",
       "folklore": "民間信俗／地方記憶",
@@ -69,10 +69,10 @@
         "kind": "prologue",
         "title": "序章：沒有收件人的信",
         "story_time": "10:00",
-        "scene": "上午十點，氹仔舊城的街聲漸漸熱起來。你的手機屏幕上忽然彈出一隻舊信盒：盒裏的五封信都寫着氹仔，卻沒有一封知道今天該寄往哪裏。",
+        "scene": "上午十點，氹仔舊城的街聲漸漸熱起來。手機輕輕一震，一隻舊退信盒在屏幕上緩緩打開。五封信疊在裏面，地址欄一片空白，信封上卻分別寫着：海、鐘、家、工、街。",
         "time_layer": {
           "period": "今日氹仔與多個歷史時期",
-          "focus": "先弄清信件的虛構邊界，再從現場與公開資料中尋找它們的地址"
+          "focus": "從五枚標籤出發，在現場與公開資料中尋找信件的時代與地址"
         },
         "letter_fragment": {
           "title": "退信盒說明",
@@ -88,14 +88,14 @@
         ],
         "interaction": {
           "type": "letter_box_opening",
-          "instruction": "讀完退信盒上的說明，先確認這五封信既不屬於同一家族，也不是真實的私人檔案。",
+          "instruction": "打開退信盒，讀一讀五枚標籤，再選出最先可以循跡尋找的那封信。",
           "safety": "路氹歷史館是否開放，請以當日官方信息為準；即使不進入場館，也能繼續故事。"
         },
         "arrival_comic": [
           {
             "asset_id": "TAI-PROP-01",
             "alt": "一隻裝著五封無地址信件的舊退信盒",
-            "caption": "盒裏裝著五段失去地址的生活。退信盒與信件均為劇情道具，並非真實文物。"
+            "caption": "盒蓋吱呀一聲彈開，五封沒有地址的信安靜地疊在一起，等着有人認出它們要去的地方。"
           }
         ],
         "dialogue": [
@@ -103,35 +103,47 @@
             "id": "taipa-prologue-dialogue-01",
             "speaker_id": "player",
             "speaker": "玩家",
-            "text": "沒有一封寫著完整地址，信封上只有五個字：海、鐘、家、工、街。"
+            "text": "海、鐘、家、工、街……地址欄全是空的，信封上只剩這五個字。"
           },
           {
             "id": "taipa-prologue-dialogue-02",
             "speaker_id": "alian",
             "speaker": "阿蓮",
             "portrait_asset_id": "V4-CHAR-01",
-            "text": "先說清楚，它們不是真正被發現的家書，只是從幾種生活背景出發寫成的情境復原信。"
+            "text": "那就別急着一次拆完。先挑一封，看看它最先讓你想到氹仔的哪裏。"
           },
           {
             "id": "taipa-prologue-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "我選「海」。紙上反覆寫着風向、水路，還有一盞留給歸船的燈。"
+          },
+          {
+            "id": "taipa-prologue-dialogue-04",
             "speaker_id": "alian",
             "speaker": "阿蓮",
             "portrait_asset_id": "V4-CHAR-02",
-            "text": "所以我們不替陌生人編家譜，只替信裏的生活找回它該在的時代和地方。"
+            "text": "歸船、風向、燈火……我想到北帝廟。舊時靠海生活的人，總有些盼望要託給水和風。"
+          },
+          {
+            "id": "taipa-prologue-dialogue-05",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "好，就從廟前開始。先替第一封信試出一個地址。"
           }
         ],
         "knowledge_cards": [
           {
             "kind": "fictional_story",
             "title": "退信盒與寫信人",
-            "text": "退信盒、五封信和全部寫信人都出自劇情創作，不能把它們當作真實檔案或家族史。",
+            "text": "退信盒、五封信和全部寫信人都出自劇情創作，用來串聯氹仔不同年代的生活背景，不對應真實檔案或家族史。",
             "source_label": "Story Package 劇情設定",
             "confidence": "high"
           },
           {
             "kind": "contextual_reconstruction",
             "title": "情境復原信",
-            "text": "這些信借真實的建築、產業、宗教和社區背景，想像普通人的生活視角，但不能代替史料。",
+            "text": "這些信借真實的建築、產業、宗教和社區背景，想像普通人的生活視角。信中的人物與經歷屬於創作，地點年代等事實則以知識卡來源為準。",
             "source_label": "策劃中的敘事邊界",
             "confidence": "high"
           }
@@ -185,7 +197,7 @@
         "story_time": "10:30",
         "location_name": "北帝廟",
         "poi_id": "poi_0100",
-        "scene": "第一封信裡，水聲、風向和歸航被寫了一遍又一遍。站在廟前，你漸漸明白：它等待的並不是某個可考的姓名，而是一段許多海島人都曾熟悉的生活。",
+        "scene": "第一封信裏，水聲、風向和歸航被寫了一遍又一遍。站在廟前，風從街巷穿過來，信紙上那盞遲遲不滅的燈，忽然有了海島生活的溫度。",
         "time_layer": {
           "period": "一座擁有至少160年歷史的廟宇與昔日漁民社區",
           "focus": "從海島生活與北帝信仰中，理解人們對平安歸航的願望"
@@ -222,16 +234,29 @@
         "dialogue": [
           {
             "id": "taipa-sea-dialogue-01",
-            "speaker_id": "alian",
-            "speaker": "阿蓮",
-            "portrait_asset_id": "V4-CHAR-02",
-            "text": "先別急著把信當真。廟的歷史可以查，等船的人卻只活在這張信紙上。"
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "這封信把風向寫了又寫。等船的人，真的會這樣反覆看風嗎？"
           },
           {
             "id": "taipa-sea-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "如果家裏有人靠水路吃飯，風就不只是景色，還是船能不能回來的一條消息。"
+          },
+          {
+            "id": "taipa-sea-dialogue-03",
             "speaker_id": "player",
             "speaker": "玩家",
-            "text": "明白了。水、風和歸航能幫我讀懂那時的生活，卻不能證明真有這樣一個寫信人。"
+            "text": "難怪燈要一直留着。那北帝廟和這份等待，又是怎樣連起來的？"
+          },
+          {
+            "id": "taipa-sea-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "看看廟的歷史，也看看從前住在這裏的人。兩條線索放在一起，你就會讀到一座海島對平安歸航的盼望。"
           }
         ],
         "knowledge_cards": [
@@ -379,14 +404,27 @@
             "id": "taipa-bell-dialogue-01",
             "speaker_id": "player",
             "speaker": "玩家",
-            "text": "原來廟宇和教堂可以同時留在一座島上，不必非要寫成誰取代了誰。"
+            "text": "站在這裏回頭看，北帝廟那邊的街聲彷彿還在，坡上卻響着另一種鐘聲。"
           },
           {
             "id": "taipa-bell-dialogue-02",
             "speaker_id": "alian",
             "speaker": "阿蓮",
             "portrait_asset_id": "V4-CHAR-03",
-            "text": "對。守住能查清的年代和地點，就能看見不同社區怎樣在這裏並存。"
+            "text": "同一座島，不同社區有各自相聚的地方。它們不必把彼此的聲音蓋住。"
+          },
+          {
+            "id": "taipa-bell-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "所以信裏那句「島的另一邊也有人循着自己的日子相聚」，不是要把兩邊分開。"
+          },
+          {
+            "id": "taipa-bell-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "是要讓你把兩邊都看見。先找出教堂的年代，再看看它在氹仔的社區空間裏處在甚麼位置。"
           }
         ],
         "knowledge_cards": [
@@ -532,13 +570,33 @@
             "speaker_id": "alian",
             "speaker": "阿蓮",
             "portrait_asset_id": "V4-CHAR-02",
-            "text": "先別只看顏色和風格。問問這些房子從前供誰居住，裡面的空間又是怎樣使用的。"
+            "text": "你走近以後，第一眼看見了甚麼？"
           },
           {
             "id": "taipa-home-dialogue-02",
             "speaker_id": "player",
             "speaker": "玩家",
-            "text": "要把房子的用途、住過的人和日常空間放在一起，我才真正看見這裡曾經是家。"
+            "text": "薄荷色的外牆。它太醒目了，我差點只顧着看顏色。"
+          },
+          {
+            "id": "taipa-home-dialogue-03",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-03",
+            "text": "如果把顏色換掉，這裏還會像一處家嗎？"
+          },
+          {
+            "id": "taipa-home-dialogue-04",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "會。門怎樣開，房間怎樣相連，桌椅和舊物放在哪裏——這些都在說人曾經怎樣住。"
+          },
+          {
+            "id": "taipa-home-dialogue-05",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "那就別替房子貼一個風格標籤。把用途、居住背景和生活空間串起來，看看它怎樣先成為家，後來才成為今天的景點。"
           }
         ],
         "knowledge_cards": [
@@ -694,16 +752,35 @@
         "dialogue": [
           {
             "id": "taipa-work-dialogue-01",
-            "speaker_id": "alian",
-            "speaker": "阿蓮",
-            "portrait_asset_id": "V4-CHAR-01",
-            "text": "如果只講當年的興旺，這封信就少了一半。勞動、風險和一家人的收入，本來就是連在一起的。"
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "這封信真短。只寫了上工、收好工錢，還有一句「回家再說」。"
           },
           {
             "id": "taipa-work-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "趕着工時的人，未必有空把一天寫得很長。越是省下來的字，越要慢一點讀。"
+          },
+          {
+            "id": "taipa-work-dialogue-03",
             "speaker_id": "player",
             "speaker": "玩家",
-            "text": "所以信裏的工人可以是虛構的，但行業怎樣興起、又怎樣停下來，這些都能查清。"
+            "text": "「把工錢仔細收好」是在惦記家裏；「一段一段走」又像是在提醒自己小心。"
+          },
+          {
+            "id": "taipa-work-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-03",
+            "text": "所以只講產業有多興旺，還讀不完這封信。工房裏的風險、手裏的收入和家裏的日子，本來就牽在一起。"
+          },
+          {
+            "id": "taipa-work-dialogue-05",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "明白了。我得把行業的年代、眼前的遺址和居民的生活放回同一幅圖裏。"
           }
         ],
         "knowledge_cards": [
@@ -867,14 +944,33 @@
             "id": "taipa-street-dialogue-01",
             "speaker_id": "player",
             "speaker": "玩家",
-            "text": "我可以寫下今天看到的街道，卻不能因為一種食物有名，就順手替它編出一個起源。"
+            "text": "這封信的地址應該最好找吧？官也街到處都是招牌和味道。"
           },
           {
             "id": "taipa-street-dialogue-02",
             "speaker_id": "alian",
             "speaker": "阿蓮",
             "portrait_asset_id": "V4-CHAR-03",
-            "text": "正是這樣。把此刻看見的語言、建築和日常記下來，已經足夠寫成一封街信。"
+            "text": "也可能最容易寫錯。一個地方越有名，「第一家」、「最早做」的故事就越容易被順手加上去。"
+          },
+          {
+            "id": "taipa-street-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "那我不替它追一個說不清的起點，只寫今天親眼看見的，可以嗎？"
+          },
+          {
+            "id": "taipa-street-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "當然。街道每天都在變化，此刻的樣子也值得被認真記下來。"
+          },
+          {
+            "id": "taipa-street-dialogue-05",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "那就從不同語言的招牌、舊建築的細節，還有不打擾別人的日常開始。"
           }
         ],
         "knowledge_cards": [
@@ -985,7 +1081,7 @@
         "story_time": "16:20",
         "location_name": "氹仔舊城公共空間",
         "poi_id": "poi_0104",
-        "scene": "五封信終於各自找回了地址，卻依然沒有真正的收件人。直到這時你才明白，退信盒收集的從來不是同一家人的歷史，而是不同時代的人如何生活，又如何理解『家』。",
+        "scene": "五封信終於各自找回了地址。你把它們依次排開：海風、鐘聲、門窗、工房與街巷，像五種不同的生活，在同一隻盒子裏輕輕碰到了一起。可退信盒仍沒有合上，裏面還留着一頁沒有收件人的空白信紙。",
         "time_layer": {
           "period": "從多段生活史到未來",
           "focus": "把海信、鐘信、家信、工信與街信放在一起，寫一封寄往未來的信"
@@ -1019,21 +1115,40 @@
             "id": "taipa-ending-dialogue-01",
             "speaker_id": "player",
             "speaker": "玩家",
-            "text": "原來它們並不屬於同一個家族，只是在反覆問同一件事：什麼才算是家。"
+            "text": "五封信都有地址了，為甚麼退信盒還沒有合上？"
           },
           {
             "id": "taipa-ending-dialogue-02",
             "speaker_id": "alian",
             "speaker": "阿蓮",
             "portrait_asset_id": "V4-CHAR-01",
-            "text": "氹仔沒有從地圖上挪開，可海岸變了，工作變了，住在這裡的人也一代代換過。"
+            "text": "因為你一路替它們找的是地方。再想想看，有哪一封真的只是在寫一個地方？"
           },
           {
             "id": "taipa-ending-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "海信等歸航，鐘信記相聚，家信留着一扇門，工信牽着生計，街信裝下每天的日常……它們都在寫人怎樣生活。"
+          },
+          {
+            "id": "taipa-ending-dialogue-04",
             "speaker_id": "alian",
             "speaker": "阿蓮",
             "portrait_asset_id": "V4-CHAR-03",
-            "text": "也許家從來不是永遠不變的地方，而是變化以後，仍有人願意記得它曾怎樣生活。"
+            "text": "也都在問同一件事：海岸、工作和住在這裏的人都變過，甚麼還讓人願意把這裏叫作家？"
+          },
+          {
+            "id": "taipa-ending-dialogue-05",
+            "speaker_id": "player",
+            "speaker": "玩家",
+            "text": "那最後一封不該寄回過去。它應該寄給還沒有見過今天氹仔的人。"
+          },
+          {
+            "id": "taipa-ending-dialogue-06",
+            "speaker_id": "alian",
+            "speaker": "阿蓮",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "正好。空白頁留給你——寫一句希望未來仍有人記得的話。"
           }
         ],
         "knowledge_cards": [
@@ -1116,7 +1231,7 @@
     "version": 4,
     "title": "Sea Breeze Letters",
     "subtitle": "Follow the sea breeze through Taipa's Old Town to find the era and destination for five letters with no recipients.",
-    "summary": "You and A Lin open a fictional returned-letter box in Taipa Old Town. Inside, five letters from different walks of life have all lost their addresses. You will walk through Pak Tai Temple, Our Lady of Carmel Church, Taipa Houses, the former I Long Firecracker Factory, and Rua do Cunha. From the traces left by faith, dwelling, labor, and everyday street life, you will restore each letter to its proper era and place.",
+    "summary": "You and A Lin open a returned-letter box marked by time in old Taipa. All five letters have lost their addresses, leaving only five labels on the envelopes: sea, bell, home, work, and street. You will visit Pak Tai Temple, Our Lady of Carmel Church, the Taipa Houses, the former Iec Long Firecracker Factory, and Rua do Cunha, using traces of belief, home life, labor, and everyday streets to restore each letter's time and place.",
     "route_id": "taipa_hotspot_halfday",
     "estimated_hours": 4,
     "product_mode": "mobile_portrait_web",
@@ -1129,9 +1244,9 @@
     "identity": {
       "id": "returned_letter_keeper",
       "name": "Returned Letter Box Keeper",
-      "description": "You don't need to prove a private family history that never existed. Your task is to use on-site observation and public information to find the correct era and place for the five contextual-reconstruction letters."
+      "description": "Follow the five labels—sea, bell, home, work, and street—and use clues still visible and audible in Taipa today to restore the time and destination of five returned letters."
     },
-    "content_notice": "The returned-letter box, all letter writers, letter contents, delivery relationships, and the future letter are fictional plot elements. The architectural dates, industries, religions, and community backgrounds in the story are compiled from public materials listed in the plan. Knowledge cards will respectively label historical fact, folk belief, contextual reconstruction, and fictional story. Tasks related to Rua do Cunha will not adopt unverified 'earliest' or 'first' claims.",
+    "content_notice": "The places and historical background are based on public sources; the characters and letters are contextual reconstructions. Knowledge cards distinguish historical facts, folk belief, and story creation. The Rua do Cunha task does not use unverified 'first' or 'oldest' claims.",
     "content_labels": {
       "historical_fact": "Historical fact",
       "folklore": "Folk belief / local memory",
@@ -1181,10 +1296,10 @@
         "kind": "prologue",
         "title": "Prologue: Letters with No Recipient",
         "story_time": "10:00",
-        "scene": "At ten in the morning, the street sounds of Taipa's old town gradually warm up. A weathered letter box suddenly pops up on your phone screen: the five letters inside are all inscribed with 'Taipa,' yet none of them knows where it should be sent today.",
+        "scene": "At ten in the morning, old Taipa is growing louder. Your phone gives a soft buzz and an old returned-letter box slowly opens on screen. Five letters are stacked inside. Their address lines are blank, but their envelopes read: sea, bell, home, work, and street.",
         "time_layer": {
           "period": "Today's Taipa and multiple historical periods",
-          "focus": "First determine the fictional boundaries of the letters, then search on-site and in public materials for their addresses."
+          "focus": "Start from the five labels and use the site and public sources to find each letter's time and address"
         },
         "letter_fragment": {
           "title": "Returned Letter Box Note",
@@ -1200,50 +1315,62 @@
         ],
         "interaction": {
           "type": "letter_box_opening",
-          "instruction": "After reading the note on the returned letter box, first confirm that these five letters are neither from the same family nor real private archives.",
+          "instruction": "Open the returned-letter box, read the five labels, and choose the first letter whose trail you can follow.",
           "safety": "Whether the Taipa and Coloane Historical Museum is open depends on the day's official information; you can continue the story even if you do not enter the venue."
         },
         "arrival_comic": [
           {
             "asset_id": "TAI-PROP-01",
             "alt": "An old returned letter box containing five unaddressed letters.",
-            "caption": "The box holds five lives that have lost their addresses. The returned letter box and the letters are story props, not real artifacts."
+            "caption": "The lid creaks open. Five unaddressed letters lie quietly together, waiting for someone to recognize where they belong."
           }
         ],
         "dialogue": [
           {
             "id": "taipa-prologue-dialogue-01",
             "speaker_id": "player",
-            "speaker": "You",
-            "text": "Not one has a complete address; there are only five words on the envelope: Sea, Bell, Home, Work, Street."
+            "speaker": "Visitor",
+            "text": "Sea, bell, home, work, street... every address line is blank. Only these five words remain."
           },
           {
             "id": "taipa-prologue-dialogue-02",
             "speaker_id": "alian",
             "speaker": "A Lin",
             "portrait_asset_id": "V4-CHAR-01",
-            "text": "First, to be clear: they are not real discovered family letters; they are contextual reconstruction letters written from several life backgrounds."
+            "text": "Then don't open them all at once. Pick one and see which part of Taipa it brings to mind first."
           },
           {
             "id": "taipa-prologue-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Visitor",
+            "text": "I'll choose 'sea.' It keeps mentioning wind direction, waterways, and a lamp left burning for a returning boat."
+          },
+          {
+            "id": "taipa-prologue-dialogue-04",
             "speaker_id": "alian",
             "speaker": "A Lin",
             "portrait_asset_id": "V4-CHAR-02",
-            "text": "So we don't invent family histories for strangers; we only help the lives in the letters return to the era and place where they belong."
+            "text": "Returning boats, wind, lamplight... I think of Pak Tai Temple. People who once lived by the sea entrusted some hopes to the water and wind."
+          },
+          {
+            "id": "taipa-prologue-dialogue-05",
+            "speaker_id": "player",
+            "speaker": "Visitor",
+            "text": "All right. Let's begin in front of the temple and test an address for the first letter."
           }
         ],
         "knowledge_cards": [
           {
             "kind": "fictional_story",
             "title": "The Returned Letter Box and the Letter Writers",
-            "text": "The returned letter box, the five letters, and all the letter writers are from fictional creation; they must not be treated as real archives or family histories.",
+            "text": "The returned-letter box, all five letters, and every writer are fictional devices connecting everyday life in Taipa across different periods. They do not represent real archives or a family history.",
             "source_label": "Story Package: Fictional Setting",
             "confidence": "high"
           },
           {
             "kind": "contextual_reconstruction",
             "title": "Contextual Reconstruction Letters",
-            "text": "These letters imagine the perspectives of ordinary people using real buildings, industries, religions, and community backgrounds, but they cannot replace historical records.",
+            "text": "The letters imagine ordinary lives through real buildings, industries, religions, and community settings. Their characters and experiences are fictional; dates and places follow the sources cited on the knowledge cards.",
             "source_label": "Narrative boundaries in the creative plan",
             "confidence": "high"
           }
@@ -1297,7 +1424,7 @@
         "story_time": "10:30",
         "location_name": "Pak Tai Temple",
         "poi_id": "poi_0100",
-        "scene": "In the first letter, the sound of water, the wind direction, and the return voyage were written over and over. Standing in front of the temple, you gradually come to understand: it is not waiting for a name that can be verified, but for a way of life once familiar to many island dwellers.",
+        "scene": "The first letter repeats the sounds of water, wind direction, and a hoped-for return. As you stand before the temple, wind passes through the lanes. The lamp that refuses to go out on the page suddenly carries the warmth of island life.",
         "time_layer": {
           "period": "A temple with at least 160 years of history and a former fishing community",
           "focus": "Understanding people's wish for a safe homecoming through island life and Pak Tai worship"
@@ -1334,16 +1461,29 @@
         "dialogue": [
           {
             "id": "taipa-sea-dialogue-01",
-            "speaker_id": "alian",
-            "speaker": "A Lin",
-            "portrait_asset_id": "V4-CHAR-02",
-            "text": "Don't rush to take the letter as real. The temple's history can be verified, but the person waiting for the boat lives only on this piece of letter paper."
+            "speaker_id": "player",
+            "speaker": "Visitor",
+            "text": "This letter notes the wind again and again. Would someone waiting for a boat really watch it that closely?"
           },
           {
             "id": "taipa-sea-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "If someone at home made a living on the water, wind was more than scenery. It was news of whether the boat could return."
+          },
+          {
+            "id": "taipa-sea-dialogue-03",
             "speaker_id": "player",
-            "speaker": "You",
-            "text": "I see. Water, wind, and the homeward voyage can help me understand the life of that time, but they cannot prove that such a letter writer really existed."
+            "speaker": "Visitor",
+            "text": "No wonder the lamp stays lit. How are Pak Tai Temple and that waiting connected?"
+          },
+          {
+            "id": "taipa-sea-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "Look at the temple's history and at the people who once lived here. Put those clues together and you will see an island community's hope for safe return."
           }
         ],
         "knowledge_cards": [
@@ -1490,15 +1630,28 @@
           {
             "id": "taipa-bell-dialogue-01",
             "speaker_id": "player",
-            "speaker": "You",
-            "text": "So temples and churches can remain together on the same island; it doesn't have to be written as one replacing the other."
+            "speaker": "Visitor",
+            "text": "Looking back from here, I can almost still hear the streets near Pak Tai Temple, while a different bell sounds on the hill."
           },
           {
             "id": "taipa-bell-dialogue-02",
             "speaker_id": "alian",
             "speaker": "A Lin",
             "portrait_asset_id": "V4-CHAR-03",
-            "text": "Yes. Hold on to the dates and places that can be verified, and you can see how different communities coexist here."
+            "text": "Different communities on the same island had their own places to gather. Their voices did not have to drown each other out."
+          },
+          {
+            "id": "taipa-bell-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Visitor",
+            "text": "So when the letter says that people on the other side of the island gathered to the rhythm of their own days, it is not dividing the two sides."
+          },
+          {
+            "id": "taipa-bell-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "It asks you to see both. First find the church's period, then consider where it sits within Taipa's community spaces."
           }
         ],
         "knowledge_cards": [
@@ -1644,13 +1797,33 @@
             "speaker_id": "alian",
             "speaker": "A Lin",
             "portrait_asset_id": "V4-CHAR-02",
-            "text": "Don't just look at colors and style. Ask who lived in these houses and how the spaces inside were used."
+            "text": "What is the first thing you notice as you approach?"
           },
           {
             "id": "taipa-home-dialogue-02",
             "speaker_id": "player",
-            "speaker": "You",
-            "text": "Only by putting together the buildings' use, the people who lived there, and the everyday spaces do I truly see that this was once a home."
+            "speaker": "Visitor",
+            "text": "The mint-green walls. They are so striking that I nearly looked at nothing but the color."
+          },
+          {
+            "id": "taipa-home-dialogue-03",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-03",
+            "text": "If the color changed, would this still feel like a home?"
+          },
+          {
+            "id": "taipa-home-dialogue-04",
+            "speaker_id": "player",
+            "speaker": "Visitor",
+            "text": "Yes. The way doors open, rooms connect, and furniture and belongings are arranged all show how people once lived."
+          },
+          {
+            "id": "taipa-home-dialogue-05",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "Then don't reduce the houses to a style label. Connect their use, residents, and domestic spaces, and see how they were homes before becoming today's attraction."
           }
         ],
         "knowledge_cards": [
@@ -1806,16 +1979,35 @@
         "dialogue": [
           {
             "id": "taipa-work-dialogue-01",
-            "speaker_id": "alian",
-            "speaker": "A Lin",
-            "portrait_asset_id": "V4-CHAR-01",
-            "text": "If we only talk about the prosperity of those days, this letter would be missing half. Labour, risk, and a family's income were always bound together."
+            "speaker_id": "player",
+            "speaker": "Visitor",
+            "text": "This letter is very short. It only mentions starting work, putting the wages away, and 'we'll talk at home.'"
           },
           {
             "id": "taipa-work-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "Someone racing against a work shift may not have time to describe the whole day. The fewer the words, the more slowly we should read them."
+          },
+          {
+            "id": "taipa-work-dialogue-03",
             "speaker_id": "player",
-            "speaker": "You",
-            "text": "So the worker in the letter can be fictional, but how the industry rose and how it stopped—those can be verified."
+            "speaker": "Visitor",
+            "text": "'Put the wages away carefully' shows concern for home, while 'walk one section at a time' sounds like a reminder to be careful."
+          },
+          {
+            "id": "taipa-work-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-03",
+            "text": "That is why prosperity alone cannot finish the letter. Workshop risks, earnings, and family life were tied together."
+          },
+          {
+            "id": "taipa-work-dialogue-05",
+            "speaker_id": "player",
+            "speaker": "Visitor",
+            "text": "I understand. I need to place the industry's period, the ruins before me, and residents' lives back in the same picture."
           }
         ],
         "knowledge_cards": [
@@ -1978,15 +2170,34 @@
           {
             "id": "taipa-street-dialogue-01",
             "speaker_id": "player",
-            "speaker": "You",
-            "text": "I can write about the street as it looks today, but I can't just invent an origin for a food just because it's famous."
+            "speaker": "Visitor",
+            "text": "This address should be easiest to find, shouldn't it? Rua do Cunha is full of signs and aromas."
           },
           {
             "id": "taipa-street-dialogue-02",
             "speaker_id": "alian",
             "speaker": "A Lin",
             "portrait_asset_id": "V4-CHAR-03",
-            "text": "Exactly. Recording the languages, architecture, and daily life seen at this moment is enough to write a street letter."
+            "text": "It may also be the easiest to get wrong. The more famous a place becomes, the easier it is to add stories about the 'first shop' or the 'oldest recipe.'"
+          },
+          {
+            "id": "taipa-street-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Visitor",
+            "text": "Then can I leave aside an uncertain origin and write only what I see today?"
+          },
+          {
+            "id": "taipa-street-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "Of course. Streets change every day, and their present appearance deserves careful attention too."
+          },
+          {
+            "id": "taipa-street-dialogue-05",
+            "speaker_id": "player",
+            "speaker": "Visitor",
+            "text": "Then I'll begin with signs in different languages, details of older buildings, and everyday life observed without disturbing anyone."
           }
         ],
         "knowledge_cards": [
@@ -2097,7 +2308,7 @@
         "story_time": "16:20",
         "location_name": "Taipa Old Town Public Space",
         "poi_id": "poi_0104",
-        "scene": "The five letters finally found their addresses, yet still had no true recipients. Only then did you understand that the returned-letter box had never collected the history of one family, but rather how people of different eras lived and how they understood 'home'.",
+        "scene": "All five letters have found addresses. You arrange them in order: sea breeze, bells, doors and windows, workshops, and streets—five kinds of life lightly touching inside one box. Yet the box remains open, holding one blank page with no recipient.",
         "time_layer": {
           "period": "From multiple life histories to the future",
           "focus": "Bring together the Sea Letter, Bell Letter, Home Letter, Work Letter, and Street Letter to write a letter addressed to the future"
@@ -2130,22 +2341,41 @@
           {
             "id": "taipa-ending-dialogue-01",
             "speaker_id": "player",
-            "speaker": "You",
-            "text": "So they didn't belong to the same family; they were just repeatedly asking the same question: what counts as home?"
+            "speaker": "Visitor",
+            "text": "All five letters have addresses now. Why hasn't the box closed?"
           },
           {
             "id": "taipa-ending-dialogue-02",
             "speaker_id": "alian",
             "speaker": "A Lin",
             "portrait_asset_id": "V4-CHAR-01",
-            "text": "Taipa hasn't moved off the map, but the coastline has changed, the work has changed, and the people living here have changed generation after generation."
+            "text": "Because you have been finding places for them. Think again: was any letter really only about a place?"
           },
           {
             "id": "taipa-ending-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Visitor",
+            "text": "The sea letter waits for a return, the bell letter remembers gathering, the home letter keeps a door, the work letter carries a livelihood, and the street letter holds daily life... They all describe how people live."
+          },
+          {
+            "id": "taipa-ending-dialogue-04",
             "speaker_id": "alian",
             "speaker": "A Lin",
             "portrait_asset_id": "V4-CHAR-03",
-            "text": "Perhaps home has never been a place that stays the same forever, but after change, there are still people willing to remember how it once lived."
+            "text": "And all ask the same question: when the coast, work, and residents have changed, what still makes people willing to call this home?"
+          },
+          {
+            "id": "taipa-ending-dialogue-05",
+            "speaker_id": "player",
+            "speaker": "Visitor",
+            "text": "Then the last letter should not go back to the past. It should go to someone who has not yet seen the Taipa of today."
+          },
+          {
+            "id": "taipa-ending-dialogue-06",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "Exactly. The blank page is yours. Write one thing you hope someone will still remember in the future."
           }
         ],
         "knowledge_cards": [
@@ -2228,7 +2458,7 @@
     "version": 4,
     "title": "Cartas enviadas pela brisa do mar",
     "subtitle": "Seguindo a brisa do mar pela cidade velha da Taipa, devolver a época e o destino a cinco cartas sem destinatário",
-    "summary": "Tu e a A Lin abrem uma caixa fictícia de cartas devolvidas na cidade velha da Taipa. As cinco cartas na caixa vêm de diferentes contextos de vida, mas todas perderam o endereço. Percorrerão o Templo de Pak Tai, a Igreja de Nossa Senhora do Carmo, as Casas da Taipa, o antigo recinto da Fábrica de Panchões I Long e a Rua do Cunha; a partir dos vestígios deixados pela fé, pela habitação, pelo trabalho e pelo quotidiano das ruas, encontrarão para cada carta a sua época e o seu lugar.",
+    "summary": "Você e A Lin abrem, na Taipa antiga, uma caixa de correio devolvido marcada pelo tempo. As cinco cartas perderam o endereço e conservam apenas cinco etiquetas nos envelopes: mar, sino, casa, trabalho e rua. Passará pelo Templo de Pak Tai, Igreja de Nossa Senhora do Carmo, Casas da Taipa, antiga Fábrica de Panchões Iec Long e Rua do Cunha, usando vestígios de crença, habitação, trabalho e vida quotidiana para devolver a cada carta o seu tempo e lugar.",
     "route_id": "taipa_hotspot_halfday",
     "estimated_hours": 4,
     "product_mode": "mobile_portrait_web",
@@ -2241,9 +2471,9 @@
     "identity": {
       "id": "returned_letter_keeper",
       "name": "Guardião da Caixa de Cartas Devolvidas",
-      "description": "Não precisas de provar uma história familiar privada que não existe. A tua tarefa é, através da observação no local e de informações públicas, devolver a época e o lugar adequados às cinco cartas de reconstituição contextual."
+      "description": "Siga as cinco etiquetas—mar, sino, casa, trabalho e rua—e use pistas ainda visíveis e audíveis na Taipa de hoje para devolver tempo e destino às cinco cartas."
     },
-    "content_notice": "A caixa de cartas devolvidas, todos os escritores, o conteúdo das cartas, as relações de envio e as cartas do futuro são ficção da história. As datas dos edifícios, indústrias, religiões e contextos comunitários envolvidos na história foram organizadas com base em informações públicas listadas na planificação; os cartões de conhecimento distinguirão separadamente factos históricos, crença popular, reconstituição contextual e ficção da história. As tarefas relacionadas com a Rua do Cunha não utilizarão alegações não verificadas de «o mais antigo» ou «a primeira».",
+    "content_notice": "Os lugares e o contexto histórico baseiam-se em fontes públicas; as personagens e cartas são reconstruções contextuais. Os cartões distinguem factos históricos, crença popular e criação narrativa. A tarefa da Rua do Cunha não usa alegações não verificadas de 'primeiro' ou 'mais antigo'.",
     "content_labels": {
       "historical_fact": "Facto histórico",
       "folklore": "Crença popular / Memória local",
@@ -2293,10 +2523,10 @@
         "kind": "prologue",
         "title": "Prólogo: A carta sem destinatário",
         "story_time": "10:00",
-        "scene": "Dez horas da manhã, os sons das ruas da Taipa vão ficando mais vivos. No ecrã do seu telemóvel aparece subitamente uma caixa de cartas antiga: as cinco cartas dentro têm todas escrito 'Taipa', mas nenhuma sabe para onde deve ser enviada hoje.",
+        "scene": "Às dez da manhã, as ruas da Taipa antiga começam a ganhar som. O telemóvel vibra suavemente e uma velha caixa de correio devolvido abre-se devagar no ecrã. Cinco cartas estão empilhadas lá dentro. Os endereços estão em branco, mas os envelopes dizem: mar, sino, casa, trabalho e rua.",
         "time_layer": {
           "period": "A Taipa de hoje e vários períodos históricos",
-          "focus": "Primeiro, perceber a fronteira ficcional das cartas e, depois, procurar os seus endereços no local e nos materiais públicos."
+          "focus": "Partir das cinco etiquetas e procurar no local e em fontes públicas o tempo e o endereço de cada carta"
         },
         "letter_fragment": {
           "title": "Instruções da caixa de devolução",
@@ -2312,50 +2542,62 @@
         ],
         "interaction": {
           "type": "letter_box_opening",
-          "instruction": "Depois de ler as instruções na caixa de devolução, confirme primeiro que estas cinco cartas não são da mesma família, nem arquivos privados reais.",
+          "instruction": "Abra a caixa, leia as cinco etiquetas e escolha primeiro a carta cujo rasto consegue seguir.",
           "safety": "Quanto à abertura do Museu da História da Taipa e de Coloane, siga as informações oficiais do dia; mesmo sem entrar no museu, pode continuar a história."
         },
         "arrival_comic": [
           {
             "asset_id": "TAI-PROP-01",
             "alt": "Uma caixa de devolução antiga com cinco cartas sem endereço",
-            "caption": "A caixa contém cinco vidas que perderam o endereço. A caixa e as cartas são adereços da história, não artefactos reais."
+            "caption": "A tampa abre-se com um rangido. Cinco cartas sem endereço aguardam, em silêncio, que alguém reconheça o seu destino."
           }
         ],
         "dialogue": [
           {
             "id": "taipa-prologue-dialogue-01",
             "speaker_id": "player",
-            "speaker": "Você",
-            "text": "Nenhuma está endereçada por completo; no envelope estão apenas cinco palavras: mar, sino, casa, trabalho, rua."
+            "speaker": "Visitante",
+            "text": "Mar, sino, casa, trabalho, rua... todos os endereços estão em branco. Só restam estas cinco palavras."
           },
           {
             "id": "taipa-prologue-dialogue-02",
             "speaker_id": "alian",
             "speaker": "A Lin",
             "portrait_asset_id": "V4-CHAR-01",
-            "text": "Deixe-me esclarecer: não são cartas de família verdadeiras descobertas; são apenas cartas de reconstituição situacional, escritas a partir de vários contextos de vida."
+            "text": "Então não as abra todas de uma vez. Escolha uma e veja que lugar da Taipa lhe vem primeiro à cabeça."
           },
           {
             "id": "taipa-prologue-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Visitante",
+            "text": "Escolho 'mar'. O texto repete a direção do vento, as vias de água e uma luz deixada acesa para o regresso de um barco."
+          },
+          {
+            "id": "taipa-prologue-dialogue-04",
             "speaker_id": "alian",
             "speaker": "A Lin",
             "portrait_asset_id": "V4-CHAR-02",
-            "text": "Por isso, não inventamos genealogias para estranhos; apenas devolvemos às vidas das cartas a época e o lugar que lhes cabem."
+            "text": "Barcos de regresso, vento, luz... penso no Templo de Pak Tai. Quem vivia do mar confiava certas esperanças à água e ao vento."
+          },
+          {
+            "id": "taipa-prologue-dialogue-05",
+            "speaker_id": "player",
+            "speaker": "Visitante",
+            "text": "Está bem. Comecemos diante do templo e procuremos um endereço para a primeira carta."
           }
         ],
         "knowledge_cards": [
           {
             "kind": "fictional_story",
             "title": "A caixa de devolução e os autores das cartas",
-            "text": "A caixa de devolução, as cinco cartas e todos os autores das cartas são criações da história; não os trate como arquivos reais ou história de família.",
+            "text": "A caixa, as cinco cartas e todos os remetentes são elementos ficcionais que ligam formas de vida da Taipa em épocas diferentes. Não correspondem a arquivos reais nem a uma história familiar.",
             "source_label": "Story Package (definição da história)",
             "confidence": "high"
           },
           {
             "kind": "contextual_reconstruction",
             "title": "Cartas de reconstituição de situação",
-            "text": "Estas cartas usam o contexto real de edifícios, indústrias, religiões e comunidades para imaginar a perspetiva de vida de pessoas comuns, mas não substituem fontes históricas.",
+            "text": "As cartas imaginam vidas comuns através de edifícios, indústrias, religiões e comunidades reais. As personagens e experiências são ficcionais; datas e lugares seguem as fontes citadas nos cartões.",
             "source_label": "Limite narrativo do planeamento",
             "confidence": "high"
           }
@@ -2409,7 +2651,7 @@
         "story_time": "10:30",
         "location_name": "Templo de Pak Tai",
         "poi_id": "poi_0100",
-        "scene": "Na primeira carta, o som da água, a direção do vento e o regresso da navegação foram escritos vezes sem conta. Em frente ao templo, Você começa a perceber: o que ele espera não é um nome verificável, mas uma vida que muitos ilhéus conheceram.",
+        "scene": "A primeira carta repete os sons da água, a direção do vento e o regresso esperado. Diante do templo, o vento atravessa as ruelas. A luz que não se apaga no papel ganha de repente o calor da vida insular.",
         "time_layer": {
           "period": "Um templo com pelo menos 160 anos de história e a antiga comunidade piscatória",
           "focus": "Compreender o desejo das pessoas por um regresso seguro, através da vida insular e da fé em Pak Tai"
@@ -2446,16 +2688,29 @@
         "dialogue": [
           {
             "id": "taipa-sea-dialogue-01",
-            "speaker_id": "alian",
-            "speaker": "A Lin",
-            "portrait_asset_id": "V4-CHAR-02",
-            "text": "Não se apresse em levar a carta a sério. A história do templo pode ser verificada, mas a pessoa que espera o barco só vive nestas folhas de papel."
+            "speaker_id": "player",
+            "speaker": "Visitante",
+            "text": "Esta carta fala do vento repetidamente. Quem esperava um barco observava-o mesmo com tanta atenção?"
           },
           {
             "id": "taipa-sea-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "Se alguém da família vivia das vias de água, o vento não era apenas paisagem. Era notícia de que o barco podia ou não regressar."
+          },
+          {
+            "id": "taipa-sea-dialogue-03",
             "speaker_id": "player",
-            "speaker": "Você",
-            "text": "Percebo. A água, o vento e o regresso da navegação ajudam-me a compreender a vida daquela época, mas não provam que tenha existido realmente tal remetente."
+            "speaker": "Visitante",
+            "text": "Agora percebo por que a luz fica acesa. Como se ligam o Templo de Pak Tai e esta espera?"
+          },
+          {
+            "id": "taipa-sea-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "Veja a história do templo e quem vivia aqui. Junte as duas pistas e encontrará a esperança de uma comunidade insular num regresso seguro."
           }
         ],
         "knowledge_cards": [
@@ -2602,15 +2857,28 @@
           {
             "id": "taipa-bell-dialogue-01",
             "speaker_id": "player",
-            "speaker": "Você",
-            "text": "Afinal, templos e igrejas podem coexistir numa ilha, sem que seja preciso escrever que um substituiu o outro."
+            "speaker": "Visitante",
+            "text": "Olhando para trás, quase ainda ouço as ruas perto do Templo de Pak Tai, enquanto outro sino toca na colina."
           },
           {
             "id": "taipa-bell-dialogue-02",
             "speaker_id": "alian",
             "speaker": "A Lin",
             "portrait_asset_id": "V4-CHAR-03",
-            "text": "Sim. Ao manter as datas e lugares que podem ser verificados, vemos como diferentes comunidades coexistem aqui."
+            "text": "Na mesma ilha, comunidades diferentes tinham os seus próprios lugares de encontro. Uma voz não precisava de abafar a outra."
+          },
+          {
+            "id": "taipa-bell-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Visitante",
+            "text": "Então a frase sobre pessoas que se reuniam ao ritmo dos seus dias do outro lado da ilha não pretende separar os dois lados."
+          },
+          {
+            "id": "taipa-bell-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "Pretende que veja ambos. Primeiro descubra a época da igreja e depois observe a posição dela nos espaços comunitários da Taipa."
           }
         ],
         "knowledge_cards": [
@@ -2756,13 +3024,33 @@
             "speaker_id": "alian",
             "speaker": "A Lin",
             "portrait_asset_id": "V4-CHAR-02",
-            "text": "Não olhes primeiro só para as cores e estilos. Pergunta para quem serviam estas casas no passado e como eram usados os seus espaços."
+            "text": "O que vê primeiro quando se aproxima?"
           },
           {
             "id": "taipa-home-dialogue-02",
             "speaker_id": "player",
-            "speaker": "Você",
-            "text": "Se juntar a utilização das casas, as pessoas que nelas viveram e os espaços do quotidiano, só então vejo verdadeiramente que aqui houve um lar."
+            "speaker": "Visitante",
+            "text": "As paredes verde-menta. São tão marcantes que quase só reparei na cor."
+          },
+          {
+            "id": "taipa-home-dialogue-03",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-03",
+            "text": "Se a cor mudasse, isto ainda pareceria uma casa?"
+          },
+          {
+            "id": "taipa-home-dialogue-04",
+            "speaker_id": "player",
+            "speaker": "Visitante",
+            "text": "Sim. A forma como as portas abrem, os quartos se ligam e os móveis e objetos estão dispostos mostra como aqui se vivia."
+          },
+          {
+            "id": "taipa-home-dialogue-05",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "Então não reduza as casas a um estilo. Ligue uso, moradores e espaços domésticos para perceber como foram casas antes de se tornarem a atração atual."
           }
         ],
         "knowledge_cards": [
@@ -2918,16 +3206,35 @@
         "dialogue": [
           {
             "id": "taipa-work-dialogue-01",
-            "speaker_id": "alian",
-            "speaker": "A Lin",
-            "portrait_asset_id": "V4-CHAR-01",
-            "text": "Se falarmos apenas da prosperidade daquela época, esta carta fica a faltar metade. O trabalho, os riscos e o rendimento de uma família estão, desde sempre, ligados uns aos outros."
+            "speaker_id": "player",
+            "speaker": "Visitante",
+            "text": "Esta carta é muito curta. Só fala de começar o turno, guardar o salário e 'falamos em casa'."
           },
           {
             "id": "taipa-work-dialogue-02",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "Quem corre contra o horário de trabalho talvez não tenha tempo para descrever o dia inteiro. Quanto menos palavras, mais devagar devemos lê-las."
+          },
+          {
+            "id": "taipa-work-dialogue-03",
             "speaker_id": "player",
-            "speaker": "Você",
-            "text": "Portanto, o trabalhador da carta pode ser fictício, mas como a indústria surgiu e como parou, isso pode ser investigado."
+            "speaker": "Visitante",
+            "text": "'Guarda bem o salário' mostra preocupação com a família; 'anda um troço de cada vez' parece lembrar prudência."
+          },
+          {
+            "id": "taipa-work-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-03",
+            "text": "Por isso, falar apenas da prosperidade não termina a carta. Os riscos da fábrica, o rendimento e a vida familiar estavam ligados."
+          },
+          {
+            "id": "taipa-work-dialogue-05",
+            "speaker_id": "player",
+            "speaker": "Visitante",
+            "text": "Percebo. Tenho de colocar a época da indústria, as ruínas diante de mim e a vida dos moradores na mesma imagem."
           }
         ],
         "knowledge_cards": [
@@ -3090,15 +3397,34 @@
           {
             "id": "taipa-street-dialogue-01",
             "speaker_id": "player",
-            "speaker": "Você",
-            "text": "Posso escrever a rua que vejo hoje, mas não posso, só porque uma comida é famosa, inventar-lhe uma origem."
+            "speaker": "Visitante",
+            "text": "Este endereço deve ser o mais fácil, não? A Rua do Cunha está cheia de letreiros e aromas."
           },
           {
             "id": "taipa-street-dialogue-02",
             "speaker_id": "alian",
             "speaker": "A Lin",
             "portrait_asset_id": "V4-CHAR-03",
-            "text": "Exatamente. Anotar as línguas, a arquitetura e o quotidiano que agora se veem já chega para escrever uma carta da rua."
+            "text": "Também pode ser o mais fácil de escrever mal. Quanto mais famoso é um lugar, mais facilmente surgem histórias sobre a 'primeira loja' ou a 'receita mais antiga'."
+          },
+          {
+            "id": "taipa-street-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Visitante",
+            "text": "Então posso deixar de lado uma origem incerta e escrever apenas o que vejo hoje?"
+          },
+          {
+            "id": "taipa-street-dialogue-04",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-02",
+            "text": "Claro. As ruas mudam todos os dias, e a sua aparência atual também merece atenção."
+          },
+          {
+            "id": "taipa-street-dialogue-05",
+            "speaker_id": "player",
+            "speaker": "Visitante",
+            "text": "Começarei pelos letreiros em línguas diferentes, os pormenores dos edifícios antigos e a vida quotidiana observada sem incomodar ninguém."
           }
         ],
         "knowledge_cards": [
@@ -3209,7 +3535,7 @@
         "story_time": "16:20",
         "location_name": "Espaço Público do Centro Antigo da Taipa",
         "poi_id": "poi_0104",
-        "scene": "As cinco cartas encontraram finalmente os seus endereços, mas continuam sem um destinatário verdadeiro. Só então você compreendeu que a caixa de devoluções nunca recolheu a história de uma mesma família, mas sim como pessoas de diferentes épocas viveram e como entenderam «casa».",
+        "scene": "As cinco cartas finalmente recuperaram os seus endereços. Você dispõe-as em ordem: brisa do mar, sinos, portas e janelas, oficinas e ruas—cinco formas de vida que se tocam levemente dentro da mesma caixa. Mas a caixa continua aberta e guarda uma página em branco sem destinatário.",
         "time_layer": {
           "period": "De várias histórias de vida ao futuro",
           "focus": "Juntando a carta do mar, a carta do relógio, a carta da família, a carta do trabalho e a carta da rua, escrever uma carta enviada ao futuro."
@@ -3242,22 +3568,41 @@
           {
             "id": "taipa-ending-dialogue-01",
             "speaker_id": "player",
-            "speaker": "Você",
-            "text": "Afinal, elas não pertenciam à mesma família; apenas faziam repetidamente a mesma pergunta: o que é que se pode chamar casa?"
+            "speaker": "Visitante",
+            "text": "As cinco cartas já têm endereço. Por que razão a caixa ainda não fechou?"
           },
           {
             "id": "taipa-ending-dialogue-02",
             "speaker_id": "alian",
             "speaker": "A Lin",
             "portrait_asset_id": "V4-CHAR-01",
-            "text": "A Taipa não saiu do mapa, mas a costa mudou, o trabalho mudou, e as pessoas que aqui viveram foram substituídas geração após geração."
+            "text": "Porque encontrou lugares para elas. Pense de novo: alguma carta falava realmente apenas de um lugar?"
           },
           {
             "id": "taipa-ending-dialogue-03",
+            "speaker_id": "player",
+            "speaker": "Visitante",
+            "text": "A carta do mar espera um regresso, a do sino recorda encontros, a de casa guarda uma porta, a do trabalho leva um sustento e a da rua contém o quotidiano... Todas falam de como as pessoas vivem."
+          },
+          {
+            "id": "taipa-ending-dialogue-04",
             "speaker_id": "alian",
             "speaker": "A Lin",
             "portrait_asset_id": "V4-CHAR-03",
-            "text": "Talvez a casa nunca seja um lugar imutável, mas sim algo em que, mesmo depois das mudanças, ainda exista quem queira lembrar como se vivia ali."
+            "text": "E todas perguntam o mesmo: quando a costa, o trabalho e os moradores mudam, o que ainda leva alguém a chamar casa a este lugar?"
+          },
+          {
+            "id": "taipa-ending-dialogue-05",
+            "speaker_id": "player",
+            "speaker": "Visitante",
+            "text": "Então a última carta não deve voltar ao passado. Deve seguir para alguém que ainda não viu a Taipa de hoje."
+          },
+          {
+            "id": "taipa-ending-dialogue-06",
+            "speaker_id": "alian",
+            "speaker": "A Lin",
+            "portrait_asset_id": "V4-CHAR-01",
+            "text": "Exatamente. A página em branco é sua. Escreva algo que espera que alguém ainda recorde no futuro."
           }
         ],
         "knowledge_cards": [

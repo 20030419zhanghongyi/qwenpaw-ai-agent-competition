@@ -297,14 +297,14 @@ def test_story_content_endpoint_returns_requested_locale_without_solutions():
             "prologue_taipa_letter_box",
             "en",
             "Prologue: Letters with No Recipient",
-            "The box holds five lives that have lost their addresses.",
+            "The lid creaks open. Five unaddressed letters lie quietly together",
         ),
         (
             "taipa_letters",
             "prologue_taipa_letter_box",
             "pt",
             "Prólogo: A carta sem destinatário",
-            "A caixa contém cinco vidas que perderam o endereço.",
+            "A tampa abre-se com um rangido. Cinco cartas sem endereço aguardam",
         ),
         (
             "coloane_after_tide",

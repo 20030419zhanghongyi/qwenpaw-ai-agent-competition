@@ -3,7 +3,7 @@
   "version": 4,
   "title": "海风寄来的信",
   "subtitle": "沿着氹仔旧城的海风，替五封没有收件人的信找回时代与归处",
-  "summary": "你与阿莲在氹仔旧城打开一只虚构的退信盒。盒中五封信来自不同的生活背景，却都遗失了地址。你们将走过北帝庙、嘉模圣母堂、龙环葡韵、益隆炮竹厂旧址和官也街，从信仰、居住、劳动与街巷日常留下的痕迹里，为每封信找回属于它的时代与地方。",
+  "summary": "你与阿莲在氹仔旧城打开一只落满岁月痕迹的退信盒。盒中五封信都遗失了地址，只在信封上留下海、钟、家、工、街五枚标签。你们将走过北帝庙、嘉模圣母堂、龙环葡韵、益隆炮竹厂旧址和官也街，从信仰、居住、劳动与街巷日常留下的痕迹里，为每封信找回属于它的时代与地方。",
   "route_id": "taipa_hotspot_halfday",
   "estimated_hours": 4,
   "product_mode": "mobile_portrait_web",
@@ -16,9 +16,9 @@
   "identity": {
     "id": "returned_letter_keeper",
     "name": "退信盒保管人",
-    "description": "你不必证明一段并不存在的私人家史。你的任务，是借现场观察和公开资料，为五封情境复原信找回合适的时代与地方。"
+    "description": "你要循着海、钟、家、工、街五枚标签，在今日氹仔仍看得见、听得到的线索里，为五封退信找回时代与归处。"
   },
-  "content_notice": "退信盒、全部写信人、信件内容、寄送关系与未来信均为剧情虚构。故事涉及的建筑年代、产业、宗教和社区背景依策划所列公开资料整理；知识卡会分别标注史实、民间信俗、情境复原与剧情虚构。官也街相关任务不会采用未经核实的‘最早’或‘第一家’说法。",
+  "content_notice": "故事中的地点与历史背景依据公开资料整理，人物和信件采用情境复原。知识卡会分别标注史实、民间信俗与剧情创作；官也街相关任务不采用未经核实的‘最早’或‘第一家’说法。",
   "content_labels": {
     "historical_fact": "史实",
     "folklore": "民间信俗／地方记忆",
@@ -68,10 +68,10 @@
       "kind": "prologue",
       "title": "序章：没有收件人的信",
       "story_time": "10:00",
-      "scene": "上午十点，氹仔旧城的街声渐渐热起来。你的手机屏幕上忽然弹出一只旧信盒：盒里的五封信都写着氹仔，却没有一封知道今天该寄往哪里。",
+      "scene": "上午十点，氹仔旧城的街声渐渐热起来。手机轻轻一震，一只旧退信盒在屏幕上缓缓打开。五封信叠在里面，地址栏一片空白，信封上却分别写着：海、钟、家、工、街。",
       "time_layer": {
         "period": "今日氹仔与多个历史时期",
-        "focus": "先弄清信件的虚构边界，再从现场与公开资料中寻找它们的地址"
+        "focus": "从五枚标签出发，在现场与公开资料中寻找信件的时代与地址"
       },
       "letter_fragment": {
         "title": "退信盒说明",
@@ -87,14 +87,14 @@
       ],
       "interaction": {
         "type": "letter_box_opening",
-        "instruction": "读完退信盒上的说明，先确认这五封信既不属于同一家族，也不是真实的私人档案。",
+        "instruction": "打开退信盒，读一读五枚标签，再选出最先可以循迹寻找的那封信。",
         "safety": "路氹历史馆是否开放，请以当日官方信息为准；即使不进入场馆，也能继续故事。"
       },
       "arrival_comic": [
         {
           "asset_id": "TAI-PROP-01",
           "alt": "一只装着五封无地址信件的旧退信盒",
-          "caption": "盒里装着五段失去地址的生活。退信盒与信件均为剧情道具，并非真实文物。"
+          "caption": "盒盖吱呀一声弹开，五封没有地址的信安静地叠在一起，等着有人认出它们要去的地方。"
         }
       ],
       "dialogue": [
@@ -102,35 +102,47 @@
           "id": "taipa-prologue-dialogue-01",
           "speaker_id": "player",
           "speaker": "玩家",
-          "text": "没有一封写着完整地址，信封上只有五个字：海、钟、家、工、街。"
+          "text": "海、钟、家、工、街……地址栏全是空的，信封上只剩这五个字。"
         },
         {
           "id": "taipa-prologue-dialogue-02",
           "speaker_id": "alian",
           "speaker": "阿莲",
           "portrait_asset_id": "V4-CHAR-01",
-          "text": "先说清楚，它们不是真正被发现的家书，只是从几种生活背景出发写成的情境复原信。"
+          "text": "那就别急着一次拆完。先挑一封，看看它最先让你想到氹仔的哪里。"
         },
         {
           "id": "taipa-prologue-dialogue-03",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "我选‘海’。纸上反复写着风向、水路，还有一盏留给归船的灯。"
+        },
+        {
+          "id": "taipa-prologue-dialogue-04",
           "speaker_id": "alian",
           "speaker": "阿莲",
           "portrait_asset_id": "V4-CHAR-02",
-          "text": "所以我们不替陌生人编家谱，只替信里的生活找回它该在的时代和地方。"
+          "text": "归船、风向、灯火……我想到北帝庙。旧时靠海生活的人，总有些盼望要托给水和风。"
+        },
+        {
+          "id": "taipa-prologue-dialogue-05",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "好，就从庙前开始。先替第一封信试出一个地址。"
         }
       ],
       "knowledge_cards": [
         {
           "kind": "fictional_story",
           "title": "退信盒与写信人",
-          "text": "退信盒、五封信和全部写信人都出自剧情创作，不能把它们当作真实档案或家族史。",
+          "text": "退信盒、五封信和全部写信人都出自剧情创作，用来串联氹仔不同年代的生活背景，不对应真实档案或家族史。",
           "source_label": "Story Package 剧情设定",
           "confidence": "high"
         },
         {
           "kind": "contextual_reconstruction",
           "title": "情境复原信",
-          "text": "这些信借真实的建筑、产业、宗教和社区背景，想象普通人的生活视角，但不能代替史料。",
+          "text": "这些信借真实的建筑、产业、宗教和社区背景，想象普通人的生活视角。信中的人物与经历属于创作，地点年代等事实则以知识卡来源为准。",
           "source_label": "策划中的叙事边界",
           "confidence": "high"
         }
@@ -184,7 +196,7 @@
       "story_time": "10:30",
       "location_name": "北帝庙",
       "poi_id": "poi_0100",
-      "scene": "第一封信里，水声、风向和归航被写了一遍又一遍。站在庙前，你渐渐明白：它等待的并不是某个可考的姓名，而是一段许多海岛人都曾熟悉的生活。",
+      "scene": "第一封信里，水声、风向和归航被写了一遍又一遍。站在庙前，风从街巷穿过来，信纸上那盏迟迟不灭的灯，忽然有了海岛生活的温度。",
       "time_layer": {
         "period": "一座拥有至少160年历史的庙宇与昔日渔民社区",
         "focus": "从海岛生活与北帝信仰中，理解人们对平安归航的愿望"
@@ -221,16 +233,29 @@
       "dialogue": [
         {
           "id": "taipa-sea-dialogue-01",
-          "speaker_id": "alian",
-          "speaker": "阿莲",
-          "portrait_asset_id": "V4-CHAR-02",
-          "text": "先别急着把信当真。庙的历史可以查，等船的人却只活在这张信纸上。"
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "这封信把风向写了又写。等船的人，真的会这样反复看风吗？"
         },
         {
           "id": "taipa-sea-dialogue-02",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-02",
+          "text": "如果家里有人靠水路吃饭，风就不只是景色，还是船能不能回来的一条消息。"
+        },
+        {
+          "id": "taipa-sea-dialogue-03",
           "speaker_id": "player",
           "speaker": "玩家",
-          "text": "明白了。水、风和归航能帮我读懂那时的生活，却不能证明真有这样一个写信人。"
+          "text": "难怪灯要一直留着。那北帝庙和这份等待，又是怎样连起来的？"
+        },
+        {
+          "id": "taipa-sea-dialogue-04",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-01",
+          "text": "看看庙的历史，也看看从前住在这里的人。两条线索放在一起，你就会读到一座海岛对平安归航的盼望。"
         }
       ],
       "knowledge_cards": [
@@ -378,14 +403,27 @@
           "id": "taipa-bell-dialogue-01",
           "speaker_id": "player",
           "speaker": "玩家",
-          "text": "原来庙宇和教堂可以同时留在一座岛上，不必非要写成谁取代了谁。"
+          "text": "站在这里回头看，北帝庙那边的街声仿佛还在，坡上却响着另一种钟声。"
         },
         {
           "id": "taipa-bell-dialogue-02",
           "speaker_id": "alian",
           "speaker": "阿莲",
           "portrait_asset_id": "V4-CHAR-03",
-          "text": "对。守住能查清的年代和地点，就能看见不同社区怎样在这里并存。"
+          "text": "同一座岛，不同社区有各自相聚的地方。它们不必把彼此的声音盖住。"
+        },
+        {
+          "id": "taipa-bell-dialogue-03",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "所以信里那句‘岛的另一边也有人循着自己的日子相聚’，不是要把两边分开。"
+        },
+        {
+          "id": "taipa-bell-dialogue-04",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-02",
+          "text": "是要让你把两边都看见。先找出教堂的年代，再看看它在氹仔的社区空间里处在什么位置。"
         }
       ],
       "knowledge_cards": [
@@ -531,13 +569,33 @@
           "speaker_id": "alian",
           "speaker": "阿莲",
           "portrait_asset_id": "V4-CHAR-02",
-          "text": "先别只看颜色和风格。问问这些房子从前供谁居住，里面的空间又是怎样使用的。"
+          "text": "你走近以后，第一眼看见了什么？"
         },
         {
           "id": "taipa-home-dialogue-02",
           "speaker_id": "player",
           "speaker": "玩家",
-          "text": "要把房子的用途、住过的人和日常空间放在一起，我才真正看见这里曾经是家。"
+          "text": "薄荷色的外墙。它太醒目了，我差点只顾着看颜色。"
+        },
+        {
+          "id": "taipa-home-dialogue-03",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-03",
+          "text": "如果把颜色换掉，这里还会像一处家吗？"
+        },
+        {
+          "id": "taipa-home-dialogue-04",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "会。门怎样开，房间怎样相连，桌椅和旧物放在哪里——这些都在说人曾经怎样住。"
+        },
+        {
+          "id": "taipa-home-dialogue-05",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-01",
+          "text": "那就别替房子贴一个风格标签。把用途、居住背景和生活空间串起来，看看它怎样先成为家，后来才成为今天的景点。"
         }
       ],
       "knowledge_cards": [
@@ -693,16 +751,35 @@
       "dialogue": [
         {
           "id": "taipa-work-dialogue-01",
-          "speaker_id": "alian",
-          "speaker": "阿莲",
-          "portrait_asset_id": "V4-CHAR-01",
-          "text": "如果只讲当年的兴旺，这封信就少了一半。劳动、风险和一家人的收入，本来就是连在一起的。"
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "这封信真短。只写了上工、收好工钱，还有一句‘回家再说’。"
         },
         {
           "id": "taipa-work-dialogue-02",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-01",
+          "text": "赶着工时的人，未必有空把一天写得很长。越是省下来的字，越要慢一点读。"
+        },
+        {
+          "id": "taipa-work-dialogue-03",
           "speaker_id": "player",
           "speaker": "玩家",
-          "text": "所以信里的工人可以是虚构的，但行业怎样兴起、又怎样停下来，这些都能查清。"
+          "text": "‘把工钱仔细收好’是在惦记家里；‘一段一段走’又像是在提醒自己小心。"
+        },
+        {
+          "id": "taipa-work-dialogue-04",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-03",
+          "text": "所以只讲产业有多兴旺，还读不完这封信。工房里的风险、手里的收入和家里的日子，本来就牵在一起。"
+        },
+        {
+          "id": "taipa-work-dialogue-05",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "明白了。我得把行业的年代、眼前的遗址和居民的生活放回同一幅图里。"
         }
       ],
       "knowledge_cards": [
@@ -866,14 +943,33 @@
           "id": "taipa-street-dialogue-01",
           "speaker_id": "player",
           "speaker": "玩家",
-          "text": "我可以写下今天看到的街道，却不能因为一种食物有名，就顺手替它编出一个起源。"
+          "text": "这封信的地址应该最好找吧？官也街到处都是招牌和味道。"
         },
         {
           "id": "taipa-street-dialogue-02",
           "speaker_id": "alian",
           "speaker": "阿莲",
           "portrait_asset_id": "V4-CHAR-03",
-          "text": "正是这样。把此刻看见的语言、建筑和日常记下来，已经足够写成一封街信。"
+          "text": "也可能最容易写错。一个地方越有名，‘第一家’、‘最早做’的故事就越容易被顺手加上去。"
+        },
+        {
+          "id": "taipa-street-dialogue-03",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "那我不替它追一个说不清的起点，只写今天亲眼看见的，可以吗？"
+        },
+        {
+          "id": "taipa-street-dialogue-04",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-02",
+          "text": "当然。街道每天都在变化，此刻的样子也值得被认真记下来。"
+        },
+        {
+          "id": "taipa-street-dialogue-05",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "那就从不同语言的招牌、旧建筑的细节，还有不打扰别人的日常开始。"
         }
       ],
       "knowledge_cards": [
@@ -984,7 +1080,7 @@
       "story_time": "16:20",
       "location_name": "氹仔旧城公共空间",
       "poi_id": "poi_0104",
-      "scene": "五封信终于各自找回了地址，却依然没有真正的收件人。直到这时你才明白，退信盒收集的从来不是同一家人的历史，而是不同时代的人如何生活，又如何理解‘家’。",
+      "scene": "五封信终于各自找回了地址。你把它们依次排开：海风、钟声、门窗、工房与街巷，像五种不同的生活，在同一只盒子里轻轻碰到了一起。可退信盒仍没有合上，里面还留着一页没有收件人的空白信纸。",
       "time_layer": {
         "period": "从多段生活史到未来",
         "focus": "把海信、钟信、家信、工信与街信放在一起，写一封寄往未来的信"
@@ -1018,21 +1114,40 @@
           "id": "taipa-ending-dialogue-01",
           "speaker_id": "player",
           "speaker": "玩家",
-          "text": "原来它们并不属于同一个家族，只是在反复问同一件事：什么才算是家。"
+          "text": "五封信都有地址了，为什么退信盒还没有合上？"
         },
         {
           "id": "taipa-ending-dialogue-02",
           "speaker_id": "alian",
           "speaker": "阿莲",
           "portrait_asset_id": "V4-CHAR-01",
-          "text": "氹仔没有从地图上挪开，可海岸变了，工作变了，住在这里的人也一代代换过。"
+          "text": "因为你一路替它们找的是地方。再想想看，有哪一封真的只是在写一个地方？"
         },
         {
           "id": "taipa-ending-dialogue-03",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "海信等归航，钟信记相聚，家信留着一扇门，工信牵着生计，街信装下每天的日常……它们都在写人怎样生活。"
+        },
+        {
+          "id": "taipa-ending-dialogue-04",
           "speaker_id": "alian",
           "speaker": "阿莲",
           "portrait_asset_id": "V4-CHAR-03",
-          "text": "也许家从来不是永远不变的地方，而是变化以后，仍有人愿意记得它曾怎样生活。"
+          "text": "也都在问同一件事：海岸、工作和住在这里的人都变过，什么还让人愿意把这里叫作家？"
+        },
+        {
+          "id": "taipa-ending-dialogue-05",
+          "speaker_id": "player",
+          "speaker": "玩家",
+          "text": "那最后一封不该寄回过去。它应该寄给还没有见过今天氹仔的人。"
+        },
+        {
+          "id": "taipa-ending-dialogue-06",
+          "speaker_id": "alian",
+          "speaker": "阿莲",
+          "portrait_asset_id": "V4-CHAR-01",
+          "text": "正好。空白页留给你——写一句希望未来仍有人记得的话。"
         }
       ],
       "knowledge_cards": [
