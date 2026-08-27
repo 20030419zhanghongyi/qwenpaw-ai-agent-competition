@@ -140,6 +140,7 @@ export function StoryChoiceSection({
         type="button"
         disabled={disabled}
         onClick={onDecline}
+        aria-pressed={storyOptIn === false}
         className={`mt-5 min-h-11 rounded-full border px-5 text-sm ${storyOptIn === false ? "border-sage-deep bg-sage-deep text-paper" : "border-line bg-card text-ink"}`}
       >
         {copy.decline}
@@ -150,7 +151,18 @@ export function StoryChoiceSection({
           const localized = copy.stories[story.id];
           const active = storyOptIn === true && storyId === story.id;
           return (
-            <article key={story.id} className={`overflow-hidden rounded-lg border bg-card ${active ? "border-sage-deep ring-2 ring-sage-deep/20" : "border-line"}`}>
+            <article
+              key={story.id}
+              onClick={(event) => {
+                if (disabled || (event.target as HTMLElement).closest("button, select, option, label")) {
+                  return;
+                }
+                onSelectStory(story.id);
+              }}
+              className={`overflow-hidden rounded-lg border bg-card transition ${
+                disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:border-sage-deep"
+              } ${active ? "border-sage-deep ring-2 ring-sage-deep/20" : "border-line"}`}
+            >
               <StoryImage
                 assetId={story.assetId}
                 alt={localized.title}
@@ -188,6 +200,7 @@ export function StoryChoiceSection({
                   type="button"
                   disabled={disabled}
                   onClick={() => onSelectStory(story.id)}
+                  aria-pressed={active}
                   className={`mt-4 inline-flex min-h-11 items-center justify-center rounded-full px-4 text-center text-sm font-medium ${active ? "bg-sage-deep text-paper" : "border border-sage-deep text-sage-deep"}`}
                 >
                   {copy.open}
