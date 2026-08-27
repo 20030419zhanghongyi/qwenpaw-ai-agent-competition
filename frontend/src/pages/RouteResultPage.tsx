@@ -312,12 +312,18 @@ export function RouteResultPage() {
   const poisById = session?.poisById ?? {};
   const route = match?.route;
   const isMultiDay = (dayMatches.length > 1) || preference?.duration === "multi-day";
-  const scheduledStoryDayIndex = isMultiDay ? (preference?.story_day ?? 1) - 1 : 0;
+  const scheduledStory = preference?.story_selections?.find(
+    (selection) => selection.story_day === dayIndex + 1,
+  ) ?? (
+    preference?.story_id
+      ? { story_id: preference.story_id, story_day: preference.story_day ?? 1 }
+      : null
+  );
   const isScheduledStoryDay =
     preference?.story_opt_in === true &&
-    isStoryId(preference.story_id) &&
-    dayIndex === scheduledStoryDayIndex &&
-    storyUsesRoute(preference.story_id, match?.selected_template ?? route?.id);
+    isStoryId(scheduledStory?.story_id) &&
+    (!isMultiDay || scheduledStory?.story_day === dayIndex + 1) &&
+    storyUsesRoute(scheduledStory.story_id, match?.selected_template ?? route?.id);
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -589,8 +595,8 @@ export function RouteResultPage() {
 
   const localizedRouteCopy = localizedRoute(route, language);
   const routeTitle =
-    isScheduledStoryDay && isStoryId(preference?.story_id)
-      ? localizedStoryTitle(preference.story_id, language)
+    isScheduledStoryDay && isStoryId(scheduledStory?.story_id)
+      ? localizedStoryTitle(scheduledStory.story_id, language)
       : localizedRouteCopy.name;
   const localizedReasons = localizedRouteReasons(route, match.reasons, language);
   const explanation =

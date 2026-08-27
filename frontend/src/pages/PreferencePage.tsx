@@ -28,6 +28,7 @@ import {
 import { PORT_OPTIONS, portLabel } from "@/lib/ports";
 import { useWalk } from "@/state/WalkContext";
 import type { Preference } from "@/types";
+import type { StorySelection } from "@/types";
 
 const THEME_OPTIONS: Array<{
   id: ThemeTag;
@@ -89,6 +90,7 @@ export function PreferencePage() {
   const [storyOptIn, setStoryOptIn] = useState<boolean | null>(null);
   const [storyId, setStoryId] = useState<StoryId | null>(null);
   const [storyDay, setStoryDay] = useState<number | null>(null);
+  const [storySelections, setStorySelections] = useState<StorySelection[]>([]);
   const [customNote, setCustomNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,6 +115,7 @@ export function PreferencePage() {
     storyOptIn: null,
     storyId: null,
     storyDay: null,
+    storySelections: [],
   });
 
   useEffect(() => {
@@ -131,6 +134,7 @@ export function PreferencePage() {
       storyOptIn,
       storyId,
       storyDay,
+      storySelections,
     };
   }, [
     duration,
@@ -147,6 +151,7 @@ export function PreferencePage() {
     storyOptIn,
     storyId,
     storyDay,
+    storySelections,
   ]);
 
   useEffect(() => {
@@ -199,6 +204,7 @@ export function PreferencePage() {
     setStoryOptIn(snapshot.storyOptIn);
     setStoryId(snapshot.storyId ?? null);
     setStoryDay(snapshot.storyDay);
+    setStorySelections(snapshot.storySelections ?? []);
     adjustersRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [showAdjusters]);
 
@@ -233,6 +239,7 @@ export function PreferencePage() {
     setStoryOptIn(next.storyOptIn);
     setStoryId(next.storyId ?? null);
     setStoryDay(next.storyDay);
+    setStorySelections(next.storySelections ?? []);
   };
 
   const flashClass = (key: string, active: boolean) =>
@@ -252,9 +259,18 @@ export function PreferencePage() {
     const nextStoryDay = formRef.current.storyDay && formRef.current.storyDay <= n
       ? formRef.current.storyDay
       : null;
-    formRef.current = { ...formRef.current, tripDays: n, storyDay: nextStoryDay };
+    const nextSelections = (formRef.current.storySelections ?? []).filter(
+      (selection) => selection.story_day <= n,
+    );
+    formRef.current = {
+      ...formRef.current,
+      tripDays: n,
+      storyDay: nextStoryDay,
+      storySelections: nextSelections,
+    };
     setTripDays(n);
     setStoryDay(nextStoryDay);
+    setStorySelections(nextSelections);
   };
 
   const selectTravelDate = (value: string) => {
@@ -295,11 +311,11 @@ export function PreferencePage() {
       setError(language === "en" ? "Please choose whether to join a story." : language === "pt" ? "Escolha se pretende participar numa história." : language === "zh-TW" ? "請選擇是否參加故事體驗。" : "请选择是否参加故事体验。");
       return;
     }
-    if (storyOptIn && !storyId) {
+    if (storyOptIn && !storyId && storySelections.length === 0) {
       setError(language === "en" ? "Please choose a story." : language === "pt" ? "Escolha uma história." : language === "zh-TW" ? "請選擇一條故事線。" : "请选择一条故事线。");
       return;
     }
-    if (storyOptIn && duration === "multi" && !storyDay) {
+    if (storyOptIn && duration === "multi" && storySelections.length === 0) {
       setError(language === "en" ? "Please choose which day includes the story." : language === "pt" ? "Escolha o dia da história." : language === "zh-TW" ? "請選擇故事安排在第幾天。" : "请选择故事安排在第几天。");
       return;
     }
@@ -528,22 +544,75 @@ export function PreferencePage() {
               storyOptIn={storyOptIn}
               storyId={storyId}
               storyDay={storyDay}
+              storySelections={duration === "multi" ? storySelections : undefined}
               disabled={loading}
               onDecline={() => {
-                formRef.current = { ...formRef.current, storyOptIn: false, storyId: null, storyDay: null };
+                formRef.current = { ...formRef.current, storyOptIn: false, storyId: null, storyDay: null, storySelections: [] };
                 setStoryOptIn(false);
                 setStoryId(null);
                 setStoryDay(null);
+                setStorySelections([]);
               }}
               onSelectStory={(nextStoryId) => {
-                formRef.current = { ...formRef.current, storyOptIn: true, storyId: nextStoryId, storyDay: duration === "multi" ? formRef.current.storyDay : 1 };
+                if (duration === "multi") {
+                  const current = formRef.current.storySelections ?? [];
+                  const existing = current.find((selection) => selection.story_id === nextStoryId);
+                  const nextSelections = existing
+                    ? current.filter((selection) => selection.story_id !== nextStoryId)
+                    : [
+                        ...current,
+                        {
+                          story_id: nextStoryId,
+                          story_day:
+                            Array.from({ length: tripDays }, (_, index) => index + 1).find(
+                              (day) => !current.some((selection) => selection.story_day === day),
+                            ) ?? 1,
+                        },
+                      ];
+                  const primary = nextSelections[0] ?? null;
+                  formRef.current = {
+                    ...formRef.current,
+                    storyOptIn: nextSelections.length > 0 ? true : false,
+                    storyId: primary?.story_id ?? null,
+                    storyDay: primary?.story_day ?? null,
+                    storySelections: nextSelections,
+                  };
+                  setStoryOptIn(nextSelections.length > 0 ? true : false);
+                  setStoryId(primary?.story_id ?? null);
+                  setStoryDay(primary?.story_day ?? null);
+                  setStorySelections(nextSelections);
+                  return;
+                }
+                formRef.current = { ...formRef.current, storyOptIn: true, storyId: nextStoryId, storyDay: 1, storySelections: [{ story_id: nextStoryId, story_day: 1 }] };
                 setStoryOptIn(true);
                 setStoryId(nextStoryId);
-                if (duration !== "multi") setStoryDay(1);
+                setStoryDay(1);
+                setStorySelections([{ story_id: nextStoryId, story_day: 1 }]);
               }}
               onDayChange={(day) => {
                 formRef.current = { ...formRef.current, storyDay: day };
                 setStoryDay(day);
+              }}
+              onStoryDayChange={(nextStoryId, day) => {
+                if (!day) return;
+                const nextSelections = (formRef.current.storySelections ?? []).map((selection) =>
+                  selection.story_id === nextStoryId
+                    ? { ...selection, story_day: day }
+                    : selection,
+                ).filter((selection, index, selections) =>
+                  selection.story_id === nextStoryId ||
+                  selections.findIndex((candidate) => candidate.story_day === selection.story_day) === index,
+                );
+                const primary = nextSelections[0] ?? null;
+                formRef.current = {
+                  ...formRef.current,
+                  storyId: primary?.story_id ?? null,
+                  storyDay: primary?.story_day ?? null,
+                  storySelections: nextSelections,
+                };
+                setStoryId(primary?.story_id ?? null);
+                setStoryDay(primary?.story_day ?? null);
+                setStorySelections(nextSelections);
               }}
             />
 

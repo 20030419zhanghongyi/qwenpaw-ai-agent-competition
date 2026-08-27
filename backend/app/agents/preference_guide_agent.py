@@ -71,8 +71,9 @@ def _build_prompt(
         parts.append(f"对话历史摘要：{transcript.strip()[:3000]}")
     parts.append(f"用户说：{user_text}")
     parts.append(
-        "在结束引导前必须确认用户是否参加故事路线；参加则确认三选一的 story_id，"
-        "多日行程还必须确认 story_day。未确认时继续礼貌追问，不要输出最终 JSON。"
+        "在结束引导前必须确认用户是否参加故事路线；单日行程最多选择一条。"
+        "多日行程允许选择多条，并为每条输出 story_selections 中的 story_id 与 story_day；"
+        "每一天最多一条故事。未确认时继续礼貌追问，不要输出最终 JSON。"
     )
     return "\n".join(parts)
 
@@ -146,6 +147,9 @@ def _coerce(obj: dict[str, Any]) -> Preference:
     story_day = obj.get("story_day")
     if not isinstance(story_day, int) or not 1 <= story_day <= 5:
         story_day = None
+    story_selections = obj.get("story_selections")
+    if not isinstance(story_selections, list):
+        story_selections = []
 
     return Preference(
         duration=duration,
@@ -161,6 +165,7 @@ def _coerce(obj: dict[str, Any]) -> Preference:
         story_opt_in=story_opt_in,
         story_id=story_id,
         story_day=story_day,
+        story_selections=story_selections,
     )
 
 

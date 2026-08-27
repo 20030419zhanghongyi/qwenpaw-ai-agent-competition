@@ -123,6 +123,9 @@ def _coerce(obj: dict[str, Any]) -> Preference:
     story_day = obj.get("story_day")
     if not isinstance(story_day, int) or not 1 <= story_day <= 5:
         story_day = None
+    story_selections = obj.get("story_selections")
+    if not isinstance(story_selections, list):
+        story_selections = []
     # Preference validator clamps / drops invalid values
 
     return Preference(
@@ -139,6 +142,7 @@ def _coerce(obj: dict[str, Any]) -> Preference:
         story_opt_in=story_opt_in,
         story_id=story_id,
         story_day=story_day,
+        story_selections=story_selections,
     )
 
 

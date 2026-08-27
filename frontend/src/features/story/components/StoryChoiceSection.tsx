@@ -1,4 +1,5 @@
 import type { LanguageCode } from "@/types";
+import type { StorySelection } from "@/types";
 import { StoryImage } from "../assets";
 import type { StoryId } from "../storyMetadata";
 
@@ -23,6 +24,7 @@ const COPY = {
     open: "选择这条故事线",
     decline: "这次不参加故事",
     required: "多日行程需要选择故事安排在第几天。",
+    limit: "每一天最多安排一条故事；如需选择更多故事，请增加行程天数。",
     chooseDay: "请选择日期",
     dayLabel: "安排故事日期",
     dayOption: (day: number, date: string) => `第 ${day} 天 · ${date}`,
@@ -41,6 +43,7 @@ const COPY = {
     open: "選擇這條故事線",
     decline: "這次不參加故事",
     required: "多日行程需要選擇故事安排在第幾天。",
+    limit: "每一天最多安排一條故事；如需選擇更多故事，請增加行程天數。",
     chooseDay: "請選擇日期",
     dayLabel: "安排故事日期",
     dayOption: (day: number, date: string) => `第 ${day} 天 · ${date}`,
@@ -59,6 +62,7 @@ const COPY = {
     open: "Choose this story",
     decline: "No story this trip",
     required: "Choose which day of your multi-day trip should include the story.",
+    limit: "Only one story can be scheduled per day. Add another trip day to choose more.",
     chooseDay: "Choose a day",
     dayLabel: "Schedule this story",
     dayOption: (day: number, date: string) => `Day ${day} · ${date}`,
@@ -77,6 +81,7 @@ const COPY = {
     open: "Escolher esta história",
     decline: "Sem história nesta viagem",
     required: "Escolha o dia da viagem de vários dias para realizar a história.",
+    limit: "Só pode agendar uma história por dia. Adicione outro dia para escolher mais.",
     chooseDay: "Escolher um dia",
     dayLabel: "Agendar esta história",
     dayOption: (day: number, date: string) => `Dia ${day} · ${date}`,
@@ -107,10 +112,12 @@ export function StoryChoiceSection({
   storyOptIn,
   storyId,
   storyDay,
+  storySelections,
   disabled,
   onDecline,
   onSelectStory,
   onDayChange,
+  onStoryDayChange,
 }: {
   language: LanguageCode;
   multiDay: boolean;
@@ -119,10 +126,12 @@ export function StoryChoiceSection({
   storyOptIn: boolean | null;
   storyId: StoryId | null | undefined;
   storyDay: number | null;
+  storySelections?: StorySelection[];
   disabled?: boolean;
   onDecline: () => void;
   onSelectStory: (storyId: StoryId) => void;
   onDayChange: (day: number | null) => void;
+  onStoryDayChange?: (storyId: StoryId, day: number | null) => void;
 }) {
   const copy = COPY[language] ?? COPY["zh-CN"];
 
@@ -149,18 +158,25 @@ export function StoryChoiceSection({
       <div className="mt-5 grid gap-4 md:grid-cols-3">
         {STORIES.map((story) => {
           const localized = copy.stories[story.id];
-          const active = storyOptIn === true && storyId === story.id;
+          const scheduled = storySelections?.find((selection) => selection.story_id === story.id);
+          const active = storySelections
+            ? Boolean(scheduled)
+            : storyOptIn === true && storyId === story.id;
+          const selectionLimitReached = Boolean(
+            multiDay && storySelections && !active && storySelections.length >= tripDays,
+          );
+          const cardDisabled = Boolean(disabled || selectionLimitReached);
           return (
             <article
               key={story.id}
               onClick={(event) => {
-                if (disabled || (event.target as HTMLElement).closest("button, select, option, label")) {
+                if (cardDisabled || (event.target as HTMLElement).closest("button, select, option, label")) {
                   return;
                 }
                 onSelectStory(story.id);
               }}
               className={`overflow-hidden rounded-lg border bg-card transition ${
-                disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:border-sage-deep"
+                cardDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:border-sage-deep"
               } ${active ? "border-sage-deep ring-2 ring-sage-deep/20" : "border-line"}`}
             >
               <StoryImage
@@ -179,8 +195,12 @@ export function StoryChoiceSection({
                   <label className="mt-4 block text-xs font-medium text-ink">
                     <span className="mb-1.5 block">{copy.dayLabel}</span>
                     <select
-                      value={storyDay ?? ""}
-                      onChange={(event) => onDayChange(event.target.value ? Number(event.target.value) : null)}
+                      value={scheduled?.story_day ?? storyDay ?? ""}
+                      onChange={(event) => {
+                        const day = event.target.value ? Number(event.target.value) : null;
+                        if (onStoryDayChange) onStoryDayChange(story.id, day);
+                        else onDayChange(day);
+                      }}
                       disabled={disabled}
                       className="h-11 w-full rounded-lg border border-line bg-paper px-3 text-sm text-ink outline-none focus:border-sage-deep"
                     >
@@ -188,7 +208,14 @@ export function StoryChoiceSection({
                       {Array.from({ length: tripDays }, (_, index) => {
                         const day = index + 1;
                         return (
-                          <option key={day} value={day}>
+                          <option
+                            key={day}
+                            value={day}
+                            disabled={storySelections?.some(
+                              (selection) =>
+                                selection.story_id !== story.id && selection.story_day === day,
+                            )}
+                          >
                             {copy.dayOption(day, addDays(arrivalDate, index))}
                           </option>
                         );
@@ -198,7 +225,7 @@ export function StoryChoiceSection({
                 ) : null}
                 <button
                   type="button"
-                  disabled={disabled}
+                  disabled={cardDisabled}
                   onClick={() => onSelectStory(story.id)}
                   aria-pressed={active}
                   className={`mt-4 inline-flex min-h-11 items-center justify-center rounded-full px-4 text-center text-sm font-medium ${active ? "bg-sage-deep text-paper" : "border border-sage-deep text-sage-deep"}`}
@@ -212,6 +239,9 @@ export function StoryChoiceSection({
       </div>
       {storyOptIn && multiDay && !storyDay ? (
         <p className="mt-3 text-sm text-clay" role="alert">{copy.required}</p>
+      ) : null}
+      {multiDay && storySelections && storySelections.length >= tripDays ? (
+        <p className="mt-3 text-sm text-ink-soft">{copy.limit}</p>
       ) : null}
     </section>
   );

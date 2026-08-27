@@ -1,6 +1,11 @@
 /** Frontend API types aligned with backend Preference / route match contracts. */
 
 export type LanguageCode = "zh-CN" | "zh-TW" | "en" | "pt";
+export type StoryId = "lotus_city_double_map" | "taipa_letters" | "coloane_after_tide";
+export interface StorySelection {
+  story_id: StoryId;
+  story_day: number;
+}
 
 export interface Preference {
   duration: "half-day" | "full-day" | "evening" | "multi-day" | "custom" | string;
@@ -20,9 +25,11 @@ export interface Preference {
   trip_days?: number | null;
   /** Story participation remains null until the guide asks the user. */
   story_opt_in?: boolean | null;
-  story_id?: "lotus_city_double_map" | "taipa_letters" | "coloane_after_tide" | null;
+  story_id?: StoryId | null;
   /** One-based day within a multi-day itinerary. */
   story_day?: number | null;
+  /** Multiple authored stories scheduled across a multi-day itinerary. */
+  story_selections?: StorySelection[];
 }
 
 export interface RouteNode {
