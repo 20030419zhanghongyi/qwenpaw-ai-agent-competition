@@ -8,6 +8,10 @@ import {
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { triggerGuide, type GuideTriggerResponse } from "@/api/guide-trigger";
+import {
+  fetchPoiOpeningHours,
+  type OpeningHoursResponse,
+} from "@/api/client";
 import { prewarmPostcardScene } from "@/api/postcards";
 import {
   adjustRoute,
@@ -220,6 +224,7 @@ export function RouteResultPage() {
   const [sheetDragHeight, setSheetDragHeight] = useState<number | null>(null);
   const [walkLegs, setWalkLegs] = useState<WalkLeg[]>([]);
   const [walkLegsLoading, setWalkLegsLoading] = useState(false);
+  const [openingHours, setOpeningHours] = useState<OpeningHoursResponse | null>(null);
   const [dayIndex, setDayIndex] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [guiding, setGuiding] = useState(false);
@@ -344,19 +349,26 @@ export function RouteResultPage() {
           : anchor === "exit"
             ? t(language, "exitPortSubtitle")
             : null;
+      const subtitle = portSubtitle ?? (poi ? localizedPoiMeta(poi, language) : undefined);
+      const fixedSummary = poi
+        ? language === "zh-CN"
+          ? poi.summary_zh_cn
+          : language === "zh-TW"
+            ? poi.summary_zh_tw ||
+              (poi.summary_zh_cn ? toTraditionalText(poi.summary_zh_cn) : null)
+            : language === "en"
+              ? poi.summary_en
+              : poi.summary_pt
+        : null;
+      const note = anchor ? node.note || portSubtitle || "" : fixedSummary || "";
       return {
         poiId: node.poi_id,
         order: node.order,
         name: poi
           ? localizedPoiName(poi, language)
           : localizedPoiIdName(node.poi_id, language) || portLabel(node.poi_id, language),
-        subtitle: portSubtitle ?? (poi ? localizedPoiMeta(poi, language) : undefined),
-        note:
-          anchor
-            ? node.note || t(language, "nodeNoteFallback")
-            : language === "zh-CN"
-            ? node.note || poi?.address || t(language, "nodeNoteFallback")
-            : t(language, "nodeNoteFallback"),
+        subtitle,
+        note: note === subtitle ? "" : note,
         stayMin: node.suggested_stay_min,
         state:
           index === currentIndex ? "current" : index === currentIndex + 1 ? "next" : "upcoming",
@@ -370,6 +382,24 @@ export function RouteResultPage() {
 
   const nodePoiIds = useMemo(() => nodes.map((n) => n.poiId), [nodes]);
   const nodePoiKey = nodePoiIds.join("|");
+
+  useEffect(() => {
+    if (!nodePoiIds.length) return;
+    let active = true;
+    fetchPoiOpeningHours({
+      language,
+      poiIds: nodePoiIds,
+    })
+      .then((result) => {
+        if (active) setOpeningHours(result);
+      })
+      .catch(() => {
+        if (active) setOpeningHours(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [nodePoiKey, language]);
 
   useEffect(() => {
     if (nodePoiIds.length < 2) {
@@ -867,9 +897,41 @@ export function RouteResultPage() {
   const currentPoiChecked = Boolean(
     currentNode?.poiId && trip?.checked_in_poi_ids.includes(currentNode.poiId),
   );
+  const currentHours = openingHours?.entries?.find(
+    (entry) => entry.poi_id === currentNode?.poiId,
+  );
+  const operationsPanel = currentHours ? (
+    <div className="mt-5 border-t border-line pt-4 text-sm">
+      <p className="font-medium text-ink">
+        {{
+          "zh-CN": "官方开放时段",
+          "zh-TW": "官方開放時段",
+          en: "Official opening schedule",
+          pt: "Horário oficial",
+        }[language]}
+      </p>
+      <p className="mt-1 text-ink-soft">
+        {currentHours.regular.join(" · ")}
+        {currentHours.last_entry
+          ? ` · ${{ "zh-CN": "最后入场", "zh-TW": "最後入場", en: "last entry", pt: "última entrada" }[language]} ${currentHours.last_entry}`
+          : ""}
+      </p>
+      {currentHours.source ? (
+        <a
+          href={currentHours.source.url}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-2 inline-block text-xs text-sage-deep underline underline-offset-2"
+        >
+          {currentHours.source.name}
+        </a>
+      ) : null}
+    </div>
+  ) : null;
 
   const tripPanel = (
     <div className="mt-6">
+      {operationsPanel}
       <TripControls
         userId={tripUserId}
         routeId={route.id}

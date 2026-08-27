@@ -17,6 +17,7 @@ from pathlib import Path
 
 from app.core.config import settings
 from app.features.guide.models import ImmersiveGuide, NextExploration, ObservationItem
+from app.features.pois.repository import LEGACY_POI_IDS
 
 # 兴趣 → 优先强调的分段 id（legacy sections 前加引导）
 _INTEREST_SECTION: dict[str, str] = {
@@ -314,8 +315,24 @@ def _find_poi(query: str) -> dict | None:
     if not name:
         return None
     pois = _load_pois()
+    legacy_by_stable = {stable: legacy for legacy, stable in LEGACY_POI_IDS.items()}
+    direct = next((poi for poi in pois if poi.get("id") == name), None)
+    legacy_id = legacy_by_stable.get(name)
+    legacy = next((poi for poi in pois if poi.get("id") == legacy_id), None)
+    if direct is not None:
+        if legacy is None:
+            return direct
+        # Stable records own identity and route metadata. Legacy curated records
+        # only fill fields that are blank in the stable catalog.
+        merged = dict(legacy)
+        merged.update({key: value for key, value in direct.items() if value not in (None, "", [])})
+        return merged
+    if legacy is not None:
+        return {**legacy, "id": name}
+
+    compatible_names = {name, LEGACY_POI_IDS.get(name, name), legacy_id or name}
     for p in pois:
-        if name in {
+        if compatible_names & {
             p.get("name_zh"),
             p.get("name_en"),
             p.get("name_pt"),
@@ -353,6 +370,34 @@ def poi_names_by_language(query: str) -> dict[str, str]:
     en = str(poi.get("name_en") or zh).strip()
     pt = str(poi.get("name_pt") or en).strip()
     return {"zh-CN": zh, "zh-TW": zh, "en": en, "pt": pt}
+
+
+def poi_official_hits_for(query: str) -> list[dict[str, str]]:
+    """Return verified official-source material bundled with the POI catalog."""
+    poi = _find_poi(query)
+    if not poi or poi.get("source_type") != "official":
+        return []
+    urls = [str(url).strip() for url in poi.get("source_urls") or [] if str(url).strip()]
+    if not urls:
+        return []
+    material = " ".join(
+        str(poi.get(key) or "").strip()
+        for key in ("intro", "history", "architecture", "story")
+        if str(poi.get(key) or "").strip()
+    )
+    if not material:
+        return []
+    title = str(poi.get("name_en") or poi.get("name_zh") or query).strip()
+    return [
+        {
+            "title": title,
+            "snippet": material[:1200],
+            "url": url,
+            "source": "official-catalog",
+            "search_language": "zh-CN",
+        }
+        for url in urls
+    ]
 
 
 def _join_parts(parts: list[str], lang: str) -> str:

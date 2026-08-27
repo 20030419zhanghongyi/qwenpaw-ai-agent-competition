@@ -87,6 +87,10 @@ export interface POI {
   source: string;
   created_at: string;
   updated_at: string;
+  summary_zh_cn?: string | null;
+  summary_zh_tw?: string | null;
+  summary_en?: string | null;
+  summary_pt?: string | null;
 }
 
 export interface WalkSession {

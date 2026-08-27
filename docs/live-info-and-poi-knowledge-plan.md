@@ -73,8 +73,8 @@ It returns:
 
 - `weather`: Open-Meteo daily forecast for Macau, converted into umbrella/sunscreen/indoor-backup advice.
 - `crowd`: estimated crowd level from mainland China holidays, weekends, and Macao official event calendar excerpts.
-- `transport`: official DSAT bus information source link. Real-time bus parsing is not implemented yet.
-- `opening_hours`: official MGTO sightseeing source link. Per-venue opening-hour scraping is not implemented yet.
+- `transport`: live DSAT route changes, suspended stops, and vehicle fields, with a 25-second cache and explicit fallback state.
+- `opening_hours`: verified per-POI schedules, closure days, last-entry times, verification dates, and official sources.
 
 Source entry points:
 
@@ -111,12 +111,19 @@ Examples:
 
 ## Next Implementation Steps
 
-1. Add frontend display for `live-advice` beside the current weather card: show weather flags, crowd level, and official source links.
-2. Add POI relationship storage. Prefer JSON metadata first; migrate to relational edge table only after route algorithms consume the graph.
-3. Enrich 20 high-priority candidates from `data/poi_expansion_candidates.json`, one batch per district, with provenance in `data/data_sources.md`.
-4. Add opening-hours metadata for museums and churches, with `holiday_note` and `last_verified`.
-5. Add transport constraints: nearest bus stops, ferry/port links, and fallback walking segments.
-6. Feed `crowd.level` and `weather.flags.indoor_backup` into route candidate scoring so rainy or crowded dates down-rank exposed and high-crowd nodes.
+1. Extend verified opening hours beyond the first five priority venues.
+2. Enrich the remaining candidates from `data/poi_expansion_candidates.json`, one batch per district, with provenance.
+3. Add nearest bus-stop identifiers to route nodes so live vehicle data can be filtered to the exact boarding stop.
+4. Migrate graph edges to a relational table only after route algorithms need graph traversal queries.
+5. Feed `crowd.level` and `weather.flags.indoor_backup` into route candidate scoring so rainy or crowded dates down-rank exposed and high-crowd nodes.
+
+## Implemented 2026-08-27
+
+- Added the DSAT public-web adapter for route changes, suspended stops, and official vehicle data.
+- Added `bus_routes` and `poi_ids` filters to `GET /api/v1/routes/live-advice`.
+- Added `data/poi_knowledge_graph.json` with ten priority cultural nodes across the peninsula, Taipa, and Coloane.
+- Added source-attributed schedules for the Ruins of St. Paul's, Macao Museum, A-Ma Temple, Taipa Houses, and Guia Fortress.
+- Added route-page display for the current POI's verified official opening schedule.
 
 ## Guardrails
 

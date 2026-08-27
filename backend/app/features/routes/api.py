@@ -82,16 +82,24 @@ def weather_advice(
     "/live-advice",
     summary="Get live travel advice for route planning",
     description=(
-        "Return weather, event/holiday crowd estimates, and official source links "
-        "for transport and opening-hours checks."
+        "Return weather, event/holiday crowd estimates, live DSAT route operations, "
+        "and source-attributed opening schedules for requested POIs."
     ),
 )
 def live_advice(
     travel_date: str | None = None,
     trip_days: int | None = None,
     language: str = "zh-CN",
+    poi_ids: str | None = None,
+    bus_routes: str | None = None,
 ) -> dict:
-    return get_live_travel_advice(travel_date, trip_days=trip_days, language=language)
+    return get_live_travel_advice(
+        travel_date,
+        trip_days=trip_days,
+        language=language,
+        poi_ids=[item for item in (poi_ids or "").split(",") if item],
+        bus_routes=[item for item in (bus_routes or "").split(",") if item],
+    )
 
 
 @router.post(

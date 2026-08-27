@@ -1,0 +1,39 @@
+{
+  "version": "2026-08-27",
+  "description": "Source-attributed operational metadata and cultural relations for priority StoryWalk POIs.",
+  "pois": [
+    {
+      "poi_id": "poi_0001", "name_zh-CN": "大三巴牌坊", "name_zh-TW": "大三巴牌坊", "name_en": "Ruins of St. Paul's", "name_pt": "Ruínas de S. Paulo",
+      "opening_hours": {"status": "verified-schedule", "regular": ["09:00-18:00"], "last_entry": "17:30", "checked_at": "2026-08-27", "source": {"name": "Macao World Heritage", "url": "https://www.wh.mo/en/site/detail/18"}},
+      "relations": [{"type": "historic_complex", "target_poi_id": "poi_0049", "weight": 1.0}, {"type": "walkable", "target_poi_id": "poi_0003", "weight": 0.95}]
+    },
+    {
+      "poi_id": "poi_0003", "name_zh-CN": "澳门博物馆", "name_zh-TW": "澳門博物館", "name_en": "Macao Museum", "name_pt": "Museu de Macau",
+      "opening_hours": {"status": "verified-schedule", "regular": ["10:00-18:00"], "last_entry": "17:30", "closed_days": ["Monday; open on public holidays"], "checked_at": "2026-08-27", "source": {"name": "Macao Museum", "url": "https://www.macaumuseum.gov.mo/en/visit/access"}},
+      "relations": [{"type": "located_within", "target_poi_id": "poi_0048", "weight": 1.0}, {"type": "walkable", "target_poi_id": "poi_0001", "weight": 0.95}]
+    },
+    {
+      "poi_id": "poi_0004", "name_zh-CN": "议事亭前地", "name_zh-TW": "議事亭前地", "name_en": "Senado Square", "name_pt": "Largo do Senado",
+      "relations": [{"type": "world_heritage_walk", "target_poi_id": "poi_0056", "weight": 1.0}, {"type": "walkable", "target_poi_id": "poi_0009", "weight": 0.95}]
+    },
+    {
+      "poi_id": "poi_0011", "name_zh-CN": "妈阁庙", "name_zh-TW": "媽閣廟", "name_en": "A-Ma Temple", "name_pt": "Templo de A-Má",
+      "opening_hours": {"status": "verified-schedule", "regular": ["07:00-18:00"], "checked_at": "2026-08-27", "source": {"name": "Macao World Heritage", "url": "https://www.wh.mo/en/site/detail/1"}},
+      "relations": [{"type": "maritime_culture", "target_poi_id": "poi_0170", "weight": 0.85}, {"type": "world_heritage_walk", "target_poi_id": "poi_0168", "weight": 0.9}]
+    },
+    {
+      "poi_id": "poi_0012", "name_zh-CN": "龙环葡韵", "name_zh-TW": "龍環葡韻", "name_en": "Taipa Houses", "name_pt": "Casas da Taipa",
+      "opening_hours": {"status": "verified-schedule", "regular": ["10:00-19:00"], "last_entry": "18:30", "closed_days": ["Monday"], "checked_at": "2026-08-27", "source": {"name": "Cultural Affairs Bureau", "url": "https://www.icm.gov.mo/en/housesmuseum/"}},
+      "relations": [{"type": "macanese_daily_life", "target_poi_id": "poi_0098", "weight": 1.0}, {"type": "walkable", "target_poi_id": "poi_0008", "weight": 0.9}]
+    },
+    {
+      "poi_id": "poi_0059", "name_zh-CN": "东望洋炮台", "name_zh-TW": "東望洋炮台", "name_en": "Guia Fortress", "name_pt": "Fortaleza da Guia",
+      "opening_hours": {"status": "verified-schedule", "regular": ["Fortress 09:00-18:00", "Chapel 10:00-17:00"], "last_entry": "17:30 (fortress)", "special_note": "Lighthouse is not open to the public.", "checked_at": "2026-08-27", "source": {"name": "Macao World Heritage", "url": "https://www.wh.mo/en/site/detail/25"}},
+      "relations": [{"type": "maritime_navigation", "target_poi_id": "poi_0011", "weight": 0.75}, {"type": "military_history", "target_poi_id": "poi_0048", "weight": 0.9}]
+    },
+    {"poi_id": "poi_0009", "name_zh-CN": "玫瑰堂", "name_zh-TW": "玫瑰堂", "name_en": "St. Dominic's Church", "name_pt": "Igreja de S. Domingos", "relations": [{"type": "world_heritage_walk", "target_poi_id": "poi_0004", "weight": 0.95}]},
+    {"poi_id": "poi_0052", "name_zh-CN": "圣若瑟修院及圣堂", "name_zh-TW": "聖若瑟修院及聖堂", "name_en": "St. Joseph's Seminary and Church", "name_pt": "Seminário e Igreja de S. José", "relations": [{"type": "missionary_history", "target_poi_id": "poi_0050", "weight": 0.85}]},
+    {"poi_id": "poi_0234", "name_zh-CN": "路环圣方济各圣堂", "name_zh-TW": "路環聖方濟各聖堂", "name_en": "Chapel of St. Francis Xavier", "name_pt": "Capela de São Francisco Xavier", "relations": [{"type": "coloane_village_walk", "target_poi_id": "poi_0238", "weight": 1.0}]},
+    {"poi_id": "poi_0238", "name_zh-CN": "路环码头", "name_zh-TW": "路環碼頭", "name_en": "Coloane Pier", "name_pt": "Ponte-Cais de Coloane", "relations": [{"type": "maritime_culture", "target_poi_id": "poi_0234", "weight": 1.0}]}
+  ]
+}

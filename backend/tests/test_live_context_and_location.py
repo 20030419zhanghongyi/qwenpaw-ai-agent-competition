@@ -175,15 +175,20 @@ def test_live_travel_advice_returns_realtime_bundle(monkeypatch):
         "_events",
         lambda _target: {"status": "ok", "events": [], "source": {"name": "events"}},
     )
+    monkeypatch.setattr(
+        live_context,
+        "get_bus_operations",
+        lambda **_kwargs: {"status": "live", "alerts": [], "source": {"name": "DSAT"}},
+    )
     live_context._cache.clear()
 
     advice = live_context.get_live_travel_advice("2026-05-02", trip_days=2, language="en")
 
     assert advice["weather"]["status"] == "unavailable"
     assert advice["crowd"]["level"] == "very_high"
-    assert advice["transport"]["status"] == "advice-only"
+    assert advice["transport"]["status"] == "live"
     assert "AMap" in advice["transport"]["notes"][0]
-    assert advice["opening_hours"]["status"] == "advice-only"
+    assert advice["opening_hours"]["status"] == "unavailable"
 
 
 @pytest.mark.parametrize(
@@ -207,6 +212,11 @@ def test_live_travel_advice_localizes_operational_notes(
         live_context,
         "_events",
         lambda _target: {"status": "ok", "events": [], "source": {"name": "events"}},
+    )
+    monkeypatch.setattr(
+        live_context,
+        "get_bus_operations",
+        lambda **_kwargs: {"status": "live", "alerts": [], "source": {"name": "DSAT"}},
     )
     live_context._cache.clear()
 

@@ -123,6 +123,59 @@ def test_local_fallback_when_web_empty(monkeypatch, tmp_path):
     assert "手头资料里没有" not in payload["text"]
 
 
+def test_ama_stable_id_searches_historical_changes_in_multiple_languages(
+    monkeypatch, tmp_path
+):
+    """Stable route IDs retain aliases and historical-change search intent."""
+    _reset(monkeypatch, tmp_path)
+    monkeypatch.setattr(guide_api.settings, "guide_agent_enabled", True)
+    captured: dict[str, list[str]] = {}
+
+    def _fake_search(queries, *, language, **_kwargs):
+        captured[language] = list(queries)
+        if language != "en":
+            return []
+        return [
+            {
+                "title": "A-Ma Temple",
+                "snippet": (
+                    "A-Ma Temple developed as a complex of prayer halls over several "
+                    "centuries and underwent repeated restoration after typhoon damage."
+                ),
+                "url": "https://example.com/ama-history",
+                "source": "official",
+            }
+        ]
+
+    monkeypatch.setattr(guide_api, "search_web_multi", _fake_search)
+
+    class _Expl:
+        text = "媽閣廟在數百年間逐步形成多座殿堂，並曾在風災後多次修繕。"
+        confidence = 0.9
+        source_type = "ai"
+        ai_generated = True
+        language = "zh-TW"
+
+    monkeypatch.setattr(guide_api.guide_agent, "answer", lambda *_a, **_k: _Expl())
+
+    response = client.post(
+        "/api/v1/guide/ask",
+        json={
+            "poi": "poi_0011",
+            "question": "媽閣廟經歷過哪些重要變化？",
+            "language": "zh-TW",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["web_used"] is True
+    assert payload["source"] == "agent+web"
+    assert "修繕" in payload["text"]
+    assert any("A-Ma Temple" in query for query in captured["en"])
+    assert any("restoration" in query for query in captured["en"])
+
+
 def test_web_false_uses_local_only(monkeypatch, tmp_path):
     _reset(monkeypatch, tmp_path)
     _stub_local(monkeypatch, "大三巴牌坊", _DASHABA_MATERIAL)

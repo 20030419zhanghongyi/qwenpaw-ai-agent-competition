@@ -206,7 +206,9 @@ function NodeCopy({ node, stayLabel }: { node: DisplayNode; stayLabel: string })
       {node.subtitle ? (
         <p className="text-[11px] uppercase tracking-widest text-ink-soft">{node.subtitle}</p>
       ) : null}
-      <p className="mt-1 text-xs leading-relaxed text-ink-soft">{node.note}</p>
+      {node.note ? (
+        <p className="mt-1 text-xs leading-relaxed text-ink-soft">{node.note}</p>
+      ) : null}
     </>
   );
 }

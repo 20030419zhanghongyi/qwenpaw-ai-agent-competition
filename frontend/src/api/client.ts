@@ -112,23 +112,56 @@ export interface LiveTravelAdviceResponse {
     status: string;
     notes: string[];
     sources: LiveAdviceSource[];
+    fetched_at?: string;
+    alerts?: Array<{
+      route: string;
+      has_change: boolean;
+      suspended_stops: Array<{ stop_code?: string; stop_name?: string }>;
+    }>;
   };
   opening_hours: {
     status: string;
     notes: string[];
     sources: LiveAdviceSource[];
+    entries?: Array<{
+      poi_id: string;
+      name: string;
+      regular: string[];
+      last_entry?: string | null;
+      closed_days: string[];
+      checked_at?: string;
+      source?: LiveAdviceSource;
+    }>;
+    coverage?: { requested: number; verified: number };
   };
+}
+
+export type OpeningHoursResponse = LiveTravelAdviceResponse["opening_hours"];
+
+export function fetchPoiOpeningHours(params: {
+  poiIds: string[];
+  language: LanguageCode;
+}): Promise<OpeningHoursResponse> {
+  const search = new URLSearchParams({
+    poi_ids: params.poiIds.join(","),
+    language: params.language,
+  });
+  return request<OpeningHoursResponse>(`/api/v1/pois/opening-hours?${search.toString()}`);
 }
 
 export function fetchLiveTravelAdvice(params: {
   travelDate: string;
   tripDays?: number | null;
   language: LanguageCode;
+  poiIds?: string[];
+  busRoutes?: string[];
 }): Promise<LiveTravelAdviceResponse> {
   const search = new URLSearchParams();
   search.set("travel_date", params.travelDate);
   search.set("language", params.language);
   if (params.tripDays != null) search.set("trip_days", String(params.tripDays));
+  if (params.poiIds?.length) search.set("poi_ids", params.poiIds.join(","));
+  if (params.busRoutes?.length) search.set("bus_routes", params.busRoutes.join(","));
   return request<LiveTravelAdviceResponse>(`/api/v1/routes/live-advice?${search.toString()}`);
 }
 
