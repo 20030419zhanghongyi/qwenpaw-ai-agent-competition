@@ -1,3 +1,5 @@
+import type { LanguageCode } from "@/types";
+
 export type StoryAssetAspectRatio =
   | "9/16"
   | "3/4"
@@ -493,8 +495,90 @@ items.push(
 export const STORY_ASSET_MANIFEST: ReadonlyMap<string, StoryAssetManifestItem> =
   new Map(items.map((item) => [item.id, item]));
 
+function labels(zhTW: string, en: string, pt: string) {
+  return { "zh-TW": zhTW, en, pt };
+}
+
+// Shared portraits and Lotus/Taipa assets use the same locale resolver.
+// Coloane-exclusive CAT labels remain part of its separate content workstream.
+const LOCALIZED_ASSET_LABELS: Readonly<
+  Record<string, Partial<Record<LanguageCode, string>>>
+> = {
+  "V4-COVER-01": labels("故事封面", "Story cover", "Capa da história"),
+  "V4-ENTRY-01": labels("故事遊邀請", "An invitation to the story walk", "Um convite para o passeio narrativo"),
+  "V4-CHAR-01": labels("阿蓮", "A Lin", "A Lin"),
+  "V4-CHAR-02": labels("阿蓮正在查找資料", "A Lin is checking the sources", "A Lin está a consultar fontes"),
+  "V4-CHAR-03": labels("阿蓮發現線索", "A Lin finds a clue", "A Lin encontra uma pista"),
+  "V4-CHAR-04": labels("阿瀾的回憶", "A Lan’s memories", "As memórias de A Lan"),
+  "V4-CHAR-05": labels("M先生的回憶", "Mr M’s memories", "As memórias do Sr. M"),
+  "V4-PROP-01": labels("一本舊書", "An old book", "Um livro antigo"),
+  "V4-PROP-02": labels("古書中的舊信封", "An old envelope inside the book", "Um envelope antigo dentro do livro"),
+  "V4-PROP-03": labels("兩張澳門舊圖", "Two old maps of Macau", "Dois mapas antigos de Macau"),
+  "V4-PROP-04": labels("六組地點局部圖", "Six pairs of local maps", "Seis pares de mapas locais"),
+  "V4-PROP-05": labels("迎光重合的五張紙條", "Five notes held together against the light", "Cinco bilhetes sobrepostos à luz"),
+  "V4-PRO-01": labels("阿蓮借出家藏舊書", "A Lin lends an old family book", "A Lin empresta um livro antigo da família"),
+  "V4-PRO-02": labels("信封與地圖從書頁間滑落", "An envelope and maps slip from the pages", "Um envelope e mapas deslizam de entre as páginas"),
+  "V4-PRO-03": labels("古書、雙圖和紙條展開", "The old book, two maps, and notes laid out", "O livro antigo, os dois mapas e os bilhetes abertos"),
+  "V4-AMA-01": labels("抵達媽閣廟", "Arriving at A-Ma Temple", "Chegada ao Templo de A-Má"),
+  "V4-AMA-02": labels("媽閣廟與海岸變化", "A-Ma Temple and the changing coastline", "O Templo de A-Má e as mudanças da costa"),
+  "V4-AMA-03": labels("媽閣廟局部雙圖", "Two local maps of A-Ma Temple", "Dois mapas locais do Templo de A-Má"),
+  "V4-AMA-04": labels("第一張密箋", "The first secret note", "O primeiro bilhete secreto"),
+  "V4-AMA-05": labels("潮線花瓣", "Shoreline petal", "Pétala da linha de costa"),
+  "V4-MAN-01": labels("抵達鄭家大屋", "Arriving at the Mandarin’s House", "Chegada à Casa do Mandarim"),
+  "V4-MAN-02": labels("鄭家大屋的轉折動線", "The winding route through the Mandarin’s House", "O percurso sinuoso pela Casa do Mandarim"),
+  "V4-MAN-03": labels("建築中的四種觀察對象", "Four architectural features to observe", "Quatro elementos arquitetónicos a observar"),
+  "V4-MAN-04": labels("帶五個小孔的紙條", "A note with five small holes", "Um bilhete com cinco pequenos orifícios"),
+  "V4-MAN-05": labels("水巷局部雙圖", "Two local maps of the water lane", "Dois mapas locais do corredor de água"),
+  "V4-MAN-06": labels("水巷花瓣", "Water-lane petal", "Pétala do corredor de água"),
+  "V4-SEN-01": labels("抵達議事亭前地", "Arriving at Senado Square", "Chegada ao Largo do Senado"),
+  "V4-SEN-02": labels("議事亭前地噴水池", "The fountain in Senado Square", "A fonte do Largo do Senado"),
+  "V4-SEN-03": labels("廣場的波浪形鋪地", "The square’s wave-patterned paving", "A calçada ondulada da praça"),
+  "V4-SEN-04": labels("舊廣場草圖", "A sketch of the old square", "Um esboço da antiga praça"),
+  "V4-SEN-05": labels("年代花瓣", "Timeline petal", "Pétala das épocas"),
+  "V4-SAM-01": labels("抵達三街會館", "Arriving at Sam Kai Vui Kun Temple", "Chegada ao Templo de Sam Kai Vui Kun"),
+  "V4-SAM-02": labels("貨物交付記錄", "A goods delivery record", "Um registo de entrega de mercadorias"),
+  "V4-SAM-03": labels("店內帳簿", "The shop ledger", "O livro de contas da loja"),
+  "V4-SAM-04": labels("腳夫留下的存條", "The porter’s receipt", "O recibo deixado pelo carregador"),
+  "V4-SAM-05": labels("三份紙面證據", "Three pieces of written evidence", "Três documentos de prova"),
+  "V4-SAM-06": labels("帳格花瓣", "Ledger petal", "Pétala do livro de contas"),
+  "V4-LOU-01": labels("抵達盧家大屋", "Arriving at Lou Kau Mansion", "Chegada à Casa de Lou Kau"),
+  "V4-LOU-02": labels("窗戶構造", "The structure of the window", "A estrutura da janela"),
+  "V4-LOU-03": labels("窗戶構件", "Window components", "Componentes da janela"),
+  "V4-LOU-04": labels("完成拼合的窗戶", "The assembled window", "A janela montada"),
+  "V4-LOU-05": labels("窗格花瓣", "Window-lattice petal", "Pétala da gelosia"),
+  "V4-LOU-06": labels("五張紙條組成完整市花", "Five notes form the complete city flower", "Cinco bilhetes formam a flor completa da cidade"),
+  "V4-LOU-P01": labels("上部窗框", "Upper window frame", "Parte superior da moldura"),
+  "V4-LOU-P02": labels("下部窗框", "Lower window frame", "Parte inferior da moldura"),
+  "V4-LOU-P03": labels("蠔殼窗片", "Oyster-shell window panel", "Painel de conchas de ostra"),
+  "V4-LOU-P04": labels("木百葉", "Wooden shutter", "Persiana de madeira"),
+  "V4-LOU-P05": labels("彩色玻璃", "Stained glass", "Vidro colorido"),
+  "V4-LOU-P06": labels("鐵花格", "Decorative iron grille", "Grade decorativa de ferro"),
+  "V4-LOU-P07": labels("鋁框", "Aluminium frame", "Moldura de alumínio"),
+  "V4-LOU-P08": labels("石花格", "Stone lattice", "Gelosia de pedra"),
+  "V4-FOR-01": labels("抵達大炮台", "Arriving at Mount Fortress", "Chegada à Fortaleza do Monte"),
+  "V4-FOR-02": labels("大炮台上的城市視野", "The city seen from Mount Fortress", "A cidade vista da Fortaleza do Monte"),
+  "V4-FOR-03": labels("舊圖與今日城市重合", "Old maps overlaid on today’s city", "Mapas antigos sobrepostos à cidade de hoje"),
+  "V4-FOR-04": labels("五站證據", "Evidence from five stops", "Provas recolhidas em cinco paragens"),
+  "V4-FOR-05": labels("M先生的回信", "Mr M’s reply", "A resposta do Sr. M"),
+  "V4-FOR-06": labels("阿瀾最後的補記", "A Lan’s final note", "A última nota de A Lan"),
+  "V4-FOR-07": labels("等待書寫的今日補記", "A blank page for today’s note", "Uma página em branco para a nota de hoje"),
+  "V4-FOR-08": labels("完整五瓣市花", "The complete five-petalled city flower", "A flor completa da cidade, com cinco pétalas"),
+  "V4-FOR-09": labels("故事結束時的澳門", "Macau at the close of the story", "Macau no final da história"),
+  "TAI-COVER-01": labels("氹仔舊城與龍環葡韻景觀", "Taipa’s old town and the Taipa Houses", "O centro antigo da Taipa e as Casas da Taipa"),
+  "TAI-PROP-01": labels("退信盒劇情道具", "The returned-letter box — a story prop", "A caixa de cartas devolvidas — um objeto da história"),
+  "TAI-SEA-01": labels("氹仔北帝廟外觀", "The exterior of Pak Tai Temple in Taipa", "O exterior do Templo de Pak Tai, na Taipa"),
+  "TAI-BELL-01": labels("嘉模聖母堂外觀", "The exterior of Our Lady of Carmel Church", "O exterior da Igreja de Nossa Senhora do Carmo"),
+  "TAI-HOME-01": labels("龍環葡韻住宅式博物館建築群", "The Taipa Houses museum buildings", "O conjunto museológico das Casas da Taipa"),
+  "TAI-WORK-01": labels("益隆炮竹廠舊址", "The former Iec Long Firecracker Factory", "A Antiga Fábrica de Panchões I Long"),
+  "TAI-STREET-01": labels("氹仔官也街街景", "A street view of Rua do Cunha in Taipa", "Vista da Rua do Cunha, na Taipa"),
+  "TAI-END-01": labels("氹仔消防局前地街景", "A street view of Largo dos Bombeiros in Taipa", "Vista do Largo dos Bombeiros, na Taipa"),
+};
+
 export function resolveStoryAsset(
   assetId: string,
+  language: LanguageCode = "zh-CN",
 ): StoryAssetManifestItem | undefined {
-  return STORY_ASSET_MANIFEST.get(assetId);
+  const item = STORY_ASSET_MANIFEST.get(assetId);
+  const label = LOCALIZED_ASSET_LABELS[assetId]?.[language];
+  return item && label ? { ...item, fallbackLabel: label } : item;
 }

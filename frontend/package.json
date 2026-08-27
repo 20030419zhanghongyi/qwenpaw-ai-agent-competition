@@ -8,6 +8,7 @@
     "dev": "vite --host 0.0.0.0",
     "audit:poi-localization": "node ./scripts/audit-poi-localization.mjs",
     "check:story-assets": "node ./scripts/check-story-v4-assets.mjs",
+    "test:story-asset-locales": "node --test ./scripts/test-story-asset-locales.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview"
   },

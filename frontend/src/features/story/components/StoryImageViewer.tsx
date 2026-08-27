@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useWalk } from "@/state/WalkContext";
 import { StoryImage } from "../assets";
 import { resolveStoryAsset } from "../assets/storyAssetManifest";
 import { useStoryMessages } from "../storyI18n";
@@ -17,6 +18,7 @@ export function StoryImageViewer({
   onClose,
 }: StoryImageViewerProps) {
   const st = useStoryMessages();
+  const { language } = useWalk();
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -53,7 +55,7 @@ export function StoryImageViewer({
   }, [assetId, onClose]);
 
   if (!assetId) return null;
-  const item = resolveStoryAsset(assetId);
+  const item = resolveStoryAsset(assetId, language);
   const label = alt ?? item?.fallbackLabel ?? st("storyImage");
 
   return (
