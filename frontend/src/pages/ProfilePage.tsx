@@ -5,10 +5,13 @@ import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { TripDaysStepper } from "@/components/preference/TripDaysStepper";
 import { ProfileSidebar } from "@/components/profile/ProfileSidebar";
+import { StoryChoiceSection } from "@/features/story/components/StoryChoiceSection";
+import type { StoryId } from "@/features/story/components/StoryChoiceSection";
 import { t } from "@/i18n";
 import { getLastTripId } from "@/lib/lastTrip";
 import {
   applyPreferenceToForm,
+  todayIso,
   toPreference,
   TRIP_DAYS_DEFAULT,
   type PreferenceFormState,
@@ -95,6 +98,9 @@ export function ProfilePage() {
   const [walkTags, setWalkTags] = useState<WalkTag[]>([]);
   const [entryPort, setEntryPort] = useState<string | null>(null);
   const [exitPort, setExitPort] = useState<string | null>(null);
+  const [storyOptIn, setStoryOptIn] = useState<boolean | null>(null);
+  const [storyId, setStoryId] = useState<StoryId | null>(null);
+  const [storyDay, setStoryDay] = useState<number | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -114,9 +120,9 @@ export function ProfilePage() {
       entryPort,
       exitPort,
       travelDate: preference?.travel_date ?? null,
-      storyOptIn: preference?.story_opt_in ?? null,
-      storyId: preference?.story_id ?? null,
-      storyDay: preference?.story_day ?? null,
+      storyOptIn,
+      storyId,
+      storyDay,
     };
   }, [
     duration,
@@ -129,6 +135,9 @@ export function ProfilePage() {
     entryPort,
     exitPort,
     preference?.travel_date,
+    storyOptIn,
+    storyId,
+    storyDay,
   ]);
 
   useEffect(() => {
@@ -143,6 +152,9 @@ export function ProfilePage() {
       setWalkTags(cleared.walkTags);
       setEntryPort(cleared.entryPort);
       setExitPort(cleared.exitPort);
+      setStoryOptIn(cleared.storyOptIn);
+      setStoryId(null);
+      setStoryDay(cleared.storyDay);
       return;
     }
     // Merge onto the live editor (via formRef), not emptyForm. emptyForm always
@@ -159,6 +171,9 @@ export function ProfilePage() {
     setWalkTags(form.walkTags);
     setEntryPort(form.entryPort);
     setExitPort(form.exitPort);
+    setStoryOptIn(form.storyOptIn);
+    setStoryId(form.storyId ?? null);
+    setStoryDay(form.storyDay);
   }, [preference, language]);
 
   const snapshot = (): PreferenceFormState => ({
@@ -173,9 +188,9 @@ export function ProfilePage() {
     entryPort,
     exitPort,
     travelDate: preference?.travel_date ?? null,
-    storyOptIn: preference?.story_opt_in ?? null,
-    storyId: preference?.story_id ?? null,
-    storyDay: preference?.story_day ?? null,
+    storyOptIn,
+    storyId,
+    storyDay,
   });
 
   const savePrefs = () => {
@@ -336,8 +351,14 @@ export function ProfilePage() {
                     key={id}
                     type="button"
                     onClick={() => {
-                      formRef.current = { ...formRef.current, duration: id };
+                      const nextStoryDay = storyOptIn && id !== "multi" ? 1 : storyDay;
+                      formRef.current = {
+                        ...formRef.current,
+                        duration: id,
+                        storyDay: nextStoryDay,
+                      };
                       setDuration(id);
+                      setStoryDay(nextStoryDay);
                     }}
                     className={`rounded-2xl border px-3 py-3 text-sm transition ${chip(duration === id)}`}
                   >
@@ -350,12 +371,58 @@ export function ProfilePage() {
                   language={language}
                   value={tripDays}
                   onChange={(n) => {
-                    formRef.current = { ...formRef.current, tripDays: n };
+                    const nextStoryDay = storyDay && storyDay <= n ? storyDay : null;
+                    formRef.current = {
+                      ...formRef.current,
+                      tripDays: n,
+                      storyDay: nextStoryDay,
+                    };
                     setTripDays(n);
+                    setStoryDay(nextStoryDay);
                   }}
                 />
               ) : null}
             </section>
+
+            <div className="py-6 [&>section]:mb-0">
+              <StoryChoiceSection
+                language={language}
+                multiDay={duration === "multi"}
+                tripDays={tripDays}
+                arrivalDate={preference?.travel_date ?? todayIso()}
+                storyOptIn={storyOptIn}
+                storyId={storyId}
+                storyDay={storyDay}
+                disabled={loading}
+                onDecline={() => {
+                  formRef.current = {
+                    ...formRef.current,
+                    storyOptIn: false,
+                    storyId: null,
+                    storyDay: null,
+                  };
+                  setStoryOptIn(false);
+                  setStoryId(null);
+                  setStoryDay(null);
+                }}
+                onSelectStory={(nextStoryId) => {
+                  const nextStoryDay = duration === "multi" ? storyDay : 1;
+                  formRef.current = {
+                    ...formRef.current,
+                    storyOptIn: true,
+                    storyId: nextStoryId,
+                    storyDay: nextStoryDay,
+                  };
+                  setStoryOptIn(true);
+                  setStoryId(nextStoryId);
+                  setStoryDay(nextStoryDay);
+                }}
+                onDayChange={(day) => {
+                  formRef.current = { ...formRef.current, storyDay: day };
+                  setStoryDay(day);
+                }}
+              />
+            </div>
 
             <section className="py-6">
               <h2 className="mb-1 font-display text-xl text-ink">{t(language, "portsTitle")}</h2>
