@@ -825,6 +825,7 @@ class PostcardService:
             user_id=trip.user_id,
             trip_id=trip_id,
             poi_id=poi_id,
+            artifact_kind="postcard",
             stop_order=stop_order,
             caption=caption,
             caption_source=caption_source,

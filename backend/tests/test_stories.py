@@ -1,16 +1,19 @@
 """Story Package V4 workflow, privacy, version, and ownership coverage."""
 
 from datetime import datetime, timezone
+from io import BytesIO
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
+from PIL import Image
 import pytest
 from sqlalchemy import delete, select
 
-from app.db.models import Checkin, StorySession as StorySessionRecord
+from app.db.models import Checkin, Postcard, StorySession as StorySessionRecord
 from app.db.models import Trip, TripStop, User
 from app.db.session import SessionLocal
 from app.features.pois.repository import PoiRepository
+from app.features.postcards.scene_image import SceneGenerationError
 from app.features.routes.repository import get_template
 from app.features.stories.content import (
     load_story,
@@ -33,6 +36,7 @@ from app.main import app
 
 STORY_ID = "lotus_city_double_map"
 COLOANE_STORY_ID = "coloane_after_tide"
+TAIPA_STORY_ID = "taipa_letters"
 V4_NODE_IDS = [
     "prologue_old_book",
     "chapter_ama",
@@ -387,6 +391,38 @@ def test_story_session_rewards_follow_requested_locale(
     assert story_session.state.rewards[0].text == "灯还亮着，信里的人仍在等水路上的归航。"
 
 
+@pytest.mark.parametrize(
+    ("language", "expected_message"),
+    [
+        ("zh-CN", "已到达当前剧情地点"),
+        ("zh-TW", "已到達目前的故事地點"),
+        ("en", "You have arrived at the current story location."),
+        ("pt", "Chegou ao local atual da história."),
+    ],
+)
+def test_story_arrival_message_follows_requested_locale(
+    language: str,
+    expected_message: str,
+):
+    story = load_story(STORY_ID)
+    story_session = _session(current_chapter_id="chapter_ama")
+    result = apply_action(
+        story,
+        story_session,
+        _action(StoryAction.ARRIVE, "chapter_ama"),
+    )
+    service = StoryService(repository=None, trips=None)  # type: ignore[arg-type]
+
+    response = service._action_response(
+        story,
+        story_session,
+        result,
+        language=language,
+    )
+
+    assert response.message == expected_message
+
+
 def test_v4_unordered_answers_and_mapping_keys_are_normalized():
     story = load_story(STORY_ID)
     story_session = _session()
@@ -610,6 +646,229 @@ def test_story_api_requires_owner_and_runs_complete_v4_workflow():
                     delete(StorySessionRecord).where(
                         StorySessionRecord.id == session_id
                     )
+                )
+                database.execute(delete(Checkin).where(Checkin.trip_id == trip_id))
+                database.execute(delete(TripStop).where(TripStop.trip_id == trip_id))
+                database.execute(delete(Trip).where(Trip.id == trip_id))
+                for user_id in (owner_id, other_id):
+                    remaining_trips = database.scalar(
+                        select(Trip.id).where(Trip.user_id == user_id).limit(1)
+                    )
+                    if remaining_trips is None:
+                        database.execute(delete(User).where(User.id == user_id))
+                database.commit()
+
+
+def test_taipa_future_letter_is_authenticated_idempotent_and_separate_from_postcard(
+    monkeypatch,
+):
+    client = TestClient(app)
+    story = load_story(TAIPA_STORY_ID)
+    owner_id = ""
+    other_id = ""
+    session_id = ""
+    trip_id = ""
+    ordinary_postcard_id = ""
+    generated_calls = 0
+    reflection = "愿未来的人仍能从海风、钟声和街巷里，知道这里怎样成为家。"
+
+    def _fake_future_letter_image(**kwargs) -> bytes:
+        nonlocal generated_calls
+        generated_calls += 1
+        assert "/qwen-image-postcard" in kwargs["prompt"]
+        assert reflection not in kwargs["prompt"]
+        assert kwargs["output_size"] == (900, 1600)
+        buffer = BytesIO()
+        Image.new("RGB", (90, 160), (55, 93, 80)).save(buffer, format="JPEG")
+        return buffer.getvalue()
+
+    monkeypatch.setattr(
+        "app.features.stories.future_letter.generate_prompt_image_via_qwenpaw",
+        _fake_future_letter_image,
+    )
+
+    try:
+        owner_id, owner_headers = _register_headers(client, "taipa-letter-owner")
+        other_id, other_headers = _register_headers(client, "taipa-letter-other")
+        started = client.post(
+            f"/api/v1/stories/{TAIPA_STORY_ID}/sessions",
+            headers=owner_headers,
+        )
+        assert started.status_code == 201, started.text
+        session_id = started.json()["session_id"]
+        trip_id = started.json()["trip_id"]
+
+        for node in sorted(story_nodes(story), key=lambda item: item["order"]):
+            if node.get("poi_id"):
+                arrived = client.post(
+                    f"/api/v1/story-sessions/{session_id}/actions",
+                    headers=owner_headers,
+                    json={"action": "arrive", "chapter_id": node["id"]},
+                )
+                assert arrived.status_code == 200, arrived.text
+            if node["kind"] == "puzzle":
+                payload = {
+                    "action": "answer",
+                    "chapter_id": node["id"],
+                    "answer": node["puzzle"]["solution"],
+                }
+            elif node["kind"] == "prologue":
+                payload = {"action": "continue", "chapter_id": node["id"]}
+            else:
+                payload = {
+                    "action": "choose_ending",
+                    "chapter_id": node["id"],
+                    "choice_id": "send_future_taipa_letter",
+                    "reflection": reflection,
+                }
+            progressed = client.post(
+                f"/api/v1/story-sessions/{session_id}/actions",
+                headers=owner_headers,
+                json=payload,
+            )
+            assert progressed.status_code == 200, progressed.text
+
+        ending_poi_id = next(
+            str(node["poi_id"])
+            for node in story_nodes(story)
+            if node["kind"] == "ending"
+        )
+        ordinary_postcard_id = str(uuid4())
+        with SessionLocal() as database:
+            database.add(
+                Postcard(
+                    id=ordinary_postcard_id,
+                    user_id=owner_id,
+                    trip_id=trip_id,
+                    poi_id=ending_poi_id,
+                    artifact_kind="postcard",
+                    stop_order=5,
+                    caption="普通地点明信片",
+                    caption_source="template",
+                    source_type="fallback",
+                    ai_generated=False,
+                    language="zh-CN",
+                    review_decision="pass",
+                    image_svg=b'<svg data-scene-source="ai"></svg>',
+                    photo_scrubbed=False,
+                    created_at=datetime.now(timezone.utc),
+                )
+            )
+            database.commit()
+
+        metadata_path = f"/api/v1/story-sessions/{session_id}/future-letter"
+        assert client.get(metadata_path, headers=owner_headers).status_code == 404
+        assert client.post(metadata_path).status_code == 401
+        assert client.post(metadata_path, headers=other_headers).status_code == 403
+
+        generated = client.post(f"{metadata_path}?language=en", headers=owner_headers)
+        assert generated.status_code == 201, generated.text
+        future_letter = generated.json()
+        assert future_letter["status"] == "ready"
+        assert future_letter["scene_source"] == "ai"
+        assert future_letter["reflection_truncated"] is False
+
+        repeated = client.post(f"{metadata_path}?language=en", headers=owner_headers)
+        assert repeated.status_code == 201
+        assert repeated.json()["postcard_id"] == future_letter["postcard_id"]
+        assert generated_calls == 1
+
+        image_path = future_letter["image_url"]
+        assert client.get(image_path).status_code == 401
+        assert client.get(image_path, headers=other_headers).status_code == 403
+        stored_language_image = client.get(image_path, headers=owner_headers)
+        assert stored_language_image.status_code == 200
+        assert b'xml:lang="en"' in stored_language_image.content
+        image = client.get(f"{image_path}?language=en", headers=owner_headers)
+        assert image.status_code == 200
+        assert image.headers["content-type"].startswith("image/svg+xml")
+        assert b'data-artifact-kind="future_letter"' in image.content
+        assert b'xml:lang="en"' in image.content
+        assert b"To Taipa&#x27;s Future" in image.content
+        assert b"AI-generated scene" in image.content
+        assert reflection.encode("utf-8") in image.content
+
+        simplified_chinese_image = client.get(
+            f"{image_path}?language=zh-CN",
+            headers=owner_headers,
+        )
+        assert simplified_chinese_image.status_code == 200
+        assert b'xml:lang="zh-CN"' in simplified_chinese_image.content
+        assert "寄给未来氹仔".encode() in simplified_chinese_image.content
+        assert "AI 场景示意".encode() in simplified_chinese_image.content
+
+        traditional_chinese_image = client.get(
+            f"{image_path}?language=zh-TW",
+            headers=owner_headers,
+        )
+        assert traditional_chinese_image.status_code == 200
+        assert b'xml:lang="zh-TW"' in traditional_chinese_image.content
+        assert "寄給未來氹仔".encode() in traditional_chinese_image.content
+        assert "AI 場景示意".encode() in traditional_chinese_image.content
+
+        portuguese_image = client.get(
+            f"{image_path}?language=pt",
+            headers=owner_headers,
+        )
+        assert portuguese_image.status_code == 200
+        assert b'xml:lang="pt"' in portuguese_image.content
+        assert "Para o Futuro da Taipa".encode() in portuguese_image.content
+        assert "Cena gerada por IA".encode() in portuguese_image.content
+        assert reflection.encode("utf-8") in portuguese_image.content
+        assert generated_calls == 1
+
+        with SessionLocal() as database:
+            stored_future_letter = database.scalar(
+                select(Postcard).where(
+                    Postcard.trip_id == trip_id,
+                    Postcard.artifact_kind == "future_letter",
+                )
+            )
+            assert stored_future_letter is not None
+            assert stored_future_letter.language == "en"
+        assert (
+            client.get(
+                f"/api/v1/postcards/{future_letter['postcard_id']}/image"
+            ).status_code
+            == 404
+        )
+
+        listed = client.get(f"/api/v1/trips/{trip_id}/postcards")
+        assert listed.status_code == 200
+        assert [card["postcard_id"] for card in listed.json()["postcards"]] == [
+            ordinary_postcard_id
+        ]
+
+        with SessionLocal() as database:
+            database.execute(
+                delete(Postcard).where(
+                    Postcard.trip_id == trip_id,
+                    Postcard.artifact_kind == "future_letter",
+                )
+            )
+            database.commit()
+
+        def _failed_future_letter_image(**_kwargs) -> bytes:
+            raise SceneGenerationError("test scene failure")
+
+        monkeypatch.setattr(
+            "app.features.stories.future_letter.generate_prompt_image_via_qwenpaw",
+            _failed_future_letter_image,
+        )
+        failed = client.post(metadata_path, headers=owner_headers)
+        assert failed.status_code == 503
+        restored = client.get(
+            f"/api/v1/story-sessions/{session_id}", headers=owner_headers
+        )
+        assert restored.status_code == 200
+        assert restored.json()["status"] == "completed"
+        assert restored.json()["state"]["ending_reflection"] == reflection
+    finally:
+        if trip_id:
+            with SessionLocal() as database:
+                database.execute(delete(Postcard).where(Postcard.trip_id == trip_id))
+                database.execute(
+                    delete(StorySessionRecord).where(StorySessionRecord.id == session_id)
                 )
                 database.execute(delete(Checkin).where(Checkin.trip_id == trip_id))
                 database.execute(delete(TripStop).where(TripStop.trip_id == trip_id))
