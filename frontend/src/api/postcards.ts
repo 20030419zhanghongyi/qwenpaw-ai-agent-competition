@@ -123,3 +123,14 @@ export async function listTripPostcards(tripId: string): Promise<Postcard[]> {
   const body = (await response.json()) as PostcardListResponse;
   return body.postcards ?? [];
 }
+
+export async function listAccountPostcards(token: string): Promise<Postcard[]> {
+  const response = await fetch(`${API_BASE}/api/v1/postcards`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    throw new PostcardApiError(await parseError(response), response.status);
+  }
+  const body = (await response.json()) as PostcardListResponse;
+  return body.postcards ?? [];
+}

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { listTripPostcards, PostcardApiError } from "@/api/postcards";
-import { listTripHistory } from "@/api/profile";
+import { listAccountPostcards, listTripPostcards, PostcardApiError } from "@/api/postcards";
 import { getCurrentTrip, TripApiError } from "@/api/trips";
 import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
@@ -21,7 +20,7 @@ export function PostcardGalleryPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { language, session } = useWalk();
-  const { userId: authUserId } = useAuth();
+  const { userId: authUserId, token, isAuthenticated } = useAuth();
   const { trip, loadTrip } = useTrip();
   const [postcards, setPostcards] = useState<Postcard[]>([]);
   const [resolvedTripId, setResolvedTripId] = useState<string | null>(
@@ -41,7 +40,9 @@ export function PostcardGalleryPage() {
         name: session.poisById[poiId]
           ? localizedPoiName(session.poisById[poiId], language)
           : poiId,
-        hasPostcard: postcards.some((card) => card.poi_id === poiId),
+        hasPostcard: postcards.some(
+          (card) => card.trip_id === trip.trip_id && card.poi_id === poiId,
+        ),
       }));
   }, [trip, session, postcards, language]);
 
@@ -49,29 +50,18 @@ export function PostcardGalleryPage() {
     setError(null);
     setLoading(true);
     try {
-      if (!tripIdFromQuery && authUserId) {
-        const history = await listTripHistory(authUserId);
-        if (history.length === 0) {
-          setResolvedTripId(null);
-          setPostcards([]);
-          return;
-        }
-
-        const allPostcards = (
-          await Promise.all(history.map(({ trip_id }) => listTripPostcards(trip_id)))
-        )
-          .flat()
-          .sort(
-            (left, right) =>
-              new Date(right.created_at).getTime() - new Date(left.created_at).getTime(),
-          );
+      if (token) {
+        const allPostcards = await listAccountPostcards(token);
         const rememberedTripId = getLastTripId();
         const selectedTripId =
-          history.find(({ trip_id }) => trip_id === rememberedTripId)?.trip_id ??
-          history[0].trip_id;
+          allPostcards.find(({ trip_id }) => trip_id === rememberedTripId)?.trip_id ??
+          allPostcards[0]?.trip_id ??
+          rememberedTripId;
         setResolvedTripId(selectedTripId);
-        rememberLastTripId(selectedTripId);
-        await loadTrip(selectedTripId);
+        if (selectedTripId) {
+          rememberLastTripId(selectedTripId);
+          await loadTrip(selectedTripId).catch(() => undefined);
+        }
         setPostcards(allPostcards);
         return;
       }
@@ -110,7 +100,7 @@ export function PostcardGalleryPage() {
     } finally {
       setLoading(false);
     }
-  }, [authUserId, language, loadTrip, tripIdFromQuery]);
+  }, [authUserId, language, loadTrip, token, tripIdFromQuery]);
 
   useEffect(() => {
     void refresh();
@@ -122,7 +112,7 @@ export function PostcardGalleryPage() {
     return `/postcards/new?trip=${encodeURIComponent(id)}&poi=${encodeURIComponent(poiId)}`;
   };
 
-  const hasTrip = Boolean(resolvedTripId || trip);
+  const hasTrip = isAuthenticated || Boolean(resolvedTripId || trip);
 
   return (
     <main className="relative flex-1 bg-paper pb-24">

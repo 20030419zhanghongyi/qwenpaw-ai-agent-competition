@@ -13,7 +13,7 @@ from app.db.base import Base, utc_now
 
 if TYPE_CHECKING:
     from .profile import Favorite, TripFeedback
-    from .trip import Trip
+    from .trip import Postcard, Trip
 
 
 DEFAULT_GUEST_USER_NAME = "Guest traveler"
@@ -69,5 +69,6 @@ class User(Base):
     )
 
     trips: Mapped[list[Trip]] = relationship(back_populates="user")
+    postcards: Mapped[list[Postcard]] = relationship(back_populates="user")
     favorites: Mapped[list[Favorite]] = relationship(back_populates="user")
     feedback: Mapped[list[TripFeedback]] = relationship(back_populates="user")

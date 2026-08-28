@@ -1,12 +1,14 @@
 """API contract tests for privacy-scrubbed personalized postcards."""
 
 from io import BytesIO
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 from sqlalchemy import select
 
+from app.core.security import create_access_token
 from app.db.models import Postcard as PostcardRecord
 from app.db.session import SessionLocal
 from app.features.trips.store import trip_store
@@ -88,10 +90,70 @@ def test_create_postcard_for_completed_stop_and_persist_svg(monkeypatch):
             select(PostcardRecord).where(PostcardRecord.id == data["postcard_id"])
         )
         assert record is not None
+        assert record.user_id == USER_ID
         assert b"data:image/jpeg;base64," in record.image_svg
         assert data["timestamp_label"].encode("utf-8") in record.image_svg
         assert data["geo_label"].encode("utf-8") in record.image_svg
         assert data["task_label"].encode("utf-8") in record.image_svg
+
+
+def test_account_gallery_is_persisted_across_trips_and_isolated_by_user(monkeypatch):
+    monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
+    first_trip, first_poi = _trip_with_checkin(USER_ID)
+    second_trip, second_poi = _trip_with_checkin(USER_ID)
+    other_trip, other_poi = _trip_with_checkin("other-postcard-user")
+
+    first = _create_postcard(first_trip, first_poi)
+    second = _create_postcard(second_trip, second_poi)
+    other = _create_postcard(other_trip, other_poi)
+    assert first.status_code == second.status_code == other.status_code == 201
+
+    assert client.get("/api/v1/postcards").status_code == 401
+    response = client.get(
+        "/api/v1/postcards",
+        headers={"Authorization": f"Bearer {create_access_token(USER_ID)}"},
+    )
+
+    assert response.status_code == 200
+    cards = response.json()["postcards"]
+    assert {card["postcard_id"] for card in cards} == {
+        first.json()["postcard_id"],
+        second.json()["postcard_id"],
+    }
+    assert {card["trip_id"] for card in cards} == {first_trip, second_trip}
+
+
+def test_guest_postcard_is_claimed_when_user_signs_in(monkeypatch):
+    monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
+    guest_user_id = f"guest-postcard-claim-{uuid4()}"
+    trip_id, poi_id = _trip_with_checkin(guest_user_id)
+    postcard = _create_postcard(trip_id, poi_id).json()
+    registered = client.post(
+        "/api/v1/users/register",
+        json={
+            "email": f"postcard-claim-{uuid4()}@test.com",
+            "password": "TestPassword123!",
+            "name": "Postcard Owner",
+            "language": "en",
+        },
+    ).json()
+
+    claimed = client.post(
+        "/api/v1/users/me/claim-guest-trips",
+        json={"guest_user_id": guest_user_id},
+        headers={"Authorization": f"Bearer {registered['token']}"},
+    )
+
+    assert claimed.status_code == 200
+    with SessionLocal() as session:
+        record = session.get(PostcardRecord, postcard["postcard_id"])
+        assert record is not None
+        assert record.user_id == registered["user_id"]
+    gallery = client.get(
+        "/api/v1/postcards",
+        headers={"Authorization": f"Bearer {registered['token']}"},
+    ).json()["postcards"]
+    assert [card["postcard_id"] for card in gallery] == [postcard["postcard_id"]]
 
 
 def test_postcard_requires_checked_in_trip_stop():
@@ -165,12 +227,32 @@ def test_legacy_postcard_is_hidden_and_can_be_replaced(monkeypatch):
     listed = client.get(f"/api/v1/trips/{trip_id}/postcards")
     assert listed.status_code == 200
     assert listed.json()["postcards"] == []
-    assert client.get(legacy["image_url"]).status_code == 404
+    assert client.get(legacy["image_url"]).status_code == 200
 
     current = _create_postcard(trip_id, poi_id)
     assert current.status_code == 201
     assert current.json()["postcard_id"] != legacy["postcard_id"]
     assert len(client.get(f"/api/v1/trips/{trip_id}/postcards").json()["postcards"]) == 1
+
+
+def test_account_gallery_includes_historical_postcards(monkeypatch):
+    monkeypatch.setattr("app.features.postcards.service._agent_caption", lambda *_: None)
+    trip_id, poi_id = _trip_with_checkin()
+    postcard = _create_postcard(trip_id, poi_id).json()
+    with SessionLocal() as session:
+        record = session.get(PostcardRecord, postcard["postcard_id"])
+        assert record is not None
+        record.render_version = 1
+        session.commit()
+
+    response = client.get(
+        "/api/v1/postcards",
+        headers={"Authorization": f"Bearer {create_access_token(USER_ID)}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["postcards"][0]["postcard_id"] == postcard["postcard_id"]
+    assert response.json()["postcards"][0]["is_historical"] is True
 
 
 def test_list_postcards_follows_route_order(monkeypatch):

@@ -23,6 +23,12 @@ export function PostcardCard({
     postcard.timestamp_label,
     postcard.geo_label,
   ].filter(Boolean);
+  const historicalLabel = {
+    "zh-CN": "历史版本",
+    "zh-TW": "歷史版本",
+    en: "Historical version",
+    pt: "Versão histórica",
+  }[language];
 
   return (
     <article
@@ -53,6 +59,11 @@ export function PostcardCard({
         <div className="px-4 py-3">
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-display text-lg text-ink">{poiName}</p>
+            {postcard.is_historical ? (
+              <span className="rounded-full bg-paper-warm px-2 py-0.5 text-[10px] text-ink-soft">
+                {historicalLabel}
+              </span>
+            ) : null}
             {postcard.ai_generated ? (
               <span className="rounded-full bg-sage-deep/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sage-deep">
                 {t(language, "postcardAiBadge")}

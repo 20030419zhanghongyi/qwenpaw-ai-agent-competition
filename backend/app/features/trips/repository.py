@@ -8,13 +8,16 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.db.models import Checkin as CheckinRecord
+from app.db.models import Favorite as FavoriteRecord
 from app.db.models import Postcard as PostcardRecord
 from app.db.models import MemoirPhoto as MemoirPhotoRecord
 from app.db.models import MemoirShare as MemoirShareRecord
 from app.db.models import TravelMemoir as TravelMemoirRecord
+from app.db.models import TripFeedback as TripFeedbackRecord
 from app.db.models import Trip as TripRecord
 from app.db.models import TripStop as TripStopRecord
 from app.db.models import User as UserRecord
+from app.db.models.story import StorySession as StorySessionRecord
 from app.db.session import SessionLocal
 from app.db.models.user import DEFAULT_GUEST_USER_NAME, guest_user_email
 
@@ -139,8 +142,37 @@ class SqlAlchemyTripRepository:
             records = session.scalars(
                 select(TripRecord).where(TripRecord.user_id == guest_user_id)
             ).all()
+            claimed_trip_ids = [record.id for record in records]
             for record in records:
                 record.user_id = user_id
+            if claimed_trip_ids:
+                account_assets = (
+                    PostcardRecord,
+                    TravelMemoirRecord,
+                    StorySessionRecord,
+                    TripFeedbackRecord,
+                )
+                for model in account_assets:
+                    assets = session.scalars(
+                        select(model).where(model.trip_id.in_(claimed_trip_ids))
+                    ).all()
+                    for asset in assets:
+                        asset.user_id = user_id
+
+            target_favorite_pois = set(
+                session.scalars(
+                    select(FavoriteRecord.poi_id).where(FavoriteRecord.user_id == user_id)
+                ).all()
+            )
+            guest_favorites = session.scalars(
+                select(FavoriteRecord).where(FavoriteRecord.user_id == guest_user_id)
+            ).all()
+            for favorite in guest_favorites:
+                if favorite.poi_id in target_favorite_pois:
+                    session.delete(favorite)
+                else:
+                    favorite.user_id = user_id
+                    target_favorite_pois.add(favorite.poi_id)
             session.commit()
             return len(records)
 

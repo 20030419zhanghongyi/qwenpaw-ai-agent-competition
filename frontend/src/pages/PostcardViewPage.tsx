@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { listTripPostcards, postcardImageSrc, PostcardApiError } from "@/api/postcards";
+import {
+  listAccountPostcards,
+  listTripPostcards,
+  postcardImageSrc,
+  PostcardApiError,
+} from "@/api/postcards";
 import { AzulejoBand } from "@/components/brand/AzulejoBand";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { PostcardActions } from "@/components/postcard/PostcardActions";
@@ -9,6 +14,7 @@ import { t } from "@/i18n";
 import { rememberLastTripId } from "@/lib/lastTrip";
 import { localizedPoiIdName } from "@/lib/poiLocalization";
 import { useWalk } from "@/state/WalkContext";
+import { useAuth } from "@/state/AuthContext";
 import type { Postcard } from "@/types/postcards";
 
 const HAN_TEXT = /[\u3400-\u9fff]/;
@@ -32,6 +38,7 @@ export function PostcardViewPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { language } = useWalk();
+  const { token } = useAuth();
   const tripId = searchParams.get("trip");
   const fromState = (location.state as { postcard?: Postcard } | null)?.postcard;
 
@@ -47,14 +54,17 @@ export function PostcardViewPage() {
 
   useEffect(() => {
     if (postcard || !postcardId) return;
-    if (!tripId) {
+    if (!tripId && !token) {
       setLoading(false);
       setError(t(language, "postcardMissingContext"));
       return;
     }
     let cancelled = false;
     setLoading(true);
-    void listTripPostcards(tripId)
+    const loadPostcards = token
+      ? listAccountPostcards(token)
+      : listTripPostcards(tripId as string);
+    void loadPostcards
       .then((cards) => {
         if (cancelled) return;
         const found = cards.find((card) => card.postcard_id === postcardId) ?? null;
@@ -77,7 +87,7 @@ export function PostcardViewPage() {
     return () => {
       cancelled = true;
     };
-  }, [language, postcard, postcardId, tripId]);
+  }, [language, postcard, postcardId, token, tripId]);
 
   const galleryHref = tripId
     ? `/postcards?trip=${encodeURIComponent(tripId)}`
