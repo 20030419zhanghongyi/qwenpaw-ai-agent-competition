@@ -3,14 +3,12 @@ import { useNavigate } from "react-router-dom";
 import {
   createMemoir,
   getTripMemoir,
-  type MemoirStyle,
   type TravelMemoir,
 } from "@/api/memoirs";
 import {
   listFavoritePois,
   listTripHistory,
   removeFavoritePoi,
-  submitTripFeedback,
   type FavoritePoi,
   type HistoryTrip,
 } from "@/api/profile";
@@ -57,12 +55,7 @@ export function TravelHistoryPanel({ userId, token, language }: { userId: string
   const [history, setHistory] = useState<HistoryTrip[]>([]);
   const [favorites, setFavorites] = useState<FavoritePoi[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [feedbackTrip, setFeedbackTrip] = useState<string | null>(null);
-  const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState("");
-  const [sent, setSent] = useState(false);
   const [memoirs, setMemoirs] = useState<Record<string, TravelMemoir>>({});
-  const [styleTrip, setStyleTrip] = useState<string | null>(null);
   const [creatingTrip, setCreatingTrip] = useState<string | null>(null);
 
   useEffect(() => {
@@ -84,17 +77,12 @@ export function TravelHistoryPanel({ userId, token, language }: { userId: string
     await removeFavoritePoi(userId, poiId);
     setFavorites((items) => items.filter((item) => item.poi_id !== poiId));
   };
-  const sendFeedback = async () => {
-    if (!feedbackTrip) return;
-    await submitTripFeedback({ tripId: feedbackTrip, userId, rating, comment });
-    setSent(true);
-  };
-  const startMemoir = async (tripId: string, style: MemoirStyle) => {
+  const startMemoir = async (tripId: string) => {
     if (!token) return;
     setCreatingTrip(tripId);
     setError(null);
     try {
-      const memoir = await createMemoir(tripId, style, language, token);
+      const memoir = await createMemoir(tripId, "magazine", language, token);
       setMemoirs((current) => ({ ...current, [tripId]: memoir }));
       navigate(`/profile/memoirs/${encodeURIComponent(memoir.memoir_id)}`);
     } catch (err) {
@@ -113,23 +101,18 @@ export function TravelHistoryPanel({ userId, token, language }: { userId: string
     {error ? <p className="mt-3 text-sm text-clay">{error}</p> : null}
     {!error && history.length === 0 && favorites.length === 0 ? <p className="mt-3 text-sm text-ink-soft">{copy.empty}</p> : null}
     {history.length > 0 ? <div className="mt-4 space-y-3">
-      {history.map((trip) => <div key={trip.trip_id} className="rounded-xl border border-line/70 px-4 py-3">
-        <div className="flex items-center justify-between gap-3 text-sm text-ink"><time dateTime={trip.created_at}>{tripDate(trip.created_at)}</time><span className="text-ink-soft">{trip.status === "completed" ? copy.completed : copy.active}</span></div>
-        <p className="mt-1 text-xs text-ink-soft">{trip.completed_stops}/{trip.total_stops} {copy.stops} · {Math.round(trip.completion_ratio * 100)}%</p>
-        <div className="mt-3 flex flex-wrap gap-4">
-          {memoirs[trip.trip_id] ? <button type="button" onClick={() => navigate(`/profile/memoirs/${encodeURIComponent(memoirs[trip.trip_id].memoir_id)}`)} className="text-xs font-medium text-sage-deep">{memoirs[trip.trip_id].status === "completed" ? copy.viewMemoir : copy.editMemoir}</button> : trip.completed_stops > 0 ? <button type="button" onClick={() => setStyleTrip(styleTrip === trip.trip_id ? null : trip.trip_id)} className="text-xs font-medium text-sage-deep">{creatingTrip === trip.trip_id ? copy.creating : copy.createMemoir}</button> : <span className="text-xs text-ink-soft">{copy.needCheckin}</span>}
-          {trip.status === "completed" ? <button type="button" onClick={() => { setFeedbackTrip(trip.trip_id); setSent(false); }} className="text-xs font-medium text-sage-deep">{copy.feedback}</button> : null}
+      {history.map((trip) => <div key={trip.trip_id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-xl border border-line/70 px-4 py-4">
+        <div className="min-w-0">
+          <div className="text-sm text-ink"><time dateTime={trip.created_at}>{tripDate(trip.created_at)}</time></div>
+          <p className="mt-1 text-xs text-ink-soft">{trip.completed_stops}/{trip.total_stops} {copy.stops} · {Math.round(trip.completion_ratio * 100)}%</p>
         </div>
-        {styleTrip === trip.trip_id && !memoirs[trip.trip_id] ? <div className="mt-3 rounded-xl bg-paper-warm p-3"><p className="text-xs text-ink-soft">{copy.chooseStyle}</p><div className="mt-2 flex flex-wrap gap-2">{([['diary', copy.diary], ['magazine', copy.magazine], ['social', copy.social], ['documentary', copy.documentary]] as Array<[MemoirStyle, string]>).map(([style, label]) => <button key={style} type="button" disabled={Boolean(creatingTrip)} onClick={() => void startMemoir(trip.trip_id, style)} className="rounded-full border border-sage-deep px-3 py-1.5 text-xs text-sage-deep disabled:opacity-50">{label}</button>)}</div></div> : null}
+        <div className="flex justify-end">
+          {memoirs[trip.trip_id] ? <button type="button" onClick={() => navigate(`/profile/memoirs/${encodeURIComponent(memoirs[trip.trip_id].memoir_id)}`)} className="min-h-10 whitespace-nowrap rounded-full border border-sage-deep px-4 py-2 text-xs font-medium text-sage-deep transition-colors hover:bg-sage-deep hover:text-paper">{copy.viewMemoir}</button> : trip.completed_stops > 0 ? <button type="button" disabled={Boolean(creatingTrip)} onClick={() => void startMemoir(trip.trip_id)} className="min-h-10 whitespace-nowrap rounded-full bg-sage-deep px-4 py-2 text-xs font-medium text-paper transition-opacity disabled:opacity-50">{creatingTrip === trip.trip_id ? copy.creating : copy.createMemoir}</button> : <span className="max-w-40 text-right text-xs leading-relaxed text-ink-soft">{copy.needCheckin}</span>}
+        </div>
       </div>)}
     </div> : null}
     {favorites.length > 0 ? <div className="mt-5"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-sage-deep">{copy.favorite}</p>
       <ul className="mt-2 space-y-2">{favorites.map((item) => <li key={item.poi_id} className="flex justify-between gap-3 text-sm text-ink"><span>{item.poi_name}</span><button type="button" onClick={() => void remove(item.poi_id)} className="text-xs text-clay">{copy.remove}</button></li>)}</ul>
-    </div> : null}
-    {feedbackTrip ? <div className="mt-5 rounded-xl bg-paper-warm p-4"><p className="text-sm font-medium text-ink">{copy.feedback}</p><p className="mt-1 text-xs text-ink-soft">{copy.feedbackHint}</p>
-      <select value={rating} onChange={(event) => setRating(Number(event.target.value))} className="mt-3 rounded-lg border border-line bg-card px-3 py-2 text-sm"><option value={5}>5 / 5</option><option value={4}>4 / 5</option><option value={3}>3 / 5</option><option value={2}>2 / 5</option><option value={1}>1 / 5</option></select>
-      <textarea value={comment} onChange={(event) => setComment(event.target.value)} className="mt-3 w-full rounded-lg border border-line bg-card p-3 text-sm" rows={2} />
-      <button type="button" onClick={() => void sendFeedback()} className="mt-3 rounded-full bg-sage-deep px-4 py-2 text-sm text-paper">{copy.send}</button>{sent ? <span className="ml-3 text-xs text-sage-deep">{copy.sent}</span> : null}
     </div> : null}
   </section>;
 }

@@ -33,6 +33,8 @@ const COPY = {
     photos: "张照片",
     memoirs: "本回忆录",
     edit: "打开回忆录",
+    completed: "已完成",
+    draft: "草稿",
     unassigned: "未关联地点",
     people: "含人物",
     private: "这些照片默认仅你可见；只有主动创建分享链接后才会公开隐私裁剪版本。",
@@ -53,6 +55,8 @@ const COPY = {
     photos: "張照片",
     memoirs: "本回憶錄",
     edit: "打開回憶錄",
+    completed: "已完成",
+    draft: "草稿",
     unassigned: "未關聯地點",
     people: "含人物",
     private: "這些照片預設只有你可見；只有主動建立分享連結後才會公開隱私裁剪版本。",
@@ -73,6 +77,8 @@ const COPY = {
     photos: "photos",
     memoirs: "memoirs",
     edit: "Open memoir",
+    completed: "Completed",
+    draft: "Draft",
     unassigned: "No place assigned",
     people: "People in photo",
     private: "Photos are visible only to you by default. A privacy-filtered version appears only after you create a share link.",
@@ -93,6 +99,8 @@ const COPY = {
     photos: "fotografias",
     memoirs: "memórias",
     edit: "Abrir memórias",
+    completed: "Concluídas",
+    draft: "Rascunho",
     unassigned: "Sem local associado",
     people: "Pessoas na fotografia",
     private: "As fotografias são privadas por predefinição. Só é mostrada uma versão protegida depois de criar uma ligação de partilha.",
@@ -142,9 +150,18 @@ export function MemoirGalleryPage() {
         ),
       )
       .then(async (items) => {
-        const available = items.filter(
-          (item): item is TravelMemoir => item !== null,
-        );
+        const available = items
+          .filter((item): item is TravelMemoir => item !== null)
+          .sort((left, right) => {
+            const statusOrder =
+              Number(right.status === "completed") -
+              Number(left.status === "completed");
+            if (statusOrder !== 0) return statusOrder;
+            return (
+              new Date(right.updated_at).getTime() -
+              new Date(left.updated_at).getTime()
+            );
+          });
         const loaded = await Promise.all(
           available.flatMap((memoir) =>
             memoir.photos.map(async (photo) => {
@@ -173,11 +190,16 @@ export function MemoirGalleryPage() {
         }
         setMemoirs(available);
         setPhotos(
-          loaded.sort(
-            (left, right) =>
+          loaded.sort((left, right) => {
+            const statusOrder =
+              Number(right.memoir.status === "completed") -
+              Number(left.memoir.status === "completed");
+            if (statusOrder !== 0) return statusOrder;
+            return (
               new Date(right.photo.created_at).getTime() -
-              new Date(left.photo.created_at).getTime(),
-          ),
+              new Date(left.photo.created_at).getTime()
+            );
+          }),
         );
       })
       .catch((loadError: unknown) => {
@@ -238,14 +260,6 @@ export function MemoirGalleryPage() {
               </section>
             ) : null}
 
-            {isAuthenticated ? (
-              <TravelHistoryPanel
-                userId={userId}
-                token={token}
-                language={language}
-              />
-            ) : null}
-
             {isAuthenticated && loading ? <LoadingState label={copy.loading} /> : null}
             {isAuthenticated && !loading && error ? (
               <ErrorState
@@ -256,7 +270,7 @@ export function MemoirGalleryPage() {
               />
             ) : null}
 
-            {isAuthenticated && !loading && !error && photos.length === 0 ? (
+            {isAuthenticated && !loading && !error && memoirs.length === 0 ? (
               <section className="rounded-[1.75rem] border border-line bg-card px-6 py-10 text-center shadow-[var(--shadow-soft)]">
                 <h2 className="font-display text-2xl text-ink">{copy.emptyTitle}</h2>
                 <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-ink-soft">
@@ -268,6 +282,31 @@ export function MemoirGalleryPage() {
                 >
                   {copy.backProfile}
                 </Link>
+              </section>
+            ) : null}
+
+            {isAuthenticated && !loading && !error && memoirs.length > 0 ? (
+              <section className="mb-7 space-y-3">
+                {memoirs.map((memoir) => (
+                  <Link
+                    key={memoir.memoir_id}
+                    to={`/profile/memoirs/${encodeURIComponent(memoir.memoir_id)}`}
+                    className="flex items-center justify-between gap-4 rounded-2xl border border-line bg-card px-5 py-4 shadow-[var(--shadow-soft)] transition hover:border-sage"
+                  >
+                    <div className="min-w-0">
+                      <h2 className="truncate font-display text-xl text-ink">
+                        {localizedMemoirTitle(memoir.title, language)}
+                      </h2>
+                      <p className="mt-1 text-xs text-ink-soft">
+                        {new Date(memoir.updated_at).toLocaleDateString(language)} ·{" "}
+                        {memoirPhotoCounts[memoir.memoir_id] ?? 0} {copy.photos}
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-paper-warm px-3 py-1 text-xs text-ink-soft">
+                      {memoir.status === "completed" ? copy.completed : copy.draft}
+                    </span>
+                  </Link>
+                ))}
               </section>
             ) : null}
 
@@ -330,23 +369,15 @@ export function MemoirGalleryPage() {
                 <p className="mt-3 rounded-2xl bg-paper-warm px-5 py-4 text-xs leading-relaxed text-ink-soft">
                   {copy.private}
                 </p>
-
-                {memoirs.some((memoir) => !memoirPhotoCounts[memoir.memoir_id]) ? (
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {memoirs
-                      .filter((memoir) => !memoirPhotoCounts[memoir.memoir_id])
-                      .map((memoir) => (
-                        <Link
-                          key={memoir.memoir_id}
-                          to={`/profile/memoirs/${encodeURIComponent(memoir.memoir_id)}`}
-                          className="rounded-full border border-line bg-card px-4 py-2 text-xs text-ink transition hover:border-sage"
-                        >
-                          {localizedMemoirTitle(memoir.title, language)} · {copy.edit}
-                        </Link>
-                      ))}
-                  </div>
-                ) : null}
               </>
+            ) : null}
+
+            {isAuthenticated && !loading ? (
+              <TravelHistoryPanel
+                userId={userId}
+                token={token}
+                language={language}
+              />
             ) : null}
 
           </div>
