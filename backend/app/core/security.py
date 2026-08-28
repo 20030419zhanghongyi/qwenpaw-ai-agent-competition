@@ -10,13 +10,32 @@ from datetime import datetime, timedelta, timezone
 
 import bcrypt
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.config import settings
 
 # Bearer 方案：auto_error=False 让依赖自行决定 401 时机与文案。
 _bearer_scheme = HTTPBearer(auto_error=False)
+AUTH_COOKIE_NAME = "macau_storywalk_session"
+
+
+def _request_token(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None,
+) -> str | None:
+    # An explicitly supplied, valid token identifies the intended API caller.
+    # Browser requests restored from an HttpOnly session may still carry a
+    # stale in-memory marker, so only let a valid Bearer token override cookie auth.
+    if credentials is not None and credentials.scheme.lower() == "bearer":
+        if decode_access_token(credentials.credentials) is not None:
+            return credentials.credentials
+    cookie_token = request.cookies.get(AUTH_COOKIE_NAME)
+    if cookie_token:
+        return cookie_token
+    if credentials is not None and credentials.scheme.lower() == "bearer":
+        return credentials.credentials
+    return None
 
 
 def create_access_token(user_id: str) -> str:
@@ -37,26 +56,28 @@ def decode_access_token(token: str) -> str | None:
 
 
 def require_user_id(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
 ) -> str:
-    """FastAPI 依赖：从 Bearer token 解出 user_id；缺失/无效 → 401。"""
-    if credentials is None or credentials.scheme.lower() != "bearer":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="missing bearer token")
-    user_id = decode_access_token(credentials.credentials)
+    """FastAPI dependency: resolve a user from the session cookie or Bearer token."""
+    token = _request_token(request, credentials)
+    if token is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="missing session")
+    user_id = decode_access_token(token)
     if user_id is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid or expired token")
     return user_id
 
 
 def optional_user_id(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
 ) -> str | None:
     """Return the authenticated user when supplied, while allowing guest requests."""
-    if credentials is None:
+    token = _request_token(request, credentials)
+    if token is None:
         return None
-    if credentials.scheme.lower() != "bearer":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid bearer token")
-    user_id = decode_access_token(credentials.credentials)
+    user_id = decode_access_token(token)
     if user_id is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid or expired token")
     return user_id

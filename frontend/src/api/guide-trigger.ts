@@ -26,6 +26,7 @@ export async function triggerGuide(body: {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ radius_m: 80, ...body }),
+    credentials: "include",
   });
 
   if (!response.ok) {

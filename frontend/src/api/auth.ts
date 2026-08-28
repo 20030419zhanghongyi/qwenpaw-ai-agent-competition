@@ -9,6 +9,7 @@ import type {
 } from "@/types/auth";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+export const COOKIE_SESSION_TOKEN = "__cookie_session__";
 
 export class AuthApiError extends Error {
   constructor(
@@ -34,7 +35,11 @@ async function request<T>(
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers,
+    credentials: "include",
+  });
   if (!response.ok) {
     let detail = `${response.status} ${response.statusText}`;
     try {
@@ -64,8 +69,15 @@ export function loginUser(input: LoginInput): Promise<LoginResponse> {
   });
 }
 
-export function getCurrentUser(token: string): Promise<CurrentUserResponse> {
+export function getCurrentUser(token?: string): Promise<CurrentUserResponse> {
   return request("/api/v1/users/me", undefined, token);
+}
+
+export async function logoutUser(): Promise<void> {
+  await fetch(`${API_BASE}/api/v1/users/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
 }
 
 export function claimGuestTrips(

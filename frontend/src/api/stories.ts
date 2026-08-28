@@ -84,7 +84,11 @@ async function request<T>(
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers,
+    credentials: "include",
+  });
   if (!response.ok) {
     const fallback = `${response.status} ${response.statusText}`.trim();
     let body: StoryErrorBody | null = null;
@@ -213,6 +217,7 @@ export async function fetchFutureLetterImage(
   const path = `/api/v1/story-sessions/${encodeURIComponent(sessionId)}/future-letter/image${languageQuery(language)}`;
   const response = await fetch(`${API_BASE}${path}`, {
     headers: { Authorization: `Bearer ${token}` },
+    credentials: "include",
   });
   if (!response.ok) {
     const fallback = `${response.status} ${response.statusText}`.trim();

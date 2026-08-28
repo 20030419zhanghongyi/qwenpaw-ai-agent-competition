@@ -9,10 +9,11 @@
 注意：/me 必须在 /{user_id} 之前声明，否则会被当成 user_id="me"。
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from app.api.contracts import CONFLICT_RESPONSE, NOT_FOUND_RESPONSE, UNPROCESSABLE_RESPONSE
-from app.core.security import require_user_id
+from app.core.config import settings
+from app.core.security import AUTH_COOKIE_NAME, require_user_id
 from app.models.user import Preference
 
 from .models import (
@@ -39,6 +40,18 @@ from .service import (
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
 
 
+def _set_session_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        key=AUTH_COOKIE_NAME,
+        value=token,
+        max_age=settings.jwt_expire_minutes * 60,
+        httponly=True,
+        secure=settings.app_env.lower() in {"prod", "production"},
+        samesite="lax",
+        path="/",
+    )
+
+
 @router.post(
     "/register",
     response_model=AuthResponse,
@@ -46,7 +59,7 @@ router = APIRouter(prefix="/api/v1/users", tags=["users"])
     summary="Register a user by email and issue a JWT",
     responses={**CONFLICT_RESPONSE, **UNPROCESSABLE_RESPONSE},
 )
-def register(request: RegisterRequest) -> AuthResponse:
+def register(request: RegisterRequest, response: Response) -> AuthResponse:
     try:
         user, token = user_service.register(
             request.name, request.language, request.password,
@@ -58,6 +71,7 @@ def register(request: RegisterRequest) -> AuthResponse:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     except InvalidLanguageError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    _set_session_cookie(response, token)
     return AuthResponse(
         user_id=user.user_id, email=user.email, phone=user.phone,
         token=token, user=user,
@@ -70,7 +84,7 @@ def register(request: RegisterRequest) -> AuthResponse:
     summary="Login: exchange email or phone for a JWT",
     responses=NOT_FOUND_RESPONSE,
 )
-def login(request: LoginRequest) -> LoginResponse:
+def login(request: LoginRequest, response: Response) -> LoginResponse:
     try:
         user, token = user_service.login(request.password, email=request.email, phone=request.phone)
     except EmailOrPhoneRequiredError as exc:
@@ -85,6 +99,7 @@ def login(request: LoginRequest) -> LoginResponse:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="incorrect password",
         ) from exc
+    _set_session_cookie(response, token)
     return LoginResponse(
         user_id=user.user_id, email=user.email, phone=user.phone,
         token=token,
@@ -94,14 +109,25 @@ def login(request: LoginRequest) -> LoginResponse:
 @router.get(
     "/me",
     response_model=UserDetailResponse,
-    summary="Get the current user from the Bearer token",
-    responses={**NOT_FOUND_RESPONSE, 401: {"description": "Missing or invalid bearer token."}},
+    summary="Get the current user from the browser session or Bearer token",
+    responses={**NOT_FOUND_RESPONSE, 401: {"description": "Missing or invalid session."}},
 )
 def me(user_id: str = Depends(require_user_id)) -> UserDetailResponse:
     user = user_service.get(user_id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user not found")
     return UserDetailResponse(user=user)
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT, summary="Clear browser session")
+def logout(response: Response) -> None:
+    response.delete_cookie(
+        key=AUTH_COOKIE_NAME,
+        path="/",
+        httponly=True,
+        secure=settings.app_env.lower() in {"prod", "production"},
+        samesite="lax",
+    )
 
 
 @router.get(

@@ -12,8 +12,10 @@ TEST_PASSWORD = "TestPassword123!"
 
 @pytest.fixture(autouse=True)
 def clear_users():
+    client.cookies.clear()
     user_repository.clear()
     yield
+    client.cookies.clear()
     user_repository.clear()
 
 
@@ -122,6 +124,32 @@ def test_login_issues_token():
     assert data["token"]
     assert data["email"] == "login@test.com"
     assert data["user_id"] == body["user_id"]
+
+
+def test_login_sets_http_only_session_cookie_and_me_accepts_it():
+    body = _register(email="cookie@test.com", name="Cookie User")
+    response = client.post(
+        "/api/v1/users/login",
+        json={"email": "cookie@test.com", "password": TEST_PASSWORD},
+    )
+
+    assert response.status_code == 200
+    assert "macau_storywalk_session=" in response.headers["set-cookie"]
+    assert "HttpOnly" in response.headers["set-cookie"]
+
+    me = client.get("/api/v1/users/me")
+    assert me.status_code == 200
+    assert me.json()["user"]["user_id"] == body["user_id"]
+
+
+def test_logout_clears_session_cookie():
+    _register(email="logout@test.com")
+    assert client.get("/api/v1/users/me").status_code == 200
+
+    response = client.post("/api/v1/users/logout")
+
+    assert response.status_code == 204
+    assert client.get("/api/v1/users/me").status_code == 401
 
 
 def test_login_with_wrong_password_returns_404():
