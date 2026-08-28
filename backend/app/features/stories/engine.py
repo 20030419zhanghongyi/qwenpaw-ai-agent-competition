@@ -193,7 +193,7 @@ def apply_action(
         hint = hints[min(count, len(hints) - 1)]
         story_session.state.hint_counts[request.chapter_id] = count + 1
         _append_unique(story_session.state.hinted_chapter_ids, request.chapter_id)
-        return TransitionResult(True, "已提供提示", hint=hint)
+        return TransitionResult(True, "已提供提示", hint=hint, message_key="hint_provided")
 
     if request.action == StoryAction.ANSWER:
         if request.answer is None:

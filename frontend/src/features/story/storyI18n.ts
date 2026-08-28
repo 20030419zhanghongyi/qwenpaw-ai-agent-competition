@@ -117,7 +117,7 @@ const COPY = {
 
 const SHARED_COPY = {
   "zh-CN": {
-    processing: "处理中…", puzzle: "谜题", submitAnswer: "提交答案", submitting: "提交中…",
+    processing: "处理中…", puzzle: "谜题", submitAnswer: "提交答案", submitting: "提交中…", submitted: "已提交",
     source: "来源：{label}", sourceType: "来源类型：{label}", confidence: "可信度：{value}", confidenceHigh: "高", confidenceMedium: "中", confidenceLow: "低",
     you: "你", tapToContinue: "轻触继续", dialogueAria: "{speaker}说：{text}。轻触继续",
     storyImage: "故事图片", imageAsset: "图片素材", viewLargeImage: "查看大图", viewLargeImageNamed: "查看大图：{label}", largeImageNamed: "大图：{label}", closeLargeImage: "关闭大图", unregisteredImage: "未登记的图片素材", imageUnavailable: "图片素材暂未提供", namedImageUnavailable: "{label}暂未提供", photoCredit: "照片：{credit}",
@@ -143,7 +143,7 @@ const SHARED_COPY = {
     storyPerformance: "剧情演绎", storyText: "剧情文本", mapPerformance: "地图演绎", soundOn: "开启声音", soundOff: "关闭声音", soundMuted: "声音 ○", soundPlaying: "声音 ◉", skipPerformance: "略过", loading: "正在加载", preparingMacauJourney: "正在整理你的澳门旅程……", confirmingIdentity: "身份确认中", sealingRecord: "记录封存中", identityPending: "身份确认中……", mapSeekerConfirmed: "寻图人 // 已确认", recordSealed: "记录已重新封存。", tapAnywhere: "轻触任意位置继续",
   },
   "zh-TW": {
-    processing: "處理中…", puzzle: "謎題", submitAnswer: "提交答案", submitting: "提交中…",
+    processing: "處理中…", puzzle: "謎題", submitAnswer: "提交答案", submitting: "提交中…", submitted: "已提交",
     source: "來源：{label}", sourceType: "來源類型：{label}", confidence: "可信度：{value}", confidenceHigh: "高", confidenceMedium: "中", confidenceLow: "低",
     you: "你", tapToContinue: "輕觸繼續", dialogueAria: "{speaker}說：{text}。輕觸繼續",
     storyImage: "故事圖片", imageAsset: "圖片素材", viewLargeImage: "查看大圖", viewLargeImageNamed: "查看大圖：{label}", largeImageNamed: "大圖：{label}", closeLargeImage: "關閉大圖", unregisteredImage: "未登記的圖片素材", imageUnavailable: "圖片素材暫未提供", namedImageUnavailable: "{label}暫未提供", photoCredit: "照片：{credit}",
@@ -169,7 +169,7 @@ const SHARED_COPY = {
     storyPerformance: "劇情演繹", storyText: "劇情文本", mapPerformance: "地圖演繹", soundOn: "開啟聲音", soundOff: "關閉聲音", soundMuted: "聲音 ○", soundPlaying: "聲音 ◉", skipPerformance: "略過", loading: "正在載入", preparingMacauJourney: "正在整理你的澳門旅程……", confirmingIdentity: "正在確認身份", sealingRecord: "正在封存紀錄", identityPending: "正在確認身份……", mapSeekerConfirmed: "尋圖人 // 已確認", recordSealed: "紀錄已重新封存。", tapAnywhere: "輕觸任意位置繼續",
   },
   en: {
-    processing: "Processing…", puzzle: "Puzzle", submitAnswer: "Submit answer", submitting: "Submitting…",
+    processing: "Processing…", puzzle: "Puzzle", submitAnswer: "Submit answer", submitting: "Submitting…", submitted: "Submitted",
     source: "Source: {label}", sourceType: "Source type: {label}", confidence: "Confidence: {value}", confidenceHigh: "High", confidenceMedium: "Medium", confidenceLow: "Low",
     you: "You", tapToContinue: "Tap to continue", dialogueAria: "{speaker} says: {text}. Tap to continue",
     storyImage: "Story image", imageAsset: "Image asset", viewLargeImage: "View full image", viewLargeImageNamed: "View full image: {label}", largeImageNamed: "Full image: {label}", closeLargeImage: "Close full image", unregisteredImage: "Unregistered image asset", imageUnavailable: "Image not available", namedImageUnavailable: "{label} is not available", photoCredit: "Photo: {credit}",
@@ -195,7 +195,7 @@ const SHARED_COPY = {
     storyPerformance: "Story sequence", storyText: "Story text", mapPerformance: "Map sequence", soundOn: "Turn sound on", soundOff: "Turn sound off", soundMuted: "Sound ○", soundPlaying: "Sound ◉", skipPerformance: "Skip", loading: "Loading", preparingMacauJourney: "Preparing your Macau journey…", confirmingIdentity: "Confirming identity", sealingRecord: "Sealing record", identityPending: "Confirming identity…", mapSeekerConfirmed: "MAP SEEKER // CONFIRMED", recordSealed: "The record has been sealed again.", tapAnywhere: "Tap anywhere to continue",
   },
   pt: {
-    processing: "A processar…", puzzle: "Enigma", submitAnswer: "Enviar resposta", submitting: "A enviar…",
+    processing: "A processar…", puzzle: "Enigma", submitAnswer: "Enviar resposta", submitting: "A enviar…", submitted: "Enviado",
     source: "Fonte: {label}", sourceType: "Tipo de fonte: {label}", confidence: "Confiança: {value}", confidenceHigh: "Alta", confidenceMedium: "Média", confidenceLow: "Baixa",
     you: "Você", tapToContinue: "Toque para continuar", dialogueAria: "{speaker} diz: {text}. Toque para continuar",
     storyImage: "Imagem da história", imageAsset: "Recurso de imagem", viewLargeImage: "Ver imagem completa", viewLargeImageNamed: "Ver imagem completa: {label}", largeImageNamed: "Imagem completa: {label}", closeLargeImage: "Fechar imagem", unregisteredImage: "Imagem não registada", imageUnavailable: "Imagem indisponível", namedImageUnavailable: "{label} indisponível", photoCredit: "Fotografia: {credit}",

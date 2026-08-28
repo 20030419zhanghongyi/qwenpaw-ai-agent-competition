@@ -21,7 +21,7 @@ from app.features.stories.content import (
     public_story,
     story_nodes,
 )
-from app.features.stories.engine import apply_action
+from app.features.stories.engine import StoryChapterConflictError, apply_action
 from app.features.stories.models import (
     StoryAction,
     StoryActionRequest,
@@ -421,6 +421,64 @@ def test_story_arrival_message_follows_requested_locale(
     )
 
     assert response.message == expected_message
+
+
+def test_story_hint_action_uses_requested_locale():
+    story_session = _session(
+        story_id=COLOANE_STORY_ID,
+        current_chapter_id="chapter_coloane_sea",
+    )
+    story_session.state.arrived_chapter_ids = ["chapter_coloane_sea"]
+
+    class Repository:
+        def get(self, session_id: str) -> StorySession | None:
+            return story_session if session_id == story_session.session_id else None
+
+        def save(self, next_session: StorySession) -> StorySession:
+            return next_session
+
+    service = StoryService(repository=Repository(), trips=None)  # type: ignore[arg-type]
+    response = service.act(
+        story_session.session_id,
+        story_session.user_id,
+        _action(StoryAction.HINT, "chapter_coloane_sea"),
+        language="en",
+    )
+
+    assert response.message == "Hint provided"
+    assert response.hint.startswith("Look for statements")
+    assert "信俗" not in response.hint
+
+
+def test_completed_story_chapter_can_be_restored_for_review():
+    story_session = _session(
+        story_id=COLOANE_STORY_ID,
+        current_chapter_id="chapter_coloane_boat",
+    )
+    story_session.state.completed_chapter_ids = ["chapter_coloane_sea"]
+
+    class Repository:
+        def get(self, session_id: str) -> StorySession | None:
+            return story_session if session_id == story_session.session_id else None
+
+    service = StoryService(repository=Repository(), trips=None)  # type: ignore[arg-type]
+    chapter = service.get_chapter(
+        story_session.session_id,
+        story_session.user_id,
+        "chapter_coloane_sea",
+        language="en",
+    )
+
+    assert chapter["title"] == "Chapter 1: Waiting for the Tide Before the Temple"
+    assert chapter["puzzle"]["prompt"].startswith("Which are suitable")
+    assert "solution" not in chapter["puzzle"]
+
+    with pytest.raises(StoryChapterConflictError):
+        service.get_chapter(
+            story_session.session_id,
+            story_session.user_id,
+            "chapter_coloane_craft",
+        )
 
 
 def test_v4_unordered_answers_and_mapping_keys_are_normalized():

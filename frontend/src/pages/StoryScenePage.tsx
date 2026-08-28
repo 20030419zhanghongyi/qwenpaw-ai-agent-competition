@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { PuzzlePanel } from "@/components/story/PuzzlePanel";
 import { RewardReveal } from "@/components/story/RewardReveal";
+import { fetchStorySessionChapter } from "@/api/stories";
 import { StoryImage } from "@/features/story/assets";
 import { DialoguePlayer } from "@/features/story/components/DialoguePlayer";
 import { KnowledgeCard } from "@/features/story/components/KnowledgeCard";
@@ -83,6 +84,8 @@ export function StoryScenePage() {
   const [agentOpen, setAgentOpen] = useState(false);
   const [overlayOpacity, setOverlayOpacity] = useState(55);
   const [arrivalMessage, setArrivalMessage] = useState<string | null>(null);
+  const [reviewChapter, setReviewChapter] = useState<StoryChapter | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
 
   const advancedSnapshot =
     submittedChapterSnapshot &&
@@ -90,8 +93,24 @@ export function StoryScenePage() {
     submittedChapterSnapshot.id !== session?.current_chapter_id
       ? submittedChapterSnapshot
       : null;
+  const completedIds = useMemo(
+    () =>
+      new Set([
+        ...(session?.state.completed_chapter_ids ?? []),
+        ...(session?.state.skipped_chapter_ids ?? []),
+      ]),
+    [session?.state.completed_chapter_ids, session?.state.skipped_chapter_ids],
+  );
+  const isReviewChapter = Boolean(
+    nodeId &&
+      session &&
+      nodeId !== session.current_chapter_id &&
+      completedIds.has(nodeId),
+  );
   const displayChapter: StoryChapter | null =
-    advancedSnapshot ?? session?.current_chapter ?? null;
+    advancedSnapshot ??
+    (isReviewChapter ? reviewChapter : session?.current_chapter) ??
+    null;
 
   useEffect(() => {
     if (!isRestoring && !token) {
@@ -119,10 +138,30 @@ export function StoryScenePage() {
       return;
     }
     if (advancedSnapshot?.id === nodeId) return;
-    if (session.current_chapter_id !== nodeId) {
+    if (session.current_chapter_id !== nodeId && !completedIds.has(nodeId)) {
       navigate(`/story-sessions/${session.session_id}/map`, { replace: true });
     }
-  }, [advancedSnapshot?.id, navigate, nodeId, session]);
+  }, [advancedSnapshot?.id, completedIds, navigate, nodeId, session]);
+
+  useEffect(() => {
+    setReviewChapter(null);
+    if (!isReviewChapter || !session || !nodeId || !token) return;
+    let cancelled = false;
+    setReviewLoading(true);
+    fetchStorySessionChapter(session.session_id, nodeId, token, language)
+      .then((chapter) => {
+        if (!cancelled) setReviewChapter(chapter);
+      })
+      .catch(() => {
+        if (!cancelled) setReviewChapter(null);
+      })
+      .finally(() => {
+        if (!cancelled) setReviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isReviewChapter, language, nodeId, session, token]);
 
   useEffect(() => {
     setComicIndex(0);
@@ -221,7 +260,7 @@ export function StoryScenePage() {
     navigate(`/story-sessions/${session.session_id}/map`);
   };
 
-  if ((loading || isRestoring) && !session) {
+  if ((loading || isRestoring || reviewLoading) && (!session || !displayChapter)) {
     return <LoadingState label={st("loadingChapter")} />;
   }
 
@@ -465,11 +504,12 @@ export function StoryScenePage() {
                     <div className="mt-3">
                       <PuzzlePanel
                         puzzle={displayChapter.puzzle}
-                        disabled={actionPending}
+                        disabled={actionPending || isReviewChapter}
                         onSubmitAnswer={(answer) => void handleAnswer(answer)}
                         onRequestHint={() => void handleHint()}
                         onSkip={() => void handleSkip()}
                         attempts={session.state.attempts[displayChapter.id] ?? 0}
+                        submitLabel={isReviewChapter ? st("submitted") : undefined}
                         lastHint={lastResultForChapter?.hint}
                         lastMessage={lastResultForChapter?.message}
                       />
@@ -592,6 +632,7 @@ export function StoryScenePage() {
 
       {!needsArrival &&
         !advancedSnapshot &&
+        !isReviewChapter &&
         narrativeReady &&
         displayChapter.kind === "prologue" && (
           <StoryBottomAction
@@ -612,6 +653,7 @@ export function StoryScenePage() {
 
       {!needsArrival &&
         !advancedSnapshot &&
+        !isReviewChapter &&
         narrativeReady &&
         isEndingChapter &&
         (!hasDialogue || dialogueDone) && (

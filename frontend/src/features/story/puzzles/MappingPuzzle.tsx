@@ -6,6 +6,7 @@ import { useStoryMessages } from "../storyI18n";
 interface MappingPuzzleProps {
   puzzle: MappingPuzzleData;
   disabled?: boolean;
+  submitLabel?: string;
   onSubmit: (answer: Record<string, string>) => void;
 }
 
@@ -20,6 +21,7 @@ const PAIR_STYLES = [
 export function MappingPuzzle({
   puzzle,
   disabled = false,
+  submitLabel,
   onSubmit,
 }: MappingPuzzleProps) {
   const st = useStoryMessages();
@@ -62,13 +64,14 @@ export function MappingPuzzle({
       selectionHint={st("mappingHint")}
       canSubmit={puzzle.fields.every((field) => Boolean(mapping[field.id]))}
       disabled={disabled}
+      submitLabel={submitLabel}
       onSubmit={() => onSubmit({ ...mapping })}
     >
       <fieldset>
         <legend className="text-[13px] font-medium text-ink-soft">
           {st("mappingStepOne")}
         </legend>
-        <div className="mt-2 grid grid-cols-5 gap-1.5">
+        <div className="mt-2 grid grid-cols-1 gap-2 min-[360px]:grid-cols-3">
           {puzzle.fields.map((field, index) => {
             const assigned = mapping[field.id];
             return (
@@ -78,7 +81,7 @@ export function MappingPuzzle({
                 disabled={disabled}
                 aria-pressed={activeField === field.id}
                 onClick={() => setActiveField(field.id)}
-                className={`min-h-12 rounded-xl border px-1 text-sm font-medium ${
+                className={`min-h-12 rounded-xl border px-3 py-2 text-sm font-medium leading-5 ${
                   activeField === field.id || assigned
                     ? PAIR_STYLES[index % PAIR_STYLES.length]
                     : "border-line bg-paper text-ink"
