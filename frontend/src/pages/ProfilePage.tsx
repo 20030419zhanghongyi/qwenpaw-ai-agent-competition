@@ -21,7 +21,7 @@ import {
 import { PORT_OPTIONS, portLabel } from "@/lib/ports";
 import { useAuth } from "@/state/AuthContext";
 import { useWalk } from "@/state/WalkContext";
-import type { LanguageCode } from "@/types";
+import type { LanguageCode, StorySelection } from "@/types";
 
 const LANGS: Array<{ code: LanguageCode; label: string }> = [
   { code: "zh-CN", label: "简体中文" },
@@ -87,7 +87,7 @@ const emptyForm = (language: LanguageCode): PreferenceFormState => ({
 
 export function ProfilePage() {
   const navigate = useNavigate();
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, savePreference } = useAuth();
   const { language, setLanguage, preference, session, updatePreference, saveMatch } =
     useWalk();
   const [duration, setDuration] = useState<PreferenceFormState["duration"]>("half");
@@ -101,11 +101,15 @@ export function ProfilePage() {
   const [storyOptIn, setStoryOptIn] = useState<boolean | null>(null);
   const [storyId, setStoryId] = useState<StoryId | null>(null);
   const [storyDay, setStoryDay] = useState<number | null>(null);
+  const [storySelections, setStorySelections] = useState<StorySelection[]>([]);
   const [savedFlash, setSavedFlash] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const formRef = useRef<PreferenceFormState>(emptyForm(language));
   const postcardTripId = getLastTripId();
+  const effectivePreference = isAuthenticated && user?.preference
+    ? user.preference
+    : preference;
 
   useEffect(() => {
     formRef.current = {
@@ -119,10 +123,11 @@ export function ProfilePage() {
       language,
       entryPort,
       exitPort,
-      travelDate: preference?.travel_date ?? null,
+      travelDate: effectivePreference?.travel_date ?? null,
       storyOptIn,
       storyId,
       storyDay,
+      storySelections,
     };
   }, [
     duration,
@@ -134,14 +139,15 @@ export function ProfilePage() {
     language,
     entryPort,
     exitPort,
-    preference?.travel_date,
+    effectivePreference?.travel_date,
     storyOptIn,
     storyId,
     storyDay,
+    storySelections,
   ]);
 
   useEffect(() => {
-    if (!preference) {
+    if (!effectivePreference) {
       const cleared = emptyForm(language);
       formRef.current = cleared;
       setDuration(cleared.duration);
@@ -155,13 +161,12 @@ export function ProfilePage() {
       setStoryOptIn(cleared.storyOptIn);
       setStoryId(null);
       setStoryDay(cleared.storyDay);
+      setStorySelections([]);
       return;
     }
-    // Merge onto the live editor (via formRef), not emptyForm. emptyForm always
-    // starts at duration=half / tripDays=3, so applyPreferenceToForm treated every
-    // multi-day preference without trip_days as a fresh multi switch and reset
-    // the stepper to 3 — wiping an in-progress day count before regenerate.
-    const form = applyPreferenceToForm(preference, formRef.current);
+    // Profile is an authoritative view of the saved preference. Start from a
+    // clean form so values removed elsewhere do not linger as incremental merges.
+    const form = applyPreferenceToForm(effectivePreference, emptyForm(language));
     formRef.current = form;
     setDuration(form.duration);
     setTripDays(form.tripDays);
@@ -174,7 +179,8 @@ export function ProfilePage() {
     setStoryOptIn(form.storyOptIn);
     setStoryId(form.storyId ?? null);
     setStoryDay(form.storyDay);
-  }, [preference, language]);
+    setStorySelections(form.storySelections ?? []);
+  }, [effectivePreference, language]);
 
   const snapshot = (): PreferenceFormState => ({
     duration,
@@ -187,17 +193,28 @@ export function ProfilePage() {
     language,
     entryPort,
     exitPort,
-    travelDate: preference?.travel_date ?? null,
+    travelDate: effectivePreference?.travel_date ?? null,
     storyOptIn,
     storyId,
     storyDay,
+    storySelections,
   });
 
-  const savePrefs = () => {
-    const preference = toPreference(snapshot());
-    updatePreference(preference);
-    setSavedFlash(true);
-    window.setTimeout(() => setSavedFlash(false), 1600);
+  const savePrefs = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const nextPreference = toPreference(snapshot());
+      updatePreference(nextPreference);
+      if (isAuthenticated) await savePreference(nextPreference);
+      setSavedFlash(true);
+      window.setTimeout(() => setSavedFlash(false), 1600);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "request failed";
+      setError(message.includes("Failed to fetch") ? t(language, "backendDown") : message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const regenerate = async () => {
@@ -206,6 +223,7 @@ export function ProfilePage() {
     try {
       const preference = toPreference(snapshot());
       updatePreference(preference);
+      if (isAuthenticated) await savePreference(preference);
       const [matchRes, pois] = await Promise.all([
         matchRoutes(preference),
         listPois({ limit: 500 }),
@@ -352,13 +370,18 @@ export function ProfilePage() {
                     type="button"
                     onClick={() => {
                       const nextStoryDay = storyOptIn && id !== "multi" ? 1 : storyDay;
+                      const nextStorySelections = storyOptIn && id !== "multi" && storyId
+                        ? [{ story_id: storyId, story_day: 1 }]
+                        : storySelections;
                       formRef.current = {
                         ...formRef.current,
                         duration: id,
                         storyDay: nextStoryDay,
+                        storySelections: nextStorySelections,
                       };
                       setDuration(id);
                       setStoryDay(nextStoryDay);
+                      setStorySelections(nextStorySelections);
                     }}
                     className={`rounded-2xl border px-3 py-3 text-sm transition ${chip(duration === id)}`}
                   >
@@ -372,13 +395,21 @@ export function ProfilePage() {
                   value={tripDays}
                   onChange={(n) => {
                     const nextStoryDay = storyDay && storyDay <= n ? storyDay : null;
+                    const nextStorySelections = storySelections.filter(
+                      (selection) => selection.story_day <= n,
+                    );
+                    const primary = nextStorySelections[0] ?? null;
                     formRef.current = {
                       ...formRef.current,
                       tripDays: n,
-                      storyDay: nextStoryDay,
+                      storyId: primary?.story_id ?? storyId,
+                      storyDay: primary?.story_day ?? nextStoryDay,
+                      storySelections: nextStorySelections,
                     };
                     setTripDays(n);
-                    setStoryDay(nextStoryDay);
+                    setStoryId(primary?.story_id ?? storyId);
+                    setStoryDay(primary?.story_day ?? nextStoryDay);
+                    setStorySelections(nextStorySelections);
                   }}
                 />
               ) : null}
@@ -389,10 +420,11 @@ export function ProfilePage() {
                 language={language}
                 multiDay={duration === "multi"}
                 tripDays={tripDays}
-                arrivalDate={preference?.travel_date ?? todayIso()}
+                arrivalDate={effectivePreference?.travel_date ?? todayIso()}
                 storyOptIn={storyOptIn}
                 storyId={storyId}
                 storyDay={storyDay}
+                storySelections={duration === "multi" ? storySelections : undefined}
                 disabled={loading}
                 onDecline={() => {
                   formRef.current = {
@@ -400,26 +432,79 @@ export function ProfilePage() {
                     storyOptIn: false,
                     storyId: null,
                     storyDay: null,
+                    storySelections: [],
                   };
                   setStoryOptIn(false);
                   setStoryId(null);
                   setStoryDay(null);
+                  setStorySelections([]);
                 }}
                 onSelectStory={(nextStoryId) => {
-                  const nextStoryDay = duration === "multi" ? storyDay : 1;
+                  if (duration === "multi") {
+                    const current = formRef.current.storySelections ?? [];
+                    const existing = current.find(
+                      (selection) => selection.story_id === nextStoryId,
+                    );
+                    const nextSelections = existing
+                      ? current.filter((selection) => selection.story_id !== nextStoryId)
+                      : [
+                          ...current,
+                          {
+                            story_id: nextStoryId,
+                            story_day:
+                              Array.from({ length: tripDays }, (_, index) => index + 1).find(
+                                (day) => !current.some((selection) => selection.story_day === day),
+                              ) ?? 1,
+                          },
+                        ];
+                    const primary = nextSelections[0] ?? null;
+                    formRef.current = {
+                      ...formRef.current,
+                      storyOptIn: nextSelections.length > 0,
+                      storyId: primary?.story_id ?? null,
+                      storyDay: primary?.story_day ?? null,
+                      storySelections: nextSelections,
+                    };
+                    setStoryOptIn(nextSelections.length > 0);
+                    setStoryId(primary?.story_id ?? null);
+                    setStoryDay(primary?.story_day ?? null);
+                    setStorySelections(nextSelections);
+                    return;
+                  }
                   formRef.current = {
                     ...formRef.current,
                     storyOptIn: true,
                     storyId: nextStoryId,
-                    storyDay: nextStoryDay,
+                    storyDay: 1,
+                    storySelections: [{ story_id: nextStoryId, story_day: 1 }],
                   };
                   setStoryOptIn(true);
                   setStoryId(nextStoryId);
-                  setStoryDay(nextStoryDay);
+                  setStoryDay(1);
+                  setStorySelections([{ story_id: nextStoryId, story_day: 1 }]);
                 }}
                 onDayChange={(day) => {
                   formRef.current = { ...formRef.current, storyDay: day };
                   setStoryDay(day);
+                }}
+                onStoryDayChange={(nextStoryId, day) => {
+                  if (!day) return;
+                  const nextSelections = (formRef.current.storySelections ?? []).map(
+                    (selection) =>
+                      selection.story_id === nextStoryId
+                        ? { ...selection, story_day: day }
+                        : selection,
+                  );
+                  const primary = nextSelections[0] ?? null;
+                  formRef.current = {
+                    ...formRef.current,
+                    storyId: primary?.story_id ?? null,
+                    storyDay: primary?.story_day ?? null,
+                    storySelections: nextSelections,
+                  };
+                  setStoryId(primary?.story_id ?? null);
+                  setStoryDay(primary?.story_day ?? null);
+                  setStorySelections(nextSelections);
                 }}
               />
             </div>
@@ -581,7 +666,8 @@ export function ProfilePage() {
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
-              onClick={savePrefs}
+              disabled={loading}
+              onClick={() => void savePrefs()}
               className="rounded-full border border-sage-deep bg-sage-deep px-6 py-3.5 text-sm font-medium text-paper transition hover:bg-moss"
             >
               {savedFlash ? t(language, "profileSaved") : t(language, "profileSave")}

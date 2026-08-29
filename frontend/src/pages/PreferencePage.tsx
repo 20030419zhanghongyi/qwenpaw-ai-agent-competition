@@ -26,6 +26,7 @@ import {
   type WalkTag,
 } from "@/lib/preference";
 import { PORT_OPTIONS, portLabel } from "@/lib/ports";
+import { useAuth } from "@/state/AuthContext";
 import { useWalk } from "@/state/WalkContext";
 import type { Preference } from "@/types";
 import type { StorySelection } from "@/types";
@@ -77,6 +78,7 @@ const WALK_OPTIONS: Array<{
 
 export function PreferencePage() {
   const navigate = useNavigate();
+  const { isAuthenticated, savePreference } = useAuth();
   const { language, saveMatch } = useWalk();
   const [duration, setDuration] = useState<PreferenceFormState["duration"]>("half");
   const [tripDays, setTripDays] = useState(TRIP_DAYS_DEFAULT);
@@ -397,6 +399,7 @@ export function PreferencePage() {
         matches: isMulti ? matchRes.matches : [top],
         pois,
       });
+      if (isAuthenticated) await savePreference(matchRes.preference);
       navigate("/walk");
     } catch (err) {
       const message = err instanceof Error ? err.message : "request failed";
