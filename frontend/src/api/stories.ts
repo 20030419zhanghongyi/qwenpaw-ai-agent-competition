@@ -2,6 +2,7 @@ import type {
   FutureLetterResponse,
   StoryActionRequest,
   StoryActionResponse,
+  StoryChapter,
   StoryOverview,
   StorySessionResponse,
 } from "@/types/stories";
@@ -144,6 +145,19 @@ export function fetchStorySession(
 ): Promise<StorySessionResponse> {
   return request<StorySessionResponse>(
     `/api/v1/story-sessions/${encodeURIComponent(sessionId)}${languageQuery(language)}`,
+    undefined,
+    token,
+  );
+}
+
+export function fetchStorySessionChapter(
+  sessionId: string,
+  chapterId: string,
+  token: string,
+  language: LanguageCode,
+): Promise<StoryChapter> {
+  return request<StoryChapter>(
+    `/api/v1/story-sessions/${encodeURIComponent(sessionId)}/nodes/${encodeURIComponent(chapterId)}${languageQuery(language)}`,
     undefined,
     token,
   );

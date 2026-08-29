@@ -44,6 +44,15 @@ function isLanguage(value: string | null): value is LanguageCode {
   return value === "zh-CN" || value === "zh-TW" || value === "en" || value === "pt";
 }
 
+function readUrlLanguage(): LanguageCode | null {
+  try {
+    const value = new URLSearchParams(window.location.search).get("language");
+    return isLanguage(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 function migrateLegacyStorage() {
   try {
     const legacyLang = localStorage.getItem(LANG_KEY);
@@ -77,6 +86,8 @@ function migrateLegacyStorage() {
 
 function readLanguage(): LanguageCode {
   migrateLegacyStorage();
+  const fromUrl = readUrlLanguage();
+  if (fromUrl) return fromUrl;
   const fromCookie = getCookie(LANG_KEY);
   if (isLanguage(fromCookie)) return fromCookie;
   try {

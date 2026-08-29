@@ -135,6 +135,36 @@ def get_active_story_session(
 
 
 @session_router.get(
+    "/{session_id}/nodes/{chapter_id}",
+    response_model=dict[str, Any],
+    summary="Restore one unlocked story chapter",
+    responses={**NOT_FOUND_RESPONSE, **CONFLICT_RESPONSE, **UNPROCESSABLE_RESPONSE},
+)
+def get_session_chapter(
+    session_id: str,
+    chapter_id: str,
+    language: str = Query(default="zh-CN", description="Story display language"),
+    user_id: str = Depends(require_user_id),
+) -> dict[str, Any]:
+    try:
+        return story_service.get_chapter(
+            session_id,
+            user_id,
+            chapter_id,
+            language=language,
+        )
+    except (
+        StorySessionNotFoundError,
+        StorySessionOwnershipError,
+        StoryNotFoundError,
+        StoryContentError,
+        StoryChapterConflictError,
+        StoryContentVersionError,
+    ) as exc:
+        _raise_http_error(exc)
+
+
+@session_router.get(
     "/{session_id}",
     response_model=StorySessionResponse,
     summary="Restore a story session",

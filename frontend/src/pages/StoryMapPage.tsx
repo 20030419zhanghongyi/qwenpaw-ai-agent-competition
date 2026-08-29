@@ -277,12 +277,10 @@ export function StoryMapPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (status === "current") {
+                      if (status === "current" || status === "completed") {
                         navigate(
                           `/story-sessions/${session.session_id}/nodes/${node.id}`,
                         );
-                      } else if (status === "completed") {
-                        setSummaryNode(node);
                       } else {
                         setNotice(st("finishPrevious"));
                       }
@@ -341,11 +339,11 @@ export function StoryMapPage() {
               onSelectPoi={(poiId) => {
                 const node = stationNodes.find((item) => item.poi_id === poiId);
                 if (!node) return;
-                if (statusFor(node) === "current") {
+                const status = statusFor(node);
+                if (status === "current" || status === "completed") {
                   navigate(`/story-sessions/${session.session_id}/nodes/${node.id}`);
                 } else {
-                  setSummaryNode(statusFor(node) === "completed" ? node : null);
-                  if (statusFor(node) === "locked") setNotice(st("finishPrevious"));
+                  setNotice(st("finishPrevious"));
                 }
               }}
             />
