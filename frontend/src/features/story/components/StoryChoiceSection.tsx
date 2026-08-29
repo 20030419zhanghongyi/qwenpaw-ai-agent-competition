@@ -175,7 +175,7 @@ export function StoryChoiceSection({
                 }
                 onSelectStory(story.id);
               }}
-              className={`overflow-hidden rounded-lg border bg-card transition ${
+              className={`flex h-full flex-col overflow-hidden rounded-lg border bg-card transition ${
                 cardDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:border-sage-deep"
               } ${active ? "border-sage-deep ring-2 ring-sage-deep/20" : "border-line"}`}
             >
@@ -185,7 +185,7 @@ export function StoryChoiceSection({
                 className="!aspect-[4/3] rounded-none border-0"
                 imageClassName="object-cover"
               />
-              <div className="flex min-h-64 flex-col p-4">
+              <div className="flex min-h-64 flex-1 flex-col p-4">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sage-deep">
                   {copy.regions[story.region]} · {copy.hours(story.hours)}
                 </p>
