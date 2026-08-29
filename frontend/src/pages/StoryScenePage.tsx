@@ -379,17 +379,11 @@ export function StoryScenePage() {
                 onOpen={(assetId) => setViewer({ assetId })}
               />
             )}
-            <div className="mt-4 rounded-2xl border border-line bg-card p-4">
-              <h2 className="font-serif text-lg font-semibold">{st("arrivalCheck")}</h2>
-              <p className="mt-2 text-base leading-7 text-ink-soft">
-                {st("arrivalSafety")}
+            {error && (
+              <p role="alert" className="mt-4 rounded-xl border border-clay/30 bg-clay/5 p-3 text-sm text-clay">
+                {error}
               </p>
-              {error && (
-                <p role="alert" className="mt-3 text-sm text-clay">
-                  {error}
-                </p>
-              )}
-            </div>
+            )}
           </section>
         ) : advancedSnapshot ? (
           <section className="space-y-4">
@@ -622,11 +616,10 @@ export function StoryScenePage() {
 
       {needsArrival && (
         <StoryBottomAction
-          label={st("arrived")}
+          label={st("arrivalCheck")}
           busy={actionPending}
           busyLabel={st("confirmingArrival")}
           onClick={() => void handleArrive()}
-          hint={st("arrivalHint")}
         />
       )}
 
