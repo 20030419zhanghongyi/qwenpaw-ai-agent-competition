@@ -94,35 +94,62 @@ export function AppNav() {
               return (
                 <div
                   key="story-navigation"
-                  className="relative flex min-w-0 flex-1 items-center justify-center sm:flex-none"
+                  className="group relative flex min-w-0 flex-1 items-stretch justify-center sm:flex-none"
                 >
                   <NavLink
                     to={storyDestination}
-                    className="relative flex h-full items-center px-1 py-3 text-sm text-ink-soft transition hover:text-ink sm:px-2"
+                    className="relative flex h-full items-center gap-1 px-2 py-3 text-sm text-ink-soft transition hover:text-ink sm:px-5"
                   >
                     {t(language, "navStory")}
+                    {storySelections.length > 1 ? (
+                      <span aria-hidden className="text-[9px] text-sage-deep transition group-hover:rotate-180">
+                        ▾
+                      </span>
+                    ) : null}
                   </NavLink>
                   {storySelections.length > 1 ? (
-                    <select
-                      aria-label={`${t(language, "navStory")} · ${t(language, "dayN").replace("{n}", String(activeStorySelection.story_day))}`}
-                      value={activeStorySelection.story_day}
-                      onChange={(event) => {
-                        const day = Number(event.target.value);
-                        const selection = storySelections.find(
-                          (candidate) => candidate.story_day === day,
-                        );
-                        if (!selection) return;
-                        setActiveItineraryDay(day);
-                        navigate(storyDestinationFor(selection));
-                      }}
-                      className="max-w-24 rounded-md border border-line bg-card py-1 pl-1.5 pr-5 text-[11px] text-sage-deep outline-none focus:border-sage-deep sm:max-w-48 sm:text-xs"
+                    <div
+                      className="invisible absolute left-1/2 top-full z-50 w-72 -translate-x-1/2 pt-2 opacity-0 transition duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+                      role="menu"
+                      aria-label={t(language, "navStory")}
                     >
-                      {storySelections.map((selection) => (
-                        <option key={`${selection.story_day}-${selection.story_id}`} value={selection.story_day}>
-                          {t(language, "dayN").replace("{n}", String(selection.story_day))} · {localizedStoryTitle(selection.story_id, language)}
-                        </option>
-                      ))}
-                    </select>
+                      <div className="overflow-hidden rounded-xl border border-line bg-card p-1.5 shadow-[var(--shadow-soft)]">
+                        {storySelections.map((selection) => {
+                          const active = selection.story_day === activeStorySelection.story_day;
+                          return (
+                            <button
+                              key={`${selection.story_day}-${selection.story_id}`}
+                              type="button"
+                              role="menuitem"
+                              aria-current={active ? "page" : undefined}
+                              onClick={() => {
+                                setActiveItineraryDay(selection.story_day);
+                                navigate(storyDestinationFor(selection));
+                              }}
+                              className={`flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition ${
+                                active
+                                  ? "bg-sage-deep text-paper"
+                                  : "text-ink hover:bg-paper-warm"
+                              }`}
+                            >
+                              <span
+                                className={`mt-0.5 shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                                  active ? "text-paper/75" : "text-sage-deep"
+                                }`}
+                              >
+                                {t(language, "dayN").replace(
+                                  "{n}",
+                                  String(selection.story_day),
+                                )}
+                              </span>
+                              <span className="text-xs leading-relaxed">
+                                {localizedStoryTitle(selection.story_id, language)}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   ) : null}
                 </div>
               );
