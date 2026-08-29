@@ -211,7 +211,13 @@ async function requestFastPosition(): Promise<GeolocationPosition> {
 
 export function RouteResultPage() {
   const navigate = useNavigate();
-  const { session, language, setSession } = useWalk();
+  const {
+    session,
+    language,
+    setSession,
+    activeItineraryDay,
+    setActiveItineraryDay,
+  } = useWalk();
   const { userId: authUserId } = useAuth();
   const {
     trip,
@@ -225,7 +231,6 @@ export function RouteResultPage() {
   const [walkLegs, setWalkLegs] = useState<WalkLeg[]>([]);
   const [walkLegsLoading, setWalkLegsLoading] = useState(false);
   const [openingHours, setOpeningHours] = useState<OpeningHoursResponse | null>(null);
-  const [dayIndex, setDayIndex] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [guiding, setGuiding] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -307,6 +312,11 @@ export function RouteResultPage() {
   }
 
   const dayMatches = session?.matches?.length ? session.matches : session?.match ? [session.match] : [];
+  const dayIndex = Math.min(
+    Math.max(activeItineraryDay - 1, 0),
+    Math.max(dayMatches.length - 1, 0),
+  );
+  const setDayIndex = (index: number) => setActiveItineraryDay(index + 1);
   const match = dayMatches[Math.min(dayIndex, Math.max(dayMatches.length - 1, 0))] ?? session?.match;
   const preference = session?.preference;
   const poisById = session?.poisById ?? {};
