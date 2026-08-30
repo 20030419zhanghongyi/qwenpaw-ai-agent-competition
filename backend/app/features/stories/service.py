@@ -47,8 +47,38 @@ _ACTION_MESSAGES = {
     "hint_provided": {
         "zh-CN": "已提供提示",
         "zh-TW": "已提供提示",
-        "en": "Hint provided",
-        "pt": "Pista fornecida",
+        "en": "Here is your hint.",
+        "pt": "Aqui está a sua pista.",
+    },
+    "incorrect_answer": {
+        "zh-CN": "答案不正确，可以重试、查看提示或跳过",
+        "zh-TW": "答案不正確，可以重試、查看提示或略過",
+        "en": "Not quite. You can try again, ask for a hint, or skip this puzzle.",
+        "pt": "Ainda não é a resposta certa. Pode tentar de novo, pedir uma pista ou saltar.",
+    },
+    "story_continued": {
+        "zh-CN": "剧情已继续",
+        "zh-TW": "劇情已繼續",
+        "en": "The story continues.",
+        "pt": "A história continua.",
+    },
+    "story_completed": {
+        "zh-CN": "今日补记已保存，故事完成",
+        "zh-TW": "今日補記已儲存，故事完成",
+        "en": "Your note has been saved. The story is complete.",
+        "pt": "A sua nota foi guardada. A história está concluída.",
+    },
+    "ending_already_saved": {
+        "zh-CN": "该结局已经保存",
+        "zh-TW": "此結局已儲存",
+        "en": "This ending has already been saved.",
+        "pt": "Este final já foi guardado.",
+    },
+    "chapter_already_processed": {
+        "zh-CN": "该章节已经处理",
+        "zh-TW": "此章節已處理",
+        "en": "This chapter has already been completed.",
+        "pt": "Este capítulo já foi concluído.",
     },
 }
 
@@ -319,10 +349,20 @@ class StoryService:
             if result.message_key
             else result.message
         )
+        hint = result.hint
+        if result.chapter_id:
+            puzzle = chapter_by_id(display_story, result.chapter_id).get("puzzle", {})
+            if result.message_key == "puzzle_solved":
+                message = puzzle.get("explanation", message)
+            elif result.message_key == "puzzle_skipped":
+                message = puzzle.get("skip_text", message)
+            hints = puzzle.get("hints", [])
+            if result.hint_index is not None and 0 <= result.hint_index < len(hints):
+                hint = hints[result.hint_index]
         return StoryActionResponse(
             accepted=result.accepted,
             message=message,
-            hint=result.hint,
+            hint=hint,
             new_clues=result.new_clues,
             new_rewards=self._localized_rewards(display_story, result.new_rewards),
             session=self._response(story, story_session, language=language),

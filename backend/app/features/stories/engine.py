@@ -28,6 +28,9 @@ class TransitionResult:
     new_rewards: list[StoryReward] = field(default_factory=list)
     message_key: str | None = None
     changed: bool = True
+    # Display references survive chapter advancement; never localize puzzle rules.
+    chapter_id: str | None = None
+    hint_index: int | None = None
 
 
 def _append_unique(values: list[str], value: str) -> None:
@@ -146,12 +149,16 @@ def apply_action(
             request.action == StoryAction.CHOOSE_ENDING
             and request.choice_id == story_session.state.ending_id
         ):
-            return TransitionResult(True, "该结局已经保存", changed=False)
+            return TransitionResult(
+                True, "该结局已经保存", message_key="ending_already_saved", changed=False
+            )
         raise StoryChapterConflictError("故事已经完成，不能再修改进度")
 
     if request.chapter_id != story_session.current_chapter_id:
         if _already_processed(story_session, request.chapter_id):
-            return TransitionResult(True, "该章节已经处理", changed=False)
+            return TransitionResult(
+                True, "该章节已经处理", message_key="chapter_already_processed", changed=False
+            )
         raise StoryChapterConflictError(
             f"当前章节是 {story_session.current_chapter_id}，不能操作 {request.chapter_id}"
         )
@@ -190,10 +197,18 @@ def apply_action(
         if not hints:
             raise InvalidStoryActionError("当前谜题没有可用提示")
         count = story_session.state.hint_counts.get(request.chapter_id, 0)
-        hint = hints[min(count, len(hints) - 1)]
+        hint_index = min(count, len(hints) - 1)
+        hint = hints[hint_index]
         story_session.state.hint_counts[request.chapter_id] = count + 1
         _append_unique(story_session.state.hinted_chapter_ids, request.chapter_id)
-        return TransitionResult(True, "已提供提示", hint=hint, message_key="hint_provided")
+        return TransitionResult(
+            True,
+            "已提供提示",
+            hint=hint,
+            message_key="hint_provided",
+            chapter_id=request.chapter_id,
+            hint_index=hint_index,
+        )
 
     if request.action == StoryAction.ANSWER:
         if request.answer is None:
@@ -202,27 +217,44 @@ def apply_action(
         if _normalized_answer(request.answer) != _normalized_answer(puzzle["solution"]):
             attempts = story_session.state.attempts.get(request.chapter_id, 0) + 1
             story_session.state.attempts[request.chapter_id] = attempts
-            return TransitionResult(False, "答案不正确，可以重试、查看提示或跳过")
+            return TransitionResult(
+                False,
+                "答案不正确，可以重试、查看提示或跳过",
+                message_key="incorrect_answer",
+            )
         new_clues, new_rewards = _complete_puzzle(story, story_session, chapter, skipped=False)
         return TransitionResult(
             True,
             puzzle["explanation"],
             new_clues=new_clues,
             new_rewards=new_rewards,
+            message_key="puzzle_solved",
+            chapter_id=request.chapter_id,
         )
 
     if request.action == StoryAction.SKIP:
         puzzle = chapter["puzzle"]
         new_clues, new_rewards = _complete_puzzle(story, story_session, chapter, skipped=True)
         return TransitionResult(
-            True, puzzle["skip_text"], new_clues=new_clues, new_rewards=new_rewards
+            True,
+            puzzle["skip_text"],
+            new_clues=new_clues,
+            new_rewards=new_rewards,
+            message_key="puzzle_skipped",
+            chapter_id=request.chapter_id,
         )
 
     if request.action == StoryAction.CONTINUE:
         _append_unique(story_session.state.completed_chapter_ids, request.chapter_id)
         new_clues, new_rewards = _award_reward(story_session, chapter.get("reward"))
         _advance(story, story_session)
-        return TransitionResult(True, "剧情已继续", new_clues=new_clues, new_rewards=new_rewards)
+        return TransitionResult(
+            True,
+            "剧情已继续",
+            new_clues=new_clues,
+            new_rewards=new_rewards,
+            message_key="story_continued",
+        )
 
     if request.action == StoryAction.CHOOSE_ENDING:
         if not request.choice_id:
@@ -252,6 +284,7 @@ def apply_action(
             "今日补记已保存，故事完成",
             new_clues=new_clues,
             new_rewards=new_rewards,
+            message_key="story_completed",
         )
 
     raise InvalidStoryActionError(f"Unsupported action: {request.action.value}")
