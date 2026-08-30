@@ -6,12 +6,14 @@ import { useStoryMessages } from "../storyI18n";
 interface SingleChoicePuzzleProps {
   puzzle: LegacySingleChoicePuzzleData;
   disabled?: boolean;
+  submitLabel?: string;
   onSubmit: (answer: string) => void;
 }
 
 export function SingleChoicePuzzle({
   puzzle,
   disabled = false,
+  submitLabel,
   onSubmit,
 }: SingleChoicePuzzleProps) {
   const st = useStoryMessages();
@@ -23,6 +25,7 @@ export function SingleChoicePuzzle({
       prompt={puzzle.prompt}
       canSubmit={Boolean(selected)}
       disabled={disabled}
+      submitLabel={submitLabel}
       onSubmit={() => selected && onSubmit(selected)}
     >
       <div className="space-y-2" role="radiogroup" aria-label={st("singleChoiceOptions")}>

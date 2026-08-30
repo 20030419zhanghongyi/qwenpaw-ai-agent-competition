@@ -7,6 +7,7 @@ interface PuzzleFrameProps {
   selectionHint?: string;
   canSubmit: boolean;
   disabled?: boolean;
+  submitLabel?: string;
   onSubmit: () => void;
 }
 
@@ -16,6 +17,7 @@ export function PuzzleFrame({
   selectionHint,
   canSubmit,
   disabled = false,
+  submitLabel,
   onSubmit,
 }: PuzzleFrameProps) {
   const st = useStoryMessages();
@@ -44,7 +46,7 @@ export function PuzzleFrame({
         onClick={onSubmit}
         className="min-h-12 w-full rounded-full bg-sage-deep px-5 text-base font-medium text-paper shadow-[var(--shadow-soft)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {disabled ? st("submitting") : st("submitAnswer")}
+        {disabled ? submitLabel ?? st("submitting") : st("submitAnswer")}
       </button>
     </section>
   );

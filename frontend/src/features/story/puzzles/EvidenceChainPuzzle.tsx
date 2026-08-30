@@ -12,6 +12,7 @@ import { useStoryMessages, type StoryMessageKey } from "../storyI18n";
 interface EvidenceChainPuzzleProps {
   puzzle: EvidenceChainPuzzleData;
   disabled?: boolean;
+  submitLabel?: string;
   onSubmit: (answer: string[]) => void;
 }
 
@@ -121,6 +122,7 @@ function EvidenceCardContent({
 export function EvidenceChainPuzzle({
   puzzle,
   disabled = false,
+  submitLabel,
   onSubmit,
 }: EvidenceChainPuzzleProps) {
   const st = useStoryMessages();
@@ -178,6 +180,7 @@ export function EvidenceChainPuzzle({
         selectionHint={st("evidenceSelectionHint", { count: requiredCount })}
         canSubmit={chain.length >= requiredCount}
         disabled={disabled}
+        submitLabel={submitLabel}
         onSubmit={() => onSubmit(chain.map((item) => item.id))}
       >
         <div>

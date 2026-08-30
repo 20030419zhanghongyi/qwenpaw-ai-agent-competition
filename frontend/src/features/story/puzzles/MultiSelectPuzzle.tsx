@@ -6,12 +6,14 @@ import { useStoryMessages } from "../storyI18n";
 interface MultiSelectPuzzleProps {
   puzzle: MultiSelectPuzzleData;
   disabled?: boolean;
+  submitLabel?: string;
   onSubmit: (answer: string[]) => void;
 }
 
 export function MultiSelectPuzzle({
   puzzle,
   disabled = false,
+  submitLabel,
   onSubmit,
 }: MultiSelectPuzzleProps) {
   const st = useStoryMessages();
@@ -49,6 +51,7 @@ export function MultiSelectPuzzle({
       }
       canSubmit={enough}
       disabled={disabled}
+      submitLabel={submitLabel}
       onSubmit={() => onSubmit([...selected])}
     >
       <div className="space-y-2" role="group" aria-label={st("multiChoiceOptions")}>

@@ -18,7 +18,12 @@ from .content import (
     story_overview,
     story_nodes,
 )
-from .engine import TransitionResult, allowed_actions, apply_action
+from .engine import (
+    StoryChapterConflictError,
+    TransitionResult,
+    allowed_actions,
+    apply_action,
+)
 from .models import (
     StoryActionRequest,
     StoryActionResponse,
@@ -169,6 +174,35 @@ class StoryService:
         self._require_current_version(story, story_session)
         return self._response(story, story_session, language=language)
 
+    def get_chapter(
+        self,
+        session_id: str,
+        user_id: str,
+        chapter_id: str,
+        *,
+        language: str = "zh-CN",
+    ) -> dict[str, Any]:
+        story_session = self._repository.get(session_id)
+        if story_session is None:
+            raise StorySessionNotFoundError(f"Story session not found: {session_id}")
+        self._require_owner(story_session, user_id)
+        story = load_story(story_session.story_id)
+        self._require_current_version(story, story_session)
+        accessible_ids = {
+            story_session.current_chapter_id,
+            *story_session.state.completed_chapter_ids,
+            *story_session.state.skipped_chapter_ids,
+        }
+        if chapter_id not in accessible_ids:
+            raise StoryChapterConflictError(
+                f"Chapter {chapter_id} has not been unlocked yet"
+            )
+        display_story = localize_story(story, normalize_story_language(language))
+        chapter = public_chapter(chapter_by_id(display_story, chapter_id))
+        if chapter["kind"] == "ending":
+            chapter["ending_options"] = story_overview(display_story)["endings"]
+        return chapter
+
     def get_active_session(
         self, story_id: str, user_id: str, *, language: str = "zh-CN"
     ) -> StorySessionResponse:
@@ -195,7 +229,8 @@ class StoryService:
         self._require_owner(story_session, user_id)
         story = load_story(story_session.story_id)
         self._require_current_version(story, story_session)
-        result = apply_action(story, story_session, request)
+        display_story = localize_story(story, normalize_story_language(language))
+        result = apply_action(display_story, story_session, request)
 
         if result.changed and request.action.value == "arrive":
             chapter = chapter_by_id(story, request.chapter_id)
