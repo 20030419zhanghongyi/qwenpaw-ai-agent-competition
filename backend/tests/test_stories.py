@@ -621,6 +621,7 @@ def test_story_api_requires_owner_and_runs_complete_v4_workflow():
     session_id = ""
     trip_id = ""
     try:
+        client.cookies.clear()
         missing_auth = client.post(f"/api/v1/stories/{STORY_ID}/sessions")
         assert missing_auth.status_code == 401
 
@@ -796,6 +797,7 @@ def test_taipa_future_letter_is_authenticated_idempotent_and_separate_from_postc
             database.add(
                 Postcard(
                     id=ordinary_postcard_id,
+                    user_id=owner_id,
                     trip_id=trip_id,
                     poi_id=ending_poi_id,
                     artifact_kind="postcard",
@@ -815,6 +817,7 @@ def test_taipa_future_letter_is_authenticated_idempotent_and_separate_from_postc
 
         metadata_path = f"/api/v1/story-sessions/{session_id}/future-letter"
         assert client.get(metadata_path, headers=owner_headers).status_code == 404
+        client.cookies.clear()
         assert client.post(metadata_path).status_code == 401
         assert client.post(metadata_path, headers=other_headers).status_code == 403
 

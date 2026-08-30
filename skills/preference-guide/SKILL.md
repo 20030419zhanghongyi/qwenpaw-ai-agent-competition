@@ -60,6 +60,7 @@ metadata:
   "story_opt_in": null,
   "story_id": null,
   "story_day": null,
+  "story_selections": [],
   "party_size": 1,
   "travel_type": ["solo", "friends", "family", "relax"],
   "interests": ["history", "architecture", "food", "photo", "culture"],
@@ -77,8 +78,10 @@ metadata:
   `multi-day`=多日游；`custom`=用户说不清。用户没明确提时长时默认 `half-day`。
 - `trip_days`：多日游的天数（整数 2-5），非多日游填 `null`。
 - `story_opt_in`：必须明确询问；参加填 `true`，明确不参加填 `false`。
-- `story_id`：参加时三选一：`lotus_city_double_map`、`taipa_letters`、`coloane_after_tide`。
-- `story_day`：多日且参加故事时必须为 1-5；其他情况可为 `null`。
+- `story_id` / `story_day`：兼容字段，填写所选故事中的第一条及其日期。
+- `story_selections`：单日最多一项；多日可多选，格式为
+  `[{"story_id": "taipa_letters", "story_day": 1}]`。同一故事和同一天都不可重复；
+  可选值为 `lotus_city_double_map`、`taipa_letters`、`coloane_after_tide`。
 
 在输出最终 JSON 前，必须询问用户是否愿意参加故事体验。若愿意，继续确认故事线；若为多日行程，再确认安排在第几天。不要自行默认故事或日期。
 - `party_size`：同行人数（整数）。用户没提就填 `1`。

@@ -9,9 +9,11 @@ import {
 } from "react";
 import {
   AuthApiError,
+  COOKIE_SESSION_TOKEN,
   claimGuestTrips,
   getCurrentUser,
   loginUser,
+  logoutUser,
   registerUser,
   saveUserPreference,
 } from "@/api/auth";
@@ -41,20 +43,11 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function readToken(): string | null {
+function clearLegacyToken() {
   try {
-    return localStorage.getItem(TOKEN_KEY);
+    localStorage.removeItem(TOKEN_KEY);
   } catch {
-    return null;
-  }
-}
-
-function writeToken(token: string | null) {
-  try {
-    if (token) localStorage.setItem(TOKEN_KEY, token);
-    else localStorage.removeItem(TOKEN_KEY);
-  } catch {
-    // Authentication still works for the current page when storage is unavailable.
+    // Storage may be unavailable in private or restricted browsing contexts.
   }
 }
 
@@ -77,9 +70,9 @@ async function adoptGuestTrips(token: string): Promise<void> {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => readToken());
+  const [token, setToken] = useState<string | null>(COOKIE_SESSION_TOKEN);
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [isRestoring, setIsRestoring] = useState(() => Boolean(readToken()));
+  const [isRestoring, setIsRestoring] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const logout = useCallback(() => {
@@ -88,7 +81,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setError(null);
     setIsRestoring(false);
-    writeToken(null);
+    clearLegacyToken();
+    void logoutUser().catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -134,8 +128,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await registerUser(input);
       adoptGuestInvitationState(response.user.user_id);
       await adoptGuestTrips(response.token);
-      writeToken(response.token);
-      setToken(response.token);
+      clearLegacyToken();
+      setToken(COOKIE_SESSION_TOKEN);
       setUser(response.user);
     } catch (requestError) {
       const message = errorMessage(requestError);
@@ -152,8 +146,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!currentUser) throw new Error("用户资料不存在");
       adoptGuestInvitationState(currentUser.user_id);
       await adoptGuestTrips(response.token);
-      writeToken(response.token);
-      setToken(response.token);
+      clearLegacyToken();
+      setToken(COOKIE_SESSION_TOKEN);
       setUser(currentUser);
     } catch (requestError) {
       const message = errorMessage(requestError);

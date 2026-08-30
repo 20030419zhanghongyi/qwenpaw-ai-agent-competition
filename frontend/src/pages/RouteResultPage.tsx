@@ -211,7 +211,13 @@ async function requestFastPosition(): Promise<GeolocationPosition> {
 
 export function RouteResultPage() {
   const navigate = useNavigate();
-  const { session, language, setSession } = useWalk();
+  const {
+    session,
+    language,
+    setSession,
+    activeItineraryDay,
+    setActiveItineraryDay,
+  } = useWalk();
   const { userId: authUserId } = useAuth();
   const {
     trip,
@@ -225,7 +231,6 @@ export function RouteResultPage() {
   const [walkLegs, setWalkLegs] = useState<WalkLeg[]>([]);
   const [walkLegsLoading, setWalkLegsLoading] = useState(false);
   const [openingHours, setOpeningHours] = useState<OpeningHoursResponse | null>(null);
-  const [dayIndex, setDayIndex] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [guiding, setGuiding] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -307,17 +312,28 @@ export function RouteResultPage() {
   }
 
   const dayMatches = session?.matches?.length ? session.matches : session?.match ? [session.match] : [];
+  const dayIndex = Math.min(
+    Math.max(activeItineraryDay - 1, 0),
+    Math.max(dayMatches.length - 1, 0),
+  );
+  const setDayIndex = (index: number) => setActiveItineraryDay(index + 1);
   const match = dayMatches[Math.min(dayIndex, Math.max(dayMatches.length - 1, 0))] ?? session?.match;
   const preference = session?.preference;
   const poisById = session?.poisById ?? {};
   const route = match?.route;
   const isMultiDay = (dayMatches.length > 1) || preference?.duration === "multi-day";
-  const scheduledStoryDayIndex = isMultiDay ? (preference?.story_day ?? 1) - 1 : 0;
+  const scheduledStory = preference?.story_selections?.find(
+    (selection) => selection.story_day === dayIndex + 1,
+  ) ?? (
+    preference?.story_id
+      ? { story_id: preference.story_id, story_day: preference.story_day ?? 1 }
+      : null
+  );
   const isScheduledStoryDay =
     preference?.story_opt_in === true &&
-    isStoryId(preference.story_id) &&
-    dayIndex === scheduledStoryDayIndex &&
-    storyUsesRoute(preference.story_id, match?.selected_template ?? route?.id);
+    isStoryId(scheduledStory?.story_id) &&
+    (!isMultiDay || scheduledStory?.story_day === dayIndex + 1) &&
+    storyUsesRoute(scheduledStory.story_id, match?.selected_template ?? route?.id);
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -589,8 +605,8 @@ export function RouteResultPage() {
 
   const localizedRouteCopy = localizedRoute(route, language);
   const routeTitle =
-    isScheduledStoryDay && isStoryId(preference?.story_id)
-      ? localizedStoryTitle(preference.story_id, language)
+    isScheduledStoryDay && isStoryId(scheduledStory?.story_id)
+      ? localizedStoryTitle(scheduledStory.story_id, language)
       : localizedRouteCopy.name;
   const localizedReasons = localizedRouteReasons(route, match.reasons, language);
   const explanation =

@@ -4,6 +4,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPExcepti
 from fastapi.responses import Response
 
 from app.api.contracts import NOT_FOUND_RESPONSE, UNPROCESSABLE_RESPONSE
+from app.core.security import require_user_id
 from app.guardrails.runtime import rate_limit
 
 from .models import PostcardListResponse, PostcardPrewarmResponse, PostcardResponse
@@ -29,6 +30,15 @@ def _http_error(exc: Exception) -> None:
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
         ) from exc
     raise exc
+
+
+@router.get(
+    "/api/v1/postcards",
+    response_model=PostcardListResponse,
+    summary="List all persisted postcards owned by the signed-in account",
+)
+def list_account_postcards(user_id: str = Depends(require_user_id)) -> PostcardListResponse:
+    return PostcardListResponse(postcards=postcard_service.list_by_user(user_id))
 
 
 @router.post(

@@ -25,7 +25,11 @@ from app.guardrails.runtime import record_audit
 from app.tools.scrub import scrub
 
 from .models import PostcardResponse
-from .repository import PostcardRepository, postcard_repository
+from .repository import (
+    CURRENT_POSTCARD_RENDER_VERSION,
+    PostcardRepository,
+    postcard_repository,
+)
 from .scene_image import (
     SceneGenerationError,
     SUPPORTED_PHOTO_STYLES,
@@ -690,6 +694,7 @@ class PostcardService:
             scene_source=scene_source,
             photo_style=_photo_style_from_record(record),
             image_url=f"/api/v1/postcards/{record.id}/image",
+            is_historical=record.render_version < CURRENT_POSTCARD_RENDER_VERSION,
             created_at=record.created_at,
             visited_at=stamps["visited_at"],
             timestamp_label=stamps["timestamp_label"],
@@ -817,6 +822,7 @@ class PostcardService:
         )
         record = PostcardRecord(
             id=str(uuid4()),
+            user_id=trip.user_id,
             trip_id=trip_id,
             poi_id=poi_id,
             artifact_kind="postcard",
@@ -916,8 +922,8 @@ class PostcardService:
             logger.info("postcard scene prewarm failed: %s", exc)
 
     def delete(self, postcard_id: str) -> None:
-        record = self._repository.get(postcard_id)
-        if record is None or record.artifact_kind != "postcard":
+        record = self._repository.get_any_version(postcard_id)
+        if record is None:
             raise PostcardNotFoundError(f"Postcard not found: {postcard_id}")
         trip_id = record.trip_id
         poi_id = record.poi_id
@@ -937,15 +943,23 @@ class PostcardService:
         records = self._repository.list_by_trip(trip_id)
         return [self._to_response(record, trip) for record in records]
 
+    def list_by_user(self, user_id: str) -> list[PostcardResponse]:
+        responses: list[PostcardResponse] = []
+        for record in self._repository.list_by_user(user_id):
+            trip = trip_repository.get_trip(record.trip_id)
+            if trip is not None:
+                responses.append(self._to_response(record, trip))
+        return responses
+
     def image(self, postcard_id: str) -> bytes:
-        record = self._repository.get(postcard_id)
-        if record is None or record.artifact_kind != "postcard":
+        record = self._repository.get_any_version(postcard_id)
+        if record is None:
             raise PostcardNotFoundError(f"Postcard not found: {postcard_id}")
         return _normalize_postcard_svg_layout(record.image_svg)
 
     def image_png(self, postcard_id: str) -> bytes:
-        record = self._repository.get(postcard_id)
-        if record is None or record.artifact_kind != "postcard":
+        record = self._repository.get_any_version(postcard_id)
+        if record is None:
             raise PostcardNotFoundError(f"Postcard not found: {postcard_id}")
         trip = trip_repository.get_trip(record.trip_id)
         if trip is None:

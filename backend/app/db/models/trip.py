@@ -94,6 +94,7 @@ class Postcard(Base):
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_string)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
     trip_id: Mapped[str] = mapped_column(ForeignKey("trips.id"), index=True, nullable=False)
     poi_id: Mapped[str] = mapped_column(String(128), index=True, nullable=False)
     artifact_kind: Mapped[str] = mapped_column(
@@ -114,6 +115,7 @@ class Postcard(Base):
     )
 
     trip: Mapped[Trip] = relationship(back_populates="postcards")
+    user: Mapped[User] = relationship(back_populates="postcards")
 
 
 class TravelMemoir(Base):

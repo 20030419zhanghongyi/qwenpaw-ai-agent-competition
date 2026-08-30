@@ -411,9 +411,14 @@ def _match_preset_templates(
     return [result for _, _, result in top]
 
 
-def _story_match(pref: Preference, research_tips: list[str], live_context: dict) -> dict | None:
+def _story_match(
+    pref: Preference,
+    research_tips: list[str],
+    live_context: dict,
+    story_id: str | None = None,
+) -> dict | None:
     """Build a match from the authored story route without reordering its chapters."""
-    route_id = STORY_ROUTE_IDS.get(pref.story_id or "")
+    route_id = STORY_ROUTE_IDS.get(story_id or pref.story_id or "")
     if not route_id:
         return None
     route = get_template(route_id)
@@ -439,19 +444,23 @@ def _insert_story_day(
     research_tips: list[str],
     live_context: dict,
 ) -> list[dict]:
-    if pref.story_opt_in is not True or not pref.story_id:
+    if pref.story_opt_in is not True:
         return matches
-    story_match = _story_match(pref, research_tips, live_context)
-    if story_match is None:
-        return matches
-    index = 0
-    if pref.duration == "multi-day":
-        day_count = clamp_trip_days(pref.trip_days) or TRIP_DAYS_DEFAULT
-        index = max(0, min(day_count - 1, (pref.story_day or 1) - 1))
     result = list(matches)
-    while len(result) <= index:
-        result.append(story_match)
-    result[index] = story_match
+    selections = list(pref.story_selections)
+    if not selections and pref.story_id:
+        selections = [{"story_id": pref.story_id, "story_day": pref.story_day or 1}]
+    day_count = clamp_trip_days(pref.trip_days) or TRIP_DAYS_DEFAULT
+    for selection in selections:
+        story_id = selection.story_id if hasattr(selection, "story_id") else selection["story_id"]
+        story_day = selection.story_day if hasattr(selection, "story_day") else selection["story_day"]
+        story_match = _story_match(pref, research_tips, live_context, story_id)
+        if story_match is None:
+            continue
+        index = 0 if pref.duration != "multi-day" else max(0, min(day_count - 1, story_day - 1))
+        while len(result) <= index:
+            result.append(story_match)
+        result[index] = story_match
     return result
 
 

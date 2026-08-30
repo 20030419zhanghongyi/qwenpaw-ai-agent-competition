@@ -12,6 +12,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers,
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -443,6 +444,7 @@ export async function recognizeGuidePhoto(args: {
     method: "POST",
     body: form,
     headers: args.token ? { Authorization: `Bearer ${args.token}` } : undefined,
+    credentials: "include",
   });
   if (!response.ok) {
     let detail = `${response.status} ${response.statusText}`;

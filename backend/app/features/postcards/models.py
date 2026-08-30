@@ -23,6 +23,7 @@ class PostcardResponse(BaseModel):
     scene_source: str = "user"
     photo_style: str | None = None
     image_url: str
+    is_historical: bool = False
     created_at: datetime
     # Design stamps: time / public POI geo / route task (not photo EXIF).
     visited_at: datetime | None = None

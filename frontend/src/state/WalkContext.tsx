@@ -25,6 +25,8 @@ const PREF_KEY = "macau-storywalk-preference";
 interface WalkContextValue {
   language: LanguageCode;
   setLanguage: (lang: LanguageCode) => void;
+  activeItineraryDay: number;
+  setActiveItineraryDay: (day: number) => void;
   preference: Preference | null;
   session: WalkSession | null;
   setSession: (session: WalkSession) => void;
@@ -131,6 +133,7 @@ function writePreference(preference: Preference | null) {
 
 export function WalkProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<LanguageCode>(() => readLanguage());
+  const [activeItineraryDay, setActiveItineraryDayState] = useState(1);
   const [session, setSessionState] = useState<WalkSession | null>(() => readSession());
   const [preference, setPreferenceState] = useState<Preference | null>(() => {
     return readPreference() ?? readSession()?.preference ?? null;
@@ -140,6 +143,10 @@ export function WalkProvider({ children }: { children: ReactNode }) {
     setLanguageState(lang);
     writeLanguage(lang);
     document.documentElement.lang = lang;
+  }, []);
+
+  const setActiveItineraryDay = useCallback((day: number) => {
+    setActiveItineraryDayState(Math.max(1, Math.round(day)));
   }, []);
 
   useEffect(() => {
@@ -197,6 +204,7 @@ export function WalkProvider({ children }: { children: ReactNode }) {
         matches: args.matches?.length ? args.matches : [args.match],
         poisById,
       };
+      setActiveItineraryDayState(1);
       setSession(next);
     },
     [language, setSession],
@@ -206,6 +214,8 @@ export function WalkProvider({ children }: { children: ReactNode }) {
     () => ({
       language,
       setLanguage,
+      activeItineraryDay,
+      setActiveItineraryDay,
       preference,
       session,
       setSession,
@@ -216,6 +226,8 @@ export function WalkProvider({ children }: { children: ReactNode }) {
     [
       language,
       setLanguage,
+      activeItineraryDay,
+      setActiveItineraryDay,
       preference,
       session,
       setSession,

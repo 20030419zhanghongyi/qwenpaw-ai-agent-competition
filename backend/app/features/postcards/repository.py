@@ -27,6 +27,17 @@ class PostcardRepository:
                 )
             )
 
+    def get_any_version(
+        self, postcard_id: str, *, artifact_kind: str = "postcard"
+    ) -> Postcard | None:
+        with self._session_factory() as session:
+            return session.scalar(
+                select(Postcard).where(
+                    Postcard.id == postcard_id,
+                    Postcard.artifact_kind == artifact_kind,
+                )
+            )
+
     def get_for_trip_poi(
         self,
         trip_id: str,
@@ -57,6 +68,20 @@ class PostcardRepository:
                         Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
                     )
                     .order_by(Postcard.stop_order, Postcard.created_at, Postcard.id)
+                )
+            )
+
+    def list_by_user(self, user_id: str) -> list[Postcard]:
+        """Return every persisted postcard belonging to the account, newest first."""
+        with self._session_factory() as session:
+            return list(
+                session.scalars(
+                    select(Postcard)
+                    .where(
+                        Postcard.user_id == user_id,
+                        Postcard.artifact_kind == "postcard",
+                    )
+                    .order_by(Postcard.created_at.desc(), Postcard.id.desc())
                 )
             )
 
@@ -92,7 +117,6 @@ class PostcardRepository:
                 select(Postcard).where(
                     Postcard.id == postcard_id,
                     Postcard.artifact_kind == artifact_kind,
-                    Postcard.render_version == CURRENT_POSTCARD_RENDER_VERSION,
                 )
             )
             if record is None:

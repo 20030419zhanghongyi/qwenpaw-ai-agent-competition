@@ -1,7 +1,12 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+  isStoryId,
+  localizedStoryTitle,
+} from "@/features/story/storyMetadata";
 import { t } from "@/i18n";
 import { useWalk } from "@/state/WalkContext";
 import { useStory } from "@/state/StoryContext";
+import type { Preference, StorySelection } from "@/types";
 
 const TABS = [
   { to: "/guide", labelKey: "navGuide" as const },
@@ -9,32 +14,57 @@ const TABS = [
   { to: "/profile", labelKey: "navProfile" as const },
 ];
 
-function selectedStoryUrl(preference: ReturnType<typeof useWalk>["preference"]): string {
-  if (!preference?.story_id) return "/stories";
-  const base = `/stories/${preference.story_id}`;
-  if (!preference.story_day || !preference.travel_date) return base;
+function selectedStoryUrl(
+  preference: Preference | null,
+  selection: StorySelection | null,
+): string {
+  if (!selection) return "/stories";
+  const base = `/stories/${selection.story_id}`;
+  if (!preference?.travel_date) return base;
   const date = new Date(`${preference.travel_date}T00:00:00`);
-  date.setDate(date.getDate() + preference.story_day - 1);
+  date.setDate(date.getDate() + selection.story_day - 1);
   const scheduledDate = [
     date.getFullYear(),
     String(date.getMonth() + 1).padStart(2, "0"),
     String(date.getDate()).padStart(2, "0"),
   ].join("-");
-  return `${base}?${new URLSearchParams({ scheduledDay: String(preference.story_day), scheduledDate })}`;
+  return `${base}?${new URLSearchParams({ scheduledDay: String(selection.story_day), scheduledDate })}`;
 }
 
 export function AppNav() {
-  const { language, preference } = useWalk();
+  const navigate = useNavigate();
+  const {
+    language,
+    preference,
+    activeItineraryDay,
+    setActiveItineraryDay,
+  } = useWalk();
   const { session } = useStory();
-  const storySelected = preference?.story_opt_in === true && Boolean(preference.story_id);
-  const matchingSession = session?.story_id === preference?.story_id ? session : null;
-  const storyDestination = matchingSession
-    ? matchingSession.status === "completed"
-      ? `/story-sessions/${matchingSession.session_id}/ending`
-      : matchingSession.current_chapter?.kind === "prologue"
-        ? `/story-sessions/${matchingSession.session_id}/nodes/${matchingSession.current_chapter_id}`
-        : `/story-sessions/${matchingSession.session_id}/map`
-    : selectedStoryUrl(preference);
+  const storySelections: StorySelection[] = (
+    preference?.story_selections?.length
+      ? preference.story_selections
+      : preference?.story_id && isStoryId(preference.story_id)
+        ? [{ story_id: preference.story_id, story_day: preference.story_day ?? 1 }]
+        : []
+  )
+    .filter((selection): selection is StorySelection => isStoryId(selection.story_id))
+    .sort((left, right) => left.story_day - right.story_day);
+  const storySelected = preference?.story_opt_in === true && storySelections.length > 0;
+  const activeStorySelection = storySelections.find(
+    (selection) => selection.story_day === activeItineraryDay,
+  ) ?? storySelections[0] ?? null;
+
+  const storyDestinationFor = (selection: StorySelection | null) => {
+    const matchingSession = selection && session?.story_id === selection.story_id ? session : null;
+    return matchingSession
+      ? matchingSession.status === "completed"
+        ? `/story-sessions/${matchingSession.session_id}/ending`
+        : matchingSession.current_chapter?.kind === "prologue"
+          ? `/story-sessions/${matchingSession.session_id}/nodes/${matchingSession.current_chapter_id}`
+          : `/story-sessions/${matchingSession.session_id}/map`
+      : selectedStoryUrl(preference, selection);
+  };
+  const storyDestination = storyDestinationFor(activeStorySelection);
   const tabs = storySelected
     ? [TABS[0], { to: storyDestination, labelKey: "navStory" as const }, ...TABS.slice(1)]
     : TABS;
@@ -58,33 +88,100 @@ export function AppNav() {
           aria-label={t(language, "navAria")}
           className="flex flex-1 items-stretch justify-center gap-0 sm:gap-1"
         >
-          {tabs.map((tab) => (
-            <NavLink
-              key={tab.to}
-              to={tab.to}
-              className={({ isActive }) =>
-                [
-                  "relative flex min-w-0 flex-1 items-center justify-center px-2 py-3 text-sm transition sm:flex-none sm:px-5",
-                  isActive
-                    ? "font-medium text-sage-deep"
-                    : "text-ink-soft hover:text-ink",
-                ].join(" ")
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <span className="truncate">{t(language, tab.labelKey)}</span>
-                  <span
-                    aria-hidden
-                    className={[
-                      "absolute inset-x-3 bottom-0 h-0.5 origin-center rounded-full bg-sage-deep transition-transform duration-200 sm:inset-x-4",
-                      isActive ? "scale-x-100" : "scale-x-0",
-                    ].join(" ")}
-                  />
-                </>
-              )}
-            </NavLink>
-          ))}
+          {tabs.map((tab) => {
+            const isStoryTab = tab.labelKey === "navStory";
+            if (isStoryTab && activeStorySelection) {
+              return (
+                <div
+                  key="story-navigation"
+                  className="group relative flex min-w-0 flex-1 items-stretch justify-center sm:flex-none"
+                >
+                  <NavLink
+                    to={storyDestination}
+                    className="relative flex h-full items-center gap-1 px-2 py-3 text-sm text-ink-soft transition hover:text-ink sm:px-5"
+                  >
+                    {t(language, "navStory")}
+                    {storySelections.length > 1 ? (
+                      <span aria-hidden className="text-[9px] text-sage-deep transition group-hover:rotate-180">
+                        ▾
+                      </span>
+                    ) : null}
+                  </NavLink>
+                  {storySelections.length > 1 ? (
+                    <div
+                      className="invisible absolute left-1/2 top-full z-50 w-72 -translate-x-1/2 pt-2 opacity-0 transition duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+                      role="menu"
+                      aria-label={t(language, "navStory")}
+                    >
+                      <div className="overflow-hidden rounded-xl border border-line bg-card p-1.5 shadow-[var(--shadow-soft)]">
+                        {storySelections.map((selection) => {
+                          const active = selection.story_day === activeStorySelection.story_day;
+                          return (
+                            <button
+                              key={`${selection.story_day}-${selection.story_id}`}
+                              type="button"
+                              role="menuitem"
+                              aria-current={active ? "page" : undefined}
+                              onClick={() => {
+                                setActiveItineraryDay(selection.story_day);
+                                navigate(storyDestinationFor(selection));
+                              }}
+                              className={`flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition ${
+                                active
+                                  ? "bg-sage-deep text-paper"
+                                  : "text-ink hover:bg-paper-warm"
+                              }`}
+                            >
+                              <span
+                                className={`mt-0.5 shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                                  active ? "text-paper/75" : "text-sage-deep"
+                                }`}
+                              >
+                                {t(language, "dayN").replace(
+                                  "{n}",
+                                  String(selection.story_day),
+                                )}
+                              </span>
+                              <span className="text-xs leading-relaxed">
+                                {localizedStoryTitle(selection.story_id, language)}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            }
+            return (
+              <NavLink
+                key={tab.to}
+                to={tab.to}
+                className={({ isActive }) =>
+                  [
+                    "relative flex min-w-0 flex-1 items-center justify-center px-2 py-3 text-sm transition sm:flex-none sm:px-5",
+                    isActive
+                      ? "font-medium text-sage-deep"
+                      : "text-ink-soft hover:text-ink",
+                  ].join(" ")
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <span className="truncate">{t(language, tab.labelKey)}</span>
+                    <span
+                      aria-hidden
+                      className={[
+                        "absolute inset-x-3 bottom-0 h-0.5 origin-center rounded-full bg-sage-deep transition-transform duration-200 sm:inset-x-4",
+                        isActive ? "scale-x-100" : "scale-x-0",
+                      ].join(" ")}
+                    />
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
         </nav>
 
         <div className="hidden w-[7.5rem] shrink-0 sm:block" aria-hidden />

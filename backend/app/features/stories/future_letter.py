@@ -363,6 +363,7 @@ class FutureLetterService:
             created_at = datetime.now(timezone.utc)
             record = PostcardRecord(
                 id=str(uuid4()),
+                user_id=story_session.user_id,
                 trip_id=story_session.trip_id,
                 poi_id=poi_id,
                 artifact_kind=FUTURE_LETTER_KIND,

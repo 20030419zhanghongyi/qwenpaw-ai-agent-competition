@@ -73,6 +73,7 @@ async function request<T>(path: string, init?: RequestInit, token?: string): Pro
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers ?? {}),
     },
+    credentials: "include",
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
@@ -119,6 +120,7 @@ export function uploadMemoirPhoto(
 export async function loadPrivatePhoto(photo: MemoirPhoto, memoirId: string, token: string) {
   const response = await fetch(`${API_BASE}/api/v1/memoirs/${encodeURIComponent(memoirId)}/photos/${encodeURIComponent(photo.photo_id)}`, {
     headers: { Authorization: `Bearer ${token}` },
+    credentials: "include",
   });
   if (!response.ok) throw new Error("Unable to load photo");
   return URL.createObjectURL(await response.blob());
@@ -126,7 +128,7 @@ export async function loadPrivatePhoto(photo: MemoirPhoto, memoirId: string, tok
 
 export function deleteMemoirPhoto(memoirId: string, photoId: string, token: string) {
   return fetch(`${API_BASE}/api/v1/memoirs/${encodeURIComponent(memoirId)}/photos/${encodeURIComponent(photoId)}`, {
-    method: "DELETE", headers: { Authorization: `Bearer ${token}` },
+    method: "DELETE", headers: { Authorization: `Bearer ${token}` }, credentials: "include",
   }).then((response) => { if (!response.ok) throw new Error(`${response.status}`); });
 }
 
@@ -139,7 +141,7 @@ export function createMemoirShare(memoirId: string, privacy: SharePrivacy, token
 
 export function revokeMemoirShare(memoirId: string, token: string) {
   return fetch(`${API_BASE}/api/v1/memoirs/${encodeURIComponent(memoirId)}/shares`, {
-    method: "DELETE", headers: { Authorization: `Bearer ${token}` },
+    method: "DELETE", headers: { Authorization: `Bearer ${token}` }, credentials: "include",
   }).then((response) => { if (!response.ok) throw new Error(`${response.status}`); });
 }
 

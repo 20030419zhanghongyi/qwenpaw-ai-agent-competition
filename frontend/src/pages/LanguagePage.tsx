@@ -119,18 +119,6 @@ export function LanguagePage() {
                 {t(language, "beginWalk")}
               </Link>
               <Link
-                to="/stories"
-                className="block w-full rounded-full border border-ochre/50 bg-ochre/10 px-6 py-4 text-center font-medium text-ochre shadow-[var(--shadow-soft)] transition hover:bg-ochre/20 active:scale-[0.99]"
-              >
-                📖 剧情探索 StoryWalk
-              </Link>
-              <Link
-                to="/guide"
-                className="block w-full rounded-full border border-line bg-card px-6 py-3.5 text-center text-sm text-ink transition hover:border-sage"
-              >
-                {t(language, "navGuide")} →
-              </Link>
-              <Link
                 to="/auth"
                 className="block w-full text-center text-sm text-ink-soft underline-offset-4 transition hover:text-ink hover:underline"
               >

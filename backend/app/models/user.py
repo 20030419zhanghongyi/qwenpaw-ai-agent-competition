@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 
 # 语言代码：简中 / 繁中 / 英文 / 葡文
@@ -17,6 +17,23 @@ TRIP_DAYS_MIN = 2
 TRIP_DAYS_MAX = 5
 TRIP_DAYS_DEFAULT = 3
 STORY_IDS = ("lotus_city_double_map", "taipa_letters", "coloane_after_tide")
+
+
+class StorySelection(BaseModel):
+    story_id: str
+    story_day: int
+
+    @field_validator("story_id", mode="before")
+    @classmethod
+    def validate_story_id(cls, value: Any) -> str:
+        if value not in STORY_IDS:
+            raise ValueError("unsupported story id")
+        return value
+
+    @field_validator("story_day", mode="before")
+    @classmethod
+    def validate_story_day(cls, value: Any) -> int:
+        return max(1, min(TRIP_DAYS_MAX, int(value)))
 
 
 def clamp_trip_days(value: int | None) -> int | None:
@@ -46,6 +63,8 @@ class Preference(BaseModel):
     story_opt_in: bool | None = None
     story_id: str | None = None
     story_day: int | None = None
+    # Multi-day trips may schedule multiple stories, at most one per day.
+    story_selections: list[StorySelection] = []
 
     @field_validator("trip_days", mode="before")
     @classmethod
@@ -71,6 +90,27 @@ class Preference(BaseModel):
             return max(1, min(TRIP_DAYS_MAX, int(value)))
         except (TypeError, ValueError):
             return None
+
+    @model_validator(mode="after")
+    def normalize_story_selections(self) -> "Preference":
+        seen_stories: set[str] = set()
+        seen_days: set[int] = set()
+        normalized: list[StorySelection] = []
+        for selection in self.story_selections:
+            if selection.story_id in seen_stories or selection.story_day in seen_days:
+                continue
+            seen_stories.add(selection.story_id)
+            seen_days.add(selection.story_day)
+            normalized.append(selection)
+        self.story_selections = normalized
+        if normalized:
+            self.story_opt_in = True
+            self.story_id = normalized[0].story_id
+            self.story_day = normalized[0].story_day
+        elif self.story_opt_in is False:
+            self.story_id = None
+            self.story_day = None
+        return self
 
 
 class UserProfile(BaseModel):

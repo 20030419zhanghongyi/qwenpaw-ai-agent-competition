@@ -19,6 +19,7 @@ export interface Postcard {
   scene_source?: "user" | "ai_edit" | "ai" | "library" | "placeholder" | string;
   photo_style?: PhotoStyle | null;
   image_url: string;
+  is_historical?: boolean;
   created_at: string;
   visited_at?: string | null;
   timestamp_label?: string;

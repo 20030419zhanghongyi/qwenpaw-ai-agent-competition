@@ -1,4 +1,4 @@
-import type { LanguageCode, Preference } from "@/types";
+import type { LanguageCode, Preference, StorySelection } from "@/types";
 
 /** UI duration ids → backend Preference.duration */
 const DURATION_MAP: Record<string, Preference["duration"]> = {
@@ -95,6 +95,7 @@ export interface PreferenceFormState {
   storyOptIn: boolean | null;
   storyId: Preference["story_id"];
   storyDay: number | null;
+  storySelections?: StorySelection[];
 }
 
 export function todayIso(): string {
@@ -118,6 +119,14 @@ export function toPreference(form: PreferenceFormState): Preference {
   if (physical.length === 0) physical.push("normal");
 
   const duration = DURATION_MAP[form.duration] ?? "half-day";
+  const storySelections = form.storyOptIn
+    ? (form.storySelections ?? []).filter((selection) => selection.story_day <= form.tripDays)
+    : [];
+  const primaryStory = storySelections[0] ?? (
+    form.storyOptIn && form.storyId
+      ? { story_id: form.storyId, story_day: form.storyDay ?? 1 }
+      : null
+  );
   return {
     duration,
     party_size: form.companion === "solo" ? 1 : form.companion === "friends" ? 2 : 3,
@@ -131,9 +140,10 @@ export function toPreference(form: PreferenceFormState): Preference {
     travel_date: form.travelDate || todayIso(),
     trip_days: duration === "multi-day" ? clampTripDays(form.tripDays) : null,
     story_opt_in: form.storyOptIn,
-    story_id: form.storyOptIn ? form.storyId : null,
+    story_id: primaryStory?.story_id ?? null,
     story_day:
-      form.storyOptIn && duration === "multi-day" ? form.storyDay : form.storyOptIn ? 1 : null,
+      primaryStory ? (duration === "multi-day" ? primaryStory.story_day : 1) : null,
+    story_selections: storySelections,
   };
 }
 
@@ -198,6 +208,11 @@ export function applyPreferenceToForm(
     storyOptIn: pref.story_opt_in ?? current.storyOptIn,
     storyId: pref.story_id ?? current.storyId,
     storyDay: pref.story_day ?? current.storyDay,
+    storySelections: pref.story_selections?.length
+      ? pref.story_selections
+      : pref.story_id
+        ? [{ story_id: pref.story_id, story_day: pref.story_day ?? 1 }]
+        : current.storySelections ?? [],
   };
 }
 

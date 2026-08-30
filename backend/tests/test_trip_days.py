@@ -3,6 +3,7 @@
 from fastapi.testclient import TestClient
 
 from app.features.intent.api import parse_intent_rules
+from app.features.routes import matcher
 from app.features.routes.matcher import match_routes, resolve_match_top_k
 from app.main import app
 from app.models.user import Preference, TRIP_DAYS_DEFAULT, clamp_trip_days
@@ -84,6 +85,35 @@ def test_story_preference_fields_are_validated_and_parsed():
 
     declined = parse_intent_rules("这次不参加故事")
     assert declined.story_opt_in is False
+
+
+def test_multiple_story_selections_replace_their_scheduled_days(monkeypatch):
+    pref = Preference(
+        duration="multi-day",
+        trip_days=3,
+        story_selections=[
+            {"story_id": "taipa_letters", "story_day": 1},
+            {"story_id": "coloane_after_tide", "story_day": 3},
+        ],
+    )
+    monkeypatch.setattr(
+        matcher,
+        "_story_match",
+        lambda _pref, _tips, _context, story_id=None: {"selected_template": story_id},
+    )
+
+    matches = matcher._insert_story_day(
+        [{"selected_template": "day-1"}, {"selected_template": "day-2"}, {"selected_template": "day-3"}],
+        pref,
+        [],
+        {},
+    )
+
+    assert [match["selected_template"] for match in matches] == [
+        "taipa_letters",
+        "day-2",
+        "coloane_after_tide",
+    ]
 
 
 def test_match_api_echoes_trip_days():

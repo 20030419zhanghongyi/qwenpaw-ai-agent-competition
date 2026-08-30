@@ -78,7 +78,7 @@ export async function createPostcard(args: {
 
   const response = await fetch(
     `${API_BASE}/api/v1/trips/${encodeURIComponent(args.tripId)}/postcards`,
-    { method: "POST", body: form },
+    { method: "POST", body: form, credentials: "include" },
   );
   if (!response.ok) {
     throw new PostcardApiError(await parseError(response), response.status);
@@ -96,7 +96,7 @@ export async function prewarmPostcardScene(args: {
   form.append("language", args.language);
   const response = await fetch(
     `${API_BASE}/api/v1/trips/${encodeURIComponent(args.tripId)}/postcards/prewarm`,
-    { method: "POST", body: form },
+    { method: "POST", body: form, credentials: "include" },
   );
   if (!response.ok) {
     throw new PostcardApiError(await parseError(response), response.status);
@@ -106,7 +106,7 @@ export async function prewarmPostcardScene(args: {
 export async function deletePostcard(postcardId: string): Promise<void> {
   const response = await fetch(
     `${API_BASE}/api/v1/postcards/${encodeURIComponent(postcardId)}`,
-    { method: "DELETE" },
+    { method: "DELETE", credentials: "include" },
   );
   if (!response.ok) {
     throw new PostcardApiError(await parseError(response), response.status);
@@ -116,7 +116,20 @@ export async function deletePostcard(postcardId: string): Promise<void> {
 export async function listTripPostcards(tripId: string): Promise<Postcard[]> {
   const response = await fetch(
     `${API_BASE}/api/v1/trips/${encodeURIComponent(tripId)}/postcards`,
+    { credentials: "include" },
   );
+  if (!response.ok) {
+    throw new PostcardApiError(await parseError(response), response.status);
+  }
+  const body = (await response.json()) as PostcardListResponse;
+  return body.postcards ?? [];
+}
+
+export async function listAccountPostcards(token: string): Promise<Postcard[]> {
+  const response = await fetch(`${API_BASE}/api/v1/postcards`, {
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: "include",
+  });
   if (!response.ok) {
     throw new PostcardApiError(await parseError(response), response.status);
   }
