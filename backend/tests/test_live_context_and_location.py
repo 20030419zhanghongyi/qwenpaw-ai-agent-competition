@@ -191,6 +191,33 @@ def test_live_travel_advice_returns_realtime_bundle(monkeypatch):
     assert advice["opening_hours"]["status"] == "unavailable"
 
 
+def test_live_travel_advice_does_not_mutate_cached_transport(monkeypatch):
+    monkeypatch.setattr(live_context, "_fetch", lambda _url: None)
+    monkeypatch.setattr(live_context, "_fetch_json", lambda _url, _params: None)
+    monkeypatch.setattr(
+        live_context,
+        "_events",
+        lambda _target: {"status": "ok", "events": [], "source": {"name": "events"}},
+    )
+    cached_transport = {
+        "status": "live",
+        "alerts": [],
+        "source": {"name": "DSAT", "url": "https://example.test"},
+    }
+    monkeypatch.setattr(
+        live_context,
+        "get_bus_operations",
+        lambda **_kwargs: cached_transport,
+    )
+    live_context._cache.clear()
+
+    first = live_context.get_live_travel_advice("2026-08-31", language="zh-CN")
+    second = live_context.get_live_travel_advice("2026-08-31", language="zh-CN")
+
+    assert first["transport"]["sources"] == second["transport"]["sources"]
+    assert cached_transport["source"]["name"] == "DSAT"
+
+
 @pytest.mark.parametrize(
     ("language", "transport_text", "opening_text"),
     [
