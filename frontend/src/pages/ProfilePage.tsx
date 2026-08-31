@@ -8,6 +8,7 @@ import { ProfileSidebar } from "@/components/profile/ProfileSidebar";
 import { StoryChoiceSection } from "@/features/story/components/StoryChoiceSection";
 import type { StoryId } from "@/features/story/components/StoryChoiceSection";
 import { t } from "@/i18n";
+import { PasswordSettings } from "@/features/auth/PasswordSettings";
 import { getLastTripId } from "@/lib/lastTrip";
 import {
   applyPreferenceToForm,
@@ -306,6 +307,8 @@ export function ProfilePage() {
             </div>
           )}
         </section>
+
+        {isAuthenticated ? <PasswordSettings language={language} /> : null}
 
         <AzulejoBand className="mb-8" />
 

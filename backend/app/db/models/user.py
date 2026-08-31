@@ -35,6 +35,8 @@ class User(Base):
     phone: Mapped[str | None] = mapped_column(String(32), unique=True, nullable=True)
     # password_hash：bcrypt 哈希（迁移 20260725_04）
     password_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    security_question_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    security_answer_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
     language: Mapped[str | None] = mapped_column(String(16), nullable=True)
     # name + preference：用户落库 + 极简登录新增（迁移 20260714_01）。
     # preference 存完整 Preference（JSON），避免逐字段映射；旧列保留向后兼容。

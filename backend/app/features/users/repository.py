@@ -8,7 +8,7 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 from threading import RLock
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.models import User as UserRecord
@@ -57,7 +57,7 @@ class SqlAlchemyUserRepository:
     def find_by_email(self, email: str) -> UserProfile | None:
         with self._session_factory() as session:
             record = session.scalar(
-                select(UserRecord).where(UserRecord.email == email)
+                select(UserRecord).where(func.lower(UserRecord.email) == email.strip().lower())
             )
             return self._to_domain(record) if record is not None else None
 
@@ -75,7 +75,7 @@ class SqlAlchemyUserRepository:
         with self._session_factory() as session:
             return session.get(UserRecord, user_id) is not None
 
-    def create(self, user_id: str, name: str, language: str, email: str | None = None, phone: str | None = None, country: str | None = None, password_hash: str | None = None) -> UserProfile:
+    def create(self, user_id: str, name: str, language: str, email: str | None = None, phone: str | None = None, country: str | None = None, password_hash: str | None = None, security_question_id: str | None = None, security_answer_hash: str | None = None) -> UserProfile:
         with self._session_factory() as session:
             record = UserRecord(
                 id=user_id,
@@ -85,6 +85,8 @@ class SqlAlchemyUserRepository:
                 language=language,
                 country=country,
                 password_hash=password_hash,
+                security_question_id=security_question_id,
+                security_answer_hash=security_answer_hash,
                 interests=[],
                 preference_memory=_empty_memory(),
             )
@@ -94,6 +96,25 @@ class SqlAlchemyUserRepository:
         with self._created_ids_lock:
             self._created_user_ids.add(user_id)
         return result
+
+    def update_password(self, user_id: str, password_hash: str) -> None:
+        with self._session_factory() as session:
+            record = session.get(UserRecord, user_id)
+            if record is None:
+                raise LookupError(user_id)
+            record.password_hash = password_hash
+            session.commit()
+
+    def update_security_question(
+        self, user_id: str, question_id: str, answer_hash: str
+    ) -> None:
+        with self._session_factory() as session:
+            record = session.get(UserRecord, user_id)
+            if record is None:
+                raise LookupError(user_id)
+            record.security_question_id = question_id
+            record.security_answer_hash = answer_hash
+            session.commit()
 
     def upsert_preference(self, user_id: str, preference: Preference) -> UserProfile:
         """写偏好；用户不存在则顺带创建（保留旧 PUT /preferences 的 upsert 语义）。"""
