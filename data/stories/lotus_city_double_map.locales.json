@@ -923,12 +923,12 @@
               "text": "木製開合窗扇"
             },
             {
-              "id": "stone_battlement",
-              "text": "石製垛口"
+              "id": "stone_lattice",
+              "text": "石花格"
             },
             {
-              "id": "ship_porthole",
-              "text": "船用舷窗"
+              "id": "aluminum_frame",
+              "text": "鋁框"
             }
           ],
           "solution": [
@@ -2028,12 +2028,12 @@
               "text": "Wooden opening/shutting shutter"
             },
             {
-              "id": "stone_battlement",
-              "text": "Stone crenellation"
+              "id": "stone_lattice",
+              "text": "Stone lattice"
             },
             {
-              "id": "ship_porthole",
-              "text": "Ship's porthole"
+              "id": "aluminum_frame",
+              "text": "Aluminium frame"
             }
           ],
           "solution": [
@@ -3133,12 +3133,12 @@
               "text": "Persiana de madeira de abrir e fechar"
             },
             {
-              "id": "stone_battlement",
-              "text": "Ameia de pedra"
+              "id": "stone_lattice",
+              "text": "Gelosia de pedra"
             },
             {
-              "id": "ship_porthole",
-              "text": "Vigia de navio"
+              "id": "aluminum_frame",
+              "text": "Moldura de alumínio"
             }
           ],
           "solution": [
