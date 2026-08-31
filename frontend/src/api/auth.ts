@@ -1,11 +1,13 @@
 import type { Preference } from "@/types";
 import type {
   AuthResponse,
+  ChangePasswordInput,
   CurrentUserResponse,
   LoginInput,
   LoginResponse,
   PreferenceSaveResponse,
   RegisterInput,
+  SecurityQuestionUpdateInput,
 } from "@/types/auth";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
@@ -52,6 +54,8 @@ async function request<T>(
     throw new AuthApiError(detail, response.status);
   }
 
+  if (response.status === 204) return undefined as T;
+
   return response.json() as Promise<T>;
 }
 
@@ -64,6 +68,47 @@ export function registerUser(input: RegisterInput): Promise<AuthResponse> {
 
 export function loginUser(input: LoginInput): Promise<LoginResponse> {
   return request("/api/v1/users/login", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function changePassword(input: ChangePasswordInput): Promise<void> {
+  await request("/api/v1/users/me/change-password", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function getSecurityQuestion(): Promise<{ security_question_id: string | null }> {
+  return request("/api/v1/users/me/security-question");
+}
+
+export async function updateSecurityQuestion(
+  input: SecurityQuestionUpdateInput,
+): Promise<void> {
+  await request("/api/v1/users/me/security-question", {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export function getRecoveryQuestion(
+  email: string,
+): Promise<{ security_question_id: string }> {
+  return request("/api/v1/users/password-recovery/question", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(input: {
+  email: string;
+  security_question_id: string;
+  security_answer: string;
+  new_password: string;
+}): Promise<void> {
+  await request("/api/v1/users/password-recovery/reset", {
     method: "POST",
     body: JSON.stringify(input),
   });
