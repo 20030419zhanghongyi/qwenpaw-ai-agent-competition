@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { AuthPage } from "@/pages/AuthPage";
 import { GuidePage } from "@/pages/GuidePage";
+import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
 import { LanguagePage } from "@/pages/LanguagePage";
 import { MemoirEditorPage } from "@/pages/MemoirEditorPage";
 import { MemoirGalleryPage } from "@/pages/MemoirGalleryPage";
@@ -33,6 +34,7 @@ export default function App() {
                 <Routes>
                   <Route path="/" element={<LanguagePage />} />
                   <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route element={<AppShell />}>
                     <Route path="/guide" element={<GuidePage />} />
                     <Route path="/walk" element={<RouteResultPage />} />

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/state/AuthContext";
 import { useWalk } from "@/state/WalkContext";
 import { AuthApiError } from "@/api/auth";
+import { SECURITY_QUESTIONS } from "@/features/auth/securityQuestions";
 import { t } from "@/i18n";
 import type { LanguageCode } from "@/types";
 
@@ -74,8 +75,11 @@ export function AuthPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
+  const [securityQuestionId, setSecurityQuestionId] = useState("");
+  const [securityAnswer, setSecurityAnswer] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [duplicateEmail, setDuplicateEmail] = useState(false);
   const [credentialError, setCredentialError] = useState<"account" | "password" | null>(null);
   const [touchedFields, setTouchedFields] = useState<Partial<Record<TouchedField, boolean>>>({});
   const phoneRegionMenuRef = useRef<HTMLDivElement>(null);
@@ -87,6 +91,7 @@ export function AuthPage() {
   const confirmPasswordInvalid = mode === "register" && confirmPassword !== password;
   const nicknameMissing = mode === "register" && !name.trim();
   const contactMissing = !email.trim() && !phone.trim();
+  const recoveryMissing = mode === "register" && (!securityQuestionId || !securityAnswer.trim());
 
   const touchField = (field: TouchedField) => {
     setTouchedFields((current) => ({ ...current, [field]: true }));
@@ -122,16 +127,9 @@ export function AuthPage() {
     setMode(nextMode);
     clearError();
     setFormError(null);
+    setDuplicateEmail(false);
     setCredentialError(null);
     setTouchedFields({});
-  };
-
-  const goBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1);
-      return;
-    }
-    navigate("/", { replace: true });
   };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -148,6 +146,7 @@ export function AuthPage() {
     const dialCode = COUNTRIES.find((item) => item.code === phoneRegion)?.dialCode ?? "+853";
     const normalizedPhone = phoneDigits ? `${dialCode}${phoneDigits}` : null;
     setFormError(null);
+    setDuplicateEmail(false);
     setCredentialError(null);
     if (
       (!normalizedEmail && !normalizedPhone) ||
@@ -156,6 +155,7 @@ export function AuthPage() {
       passwordTooShort ||
       confirmPasswordInvalid ||
       nicknameMissing
+      || recoveryMissing
     ) {
       return;
     }
@@ -178,6 +178,8 @@ export function AuthPage() {
           name: normalizedName,
           language,
           country: country || null,
+          security_question_id: securityQuestionId,
+          security_answer: securityAnswer.trim(),
         });
       }
       navigate(successDestination);
@@ -189,7 +191,11 @@ export function AuthPage() {
         } else if (mode === "login" && requestError.status === 401) {
           setCredentialError("password");
         } else if (mode === "register" && requestError.status === 409) {
-          setFormError(t(language, "authAccountExists"));
+          if (requestError.message === "email_already_registered") {
+            setDuplicateEmail(true);
+          } else {
+            setFormError(t(language, "authAccountExists"));
+          }
         } else {
           setFormError(t(language, "authRequestFailed"));
         }
@@ -233,10 +239,10 @@ export function AuthPage() {
       <section className="w-full max-w-md rounded-3xl border border-line bg-card p-6 shadow-[var(--shadow-soft)] sm:p-8">
         <button
           type="button"
-          onClick={goBack}
+          onClick={() => navigate("/")}
           className="text-sm text-ink-soft transition hover:text-ink"
         >
-          {t(language, "back")}
+          {t(language, "authBackHome")}
         </button>
         <h1 className="mt-4 font-display text-3xl text-ink">
           {mode === "login" ? t(language, "authLoginTab") : t(language, "authRegisterTab")}
@@ -281,20 +287,28 @@ export function AuthPage() {
               onChange={(event) => {
                 setEmail(event.target.value);
                 setFormError(null);
+                setDuplicateEmail(false);
                 setCredentialError(null);
               }}
               onBlur={() => touchField("email")}
               placeholder={t(language, "authEmailPlaceholder")}
-              aria-invalid={Boolean(touchedFields.email && emailInvalid) || (credentialError === "account" && Boolean(email.trim()))}
+              aria-invalid={
+                Boolean(touchedFields.email && emailInvalid) ||
+                duplicateEmail ||
+                (credentialError === "account" && Boolean(email.trim()))
+              }
               aria-describedby={
                 touchedFields.email && emailInvalid
                   ? "email-error"
+                  : duplicateEmail
+                    ? "duplicate-email-error"
                   : credentialError === "account" && email.trim()
                     ? "account-email-error"
                     : undefined
               }
               className={`h-11 w-full rounded-xl border bg-paper px-4 text-ink outline-none focus:border-sage-deep ${
                 (touchedFields.email && emailInvalid) ||
+                duplicateEmail ||
                 (credentialError === "account" && email.trim())
                   ? "border-clay"
                   : "border-line"
@@ -305,6 +319,17 @@ export function AuthPage() {
               <p id="email-error" role="alert" className="mt-1.5 text-xs text-clay">
                 {t(language, "authEmailInvalid")}
               </p>
+            ) : duplicateEmail ? (
+              <div id="duplicate-email-error" role="alert" className="mt-1.5 text-xs text-clay">
+                <span>{t(language, "authEmailExists")}</span>{" "}
+                <button
+                  type="button"
+                  onClick={() => changeMode("login")}
+                  className="font-medium underline underline-offset-2 hover:text-ink"
+                >
+                  {t(language, "authLoginDirectly")}
+                </button>
+              </div>
             ) : credentialError === "account" && email.trim() ? (
               <p id="account-email-error" role="alert" className="mt-1.5 text-xs text-clay">
                 {t(language, "authNoAccountFound")}
@@ -520,6 +545,49 @@ export function AuthPage() {
 
               {/* Country */}
               <label className="block">
+                <span className="mb-1.5 block text-sm text-ink">
+                  {t(language, "authSecurityQuestion")}
+                </span>
+                <select
+                  required
+                  value={securityQuestionId}
+                  onChange={(event) => {
+                    setSecurityQuestionId(event.target.value);
+                    setFormError(null);
+                  }}
+                  className="h-11 w-full rounded-xl border border-line bg-paper px-4 text-ink outline-none focus:border-sage-deep"
+                >
+                  <option value="">{t(language, "authSecurityQuestionPlaceholder")}</option>
+                  {SECURITY_QUESTIONS.map((question) => (
+                    <option key={question.id} value={question.id}>
+                      {question.label[language]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-sm text-ink">
+                  {t(language, "authSecurityAnswer")}
+                </span>
+                <input
+                  required
+                  value={securityAnswer}
+                  onChange={(event) => {
+                    setSecurityAnswer(event.target.value);
+                    setFormError(null);
+                  }}
+                  placeholder={t(language, "authSecurityAnswerPlaceholder")}
+                  className="h-11 w-full rounded-xl border border-line bg-paper px-4 text-ink outline-none focus:border-sage-deep"
+                  autoComplete="off"
+                />
+                <p className="mt-1 text-xs text-ink-soft">
+                  {t(language, "authSecurityAnswerHint")}
+                </p>
+              </label>
+
+              {/* Country */}
+              <label className="block">
                 <span className="mb-1.5 block text-sm text-ink">{t(language, "authCountry")}</span>
                 <select
                   value={country}
@@ -577,6 +645,15 @@ export function AuthPage() {
                 ? t(language, "authLoginButton")
                 : t(language, "authRegisterButton")}
           </button>
+          {mode === "login" ? (
+            <button
+              type="button"
+              onClick={() => navigate("/forgot-password")}
+              className="w-full text-center text-sm text-sage-deep underline underline-offset-2"
+            >
+              {t(language, "authForgotPassword")}
+            </button>
+          ) : null}
         </form>
 
         {/* Toggle hint */}

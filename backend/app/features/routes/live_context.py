@@ -742,9 +742,13 @@ def get_live_travel_advice(
             "consulte o site oficial da atração antes de partir."
         ),
     }.get(language, "景点开放时间会因场馆和假期变动，出发前建议查询景点官方网站。")
-    transport = get_bus_operations(routes=bus_routes or [], language=language)
+    bus_operations = get_bus_operations(routes=bus_routes or [], language=language)
+    source = bus_operations.get("source")
+    # Transit responses are cached. Build a fresh response instead of mutating the
+    # cached dictionary (previously pop("source") made the second request crash).
+    transport = {key: value for key, value in bus_operations.items() if key != "source"}
     transport["notes"] = [transport_note]
-    transport["sources"] = [transport.pop("source")]
+    transport["sources"] = [source] if source else []
     opening_hours = get_operational_metadata(poi_ids or [], language)
     opening_hours["notes"] = [opening_hours_note]
     return {

@@ -18,20 +18,31 @@ from app.models.user import Preference
 
 from .models import (
     AuthResponse,
+    ChangePasswordRequest,
     LoginRequest,
     LoginResponse,
     PreferenceUpdateResponse,
     PreferenceMemoryResponse,
+    RecoveryQuestionRequest,
+    RecoveryQuestionResponse,
     RegisterRequest,
+    ResetPasswordRequest,
+    SecurityQuestionStatusResponse,
+    SecurityQuestionUpdateRequest,
     SendVerificationRequest,
     UserDetailResponse,
     VerificationStatusResponse,
     VerifyRequest,
 )
 from .service import (
+    EmailAlreadyExistsError,
     EmailOrPhoneRequiredError,
+    IncorrectSecurityAnswerError,
     IncorrectPasswordError,
     InvalidLanguageError,
+    InvalidSecurityQuestionError,
+    PhoneAlreadyExistsError,
+    RecoveryUnavailableError,
     UserAlreadyExistsError,
     UserNotFoundError,
     user_service,
@@ -64,12 +75,29 @@ def register(request: RegisterRequest, response: Response) -> AuthResponse:
         user, token = user_service.register(
             request.name, request.language, request.password,
             email=request.email, phone=request.phone, country=request.country,
+            security_question_id=request.security_question_id,
+            security_answer=request.security_answer,
         )
     except EmailOrPhoneRequiredError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    except EmailAlreadyExistsError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="email_already_registered",
+        ) from exc
+    except PhoneAlreadyExistsError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="phone_already_registered",
+        ) from exc
     except UserAlreadyExistsError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="account_already_registered",
+        ) from exc
     except InvalidLanguageError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    except InvalidSecurityQuestionError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
     _set_session_cookie(response, token)
     return AuthResponse(
@@ -128,6 +156,82 @@ def logout(response: Response) -> None:
         secure=settings.app_env.lower() in {"prod", "production"},
         samesite="lax",
     )
+
+
+@router.post("/me/change-password", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(
+    request: ChangePasswordRequest,
+    user_id: str = Depends(require_user_id),
+) -> None:
+    try:
+        user_service.change_password(user_id, request.current_password, request.new_password)
+    except IncorrectPasswordError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="incorrect password") from exc
+    except UserNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user not found") from exc
+
+
+@router.get("/me/security-question", response_model=SecurityQuestionStatusResponse)
+def get_security_question(user_id: str = Depends(require_user_id)) -> SecurityQuestionStatusResponse:
+    try:
+        question_id = user_service.get_security_question(user_id)
+    except UserNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user not found") from exc
+    return SecurityQuestionStatusResponse(security_question_id=question_id)
+
+
+@router.put("/me/security-question", status_code=status.HTTP_204_NO_CONTENT)
+def update_security_question(
+    request: SecurityQuestionUpdateRequest,
+    user_id: str = Depends(require_user_id),
+) -> None:
+    try:
+        user_service.update_security_question(
+            user_id,
+            request.current_password,
+            request.security_question_id,
+            request.security_answer,
+        )
+    except IncorrectPasswordError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="incorrect password") from exc
+    except UserNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user not found") from exc
+
+
+@router.post(
+    "/password-recovery/question",
+    response_model=RecoveryQuestionResponse,
+)
+def recovery_question(request: RecoveryQuestionRequest) -> RecoveryQuestionResponse:
+    try:
+        question_id = user_service.get_recovery_question(request.email)
+    except RecoveryUnavailableError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="recovery_not_available",
+        ) from exc
+    return RecoveryQuestionResponse(security_question_id=question_id)
+
+
+@router.post("/password-recovery/reset", status_code=status.HTTP_204_NO_CONTENT)
+def reset_password(request: ResetPasswordRequest) -> None:
+    try:
+        user_service.reset_password_with_security_answer(
+            request.email,
+            request.security_question_id,
+            request.security_answer,
+            request.new_password,
+        )
+    except RecoveryUnavailableError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="recovery_not_available",
+        ) from exc
+    except IncorrectSecurityAnswerError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="invalid_recovery_answer",
+        ) from exc
 
 
 @router.get(
@@ -235,3 +339,4 @@ def get_verification_status(
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user not found")
     return VerificationStatusResponse(status=user.verification_status)
+    RecoveryUnavailableError,

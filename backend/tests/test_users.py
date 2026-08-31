@@ -8,6 +8,8 @@ from app.main import app
 
 client = TestClient(app)
 TEST_PASSWORD = "TestPassword123!"
+SECURITY_QUESTION_ID = "childhood_friend"
+SECURITY_ANSWER = "Ming"
 
 
 @pytest.fixture(autouse=True)
@@ -30,6 +32,8 @@ def _register(
         "password": TEST_PASSWORD,
         "name": name,
         "language": language,
+        "security_question_id": SECURITY_QUESTION_ID,
+        "security_answer": SECURITY_ANSWER,
     }
     if country is not None:
         payload["country"] = country
@@ -88,6 +92,22 @@ def test_register_duplicate_email_returns_409():
         },
     )
     assert response.status_code == 409
+    assert response.json()["detail"] == "email_already_registered"
+
+
+def test_register_duplicate_email_is_case_insensitive():
+    _register(email="case-sensitive@test.com")
+    response = client.post(
+        "/api/v1/users/register",
+        json={
+            "email": "  CASE-SENSITIVE@TEST.COM  ",
+            "password": TEST_PASSWORD,
+            "name": "Duplicate",
+            "language": "zh-CN",
+        },
+    )
+    assert response.status_code == 409
+    assert response.json()["detail"] == "email_already_registered"
 
 
 def test_register_invalid_language_returns_422():
@@ -101,6 +121,89 @@ def test_register_invalid_language_returns_422():
         },
     )
     assert response.status_code == 422
+
+
+def test_change_password_requires_current_password_and_updates_login():
+    _register(email="change-password@test.com")
+    wrong = client.post(
+        "/api/v1/users/me/change-password",
+        json={"current_password": "wrong-password", "new_password": "NewPassword123!"},
+    )
+    assert wrong.status_code == 401
+
+    changed = client.post(
+        "/api/v1/users/me/change-password",
+        json={"current_password": TEST_PASSWORD, "new_password": "NewPassword123!"},
+    )
+    assert changed.status_code == 204
+
+    client.cookies.clear()
+    old_login = client.post(
+        "/api/v1/users/login",
+        json={"email": "change-password@test.com", "password": TEST_PASSWORD},
+    )
+    assert old_login.status_code == 401
+    new_login = client.post(
+        "/api/v1/users/login",
+        json={"email": "change-password@test.com", "password": "NewPassword123!"},
+    )
+    assert new_login.status_code == 200
+
+
+def test_security_question_can_reset_password():
+    _register(email="recovery@test.com")
+    client.cookies.clear()
+
+    question = client.post(
+        "/api/v1/users/password-recovery/question",
+        json={"email": "recovery@test.com"},
+    )
+    assert question.status_code == 200
+    assert question.json()["security_question_id"] == SECURITY_QUESTION_ID
+
+    wrong = client.post(
+        "/api/v1/users/password-recovery/reset",
+        json={
+            "email": "recovery@test.com",
+            "security_question_id": SECURITY_QUESTION_ID,
+            "security_answer": "wrong answer",
+            "new_password": "Recovered123!",
+        },
+    )
+    assert wrong.status_code == 401
+
+    reset = client.post(
+        "/api/v1/users/password-recovery/reset",
+        json={
+            "email": "recovery@test.com",
+            "security_question_id": SECURITY_QUESTION_ID,
+            "security_answer": "  mING  ",
+            "new_password": "Recovered123!",
+        },
+    )
+    assert reset.status_code == 204
+    login = client.post(
+        "/api/v1/users/login",
+        json={"email": "recovery@test.com", "password": "Recovered123!"},
+    )
+    assert login.status_code == 200
+
+
+def test_existing_user_can_set_security_question():
+    body = _register(email="set-question@test.com")
+    response = client.put(
+        "/api/v1/users/me/security-question",
+        json={
+            "current_password": TEST_PASSWORD,
+            "security_question_id": "favorite_place",
+            "security_answer": "Coloane",
+        },
+    )
+    assert response.status_code == 204
+    status_response = client.get("/api/v1/users/me/security-question")
+    assert status_response.status_code == 200
+    assert status_response.json()["security_question_id"] == "favorite_place"
+    assert body["user_id"]
 
 
 def test_login_unknown_email_returns_404():

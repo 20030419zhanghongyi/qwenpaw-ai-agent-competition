@@ -18,6 +18,19 @@ export interface RegisterInput {
   name: string;
   language: LanguageCode;
   country?: string | null;
+  security_question_id: string;
+  security_answer: string;
+}
+
+export interface ChangePasswordInput {
+  current_password: string;
+  new_password: string;
+}
+
+export interface SecurityQuestionUpdateInput {
+  current_password: string;
+  security_question_id: string;
+  security_answer: string;
 }
 
 export interface LoginInput {
