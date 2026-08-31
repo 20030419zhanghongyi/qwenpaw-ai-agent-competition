@@ -229,8 +229,8 @@ class StoryService:
         self._require_owner(story_session, user_id)
         story = load_story(story_session.story_id)
         self._require_current_version(story, story_session)
-        display_story = localize_story(story, normalize_story_language(language))
-        result = apply_action(display_story, story_session, request)
+        # Persist canonical rewards; localization belongs to the response only.
+        result = apply_action(story, story_session, request)
 
         if result.changed and request.action.value == "arrive":
             chapter = chapter_by_id(story, request.chapter_id)
