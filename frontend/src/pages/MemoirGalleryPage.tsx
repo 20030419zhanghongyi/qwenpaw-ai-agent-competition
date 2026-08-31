@@ -270,6 +270,19 @@ export function MemoirGalleryPage() {
               />
             ) : null}
 
+            {isAuthenticated && !loading && !error && photos.length > 0 ? (
+              <section className="mb-7 flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-line bg-card px-5 py-4 shadow-[var(--shadow-soft)]">
+                <div>
+                  <p className="font-display text-2xl text-ink">{photos.length}</p>
+                  <p className="text-xs text-ink-soft">{copy.photos}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-display text-2xl text-ink">{memoirs.length}</p>
+                  <p className="text-xs text-ink-soft">{copy.memoirs}</p>
+                </div>
+              </section>
+            ) : null}
+
             {isAuthenticated && !loading && !error && memoirs.length === 0 ? (
               <section className="rounded-[1.75rem] border border-line bg-card px-6 py-10 text-center shadow-[var(--shadow-soft)]">
                 <h2 className="font-display text-2xl text-ink">{copy.emptyTitle}</h2>
@@ -312,17 +325,6 @@ export function MemoirGalleryPage() {
 
             {isAuthenticated && !loading && !error && photos.length > 0 ? (
               <>
-                <section className="mb-7 flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-line bg-card px-5 py-4 shadow-[var(--shadow-soft)]">
-                  <div>
-                    <p className="font-display text-2xl text-ink">{photos.length}</p>
-                    <p className="text-xs text-ink-soft">{copy.photos}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-display text-2xl text-ink">{memoirs.length}</p>
-                    <p className="text-xs text-ink-soft">{copy.memoirs}</p>
-                  </div>
-                </section>
-
                 <AzulejoBand className="mb-7" />
 
                 <div className="columns-1 gap-5 sm:columns-2 xl:columns-3">
