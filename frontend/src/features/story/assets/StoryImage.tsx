@@ -21,7 +21,7 @@ function placeholderImage(assetId: string): string {
   return "/story/v4/_placeholder.svg";
 }
 
-interface StoryImageProps {
+export interface StoryImageProps {
   assetId: string;
   alt?: string;
   className?: string;

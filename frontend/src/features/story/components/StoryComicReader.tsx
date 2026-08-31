@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { StoryImage } from "../assets";
+import { StoryFigure } from "../assets";
 import type { StoryAssetRef } from "@/types/stories";
 import { useStoryMessages } from "../storyI18n";
 
@@ -60,7 +60,7 @@ export function StoryComicReader({
         className={`story-comic-page story-comic-page--${direction}`}
         data-comic-direction={direction}
       >
-        <StoryImage
+        <StoryFigure
           assetId={currentComic.asset_id}
           alt={currentComic.alt}
           eager={index === 0}
