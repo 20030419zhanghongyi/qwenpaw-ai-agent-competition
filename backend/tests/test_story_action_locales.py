@@ -193,6 +193,83 @@ def test_action_api_localizes_hint_and_feedback_without_persisting_translations(
 
 
 @pytest.mark.parametrize("story_id", STORY_IDS)
+@pytest.mark.parametrize("language", LANGUAGES)
+@pytest.mark.parametrize("action", ("answer", "skip", "continue", "choose_ending"))
+def test_action_api_saves_canonical_rewards_and_localizes_response(
+    monkeypatch, story_id, language, action
+):
+    story = load_story(story_id)
+    display_story = localize_story(story, language)
+    nodes = story_nodes(story)
+    values = {}
+    if action in ("answer", "skip"):
+        chapter = next(node for node in nodes if node["kind"] == "puzzle")
+        source_rewards = [chapter["puzzle"]["reward"]]
+        localized_rewards = [
+            chapter_by_id(display_story, chapter["id"])["puzzle"]["reward"]
+        ]
+        if action == "answer":
+            values["answer"] = chapter["puzzle"]["solution"]
+    elif action == "continue":
+        chapter = next(node for node in nodes if node.get("reward"))
+        source_rewards = [chapter["reward"]]
+        localized_rewards = [chapter_by_id(display_story, chapter["id"])["reward"]]
+    else:
+        chapter = next(node for node in nodes if node["kind"] == "ending")
+        ending = story["endings"][0]
+        source_rewards = ending["rewards"]
+        localized_rewards = next(
+            item["rewards"] for item in display_story["endings"] if item["id"] == ending["id"]
+        )
+        values["choice_id"] = ending["id"]
+
+    session = _session(story, chapter["id"])
+    session.state.arrived_chapter_ids.append(chapter["id"])
+    repository = Mock()
+    repository.get.return_value = session
+    saved_states = []
+
+    def save(updated):
+        # Capture the JSON payload before response localization and reload a copy.
+        payload = updated.model_dump(mode="json")
+        saved_states.append(deepcopy(payload["state"]))
+        repository.get.return_value = StorySession.model_validate(payload)
+        return repository.get.return_value
+
+    repository.save.side_effect = save
+    monkeypatch.setattr(api, "story_service", StoryService(repository, Mock()))
+    monkeypatch.setitem(app.dependency_overrides, require_user_id, lambda: session.user_id)
+    client = TestClient(app)
+    url = f"/api/v1/story-sessions/{session.session_id}"
+
+    response = client.post(
+        f"{url}/actions?language={language}",
+        json={"action": action, "chapter_id": chapter["id"], **values},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["accepted"]
+    repository.save.assert_called_once()
+
+    def reward_texts(rewards):
+        return {reward["id"]: (reward["name"], reward["text"]) for reward in rewards}
+
+    assert source_rewards
+    assert reward_texts(saved_states[0]["rewards"]) == reward_texts(source_rewards)
+    assert reward_texts(body["new_rewards"]) == reward_texts(localized_rewards)
+    assert reward_texts(body["session"]["state"]["rewards"]) == reward_texts(localized_rewards)
+    assert repository.get.return_value.state.model_dump(mode="json") == saved_states[0]
+    assert "solution" not in response.text
+
+    # Changing display language must neither rewrite storage nor keep the old translation.
+    reread = client.get(f"{url}?language=zh-CN")
+    assert reread.status_code == 200
+    assert reward_texts(reread.json()["state"]["rewards"]) == reward_texts(source_rewards)
+    assert repository.get.return_value.state.model_dump(mode="json") == saved_states[0]
+    repository.save.assert_called_once()
+
+
+@pytest.mark.parametrize("story_id", STORY_IDS)
 def test_switching_hint_language_keeps_server_hint_tier(story_id):
     story = load_story(story_id)
     chapter = story_nodes(story)[1]

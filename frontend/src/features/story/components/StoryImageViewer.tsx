@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useWalk } from "@/state/WalkContext";
-import { StoryImage } from "../assets";
+import { StoryImage, StoryImageCaption } from "../assets";
 import { resolveStoryAsset } from "../assets/storyAssetManifest";
 import { useStoryMessages } from "../storyI18n";
 
@@ -67,7 +67,7 @@ export function StoryImageViewer({
       onClick={onClose}
     >
       <div
-        className="flex items-center justify-between px-4 text-paper"
+        className="flex shrink-0 items-center justify-between px-4 text-paper"
         style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
       >
         <p className="pr-4 text-sm">{label}</p>
@@ -82,23 +82,26 @@ export function StoryImageViewer({
         </button>
       </div>
       <div
-        className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4"
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[env(safe-area-inset-bottom)]"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="w-full max-w-lg touch-pinch-zoom">
+        <figure className="mx-auto flex min-h-full w-full max-w-lg touch-auto flex-col justify-center py-4">
           <StoryImage
             assetId={assetId}
             alt={label}
             eager
-            className="max-h-[78dvh] border-paper/15 bg-ink"
+            className="max-h-[78dvh] shrink-0 border-paper/15 bg-ink"
             imageClassName="object-contain"
           />
-          {caption && (
-            <p className="mx-auto mt-3 max-w-md text-center text-sm leading-relaxed text-paper/75">
-              {caption}
-            </p>
-          )}
-        </div>
+          <figcaption className="shrink-0">
+            <StoryImageCaption assetId={assetId} dark as="div" />
+            {caption && (
+              <p className="mx-auto mt-3 max-w-md text-center text-sm leading-relaxed text-paper/75">
+                {caption}
+              </p>
+            )}
+          </figcaption>
+        </figure>
       </div>
     </div>
   );

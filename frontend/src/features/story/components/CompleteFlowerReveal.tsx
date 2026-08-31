@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { StoryImage } from "../assets";
+import { StoryImage, StoryImageCaption } from "../assets";
 import { useStoryMessages } from "../storyI18n";
 
 const PETAL_ASSET_IDS = [
@@ -53,6 +53,7 @@ export function CompleteFlowerReveal() {
           />
         </div>
       </div>
+      <StoryImageCaption assetId="V4-LOU-06" as="div" />
       <p className="mt-2 text-sm leading-6 text-sage-deep">
         {st("flowerRevealBody")}
       </p>

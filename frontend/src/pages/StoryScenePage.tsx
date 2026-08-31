@@ -4,7 +4,7 @@ import { ErrorState, LoadingState } from "@/components/common/States";
 import { PuzzlePanel } from "@/components/story/PuzzlePanel";
 import { RewardReveal } from "@/components/story/RewardReveal";
 import { fetchStorySessionChapter } from "@/api/stories";
-import { StoryImage } from "@/features/story/assets";
+import { StoryImage, StoryFigure, StoryImageCaption } from "@/features/story/assets";
 import { DialoguePlayer } from "@/features/story/components/DialoguePlayer";
 import { KnowledgeCard } from "@/features/story/components/KnowledgeCard";
 import { StoryAgentDrawer } from "@/features/story/components/StoryAgentDrawer";
@@ -365,14 +365,14 @@ export function StoryScenePage() {
         {needsArrival ? (
           <section>
             {currentComic ? (
-              <StoryImage
+              <StoryFigure
                 assetId={currentComic.asset_id}
                 alt={currentComic.alt}
                 eager
                 onOpen={() => openComic(currentComic)}
               />
             ) : (
-              <StoryImage
+              <StoryFigure
                 assetId={displayChapter.presentation?.assets[0] ?? "V4-PROP-03"}
                 alt={displayChapter.location_name ?? displayChapter.title}
                 eager
@@ -452,9 +452,9 @@ export function StoryScenePage() {
                 {clueAssets.length > 0 && (
                   <section className="mt-5">
                     <h2 className="font-serif text-xl font-semibold">{st("observations")}</h2>
-                    <div className="mt-3 grid gap-3">
+                    <div className={`mt-3 grid ${isLotusStory ? "gap-6" : "gap-3"}`}>
                       {clueAssets.map((assetId) => (
-                        <StoryImage
+                        <StoryFigure
                           key={assetId}
                           assetId={assetId}
                           alt={displayChapter.location_name ?? displayChapter.title}
@@ -536,6 +536,8 @@ export function StoryScenePage() {
                             />
                           </div>
                         </div>
+                        {/* Both layers carry the same map titles and signatures. */}
+                        <StoryImageCaption assetId="V4-FOR-03" as="div" />
                         <label htmlFor="map-overlay" className="mt-4 block text-sm font-medium text-sage-deep">
                           {st("opacity", { value: overlayOpacity })}
                         </label>
@@ -558,7 +560,7 @@ export function StoryScenePage() {
                           {st("holdOverlay")}
                         </button>
                         <div className="mt-4 border-t border-line pt-4">
-                          <StoryImage
+                          <StoryFigure
                             assetId="V4-FOR-08"
                             alt={st("petalsComplete")}
                             onOpen={(assetId) => setViewer({ assetId })}

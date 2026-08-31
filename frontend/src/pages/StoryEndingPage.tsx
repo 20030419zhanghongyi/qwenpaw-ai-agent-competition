@@ -7,7 +7,7 @@ import {
   isStoryApiError,
 } from "@/api/stories";
 import { ErrorState, LoadingState } from "@/components/common/States";
-import { StoryImage } from "@/features/story/assets";
+import { StoryFigure } from "@/features/story/assets";
 import { ChapterRecapDialog } from "@/features/story/components/ChapterRecapDialog";
 import { StoryAgentDrawer } from "@/features/story/components/StoryAgentDrawer";
 import { StoryBottomAction } from "@/features/story/components/StoryBottomAction";
@@ -309,7 +309,7 @@ export function StoryEndingPage() {
               className="aspect-[9/16] w-full rounded-2xl border border-line bg-card object-contain shadow-[var(--shadow-soft)]"
             />
           ) : (
-            <StoryImage
+            <StoryFigure
               assetId={
                 isLotusStory
                   ? "V4-FOR-09"
@@ -398,7 +398,7 @@ export function StoryEndingPage() {
           )}
 
           <section className="mt-4 grid grid-cols-2 gap-3">
-            <StoryImage
+            <StoryFigure
               assetId={
                 isLotusStory
                   ? "V4-FOR-08"
@@ -415,7 +415,7 @@ export function StoryEndingPage() {
               }
               onOpen={setViewerAssetId}
             />
-            <StoryImage
+            <StoryFigure
               assetId={
                 isLotusStory
                   ? "V4-PROP-05"
@@ -541,7 +541,7 @@ export function StoryEndingPage() {
       />
 
       <div className="flex-1 px-4 pb-32 pt-4">
-        <StoryImage
+        <StoryFigure
           assetId={
             isLotusStory
               ? "V4-FOR-07"
