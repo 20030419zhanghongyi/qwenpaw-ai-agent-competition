@@ -76,10 +76,12 @@ cp .env.example .env
 open -e .env
 ```
 
-At minimum, set your own `DASHSCOPE_API_KEY`, `AMAP_WEB_SERVICE_KEY`,
-`VITE_AMAP_API_KEY`, and `VITE_AMAP_SECURITY_CODE`. Do not commit `.env`; it is
-already ignored by Git. See "Configuration Requirements" below for every
-field.
+At minimum, set your own `DASHSCOPE_API_KEY`, `QWEN_IMAGE_API_KEY`,
+`AMAP_WEB_SERVICE_KEY`, `VITE_AMAP_API_KEY`, and `VITE_AMAP_SECURITY_CODE`.
+`QWEN_IMAGE_API_KEY` may contain the same DashScope credential, but it must be
+set explicitly because the image Agents do not fall back to the general key.
+Do not commit `.env`; it is already ignored by Git. See "Configuration
+Requirements" below for every field.
 
 ### 3. Install and Initialize QwenPaw
 
@@ -196,7 +198,10 @@ the following credentials:
 
 | Variable | Requirement | Description |
 |---|---|---|
-| `DASHSCOPE_API_KEY` | Required for complete AI functionality | Your own Alibaba Cloud Model Studio/DashScope key, used by TTS, images, and some backend capabilities; it is not provided by the competition organizer |
+| `DASHSCOPE_API_KEY` | Required for complete AI functionality | Your own Alibaba Cloud Model Studio/DashScope key, used by TTS, the QwenPaw model provider, and some backend capabilities; it is not provided by the competition organizer |
+| `QWEN_IMAGE_API_KEY` | Required for Qwen-Image | Explicit image-tool credential; it may equal `DASHSCOPE_API_KEY`, but there is no automatic fallback |
+| `QWEN_IMAGE_ENDPOINT` | Has a default | Native DashScope image endpoint for the credential's region; do not use the OpenAI-compatible path |
+| `QWEN_IMAGE_MODEL` | Has a default | Exact Plugin model ID, normally `qwen-image-2.0-pro` |
 | `QWEN_EMBEDDING_API_KEY` | Optional | Dedicated RAG embedding key; falls back to the DashScope key when empty |
 | `AMAP_WEB_SERVICE_KEY` | Required for walking-route planning | AMap "Web Service" key |
 | `VITE_AMAP_API_KEY` | Required for the frontend map | AMap "Web (JS API)" key |
@@ -373,11 +378,26 @@ a `/compatible-mode/v1` suffix is converted to `/api/v1`.
 Use the regional endpoint matching your key. The project provides no API keys;
 usage and charges belong to the deploying account.
 
+Use an exact model ID accepted by both `generate_image_qwen` and
+`edit_image_qwen`; `qwen-image-2.0-pro` is the default shared option. Display
+names such as `QwenImage` and retired Wanx IDs are not valid Plugin model IDs.
+The script validates the value against the repository Plugin manifest before it
+changes QwenPaw.
+
+QwenPaw does not watch the project `.env`. After changing an image key,
+endpoint, or model, rerun the normal configuration command, then verify it:
+
+```powershell
+pwsh -NoProfile -File .\scripts\configure_qwenpaw_windows.ps1
+pwsh -NoProfile -File .\scripts\configure_qwenpaw_windows.ps1 -VerifyOnly
+```
+
 The Windows script does not print keys or write temporary secret payload files.
 If a key is absent, its corresponding tools are disabled and existing stored
 credentials are preserved. Verification reports disabled tools explicitly.
 `-VerifyOnly` checks local Agents, mounted Skills, ethics markers, Plugins,
-vision declarations, and tool configuration; it does **not** call
+vision declarations, tool enabled states, and the applied model, endpoint,
+timeout, and credential against `.env`; it does **not** call
 `qwenpaw doctor`, chat models, image generation, or TTS.
 
 ### macOS / zsh
