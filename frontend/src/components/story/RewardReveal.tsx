@@ -31,6 +31,7 @@ function rewardAssetId(reward: StoryReward): string | null {
     return "V4-FOR-08";
   }
   if (reward.id === "research_materials") return "V4-PROP-03";
+  if (reward.id === "returned_letter_box") return "TAI-PROP-01";
   return null;
 }
 

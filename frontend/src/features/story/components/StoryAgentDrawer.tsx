@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { askGuide } from "@/api/client";
+import { askGuide, type GuideConversationMessage } from "@/api/client";
 import { useWalk } from "@/state/WalkContext";
 import type { LanguageCode } from "@/types";
 import { storyT } from "../storyI18n";
@@ -18,43 +18,32 @@ interface ChatMessage {
 
 interface StoryAgentDrawerProps {
   open: boolean;
+  sessionId: string;
+  chapterId?: string;
   context?: StoryAgentContextData;
   language?: LanguageCode;
   onClose: () => void;
   ask?: (
     question: string,
     context?: StoryAgentContextData,
+    history?: GuideConversationMessage[],
   ) => Promise<StoryAgentAnswer>;
-}
-
-function contextPrompt(
-  question: string,
-  context?: StoryAgentContextData,
-  language: LanguageCode = "zh-CN",
-): string {
-  if (!context) return question;
-  const facts = context.known_facts?.slice(0, 4).join("；");
-  const boundaries = context.fiction_boundaries?.slice(0, 3).join("；");
-  const parts = [
-    context.chapter_title && storyT(language, "agentChapter", { value: context.chapter_title }),
-    context.chapter_goal && storyT(language, "agentGoal", { value: context.chapter_goal }),
-    facts && storyT(language, "agentFacts", { value: facts }),
-    boundaries && storyT(language, "agentBoundaries", { value: boundaries }),
-    storyT(language, "agentGuardrail"),
-    storyT(language, "agentQuestion", { value: question }),
-  ].filter(Boolean);
-  return parts.join("\n").slice(0, 1000);
 }
 
 async function defaultAsk(
   question: string,
-  context?: StoryAgentContextData,
-  language = "zh-CN",
+  sessionId: string,
+  chapterId: string | undefined,
+  context: StoryAgentContextData | undefined,
+  language: LanguageCode,
+  history: GuideConversationMessage[],
 ): Promise<StoryAgentAnswer> {
   const response = await askGuide({
-    poi: context?.poi_name || storyT(language as LanguageCode, "macau"),
-    question: contextPrompt(question, context, language as LanguageCode),
+    poi: context?.poi_name || storyT(language, "macau"),
+    question,
     language,
+    story_context: { session_id: sessionId, chapter_id: chapterId },
+    history,
   });
   return {
     text: response.text,
@@ -66,6 +55,8 @@ async function defaultAsk(
 
 export function StoryAgentDrawer({
   open,
+  sessionId,
+  chapterId,
   context,
   language,
   onClose,
@@ -82,7 +73,13 @@ export function StoryAgentDrawer({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const conversationRef = useRef<HTMLDivElement>(null);
   const messageIdRef = useRef(0);
+
+  useEffect(() => {
+    const container = conversationRef.current;
+    if (container) container.scrollTop = container.scrollHeight;
+  }, [messages, busy, error, open]);
 
   useEffect(() => {
     if (!open) return;
@@ -102,33 +99,45 @@ export function StoryAgentDrawer({
   const submit = async (rawQuestion: string) => {
     const normalized = rawQuestion.trim();
     if (!normalized || busy) return;
+    // Only successful question/answer pairs enter history; failed requests stay visible.
+    const history = messages.flatMap((message, index) => {
+      const previous = messages[index - 1];
+      if (message.role !== "assistant" || previous?.role !== "user") return [];
+      return [previous, message].map((item) => ({
+        role: item.role,
+        content: item.text.slice(0, 2000),
+      }));
+    }).slice(-8);
     setBusy(true);
     setError(null);
     setQuestion("");
-    messageIdRef.current += 1;
+    const userMessageId = ++messageIdRef.current;
     setMessages((current) => [
       ...current,
-      { id: messageIdRef.current, role: "user", text: normalized },
+      { id: userMessageId, role: "user", text: normalized },
     ]);
     try {
       const response = ask
-        ? await ask(normalized, context)
-        : await defaultAsk(normalized, context, effectiveLanguage);
-      messageIdRef.current += 1;
+        ? await ask(normalized, context, history)
+        : await defaultAsk(normalized, sessionId, chapterId, context, effectiveLanguage, history);
+      const assistantMessageId = ++messageIdRef.current;
       setMessages((current) => [
         ...current,
         {
-          id: messageIdRef.current,
+          id: assistantMessageId,
           role: "assistant",
           text: response.text || st("agentIntro"),
           sources: response.webSources,
           sourceLabel:
-            response.source ||
-            response.webUsed ? "Web" : "AI",
+            response.source === "story"
+              ? st("agentPresetSource")
+              : response.source?.startsWith("agent")
+                ? st(response.webUsed ? "agentWebSource" : "agentAiSource")
+                : st(response.webUsed ? "agentPublicSource" : "agentLocalSource"),
         },
       ]);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : st("close"));
+      setError(caught instanceof Error ? caught.message : st("agentRequestFailed"));
       setQuestion(normalized);
     } finally {
       setBusy(false);
@@ -176,7 +185,7 @@ export function StoryAgentDrawer({
           </button>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+        <div ref={conversationRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
           {messages.length === 0 && (
             <div className="rounded-2xl border border-line bg-card p-4">
               <p className="text-base leading-7 text-ink-soft">
@@ -213,7 +222,7 @@ export function StoryAgentDrawer({
                     : "mr-auto border border-line bg-card text-ink"
                 }`}
               >
-                <p className="text-base leading-7">{message.text}</p>
+                <p className="whitespace-pre-wrap text-base leading-7">{message.text}</p>
                 {message.role === "assistant" && message.sourceLabel && (
                   <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] opacity-70">
                     {message.sourceLabel}

@@ -161,6 +161,17 @@ function Set-ToolEnabled {
     }
 }
 
+function Get-ToolModelOptions {
+    param($Manifest, [string] $ToolName)
+    $tool = @($Manifest.meta.tools | Where-Object name -eq $ToolName)
+    if ($tool.Count -ne 1) { throw "Plugin manifest is missing tool metadata: $ToolName" }
+    $field = @($tool[0].config_fields | Where-Object name -eq 'model')
+    if ($field.Count -ne 1 -or -not $field[0].options) {
+        throw "Plugin manifest is missing model options: $ToolName"
+    }
+    return @($field[0].options | ForEach-Object { "$_" })
+}
+
 $agentSpecs = @(
     @{ id = 'route'; name = '路线微调'; skills = @('route-adjust') },
     @{ id = 'intent'; name = '需求理解'; skills = @('requirement-understand', 'fairness-gate') },
@@ -206,6 +217,53 @@ $descriptions = @{
     scene = '仅使用 gc-minimal-zine-poster 和 generate_image_qwen 生成无照片澳门场景图。'
     'scene-photo' = '仅处理已获授权并完成隐私清理的用户照片编辑，不生成无照片场景。'
 }
+
+# Read only allowlisted settings; never evaluate .env as shell code. Resolve and validate
+# the complete desired tool configuration before any runtime files or Agents are changed.
+$settings = @{}
+$settingNames = @('QWEN_IMAGE_API_KEY', 'QWEN_IMAGE_ENDPOINT', 'QWEN_IMAGE_MODEL', 'DASHSCOPE_API_KEY')
+$envFile = Join-Path $repoRoot '.env'
+if (Test-Path -LiteralPath $envFile) {
+    foreach ($line in [IO.File]::ReadAllLines($envFile)) {
+        if ($line -match '^\s*([A-Z][A-Z0-9_]*)\s*=(.*)$' -and $Matches[1] -in $settingNames) {
+            $settings[$Matches[1]] = $Matches[2].Trim().Trim('"').Trim("'")
+        }
+    }
+}
+foreach ($name in $settingNames) {
+    $value = [Environment]::GetEnvironmentVariable($name)
+    if ($value) { $settings[$name] = $value.Trim().Trim('"').Trim("'") }
+}
+$imageEndpoint = if ($settings.QWEN_IMAGE_ENDPOINT) {
+    $settings.QWEN_IMAGE_ENDPOINT.TrimEnd('/')
+} else {
+    'https://dashscope.aliyuncs.com/api/v1'
+}
+$imageEndpoint = $imageEndpoint -replace '/compatible-mode/v1$', '/api/v1'
+$imageEndpointUri = $null
+if (-not [uri]::TryCreate($imageEndpoint, [UriKind]::Absolute, [ref] $imageEndpointUri) -or
+    $imageEndpointUri.Scheme -notin @('http', 'https') -or $imageEndpointUri.UserInfo -or
+    $imageEndpointUri.Query -or $imageEndpointUri.Fragment) {
+    throw 'QWEN_IMAGE_ENDPOINT must be an absolute HTTP(S) URL without credentials, query, or fragment.'
+}
+$imageModel = if ($settings.QWEN_IMAGE_MODEL) {
+    $settings.QWEN_IMAGE_MODEL
+} else {
+    'qwen-image-2.0-pro'
+}
+$imageManifest = Get-Content -LiteralPath (Join-Path $repoRoot 'backend/app/tools/qwen-image/plugin.json') -Raw |
+    ConvertFrom-Json
+$generateModels = Get-ToolModelOptions $imageManifest 'generate_image_qwen'
+$editModels = Get-ToolModelOptions $imageManifest 'edit_image_qwen'
+if ($imageModel -notin $generateModels -or $imageModel -notin $editModels) {
+    $commonModels = @($generateModels | Where-Object { $_ -in $editModels })
+    throw "QWEN_IMAGE_MODEL '$imageModel' must be supported by both Qwen-Image tools. Valid shared options: $($commonModels -join ', ')."
+}
+$toolSpecs = @(
+    @{ agent = 'scene'; name = 'generate_image_qwen'; config = @{ api_key = $settings.QWEN_IMAGE_API_KEY; endpoint = $imageEndpoint; model = $imageModel; timeout = 180 } },
+    @{ agent = 'scene-photo'; name = 'edit_image_qwen'; config = @{ api_key = $settings.QWEN_IMAGE_API_KEY; endpoint = $imageEndpoint; model = $imageModel; timeout = 180 } },
+    @{ agent = 'guide'; name = 'synthesize_speech_qwen'; config = @{ api_key = $settings.DASHSCOPE_API_KEY; model = 'qwen3-tts-flash'; timeout = 60 } }
+)
 
 Write-Host "Checking local QwenPaw at $BaseUrl (no model calls)."
 $version = Invoke-QwenPawApi 'version'
@@ -345,29 +403,6 @@ if (-not $VerifyOnly) {
         }
     }
 
-    # Read only the allowlisted settings; never evaluate .env as shell code.
-    $settings = @{}
-    $settingNames = @('QWEN_IMAGE_API_KEY', 'QWEN_IMAGE_ENDPOINT', 'QWEN_IMAGE_MODEL', 'DASHSCOPE_API_KEY')
-    $envFile = Join-Path $repoRoot '.env'
-    if (Test-Path -LiteralPath $envFile) {
-        foreach ($line in [IO.File]::ReadAllLines($envFile)) {
-            if ($line -match '^\s*([A-Z][A-Z0-9_]*)\s*=(.*)$' -and $Matches[1] -in $settingNames) {
-                $settings[$Matches[1]] = $Matches[2].Trim().Trim('"').Trim("'")
-            }
-        }
-    }
-    foreach ($name in $settingNames) {
-        $value = [Environment]::GetEnvironmentVariable($name)
-        if ($value) { $settings[$name] = $value.Trim().Trim('"').Trim("'") }
-    }
-    $imageEndpoint = if ($settings.QWEN_IMAGE_ENDPOINT) { $settings.QWEN_IMAGE_ENDPOINT.TrimEnd('/') } else { 'https://dashscope.aliyuncs.com/api/v1' }
-    $imageEndpoint = $imageEndpoint -replace '/compatible-mode/v1$', '/api/v1'
-    $imageModel = if ($settings.QWEN_IMAGE_MODEL) { $settings.QWEN_IMAGE_MODEL } else { 'qwen-image-2.0-pro' }
-    $toolSpecs = @(
-        @{ agent = 'scene'; name = 'generate_image_qwen'; config = @{ api_key = $settings.QWEN_IMAGE_API_KEY; endpoint = $imageEndpoint; model = $imageModel; timeout = 180 } },
-        @{ agent = 'scene-photo'; name = 'edit_image_qwen'; config = @{ api_key = $settings.QWEN_IMAGE_API_KEY; endpoint = $imageEndpoint; model = $imageModel; timeout = 180 } },
-        @{ agent = 'guide'; name = 'synthesize_speech_qwen'; config = @{ api_key = $settings.DASHSCOPE_API_KEY; model = 'qwen3-tts-flash'; timeout = 60 } }
-    )
     foreach ($spec in $toolSpecs) {
         if ($spec.config.api_key) {
             # Agent GET is local and unmasked; compare in memory, never print it.
@@ -386,7 +421,7 @@ if (-not $VerifyOnly) {
     Set-ToolEnabled 'scene' 'edit_image_qwen' $false
     Set-ToolEnabled 'scene-photo' 'generate_image_qwen' $false
     foreach ($id in @('photo', 'scene', 'scene-photo')) { Set-ToolEnabled $id 'view_image' $true }
-    Remove-Variable settings, toolSpecs, config, existing -ErrorAction SilentlyContinue
+    Remove-Variable config, existing -ErrorAction SilentlyContinue
 }
 
 # Local postconditions: no doctor, chat/completion, image, TTS, or provider probes.
@@ -406,6 +441,11 @@ foreach ($agent in $agents | Where-Object id -in $projectIds) {
 foreach ($spec in $agentSpecs) {
     $agent = $agents | Where-Object id -eq $spec.id
     if (-not $agent) { throw "Missing Agent: $($spec.id)" }
+    $agentConfig = Invoke-QwenPawApi "agents/$($spec.id)"
+    if ($descriptions.ContainsKey($spec.id) -and
+        $agentConfig.description -cne $descriptions[$spec.id]) {
+        throw "Agent description differs: $($spec.id)"
+    }
     $mounted = @(Invoke-QwenPawApi 'skills' -AgentId $spec.id)
     foreach ($name in $spec.skills) {
         if (-not @($mounted | Where-Object { $_.name -eq $name -and $_.enabled }).Count) { throw "Skill not enabled: $($spec.id)/$name" }
@@ -428,12 +468,24 @@ foreach ($id in @('photo', 'scene', 'scene-photo')) {
 foreach ($pair in @(@('scene', 'edit_image_qwen'), @('scene-photo', 'generate_image_qwen'))) {
     if ((Get-AgentTool $pair[0] $pair[1]).enabled) { throw "Wrong image tool enabled: $($pair -join '/')" }
 }
-foreach ($pair in @(@('scene', 'generate_image_qwen'), @('scene-photo', 'edit_image_qwen'), @('guide', 'synthesize_speech_qwen'))) {
-    $tool = Get-AgentTool $pair[0] $pair[1]
-    $required = @('api_key', 'model', 'timeout')
-    if ($pair[1] -ne 'synthesize_speech_qwen') { $required += 'endpoint' }
-    if ($tool.enabled -and @($required | Where-Object { -not $tool.config_values.$_ }).Count) { throw "Tool configuration incomplete: $($pair -join '/')" }
-    Write-Host "Verified tool: $($pair -join '/') (enabled=$($tool.enabled))"
+foreach ($spec in $toolSpecs) {
+    # Agent GET is local and unmasked. Compare only in memory and report field names,
+    # never stored or expected values, because api_key is part of the comparison.
+    $agentConfig = Invoke-QwenPawApi "agents/$($spec.agent)"
+    $storedTool = $agentConfig.tools.builtin_tools.($spec.name)
+    if (-not $storedTool) { throw "Missing tool configuration: $($spec.agent)/$($spec.name)" }
+    $expectedEnabled = [bool] $spec.config.api_key
+    if ([bool] $storedTool.enabled -ne $expectedEnabled) {
+        throw "Tool enabled state differs from .env: $($spec.agent)/$($spec.name)"
+    }
+    if ($expectedEnabled) {
+        foreach ($field in $spec.config.Keys) {
+            if ("$($storedTool.config.$field)" -cne "$($spec.config[$field])") {
+                throw "Tool configuration differs from .env/defaults: $($spec.agent)/$($spec.name)/$field"
+            }
+        }
+    }
+    Write-Host "Verified tool: $($spec.agent)/$($spec.name) (enabled=$expectedEnabled)"
 }
 $plugins = @(Invoke-QwenPawApi 'plugins')
 foreach ($id in @('qwen-image-tool', 'qwen-tts-tool')) {
@@ -450,3 +502,4 @@ if ($drift.Count -gt 0) {
     Write-Warning "$($drift.Count) workspace copies were preserved; configuration exists but Skills are not fully synchronized."
 }
 Write-Host "QwenPaw $($version.version): verified 9 project Agents, 13 pool Skills and local tool configuration. No online model tests were run."
+Remove-Variable settings, toolSpecs, agentConfig, storedTool -ErrorAction SilentlyContinue

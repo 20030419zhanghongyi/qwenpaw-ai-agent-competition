@@ -308,7 +308,7 @@ def test_keys_and_image_endpoint_are_separate_and_never_logged(runtime):
     (runtime.repo / ".env").write_text(
         'QWEN_IMAGE_API_KEY="test-image-secret"\nDASHSCOPE_API_KEY=test-tts-secret\n'
         "QWEN_IMAGE_ENDPOINT=https://dashscope-intl.aliyuncs.com/compatible-mode/v1/\n"
-        "QWEN_IMAGE_MODEL=test-image-model\n",
+        "QWEN_IMAGE_MODEL=qwen-image-2.0-pro\n",
         encoding="utf-8",
     )
     result = runtime.run("-UpdateExistingSkills")
@@ -324,9 +324,56 @@ def test_keys_and_image_endpoint_are_separate_and_never_logged(runtime):
         == "https://dashscope-intl.aliyuncs.com/api/v1"
     )
     assert guide["synthesize_speech_qwen"]["config"]["api_key"] == "test-tts-secret"
+    assert scene["generate_image_qwen"]["config"]["model"] == "qwen-image-2.0-pro"
     assert photo["edit_image_qwen"]["enabled"]
     assert not photo["generate_image_qwen"]["enabled"]
     assert not scene["edit_image_qwen"]["enabled"]
+
+
+def test_verify_only_detects_stale_enabled_image_model_without_leaking_keys(runtime):
+    (runtime.repo / ".env").write_text(
+        "QWEN_IMAGE_API_KEY=test-image-secret\n"
+        "DASHSCOPE_API_KEY=test-tts-secret\n"
+        "QWEN_IMAGE_MODEL=qwen-image-2.0-pro\n",
+        encoding="utf-8",
+    )
+    assert_ok(runtime.run("-UpdateExistingSkills"))
+    runtime.configs["scene"]["tools"]["builtin_tools"]["generate_image_qwen"]["config"][
+        "model"
+    ] = "wanx2.1-t2i-turbo"
+    before = runtime.hashes()
+    runtime.calls.clear()
+
+    result = runtime.run("-VerifyOnly")
+
+    output = result.stdout + result.stderr
+    assert result.returncode != 0
+    assert "Tool configuration differs from .env/defaults" in output
+    assert "scene/generate_image_qwen/model" in output
+    assert "test-image-secret" not in output
+    assert "test-tts-secret" not in output
+    assert all(method == "GET" for method, *_ in runtime.calls)
+    assert runtime.hashes() == before
+
+
+def test_invalid_shared_image_model_fails_before_runtime_writes(runtime):
+    (runtime.repo / ".env").write_text(
+        "QWEN_IMAGE_API_KEY=test-image-secret\n"
+        "QWEN_IMAGE_MODEL=wanx2.1-t2i-turbo\n",
+        encoding="utf-8",
+    )
+    before = runtime.hashes()
+
+    result = runtime.run("-UpdateExistingSkills")
+
+    output = result.stdout + result.stderr
+    assert result.returncode != 0
+    assert "QWEN_IMAGE_MODEL 'wanx2.1-t2i-turbo'" in output
+    assert "Valid shared options" in output
+    assert "test-image-secret" not in output
+    assert runtime.hashes() == before
+    assert not (runtime.root / "backups").exists()
+    assert all(method == "GET" for method, *_ in runtime.calls)
 
 
 @pytest.mark.parametrize("corruption", ["markers", "outside_workspace"])

@@ -494,7 +494,9 @@ export function StoryEndingPage() {
           onClick={() => navigate("/preferences")}
         />
         <StoryAgentDrawer
+          key={`${session.session_id}:completed:${language}`}
           open={agentOpen}
+          sessionId={session.session_id}
           context={agentContext}
           onClose={() => setAgentOpen(false)}
         />
@@ -633,7 +635,10 @@ export function StoryEndingPage() {
         hint={st("progressSaved")}
       />
       <StoryAgentDrawer
+        key={`${session.session_id}:${finalChapter?.id}:${language}`}
         open={agentOpen}
+        sessionId={session.session_id}
+        chapterId={finalChapter?.id}
         context={agentContext}
         onClose={() => setAgentOpen(false)}
       />

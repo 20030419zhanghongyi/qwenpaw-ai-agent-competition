@@ -71,9 +71,11 @@ cp .env.example .env
 open -e .env
 ```
 
-至少填写你自行申请的 `DASHSCOPE_API_KEY`、`AMAP_WEB_SERVICE_KEY`、
-`VITE_AMAP_API_KEY` 和 `VITE_AMAP_SECURITY_CODE`。不要提交 `.env`；它已经被
-Git 忽略。完整字段说明见下方“配置要求”。
+至少填写你自行申请的 `DASHSCOPE_API_KEY`、`QWEN_IMAGE_API_KEY`、
+`AMAP_WEB_SERVICE_KEY`、`VITE_AMAP_API_KEY` 和 `VITE_AMAP_SECURITY_CODE`。
+`QWEN_IMAGE_API_KEY` 可以填写同一个 DashScope 凭据，但必须显式设置，因为图片
+Agent 不会回落到通用 Key。不要提交 `.env`；它已经被 Git 忽略。完整字段说明见
+下方“配置要求”。
 
 ### 3. 安装并初始化 QwenPaw
 
@@ -187,7 +189,10 @@ curl -fsS http://127.0.0.1:8088/api/version
 
 | 变量 | 必需性 | 说明 |
 |---|---|---|
-| `DASHSCOPE_API_KEY` | 完整 AI 功能必需 | 部署者自行申请的百炼/DashScope Key；用于 TTS、图片和部分后端能力，**不是赛委会提供的 Key** |
+| `DASHSCOPE_API_KEY` | 完整 AI 功能必需 | 部署者自行申请的百炼/DashScope Key；用于 TTS、QwenPaw 模型 Provider 和部分后端能力，**不是赛委会提供的 Key** |
+| `QWEN_IMAGE_API_KEY` | Qwen-Image 必需 | 图片工具专用凭据；可以与 `DASHSCOPE_API_KEY` 相同，但不会自动回落 |
+| `QWEN_IMAGE_ENDPOINT` | 有默认值 | 与凭据区域一致的 DashScope 图片原生端点；不要使用 OpenAI 兼容路径 |
+| `QWEN_IMAGE_MODEL` | 有默认值 | Plugin 接受的精确模型 ID，通常使用 `qwen-image-2.0-pro` |
 | `QWEN_EMBEDDING_API_KEY` | 可选 | RAG embedding 专用；留空时回退到 DashScope Key |
 | `AMAP_WEB_SERVICE_KEY` | 路线步行规划必需 | 高德“Web 服务”Key |
 | `VITE_AMAP_API_KEY` | 前端地图必需 | 高德“Web 端（JS API）”Key |
@@ -343,9 +348,22 @@ Plugin，保留无关 Agent 配置，不重装 QwenPaw 或升级 Python 环境�
 `/compatible-mode/v1` 后缀会转换为原生 `/api/v1`。
 密钥与端点必须属于同一区域。本项目不提供密钥，调用额度和费用归部署账号所有。
 
+模型名必须是 `generate_image_qwen` 与 `edit_image_qwen` 都接受的精确 ID；默认的
+共同选项是 `qwen-image-2.0-pro`。`QwenImage` 这类显示名称和旧版 Wanx ID 都不是
+有效的 Plugin 模型 ID。脚本会先按仓库中的 Plugin manifest 校验，再改动 QwenPaw。
+
+QwenPaw 不会监听项目 `.env` 的变化。修改图片 Key、端点或模型后，必须重新运行
+普通配置，再执行只读验证：
+
+```powershell
+pwsh -NoProfile -File .\scripts\configure_qwenpaw_windows.ps1
+pwsh -NoProfile -File .\scripts\configure_qwenpaw_windows.ps1 -VerifyOnly
+```
+
 Windows 脚本不打印密钥，也不创建包含密钥的临时请求文件。
 缺少密钥时，会禁用对应工具并保留原有已存凭据；验证结果会明确显示工具禁用。
-`-VerifyOnly` 检查本地 Agent、Skill、伦理标记、Plugin、视觉声明及工具配置，
+`-VerifyOnly` 检查本地 Agent、Skill、伦理标记、Plugin、视觉声明、工具启用状态，
+并把已应用的模型、端点、超时和凭据与 `.env` 逐项比对，
 **不会**调用 `qwenpaw doctor`、聊天模型、图片生成或 TTS。
 
 ### macOS / zsh

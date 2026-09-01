@@ -672,7 +672,10 @@ export function StoryScenePage() {
         />
       )}
       <StoryAgentDrawer
+        key={`${session.session_id}:${displayChapter.id}:${language}`}
         open={agentOpen}
+        sessionId={session.session_id}
+        chapterId={displayChapter.id}
         context={agentContext}
         onClose={() => setAgentOpen(false)}
       />
