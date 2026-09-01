@@ -401,7 +401,10 @@ export function StoryMapPage() {
       />
 
       <StoryAgentDrawer
+        key={`${session.session_id}:${currentChapter?.id}:${language}`}
         open={agentOpen}
+        sessionId={session.session_id}
+        chapterId={currentChapter?.id}
         context={agentContext}
         onClose={() => setAgentOpen(false)}
       />

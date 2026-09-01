@@ -9,6 +9,7 @@ from uuid import uuid4
 from app.features.trips.service import TripService, trip_service
 
 from .content import (
+    STORY_DATA_DIR,
     chapter_by_id,
     load_story,
     localize_story,
@@ -107,6 +108,17 @@ class StoryService:
     @staticmethod
     def get_story(story_id: str, *, language: str = "zh-CN") -> dict[str, Any]:
         return story_overview(localize_story(load_story(story_id), language))
+
+    @staticmethod
+    def get_story_summaries(*, language: str = "zh-CN") -> list[dict[str, str]]:
+        """Public cover copy for comparing routes, without any chapter or ending content."""
+        summaries = []
+        for path in sorted(STORY_DATA_DIR.glob("*.json")):
+            if path.name.endswith(".locales.json"):
+                continue
+            story = localize_story(load_story(path.stem), language)
+            summaries.append({key: str(story.get(key, "")) for key in ("id", "title", "summary")})
+        return summaries
 
     def start(
         self,

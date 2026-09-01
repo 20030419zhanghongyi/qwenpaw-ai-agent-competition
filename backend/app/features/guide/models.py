@@ -6,7 +6,66 @@ Legacy ``sections`` / flat ``text`` remain for older clients and TTS fallbacks.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.guardrails.runtime import sanitize_untrusted_text
+
+
+class GuideStoryReference(BaseModel):
+    """Resolve story context on the server, never accept client-authored plot facts."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    session_id: str = Field(min_length=1, max_length=128)
+    chapter_id: str | None = Field(default=None, min_length=1, max_length=128)
+
+
+class GuideConversationMessage(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=2000)
+
+    @field_validator("content")
+    @classmethod
+    def sanitize_content(cls, value: str) -> str:
+        value = sanitize_untrusted_text(value, max_length=2000)
+        if not value:
+            raise ValueError("message must not be blank")
+        return value
+
+
+class StoryGuideKnowledgeCard(BaseModel):
+    kind: str
+    title: str
+    text: str
+    source_label: str = ""
+
+
+class StoryGuideContext(BaseModel):
+    """Allowlisted, unlocked story content; no puzzle, reward or private reflection."""
+
+    story_id: str
+    story_title: str
+    story_summary: str
+    story_summaries: list[dict[str, str]] = Field(default_factory=list)
+    chapter_id: str
+    chapter_title: str
+    persona: str
+    poi_id: str | None = None
+    poi_name: str
+    chapter_goal: str = ""
+    scene: str = ""
+    dialogue: list[str] = Field(default_factory=list)
+    known_facts: list[str] = Field(default_factory=list)
+    fiction_boundaries: list[str] = Field(default_factory=list)
+    do_not_reveal: list[str] = Field(default_factory=list)
+    knowledge_cards: list[StoryGuideKnowledgeCard] = Field(default_factory=list)
+    unlocked_chapters: list[str] = Field(default_factory=list)
+    story_completed: bool = False
+    ending_text: str = ""
 
 
 class ObservationItem(BaseModel):
