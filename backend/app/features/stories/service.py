@@ -9,6 +9,7 @@ from uuid import uuid4
 from app.features.trips.service import TripService, trip_service
 
 from .content import (
+    STORY_DATA_DIR,
     chapter_by_id,
     load_story,
     localize_story,
@@ -18,7 +19,12 @@ from .content import (
     story_overview,
     story_nodes,
 )
-from .engine import TransitionResult, allowed_actions, apply_action
+from .engine import (
+    StoryChapterConflictError,
+    TransitionResult,
+    allowed_actions,
+    apply_action,
+)
 from .models import (
     StoryActionRequest,
     StoryActionResponse,
@@ -38,6 +44,42 @@ _ACTION_MESSAGES = {
         "zh-TW": "已到達目前的故事地點",
         "en": "You have arrived at the current story location.",
         "pt": "Chegou ao local atual da história.",
+    },
+    "hint_provided": {
+        "zh-CN": "已提供提示",
+        "zh-TW": "已提供提示",
+        "en": "Here is your hint.",
+        "pt": "Aqui está a sua pista.",
+    },
+    "incorrect_answer": {
+        "zh-CN": "答案不正确，可以重试、查看提示或跳过",
+        "zh-TW": "答案不正確，可以重試、查看提示或略過",
+        "en": "Not quite. You can try again, ask for a hint, or skip this puzzle.",
+        "pt": "Ainda não é a resposta certa. Pode tentar de novo, pedir uma pista ou saltar.",
+    },
+    "story_continued": {
+        "zh-CN": "剧情已继续",
+        "zh-TW": "劇情已繼續",
+        "en": "The story continues.",
+        "pt": "A história continua.",
+    },
+    "story_completed": {
+        "zh-CN": "今日补记已保存，故事完成",
+        "zh-TW": "今日補記已儲存，故事完成",
+        "en": "Your note has been saved. The story is complete.",
+        "pt": "A sua nota foi guardada. A história está concluída.",
+    },
+    "ending_already_saved": {
+        "zh-CN": "该结局已经保存",
+        "zh-TW": "此結局已儲存",
+        "en": "This ending has already been saved.",
+        "pt": "Este final já foi guardado.",
+    },
+    "chapter_already_processed": {
+        "zh-CN": "该章节已经处理",
+        "zh-TW": "此章節已處理",
+        "en": "This chapter has already been completed.",
+        "pt": "Este capítulo já foi concluído.",
     },
 }
 
@@ -66,6 +108,17 @@ class StoryService:
     @staticmethod
     def get_story(story_id: str, *, language: str = "zh-CN") -> dict[str, Any]:
         return story_overview(localize_story(load_story(story_id), language))
+
+    @staticmethod
+    def get_story_summaries(*, language: str = "zh-CN") -> list[dict[str, str]]:
+        """Public cover copy for comparing routes, without any chapter or ending content."""
+        summaries = []
+        for path in sorted(STORY_DATA_DIR.glob("*.json")):
+            if path.name.endswith(".locales.json"):
+                continue
+            story = localize_story(load_story(path.stem), language)
+            summaries.append({key: str(story.get(key, "")) for key in ("id", "title", "summary")})
+        return summaries
 
     def start(
         self,
@@ -133,6 +186,35 @@ class StoryService:
         self._require_current_version(story, story_session)
         return self._response(story, story_session, language=language)
 
+    def get_chapter(
+        self,
+        session_id: str,
+        user_id: str,
+        chapter_id: str,
+        *,
+        language: str = "zh-CN",
+    ) -> dict[str, Any]:
+        story_session = self._repository.get(session_id)
+        if story_session is None:
+            raise StorySessionNotFoundError(f"Story session not found: {session_id}")
+        self._require_owner(story_session, user_id)
+        story = load_story(story_session.story_id)
+        self._require_current_version(story, story_session)
+        accessible_ids = {
+            story_session.current_chapter_id,
+            *story_session.state.completed_chapter_ids,
+            *story_session.state.skipped_chapter_ids,
+        }
+        if chapter_id not in accessible_ids:
+            raise StoryChapterConflictError(
+                f"Chapter {chapter_id} has not been unlocked yet"
+            )
+        display_story = localize_story(story, normalize_story_language(language))
+        chapter = public_chapter(chapter_by_id(display_story, chapter_id))
+        if chapter["kind"] == "ending":
+            chapter["ending_options"] = story_overview(display_story)["endings"]
+        return chapter
+
     def get_active_session(
         self, story_id: str, user_id: str, *, language: str = "zh-CN"
     ) -> StorySessionResponse:
@@ -159,6 +241,7 @@ class StoryService:
         self._require_owner(story_session, user_id)
         story = load_story(story_session.story_id)
         self._require_current_version(story, story_session)
+        # Persist canonical rewards; localization belongs to the response only.
         result = apply_action(story, story_session, request)
 
         if result.changed and request.action.value == "arrive":
@@ -278,10 +361,20 @@ class StoryService:
             if result.message_key
             else result.message
         )
+        hint = result.hint
+        if result.chapter_id:
+            puzzle = chapter_by_id(display_story, result.chapter_id).get("puzzle", {})
+            if result.message_key == "puzzle_solved":
+                message = puzzle.get("explanation", message)
+            elif result.message_key == "puzzle_skipped":
+                message = puzzle.get("skip_text", message)
+            hints = puzzle.get("hints", [])
+            if result.hint_index is not None and 0 <= result.hint_index < len(hints):
+                hint = hints[result.hint_index]
         return StoryActionResponse(
             accepted=result.accepted,
             message=message,
-            hint=result.hint,
+            hint=hint,
             new_clues=result.new_clues,
             new_rewards=self._localized_rewards(display_story, result.new_rewards),
             session=self._response(story, story_session, language=language),

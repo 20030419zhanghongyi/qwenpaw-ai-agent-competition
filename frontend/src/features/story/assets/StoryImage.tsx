@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties } from "react";
+import { useWalk } from "@/state/WalkContext";
 import { resolveStoryAsset } from "./storyAssetManifest";
 import { useStoryMessages } from "../storyI18n";
 
@@ -20,7 +21,7 @@ function placeholderImage(assetId: string): string {
   return "/story/v4/_placeholder.svg";
 }
 
-interface StoryImageProps {
+export interface StoryImageProps {
   assetId: string;
   alt?: string;
   className?: string;
@@ -38,10 +39,11 @@ export function StoryImage({
   onOpen,
 }: StoryImageProps) {
   const st = useStoryMessages();
+  const { language } = useWalk();
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [assetId]);
 
-  const item = resolveStoryAsset(assetId);
+  const item = resolveStoryAsset(assetId, language);
   const ratio = item?.aspectRatio ?? "4/5";
   const label = alt ?? item?.fallbackLabel ?? st("storyImage");
   const fallbackLabel = item?.fallbackLabel ?? st("imageAsset");

@@ -110,8 +110,7 @@
             "kind": "fictional_story",
             "title": "潮汐工作簿",
             "text": "工作簿、前任記錄員和五個空欄均為故事道具，用來組織路環的觀察線索。",
-            "source_label": "《潮退之後》劇情設定",
-            "confidence": "high"
+            "source_label": "《潮退之後》劇情設定"
           }
         ],
         "agent_context": {
@@ -224,15 +223,13 @@
             "kind": "historical_fact",
             "title": "路環古廟",
             "text": "觀音古廟約建於1800年，碑文記載由船戶集資興建；天后古廟約建於1763年，是路環較早的廟宇之一。",
-            "source_label": "澳門旅遊局及公開文化資料",
-            "confidence": "high"
+            "source_label": "澳門旅遊局及公開文化資料"
           },
           {
             "kind": "folklore",
             "title": "出海平安",
             "text": "祈求出海平安屬於信俗和地方生活記憶，應被尊重，但不應寫成可驗證史實。",
-            "source_label": "地方信俗整理",
-            "confidence": "medium"
+            "source_label": "地方信俗整理"
           }
         ],
         "agent_context": {
@@ -369,15 +366,13 @@
             "kind": "historical_fact",
             "title": "譚公廟與鯨骨龍舟",
             "text": "譚公廟建於清同治年間，廟內保存以鯨骨雕製、已有百年以上歷史的龍舟。",
-            "source_label": "澳門旅遊局及公開文化資料",
-            "confidence": "high"
+            "source_label": "澳門旅遊局及公開文化資料"
           },
           {
             "kind": "folklore",
             "title": "觸摸鯨骨",
             "text": "觸摸鯨骨求好運屬於地方信俗，是人們賦予文物的意義之一。",
-            "source_label": "地方信俗整理",
-            "confidence": "medium"
+            "source_label": "地方信俗整理"
           }
         ],
         "agent_context": {
@@ -518,15 +513,13 @@
             "kind": "historical_fact",
             "title": "聖方濟各聖堂",
             "text": "聖方濟各聖堂建於1928年；堂前紀念碑與1910年當地抗擊海盜事件有關。",
-            "source_label": "澳門旅遊局公開資料",
-            "confidence": "high"
+            "source_label": "澳門旅遊局公開資料"
           },
           {
             "kind": "contextual_reconstruction",
             "title": "多重記憶",
             "text": "一個地點的歷史不等於今天可見的全部。建築、紀念事件和曾經在此的物件可分層理解。",
-            "source_label": "故事導覽整理",
-            "confidence": "high"
+            "source_label": "故事導覽整理"
           }
         ],
         "agent_context": {
@@ -667,15 +660,13 @@
             "kind": "historical_fact",
             "title": "荔枝碗船廠片區",
             "text": "荔枝碗船廠片區主要形成於20世紀中期，沿海岸聯排展開，部分延伸至水面。",
-            "source_label": "澳門文化遺產公開資料",
-            "confidence": "high"
+            "source_label": "澳門文化遺產公開資料"
           },
           {
             "kind": "historical_fact",
             "title": "造船業式微",
             "text": "澳門傳統造船業於20世紀90年代後逐漸式微；荔枝碗船廠片區於2018年依法評定為場所。",
-            "source_label": "澳門文化遺產公開資料",
-            "confidence": "high"
+            "source_label": "澳門文化遺產公開資料"
           }
         ],
         "agent_context": {
@@ -809,15 +800,13 @@
             "kind": "historical_fact",
             "title": "黑沙考古",
             "text": "1973至2006年，黑沙曾進行五次考古發掘，出土文物跨越數千年，並包括新石器時代遺存。",
-            "source_label": "路氹歷史館及公開展覽資料",
-            "confidence": "high"
+            "source_label": "路氹歷史館及公開展覽資料"
           },
           {
             "kind": "dynamic_operational_info",
             "title": "安全邊界",
             "text": "本章以遠程知識層完成，不鼓勵進入敏感考古點或自行尋找遺物。",
-            "source_label": "故事安全設計",
-            "confidence": "high"
+            "source_label": "故事安全設計"
           }
         ],
         "agent_context": {
@@ -962,8 +951,7 @@
             "kind": "fictional_story",
             "title": "路環聲音明信片",
             "text": "聲音明信片是結局道具，會把玩家的選擇和反思保存為本次故事完成記錄。",
-            "source_label": "《潮退之後》劇情設定",
-            "confidence": "high"
+            "source_label": "《潮退之後》劇情設定"
           }
         ],
         "agent_context": {
@@ -1147,8 +1135,7 @@
             "kind": "fictional_story",
             "title": "Tide Workbook",
             "text": "The workbook, the previous recorder, and the five blank slots are all story props used to organize the observational clues of Coloane.",
-            "source_label": "Plot setting of 'After the Tide Recedes'",
-            "confidence": "high"
+            "source_label": "Plot setting of 'After the Tide Recedes'"
           }
         ],
         "agent_context": {
@@ -1261,15 +1248,13 @@
             "kind": "historical_fact",
             "title": "Coloane Ancient Temples",
             "text": "The Kun Iam Temple was built around 1800, and inscriptions record that it was funded by boat households; the Tin Hau Temple was built around 1763, one of the earliest temples in Coloane.",
-            "source_label": "Macau Government Tourism Office and public cultural sources",
-            "confidence": "high"
+            "source_label": "Macau Government Tourism Office and public cultural sources"
           },
           {
             "kind": "folklore",
             "title": "Safe Sea Voyages",
             "text": "Praying for safe voyages is part of folk belief and local life memory; it should be respected but not written as verifiable historical fact.",
-            "source_label": "Compilation of local folk beliefs",
-            "confidence": "medium"
+            "source_label": "Compilation of local folk beliefs"
           }
         ],
         "agent_context": {
@@ -1357,8 +1342,8 @@
             "tin_hau_1763"
           ],
           "hints": [
-            "Look for statements that can be verified by sources.",
-            "Folk belief can be respected, but it cannot be written as historical fact that is guaranteed to have happened."
+            "Look for statements that can be verified by public materials or on-site inscriptions.",
+            "Folk belief can be respected, but it cannot be written as a historical fact that is guaranteed to have happened."
           ],
           "explanation": "The Kun Iam Temple's date, the boat households' fundraising, and the Tin Hau Temple's date are all verifiable sources; the belief that prayers will surely be answered is an expression of folk belief and should not be written in the historical facts column. After you fill in 'Sea', a boat shadow appears on the next page of the workbook: please leave the open area in front of the temple and head to Tam Kung Temple.",
           "skip_text": "A Lin helps you separate the verifiable sources from the folk beliefs. You still fill in 'Sea'. A boat shadow appears on the next page of the workbook: please leave the open area in front of the temple and head to Tam Kung Temple.",
@@ -1406,15 +1391,13 @@
             "kind": "historical_fact",
             "title": "Tam Kung Temple and the Whalebone Dragon Boat",
             "text": "Tam Kung Temple was built during the Tongzhi reign of the Qing dynasty. The temple preserves a dragon boat carved from whalebone that is over a hundred years old.",
-            "source_label": "Macao Government Tourism Office and public cultural materials",
-            "confidence": "high"
+            "source_label": "Macao Government Tourism Office and public cultural materials"
           },
           {
             "kind": "folklore",
             "title": "Touching the Whalebone",
             "text": "Touching the whalebone for good luck is a local folk belief; it is one of the meanings people give to the relic.",
-            "source_label": "Compilation of local folk beliefs",
-            "confidence": "medium"
+            "source_label": "Compilation of local folk beliefs"
           }
         ],
         "agent_context": {
@@ -1507,7 +1490,7 @@
           },
           "hints": [
             "First find the content that can be described as the relic itself.",
-            "Then sort out what people believe and what wish that belief reflects."
+            "Then separate what people believe from the wish that belief reflects."
           ],
           "explanation": "The whalebone dragon boat surviving until today is a historical fact; touching it for luck is a folk belief; the wish for safe voyages shows how this object carries local meaning. After you fill in “Boat”, the workbook draws the line back to St. Francis Xavier Church and Square: the next stop is to see how the same village heart preserves different memories.",
           "skip_text": "A Lin sorts the three records into columns, reminding you not to write folk belief as historical fact, and not to erase folk belief from local memory. After you fill in “Boat”, the next stop returns to St. Francis Xavier Church and Square to see how the village heart preserves different memories.",
@@ -1555,15 +1538,13 @@
             "kind": "historical_fact",
             "title": "St. Francis Xavier Church",
             "text": "St. Francis Xavier Church was built in 1928; the monument in front of the church relates to the local anti-piracy incident of 1910.",
-            "source_label": "Public information from the Macau Government Tourism Office",
-            "confidence": "high"
+            "source_label": "Public information from the Macau Government Tourism Office"
           },
           {
             "kind": "contextual_reconstruction",
             "title": "Multiple Memories",
             "text": "The history of a place is not the same as everything visible today. Buildings, commemorated events, and objects once here can be understood in layers.",
-            "source_label": "Compiled from the story guide",
-            "confidence": "high"
+            "source_label": "Compiled from the story guide"
           }
         ],
         "agent_context": {
@@ -1655,8 +1636,8 @@
             "memory": "not_all_visible_today"
           },
           "hints": [
-            "Start by finding the date of the building itself.",
-            "The monument points to an event; what remains is a way of understanding the place."
+            "Start by finding the construction date of the building itself.",
+            "The monument points to an event; the remaining option is a way to understand this place."
           ],
           "explanation": "The church's date belongs to the building layer, the anti-piracy commemoration belongs to the event layer, and what cannot be fully captured by today's site is a way of understanding community memory. After you complete [Village], the workbook's pages reveal a wood-grain pattern: next stop is the Lai Chi Vun Shipyards area.",
           "skip_text": "A Lin divides the square into three layers: building, event and memory. You still complete [Village]. The workbook's pages reveal a wood-grain pattern: next stop is the Lai Chi Vun Shipyards area.",
@@ -1704,15 +1685,13 @@
             "kind": "historical_fact",
             "title": "Lai Chi Vun Shipyards",
             "text": "The Lai Chi Vun Shipyards mainly took shape in the mid-20th century, stretched in a row along the coast, with parts extending over the water.",
-            "source_label": "Macau Cultural Heritage public information",
-            "confidence": "high"
+            "source_label": "Macau Cultural Heritage public information"
           },
           {
             "kind": "historical_fact",
             "title": "Decline of the Shipbuilding Industry",
             "text": "Macau's traditional shipbuilding industry gradually declined after the 1990s; the Lai Chi Vun Shipyards were legally designated as a site in 2018.",
-            "source_label": "Macau Cultural Heritage public information",
-            "confidence": "high"
+            "source_label": "Macau Cultural Heritage public information"
           }
         ],
         "agent_context": {
@@ -1797,8 +1776,8 @@
             "industry_decline"
           ],
           "hints": [
-            "The placeholder version only looks for three pieces of evidence: space, craftsmanship, and change.",
-            "Don't choose lifestyle preferences unrelated to the shipbuilding evidence chain."
+            "This placeholder version only looks for three kinds of evidence: space, craft, and change.",
+            "Do not choose lifestyle preferences unrelated to the shipbuilding evidence chain."
           ],
           "explanation": "The waterside spaces, wooden fishing boat craftsmanship, and industry decline form the minimal evidence chain. The snack memory can stay as a travel experience, but it cannot replace shipyard craft evidence. Once you fill in 'Craft', A Lin reminds you: focusing only on shipbuilding would date Coloane too late; the next stop enters the Hac Sa knowledge layer.",
           "skip_text": "A Lin writes the three pieces of evidence into the workbook: space, craftsmanship, and change. You still fill in 'Craft'. She reminds you: focusing only on shipbuilding would date Coloane too late; the next stop enters the Hac Sa knowledge layer.",
@@ -1846,15 +1825,13 @@
             "kind": "historical_fact",
             "title": "Hac Sa Archaeology",
             "text": "From 1973 to 2006, five archaeological excavations were conducted at Hac Sa. The unearthed artifacts span thousands of years and include Neolithic remains.",
-            "source_label": "Taipa and Coloane Historical Museum and public exhibition materials",
-            "confidence": "high"
+            "source_label": "Taipa and Coloane Historical Museum and public exhibition materials"
           },
           {
             "kind": "dynamic_operational_info",
             "title": "Safety Boundary",
             "text": "This chapter is completed through the remote knowledge layer. Entering sensitive archaeological sites or searching for artifacts on your own is not encouraged.",
-            "source_label": "Story safety design",
-            "confidence": "high"
+            "source_label": "Story safety design"
           }
         ],
         "agent_context": {
@@ -1937,8 +1914,8 @@
             "thousands_years"
           ],
           "hints": [
-            "Look for content in public materials that can be written into the timeline.",
-            "Searching for artifacts on your own does not comply with safety and ethical boundaries."
+            "Look for content from public materials that can be placed on the timeline.",
+            "Searching for artifacts on your own does not meet the safety and ethical boundaries."
           ],
           "explanation": "Five archaeological excavations, Neolithic remains, and a time span of thousands of years can all be written into the soil column; searching for artifacts on your own should not be a game task. Once you fill in 'Soil', the five empty columns are finally complete: next, return to a public space where you can safely stay and complete the final page.",
           "skip_text": "A Lin helps you write the Hac Sa timeline into the soil column and also marks the safety boundary of not entering sensitive sites. The five empty columns are finally complete: next, return to a public space where you can safely stay and complete the final page.",
@@ -1999,8 +1976,7 @@
             "kind": "fictional_story",
             "title": "Coloane Sound Postcard",
             "text": "The sound postcard is an ending item that saves your choice and reflection as the completion record of this story.",
-            "source_label": "Story setting of After the Tide Recedes",
-            "confidence": "high"
+            "source_label": "Story setting of After the Tide Recedes"
           }
         ],
         "agent_context": {
@@ -2184,8 +2160,7 @@
             "kind": "fictional_story",
             "title": "Caderno de Marés",
             "text": "O caderno, o registador anterior e as cinco colunas em branco são elementos fictícios para organizar as pistas de observação de Coloane.",
-            "source_label": "Definição da história de «Depois da Maré Baixa»",
-            "confidence": "high"
+            "source_label": "Definição da história de «Depois da Maré Baixa»"
           }
         ],
         "agent_context": {
@@ -2298,15 +2273,13 @@
             "kind": "historical_fact",
             "title": "Templos Antigos de Coloane",
             "text": "O Templo de Kun Iam foi construído por volta de 1800, segundo a inscrição, financiado colectivamente pelos habitantes das casas de barco; o Templo de Tin Hau foi construído por volta de 1763, sendo um dos templos mais antigos de Coloane.",
-            "source_label": "Direcção dos Serviços de Turismo de Macau e materiais culturais públicos",
-            "confidence": "high"
+            "source_label": "Direcção dos Serviços de Turismo de Macau e materiais culturais públicos"
           },
           {
             "kind": "folklore",
             "title": "Segurança no Mar",
             "text": "A oração pela segurança no mar pertence às crenças populares e à memória da vida local; deve ser respeitada, mas não deve ser apresentada como facto histórico verificável.",
-            "source_label": "Compilação de crenças populares locais",
-            "confidence": "medium"
+            "source_label": "Compilação de crenças populares locais"
           }
         ],
         "agent_context": {
@@ -2443,15 +2416,13 @@
             "kind": "historical_fact",
             "title": "Templo de Tam Kung e o barco-dragão de osso de baleia",
             "text": "O Templo de Tam Kung foi construído durante o reinado de Tongzhi da dinastia Qing. No seu interior preserva-se um barco-dragão esculpido em osso de baleia, com mais de cem anos de história.",
-            "source_label": "Direcção dos Serviços de Turismo de Macau e materiais culturais públicos",
-            "confidence": "high"
+            "source_label": "Direcção dos Serviços de Turismo de Macau e materiais culturais públicos"
           },
           {
             "kind": "folklore",
             "title": "Tocar no osso de baleia",
             "text": "Tocar no osso de baleia para ter boa sorte é uma crença popular local, um dos significados que as pessoas atribuem ao objecto.",
-            "source_label": "Compilação de crenças populares locais",
-            "confidence": "medium"
+            "source_label": "Compilação de crenças populares locais"
           }
         ],
         "agent_context": {
@@ -2592,15 +2563,13 @@
             "kind": "historical_fact",
             "title": "Igreja de São Francisco Xavier",
             "text": "A Igreja de São Francisco Xavier foi construída em 1928; o monumento em frente está ligado ao episódio de 1910 de combate aos piratas na região.",
-            "source_label": "Informações públicas da Direcção dos Serviços de Turismo de Macau",
-            "confidence": "high"
+            "source_label": "Informações públicas da Direcção dos Serviços de Turismo de Macau"
           },
           {
             "kind": "contextual_reconstruction",
             "title": "Memórias múltiplas",
             "text": "A história de um lugar não se limita ao que é visível hoje. Edifícios, acontecimentos comemorados e objectos que ali existiram podem ser compreendidos em camadas.",
-            "source_label": "Compilação do guia da narrativa",
-            "confidence": "high"
+            "source_label": "Compilação do guia da narrativa"
           }
         ],
         "agent_context": {
@@ -2741,15 +2710,13 @@
             "kind": "historical_fact",
             "title": "Zona dos Estaleiros de Lai Chi Vun",
             "text": "A Zona dos Estaleiros de Lai Chi Vun formou-se principalmente em meados do século XX, desenvolvendo-se em banda ao longo da costa, com uma parte a estender-se até à água.",
-            "source_label": "Informação pública do Património Cultural de Macau",
-            "confidence": "high"
+            "source_label": "Informação pública do Património Cultural de Macau"
           },
           {
             "kind": "historical_fact",
             "title": "Declínio da indústria de construção naval",
             "text": "A indústria tradicional de construção naval de Macau entrou gradualmente em declínio após a década de 1990; a Zona dos Estaleiros de Lai Chi Vun foi classificada por lei como lugar em 2018.",
-            "source_label": "Informação pública do Património Cultural de Macau",
-            "confidence": "high"
+            "source_label": "Informação pública do Património Cultural de Macau"
           }
         ],
         "agent_context": {
@@ -2883,15 +2850,13 @@
             "kind": "historical_fact",
             "title": "Arqueologia de Hac Sá",
             "text": "Entre 1973 e 2006, realizaram-se cinco escavações arqueológicas em Hac Sá; os artefactos exumados abrangem milhares de anos, incluindo vestígios do Neolítico.",
-            "source_label": "Museu da História de Taipa e Coloane e dados de exposições públicas",
-            "confidence": "high"
+            "source_label": "Museu da História de Taipa e Coloane e dados de exposições públicas"
           },
           {
             "kind": "dynamic_operational_info",
             "title": "Limite de Segurança",
             "text": "Este capítulo é concluído com a camada de conhecimento remoto; não se incentiva a entrada em locais arqueológicos sensíveis nem a procura de relíquias por conta própria.",
-            "source_label": "Design de Segurança da História",
-            "confidence": "high"
+            "source_label": "Design de Segurança da História"
           }
         ],
         "agent_context": {
@@ -3036,8 +3001,7 @@
             "kind": "fictional_story",
             "title": "Cartão Postal Sonoro de Coloane",
             "text": "O cartão postal sonoro é um item de desfecho que guarda as escolhas e reflexões do jogador como registo de conclusão desta história.",
-            "source_label": "Definição da história de «Depois da Maré Baixa»",
-            "confidence": "high"
+            "source_label": "Definição da história de «Depois da Maré Baixa»"
           }
         ],
         "agent_context": {

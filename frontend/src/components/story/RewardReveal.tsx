@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { StoryImage } from "@/features/story/assets";
+import { StoryFigure } from "@/features/story/assets";
 import { CompleteFlowerReveal } from "@/features/story/components/CompleteFlowerReveal";
 import { PetalProgress } from "@/features/story/components/PetalProgress";
 import type { StoryReward } from "@/types/stories";
@@ -31,6 +31,7 @@ function rewardAssetId(reward: StoryReward): string | null {
     return "V4-FOR-08";
   }
   if (reward.id === "research_materials") return "V4-PROP-03";
+  if (reward.id === "returned_letter_box") return "TAI-PROP-01";
   return null;
 }
 
@@ -130,7 +131,7 @@ export function RewardReveal({
                       className="rounded-2xl border border-line bg-paper-warm p-4 text-center"
                     >
                       {assetId ? (
-                        <StoryImage
+                        <StoryFigure
                           assetId={assetId}
                           alt={reward.name ?? meta.label}
                           eager

@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Dev runs as **three processes**:
 1. QwenPaw on the host at `127.0.0.1:8088` (`qwenpaw app`; containers reach it via `host.docker.internal:8088`)
-2. Backend + database via Docker Compose at `:8000`
+2. Backend + database via Docker Compose at `:8001`
 3. Vite frontend at `:5173`
 
 Config comes from the repo-root `.env` (copied from `.env.example`); both backend and frontend (`envDir: ".."` in vite.config.ts) read it. Never commit `.env`.
@@ -27,7 +27,7 @@ cd backend && python -m pytest tests/test_routes_database.py -q            # one
 cd backend && python -m pytest tests/test_users.py -k <name> -q            # one test
 cd backend && ruff check app tests      # lint (line length 100)
 
-cd frontend && npm run dev              # Vite dev server, proxies /api → localhost:8000
+cd frontend && npm run dev              # Vite dev server, proxies /api -> localhost:8001
 cd frontend && npm run build            # tsc --noEmit + vite build (this is the type check)
 ```
 
@@ -35,7 +35,7 @@ Local backend without Compose: install `backend[dev]`, then from `backend/` run 
 
 Some integration tests need the Compose database running. Docker images bake in the code — after adding an Alembic migration or changing seed data, re-run `docker compose up -d --build` so the seed container picks it up.
 
-Verify: `curl http://127.0.0.1:8000/api/v1/health` (API returns 200 even when the db is down, with `database_status=unavailable`), OpenAPI at `http://localhost:8000/docs`.
+Verify: `curl http://127.0.0.1:8001/api/v1/health` (API returns 200 even when the db is down, with `database_status=unavailable`), OpenAPI at `http://localhost:8001/docs`.
 
 ## Architecture
 

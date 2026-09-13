@@ -12,6 +12,7 @@ interface PuzzlePanelProps {
   onRequestHint: () => void;
   onSkip: () => void;
   attempts: number;
+  submitLabel?: string;
   lastHint?: string | null;
   lastMessage?: string | null;
 }
@@ -31,6 +32,7 @@ export function PuzzlePanel({
   onRequestHint,
   onSkip,
   attempts,
+  submitLabel,
   lastHint,
   lastMessage,
 }: PuzzlePanelProps) {
@@ -45,6 +47,7 @@ export function PuzzlePanel({
           key={puzzle.id}
           puzzle={puzzle as unknown as StoryPuzzleData}
           disabled={disabled}
+          submitLabel={submitLabel}
           onSubmit={onSubmitAnswer}
         />
       ) : (

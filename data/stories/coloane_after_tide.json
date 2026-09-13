@@ -109,8 +109,7 @@
           "kind": "fictional_story",
           "title": "潮汐工作簿",
           "text": "工作簿、前任记录员和五个空栏均为故事道具，用来组织路环的观察线索。",
-          "source_label": "《潮退之后》剧情设定",
-          "confidence": "high"
+          "source_label": "《潮退之后》剧情设定"
         }
       ],
       "agent_context": {
@@ -223,15 +222,13 @@
           "kind": "historical_fact",
           "title": "路环古庙",
           "text": "观音古庙约建于1800年，碑文记载由船户集资兴建；天后古庙约建于1763年，是路环较早的庙宇之一。",
-          "source_label": "澳门旅游局及公开文化资料",
-          "confidence": "high"
+          "source_label": "澳门旅游局及公开文化资料"
         },
         {
           "kind": "folklore",
           "title": "出海平安",
           "text": "祈求出海平安属于信俗和地方生活记忆，应被尊重，但不应写成可验证史实。",
-          "source_label": "地方信俗整理",
-          "confidence": "medium"
+          "source_label": "地方信俗整理"
         }
       ],
       "agent_context": {
@@ -368,15 +365,13 @@
           "kind": "historical_fact",
           "title": "谭公庙与鲸骨龙舟",
           "text": "谭公庙建于清同治年间，庙内保存以鲸骨雕制、已有百年以上历史的龙舟。",
-          "source_label": "澳门旅游局及公开文化资料",
-          "confidence": "high"
+          "source_label": "澳门旅游局及公开文化资料"
         },
         {
           "kind": "folklore",
           "title": "触摸鲸骨",
           "text": "触摸鲸骨求好运属于地方信俗，是人们赋予文物的意义之一。",
-          "source_label": "地方信俗整理",
-          "confidence": "medium"
+          "source_label": "地方信俗整理"
         }
       ],
       "agent_context": {
@@ -517,15 +512,13 @@
           "kind": "historical_fact",
           "title": "圣方济各圣堂",
           "text": "圣方济各圣堂建于1928年；堂前纪念碑与1910年当地抗击海盗事件有关。",
-          "source_label": "澳门旅游局公开资料",
-          "confidence": "high"
+          "source_label": "澳门旅游局公开资料"
         },
         {
           "kind": "contextual_reconstruction",
           "title": "多重记忆",
           "text": "一个地点的历史不等于今天可见的全部。建筑、纪念事件和曾经在此的物件可分层理解。",
-          "source_label": "故事导览整理",
-          "confidence": "high"
+          "source_label": "故事导览整理"
         }
       ],
       "agent_context": {
@@ -666,15 +659,13 @@
           "kind": "historical_fact",
           "title": "荔枝碗船厂片区",
           "text": "荔枝碗船厂片区主要形成于20世纪中期，沿海岸联排展开，部分延伸至水面。",
-          "source_label": "澳门文化遗产公开资料",
-          "confidence": "high"
+          "source_label": "澳门文化遗产公开资料"
         },
         {
           "kind": "historical_fact",
           "title": "造船业式微",
           "text": "澳门传统造船业于20世纪90年代后逐渐式微；荔枝碗船厂片区于2018年依法评定为场所。",
-          "source_label": "澳门文化遗产公开资料",
-          "confidence": "high"
+          "source_label": "澳门文化遗产公开资料"
         }
       ],
       "agent_context": {
@@ -808,15 +799,13 @@
           "kind": "historical_fact",
           "title": "黑沙考古",
           "text": "1973至2006年，黑沙曾进行五次考古发掘，出土文物跨越数千年，并包括新石器时代遗存。",
-          "source_label": "路凼历史馆及公开展览资料",
-          "confidence": "high"
+          "source_label": "路凼历史馆及公开展览资料"
         },
         {
           "kind": "dynamic_operational_info",
           "title": "安全边界",
           "text": "本章以远程知识层完成，不鼓励进入敏感考古点或自行寻找遗物。",
-          "source_label": "故事安全设计",
-          "confidence": "high"
+          "source_label": "故事安全设计"
         }
       ],
       "agent_context": {
@@ -961,8 +950,7 @@
           "kind": "fictional_story",
           "title": "路环声音明信片",
           "text": "声音明信片是结局道具，会把玩家的选择和反思保存为本次故事完成记录。",
-          "source_label": "《潮退之后》剧情设定",
-          "confidence": "high"
+          "source_label": "《潮退之后》剧情设定"
         }
       ],
       "agent_context": {

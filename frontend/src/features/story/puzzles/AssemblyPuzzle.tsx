@@ -8,6 +8,7 @@ import { useStoryMessages } from "../storyI18n";
 interface AssemblyPuzzleProps {
   puzzle: AssemblyPuzzleData;
   disabled?: boolean;
+  submitLabel?: string;
   onSubmit: (answer: string[]) => void;
 }
 
@@ -61,6 +62,7 @@ function PieceVisual({
 export function AssemblyPuzzle({
   puzzle,
   disabled = false,
+  submitLabel,
   onSubmit,
 }: AssemblyPuzzleProps) {
   const st = useStoryMessages();
@@ -122,6 +124,7 @@ export function AssemblyPuzzle({
         selectionHint={st("assemblyHint", { count: slotCount })}
         canSubmit={slots.every(Boolean)}
         disabled={disabled}
+        submitLabel={submitLabel}
         onSubmit={() => onSubmit(slots.filter((id): id is string => Boolean(id)))}
       >
         <div className="rounded-xl border border-dashed border-sage/50 bg-sage/5 p-3">

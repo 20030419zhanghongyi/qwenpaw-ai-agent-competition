@@ -390,6 +390,12 @@ export interface GuideAskResponse {
   error?: string | null;
   web_used?: boolean;
   web_sources?: Array<{ title?: string; url?: string; source?: string }>;
+  story_context_used?: boolean;
+}
+
+export interface GuideConversationMessage {
+  role: "user" | "assistant";
+  content: string;
 }
 
 export function askGuide(body: {
@@ -398,8 +404,14 @@ export function askGuide(body: {
   language: string;
   interests?: string[];
   web?: boolean;
+  enhance?: boolean;
+  story_context?: { session_id: string; chapter_id?: string };
+  history?: GuideConversationMessage[];
 }): Promise<GuideAskResponse> {
-  const qs = body.web === false ? "?web=false" : "";
+  const params = new URLSearchParams();
+  if (body.web === false) params.set("web", "false");
+  if (body.enhance) params.set("enhance", "true");
+  const qs = params.size ? `?${params}` : "";
   return request(`/api/v1/guide/ask${qs}`, {
     method: "POST",
     body: JSON.stringify({
@@ -407,6 +419,8 @@ export function askGuide(body: {
       question: body.question,
       language: body.language,
       interests: body.interests,
+      story_context: body.story_context,
+      history: body.history,
     }),
   });
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { StoryImage } from "@/features/story/assets";
@@ -24,7 +24,7 @@ export function StoryCoverPage() {
   const { storyId } = useParams<{ storyId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, isRestoring } = useAuth();
+  const { isAuthenticated, isRestoring, login, register } = useAuth();
   const { language } = useWalk();
   const {
     story,
@@ -40,6 +40,7 @@ export function StoryCoverPage() {
   const { sessionId: persistedSessionId } = useStoryRestore();
   const st = useStoryMessages();
   const [starting, setStarting] = useState(false);
+  const debugAutoStartRef = useRef(false);
   const requestedSchedule = useMemo(() => {
     const search = new URLSearchParams(location.search);
     const day = Number(search.get("scheduledDay"));
@@ -49,10 +50,59 @@ export function StoryCoverPage() {
     }
     return { day, date };
   }, [location.search]);
+  const debugAutoStart = useMemo(() => {
+    const search = new URLSearchParams(location.search);
+    return import.meta.env.DEV && search.get("debugAutoStart") === "1";
+  }, [location.search]);
 
   useEffect(() => {
     if (storyId) void loadStory(storyId);
   }, [loadStory, storyId]);
+
+  useEffect(() => {
+    if (!debugAutoStart || !storyId || isRestoring || debugAutoStartRef.current) return;
+    debugAutoStartRef.current = true;
+
+    const enterDebugStory = async () => {
+      clearError();
+      const debugAccount = {
+        email: "story-debugger@example.local",
+        password: "story-debugger-password",
+      };
+
+      if (!isAuthenticated) {
+        try {
+          await register({
+            ...debugAccount,
+            name: "Story Debugger",
+            language,
+            country: "MO",
+          });
+        } catch {
+          await login(debugAccount);
+        }
+      }
+
+      const startedSession = await startStory(storyId, requestedSchedule);
+      navigate(sessionDestination(startedSession), { replace: true });
+    };
+
+    void enterDebugStory().catch(() => {
+      debugAutoStartRef.current = false;
+    });
+  }, [
+    clearError,
+    debugAutoStart,
+    isAuthenticated,
+    isRestoring,
+    language,
+    login,
+    navigate,
+    register,
+    requestedSchedule,
+    startStory,
+    storyId,
+  ]);
 
   useEffect(() => {
     if (

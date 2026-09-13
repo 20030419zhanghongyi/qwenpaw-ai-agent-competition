@@ -3,7 +3,8 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ErrorState, LoadingState } from "@/components/common/States";
 import { PuzzlePanel } from "@/components/story/PuzzlePanel";
 import { RewardReveal } from "@/components/story/RewardReveal";
-import { StoryImage } from "@/features/story/assets";
+import { fetchStorySessionChapter } from "@/api/stories";
+import { StoryImage, StoryFigure, StoryImageCaption } from "@/features/story/assets";
 import { DialoguePlayer } from "@/features/story/components/DialoguePlayer";
 import { KnowledgeCard } from "@/features/story/components/KnowledgeCard";
 import { StoryAgentDrawer } from "@/features/story/components/StoryAgentDrawer";
@@ -83,6 +84,8 @@ export function StoryScenePage() {
   const [agentOpen, setAgentOpen] = useState(false);
   const [overlayOpacity, setOverlayOpacity] = useState(55);
   const [arrivalMessage, setArrivalMessage] = useState<string | null>(null);
+  const [reviewChapter, setReviewChapter] = useState<StoryChapter | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
 
   const advancedSnapshot =
     submittedChapterSnapshot &&
@@ -90,8 +93,24 @@ export function StoryScenePage() {
     submittedChapterSnapshot.id !== session?.current_chapter_id
       ? submittedChapterSnapshot
       : null;
+  const completedIds = useMemo(
+    () =>
+      new Set([
+        ...(session?.state.completed_chapter_ids ?? []),
+        ...(session?.state.skipped_chapter_ids ?? []),
+      ]),
+    [session?.state.completed_chapter_ids, session?.state.skipped_chapter_ids],
+  );
+  const isReviewChapter = Boolean(
+    nodeId &&
+      session &&
+      nodeId !== session.current_chapter_id &&
+      completedIds.has(nodeId),
+  );
   const displayChapter: StoryChapter | null =
-    advancedSnapshot ?? session?.current_chapter ?? null;
+    advancedSnapshot ??
+    (isReviewChapter ? reviewChapter : session?.current_chapter) ??
+    null;
 
   useEffect(() => {
     if (!isRestoring && !token) {
@@ -119,10 +138,30 @@ export function StoryScenePage() {
       return;
     }
     if (advancedSnapshot?.id === nodeId) return;
-    if (session.current_chapter_id !== nodeId) {
+    if (session.current_chapter_id !== nodeId && !completedIds.has(nodeId)) {
       navigate(`/story-sessions/${session.session_id}/map`, { replace: true });
     }
-  }, [advancedSnapshot?.id, navigate, nodeId, session]);
+  }, [advancedSnapshot?.id, completedIds, navigate, nodeId, session]);
+
+  useEffect(() => {
+    setReviewChapter(null);
+    if (!isReviewChapter || !session || !nodeId || !token) return;
+    let cancelled = false;
+    setReviewLoading(true);
+    fetchStorySessionChapter(session.session_id, nodeId, token, language)
+      .then((chapter) => {
+        if (!cancelled) setReviewChapter(chapter);
+      })
+      .catch(() => {
+        if (!cancelled) setReviewChapter(null);
+      })
+      .finally(() => {
+        if (!cancelled) setReviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isReviewChapter, language, nodeId, session, token]);
 
   useEffect(() => {
     setComicIndex(0);
@@ -221,7 +260,7 @@ export function StoryScenePage() {
     navigate(`/story-sessions/${session.session_id}/map`);
   };
 
-  if ((loading || isRestoring) && !session) {
+  if ((loading || isRestoring || reviewLoading) && (!session || !displayChapter)) {
     return <LoadingState label={st("loadingChapter")} />;
   }
 
@@ -326,31 +365,25 @@ export function StoryScenePage() {
         {needsArrival ? (
           <section>
             {currentComic ? (
-              <StoryImage
+              <StoryFigure
                 assetId={currentComic.asset_id}
                 alt={currentComic.alt}
                 eager
                 onOpen={() => openComic(currentComic)}
               />
             ) : (
-              <StoryImage
+              <StoryFigure
                 assetId={displayChapter.presentation?.assets[0] ?? "V4-PROP-03"}
                 alt={displayChapter.location_name ?? displayChapter.title}
                 eager
                 onOpen={(assetId) => setViewer({ assetId })}
               />
             )}
-            <div className="mt-4 rounded-2xl border border-line bg-card p-4">
-              <h2 className="font-serif text-lg font-semibold">{st("arrivalCheck")}</h2>
-              <p className="mt-2 text-base leading-7 text-ink-soft">
-                {st("arrivalSafety")}
+            {error && (
+              <p role="alert" className="mt-4 rounded-xl border border-clay/30 bg-clay/5 p-3 text-sm text-clay">
+                {error}
               </p>
-              {error && (
-                <p role="alert" className="mt-3 text-sm text-clay">
-                  {error}
-                </p>
-              )}
-            </div>
+            )}
           </section>
         ) : advancedSnapshot ? (
           <section className="space-y-4">
@@ -419,9 +452,9 @@ export function StoryScenePage() {
                 {clueAssets.length > 0 && (
                   <section className="mt-5">
                     <h2 className="font-serif text-xl font-semibold">{st("observations")}</h2>
-                    <div className="mt-3 grid gap-3">
+                    <div className={`mt-3 grid ${isLotusStory ? "gap-6" : "gap-3"}`}>
                       {clueAssets.map((assetId) => (
-                        <StoryImage
+                        <StoryFigure
                           key={assetId}
                           assetId={assetId}
                           alt={displayChapter.location_name ?? displayChapter.title}
@@ -465,11 +498,12 @@ export function StoryScenePage() {
                     <div className="mt-3">
                       <PuzzlePanel
                         puzzle={displayChapter.puzzle}
-                        disabled={actionPending}
+                        disabled={actionPending || isReviewChapter}
                         onSubmitAnswer={(answer) => void handleAnswer(answer)}
                         onRequestHint={() => void handleHint()}
                         onSkip={() => void handleSkip()}
                         attempts={session.state.attempts[displayChapter.id] ?? 0}
+                        submitLabel={isReviewChapter ? st("submitted") : undefined}
                         lastHint={lastResultForChapter?.hint}
                         lastMessage={lastResultForChapter?.message}
                       />
@@ -502,6 +536,8 @@ export function StoryScenePage() {
                             />
                           </div>
                         </div>
+                        {/* Both layers carry the same map titles and signatures. */}
+                        <StoryImageCaption assetId="V4-FOR-03" as="div" />
                         <label htmlFor="map-overlay" className="mt-4 block text-sm font-medium text-sage-deep">
                           {st("opacity", { value: overlayOpacity })}
                         </label>
@@ -524,7 +560,7 @@ export function StoryScenePage() {
                           {st("holdOverlay")}
                         </button>
                         <div className="mt-4 border-t border-line pt-4">
-                          <StoryImage
+                          <StoryFigure
                             assetId="V4-FOR-08"
                             alt={st("petalsComplete")}
                             onOpen={(assetId) => setViewer({ assetId })}
@@ -582,16 +618,16 @@ export function StoryScenePage() {
 
       {needsArrival && (
         <StoryBottomAction
-          label={st("arrived")}
+          label={st("arrivalCheck")}
           busy={actionPending}
           busyLabel={st("confirmingArrival")}
           onClick={() => void handleArrive()}
-          hint={st("arrivalHint")}
         />
       )}
 
       {!needsArrival &&
         !advancedSnapshot &&
+        !isReviewChapter &&
         narrativeReady &&
         displayChapter.kind === "prologue" && (
           <StoryBottomAction
@@ -612,6 +648,7 @@ export function StoryScenePage() {
 
       {!needsArrival &&
         !advancedSnapshot &&
+        !isReviewChapter &&
         narrativeReady &&
         isEndingChapter &&
         (!hasDialogue || dialogueDone) && (
@@ -635,7 +672,10 @@ export function StoryScenePage() {
         />
       )}
       <StoryAgentDrawer
+        key={`${session.session_id}:${displayChapter.id}:${language}`}
         open={agentOpen}
+        sessionId={session.session_id}
+        chapterId={displayChapter.id}
         context={agentContext}
         onClose={() => setAgentOpen(false)}
       />

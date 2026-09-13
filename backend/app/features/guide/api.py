@@ -16,7 +16,6 @@ Ask 追问（``/ask``）为 **web-first**：短超时联网为主，``_gather_ma
 from __future__ import annotations
 
 import logging
-import json
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -33,6 +32,13 @@ from app.core.security import optional_user_id
 from app.db.session import get_db
 from app.features.pois.models import NearbyPoiResponse
 from app.features.pois.service import PoiService
+from app.features.stories.content import StoryContentError, StoryNotFoundError
+from app.features.stories.engine import StoryChapterConflictError
+from app.features.stories.service import (
+    StoryContentVersionError,
+    StorySessionNotFoundError,
+    StorySessionOwnershipError,
+)
 from app.features.memoirs.models import MemoirCreateRequest
 from app.features.memoirs.service import (
     MemoirError,
@@ -50,6 +56,8 @@ from .preset_script import (
     poi_names_for,
     poi_official_hits_for,
 )
+from .models import GuideConversationMessage, GuideStoryReference
+from .service import resolve_story_guide_context, story_guide_fallback
 from .trigger_state import trigger_state
 from .tts import TTSUnavailableError, VOICE_BY_LANGUAGE, local_audio_path, synthesize_to_oss
 from .web_search import filter_relevant_hits, format_web_material, search_web_multi
@@ -268,18 +276,7 @@ def _apply_review(text: str, *, path: str) -> tuple[str, dict]:
 
 def _guide_language_matches(explanation: object, language: str) -> bool:
     """Reject an enhanced foreign-language result that leaks Chinese source text."""
-    if getattr(explanation, "language", None) != language:
-        return False
-    text = str(getattr(explanation, "text", "") or "")
-    immersive = getattr(explanation, "immersive", None)
-    if immersive is not None:
-        text += json.dumps(immersive.to_public_dict(), ensure_ascii=False)
-    if language in {"en", "pt"}:
-        return re.search(r"[\u3400-\u9fff]", text) is None
-    if language == "zh-TW":
-        simplified_only = set("这时为么开启里与还体来说请问过于从将会后发现处")
-        return not any(char in simplified_only for char in text)
-    return True
+    return guide_agent.language_matches(explanation, language)
 
 
 def _gather_material(candidate_poi: str | None, description: str) -> tuple[str, str]:
@@ -376,6 +373,8 @@ class GuideAskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=1000)
     language: str = "zh-CN"
     interests: list[str] | None = None
+    story_context: GuideStoryReference | None = None
+    history: list[GuideConversationMessage] = Field(default_factory=list, max_length=8)
 
     @field_validator("poi")
     @classmethod
@@ -1003,14 +1002,39 @@ def ask(
     web: Annotated[
         bool, Query(description="是否联网检索公开百科（默认开启，作为主回答来源）")
     ] = True,
+    user_id: str | None = Depends(optional_user_id),
 ) -> dict:
     """就当前 POI 追问。
 
     **Web-first**（本地 KB 偏稀）：默认先短超时联网检索公开百科并合成答案；
     本地仅轻量取料作点缀/兜底，不挡联网。跨语言提问会自动调用 guide agent，
     将多语言检索材料统一合成为个人中心设定的语言；``enhance=true`` 可强制深度回答。
+    StoryWalk 提交会话/章节引用后，服务端加载已解锁剧情，自动调用同一个 guide agent。
     """
     t0 = time.perf_counter()
+    story_context = None
+    if req.story_context is not None:
+        if not user_id:
+            raise HTTPException(status_code=401, detail="missing story session authentication")
+        try:
+            story_context = resolve_story_guide_context(
+                req.story_context, user_id, language=req.language
+            )
+        except StorySessionOwnershipError as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
+        except (StorySessionNotFoundError, StoryNotFoundError) as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except (StoryChapterConflictError, StoryContentVersionError) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except StoryContentError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        req = req.model_copy(update={"poi": story_context.poi_id or story_context.poi_name})
+    # Keep question-only retrieval and the ordinary Guide contract unchanged.
+    answer_context = {}
+    if story_context is not None:
+        answer_context["story_context"] = story_context
+    if req.history:
+        answer_context["history"] = req.history
     # 轻量本地（无向量检索）；不拖慢 web-first
     poi_name, material = _gather_material_fast(
         req.poi, language=req.language, interests=req.interests
@@ -1019,7 +1043,7 @@ def ask(
     input_language = _detect_question_language(req.question)
     output_search_language = _search_language(req.language)
     # web-first：本地无料仍可用 POI 名去搜；仅 web=false 且无料时 404
-    if not material and not web:
+    if not material and not web and story_context is None:
         raise HTTPException(status_code=404, detail=f"找不到 POI 资料：{req.poi}")
 
     local_answer, weak = _material_snippet_answer(
@@ -1107,6 +1131,7 @@ def ask(
             }
             needs_synthesis = (
                 enhance
+                or story_context is not None
                 or cross_language
                 or req.language == "zh-TW"
                 or any(language != output_search_language for language in source_languages)
@@ -1121,17 +1146,21 @@ def ask(
                         language=req.language,
                         input_language=input_language,
                         interests=req.interests,
+                        **answer_context,
                     )
                     if (
                         expl
                         and expl.text.strip()
-                        and not _looks_like_refusal(expl.text)
+                        and (story_context is not None or not _looks_like_refusal(expl.text))
                         and _guide_language_matches(expl, req.language)
                     ):
                         answer_text = expl.text
-                        confidence = max(float(expl.confidence or 0.7), 0.7)
+                        confidence = (
+                            expl.confidence if story_context
+                            else max(float(expl.confidence or 0.7), 0.7)
+                        )
                         ai_generated = True
-                        source = "agent+web"
+                        source = "agent+story+web" if story_context else "agent+web"
                     else:
                         has_target_web = any(
                             _search_language(str(hit.get("search_language") or ""))
@@ -1139,7 +1168,8 @@ def ask(
                             for hit in web_hits
                         )
                         language_safe_web = (
-                            not cross_language
+                            story_context is None
+                            and not cross_language
                             and req.language != "zh-TW"
                             and has_target_web
                         )
@@ -1163,9 +1193,9 @@ def ask(
     # ── 兜底：强相关本地摘录 / enhance 仅本地 / 空答案（不甩「手头没有」）──
     if not (answer_text or "").strip():
         if (
-            material.strip()
+            (material.strip() or story_context is not None)
             and settings.guide_agent_enabled
-            and (enhance or cross_language)
+            and (enhance or cross_language or story_context is not None)
             and not agent_attempted
         ):
             agent_attempted = True
@@ -1176,24 +1206,39 @@ def ask(
                 language=req.language,
                 input_language=input_language,
                 interests=req.interests,
+                **answer_context,
             )
             if (
                 expl
                 and expl.text.strip()
-                and not _looks_like_refusal(expl.text)
+                and (story_context is not None or not _looks_like_refusal(expl.text))
                 and _guide_language_matches(expl, req.language)
             ):
                 answer_text = expl.text
-                confidence = max(float(expl.confidence or 0.7), 0.7)
+                confidence = (
+                    expl.confidence if story_context
+                    else max(float(expl.confidence or 0.7), 0.7)
+                )
                 ai_generated = True
-                source = "agent"
+                source = "agent+story" if story_context else "agent"
+
+    if story_context is not None and not (answer_text or "").strip():
+        answer_text = story_guide_fallback(story_context, language=req.language)
+        source = "story"
+        confidence = 0.5
+        used_web = False
+        web_hits = []
+        error = "guide agent unavailable; served preset story notes"
 
     if not (answer_text or "").strip():
         if not weak and (local_answer or "").strip():
             answer_text = local_answer
             source = "rules"
             confidence = 0.55
-            if enhance and settings.guide_agent_enabled and material.strip():
+            if (
+                enhance and settings.guide_agent_enabled and material.strip()
+                and not agent_attempted
+            ):
                 expl = guide_agent.answer(
                     display_name,
                     req.question,
@@ -1201,6 +1246,7 @@ def ask(
                     language=req.language,
                     input_language=input_language,
                     interests=req.interests,
+                    **answer_context,
                 )
                 if (
                     expl
@@ -1220,13 +1266,23 @@ def ask(
             source = "empty"
 
     # 拒答文案兜底（避免泄漏「手头资料里没有」；空答案模板本身含拒答标记，跳过）
-    if source != "empty" and _looks_like_refusal(answer_text) and not used_web:
+    if (
+        story_context is None and source != "empty"
+        and _looks_like_refusal(answer_text) and not used_web
+    ):
         answer_text = _ASK_EMPTY.get(req.language, _ASK_EMPTY["zh-CN"])
         confidence = min(confidence, 0.3)
         source = "empty"
 
     if req.language in {"en", "pt"} and re.search(r"[\u3400-\u9fff]", answer_text):
-        if local_answer and not re.search(r"[\u3400-\u9fff]", local_answer):
+        if story_context is not None:
+            answer_text = story_guide_fallback(story_context, language=req.language)
+            source = "story"
+            ai_generated = False
+            used_web = False
+            web_hits = []
+            confidence = 0.5
+        elif local_answer and not re.search(r"[\u3400-\u9fff]", local_answer):
             answer_text = local_answer
             source = "rules"
             confidence = 0.55
@@ -1254,6 +1310,8 @@ def ask(
             "strategy": "web_first",
             "input_language": input_language,
             "output_language": req.language,
+            "story_context": story_context is not None,
+            "history_turns": len(req.history),
         },
     )
     return {
@@ -1268,6 +1326,7 @@ def ask(
         "blocked": review.get("decision") == "block",
         "error": error,
         "review": review,
+        "story_context_used": story_context is not None,
         "web_used": used_web,
         "web_sources": [
             {"title": h.get("title"), "url": h.get("url"), "source": h.get("source")}

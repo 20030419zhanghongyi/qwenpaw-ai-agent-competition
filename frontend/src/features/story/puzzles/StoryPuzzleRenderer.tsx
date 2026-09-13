@@ -8,12 +8,14 @@ import { SingleChoicePuzzle } from "./SingleChoicePuzzle";
 interface StoryPuzzleRendererProps {
   puzzle: StoryPuzzleData;
   disabled?: boolean;
+  submitLabel?: string;
   onSubmit: (answer: unknown) => void;
 }
 
 export function StoryPuzzleRenderer({
   puzzle,
   disabled = false,
+  submitLabel,
   onSubmit,
 }: StoryPuzzleRendererProps) {
   switch (puzzle.type) {
@@ -22,6 +24,7 @@ export function StoryPuzzleRenderer({
         <MultiSelectPuzzle
           puzzle={puzzle}
           disabled={disabled}
+          submitLabel={submitLabel}
           onSubmit={onSubmit}
         />
       );
@@ -30,6 +33,7 @@ export function StoryPuzzleRenderer({
         <MappingPuzzle
           puzzle={puzzle}
           disabled={disabled}
+          submitLabel={submitLabel}
           onSubmit={onSubmit}
         />
       );
@@ -38,6 +42,7 @@ export function StoryPuzzleRenderer({
         <EvidenceChainPuzzle
           puzzle={puzzle}
           disabled={disabled}
+          submitLabel={submitLabel}
           onSubmit={onSubmit}
         />
       );
@@ -46,6 +51,7 @@ export function StoryPuzzleRenderer({
         <AssemblyPuzzle
           puzzle={puzzle}
           disabled={disabled}
+          submitLabel={submitLabel}
           onSubmit={onSubmit}
         />
       );
@@ -54,6 +60,7 @@ export function StoryPuzzleRenderer({
         <SingleChoicePuzzle
           puzzle={puzzle}
           disabled={disabled}
+          submitLabel={submitLabel}
           onSubmit={onSubmit}
         />
       );

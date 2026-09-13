@@ -922,12 +922,14 @@
             "text": "木制开合窗扇"
           },
           {
-            "id": "stone_battlement",
-            "text": "石制垛口"
+            "id": "stone_lattice",
+            "text": "石花格",
+            "asset_id": "V4-LOU-P08"
           },
           {
-            "id": "ship_porthole",
-            "text": "船用舷窗"
+            "id": "aluminum_frame",
+            "text": "铝框",
+            "asset_id": "V4-LOU-P07"
           }
         ],
         "solution": [

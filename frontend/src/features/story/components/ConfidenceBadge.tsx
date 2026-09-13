@@ -23,7 +23,7 @@ export function ConfidenceBadge({
   const st = useStoryMessages();
   if (confidence == null) return null;
   return (
-    <span className="inline-flex min-h-6 items-center rounded-full border border-sage/30 bg-sage/10 px-2.5 text-[11px] font-medium text-sage-deep">
+    <span className="inline-flex min-h-6 max-w-full items-center rounded-full border border-sage/30 bg-sage/10 px-2.5 py-1 text-[11px] font-medium leading-4 text-sage-deep">
       {st("confidence", { value: confidenceLabel(confidence, st) })}
     </span>
   );
